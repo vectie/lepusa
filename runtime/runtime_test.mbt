@@ -248,6 +248,108 @@ test "runtime host dispatches through plan capabilities" {
 }
 
 ///|
+test "runtime session applies startup actions as backend operations" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>before</main>"))
+    .with_startup(
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::emit(
+          @lepusa.Event::new("ready", payload="{}"),
+          target=WindowTarget("main"),
+        ),
+        @lepusa.Cmd::effect("boot"),
+        @lepusa.Cmd::navigate(
+          "main",
+          @lepusa.Source::html("<main>after</main>"),
+        ),
+      ]),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).startup_step() {
+        Ok(step) => {
+          let operations = step.operations()
+          assert_eq(operations.length(), 3)
+          assert_true(
+            operations[0] is RuntimeSendEvent(WindowTarget("main"), _),
+          )
+          assert_true(operations[1] is RuntimeRunEffect("boot"))
+          assert_true(
+            operations[2]
+            is RuntimeNavigateWindow("main", "lepusa://inline/main/index.html"),
+          )
+          match
+            step.session().resolve_asset("lepusa://inline/main/index.html") {
+            Ok(asset) =>
+              assert_true(asset.body() is VirtualContent("<main>after</main>"))
+            Err(_) => abort("unexpected missing navigated asset")
+          }
+        }
+        Err(_) => abort("unexpected invalid startup step")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime host applies lifecycle actions to an existing session" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>main</main>"))
+    .on_window_close_requested(
+      "main",
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::emit(@lepusa.Event::new("closing")),
+        @lepusa.Cmd::effect("persist"),
+      ]),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let host = RuntimeHost::new(plan)
+      match host.snapshot() {
+        Ok(session) =>
+          match host.lifecycle_step(session, WindowCloseRequested("main")) {
+            Ok(step) => {
+              let operations = step.operations()
+              assert_eq(operations.length(), 2)
+              assert_true(operations[0] is RuntimeSendEvent(AppTarget, _))
+              assert_true(operations[1] is RuntimeRunEffect("persist"))
+              assert_eq(
+                step.session().windows()[0].url(),
+                "lepusa://inline/main/index.html",
+              )
+            }
+            Err(_) => abort("unexpected invalid lifecycle step")
+          }
+        Err(_) => abort("unexpected invalid session")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime session reports invalid action application" {
+  match RuntimeHost::new(test_plan()).snapshot() {
+    Ok(session) =>
+      match
+        @lepusa.Source::html("<main>missing</main>").resolve(
+          window_label="missing",
+        ) {
+        Ok(source) =>
+          match session.apply_actions([RuntimeNavigate("missing", source)]) {
+            Ok(_) => abort("unexpected valid missing navigation")
+            Err(problems) =>
+              assert_eq(problems[0], "navigate window not found: missing")
+          }
+        Err(_) => abort("unexpected invalid test source")
+      }
+    Err(_) => abort("unexpected invalid session")
+  }
+}
+
+///|
 test "runtime wire codec decodes bridge requests and encodes responses" {
   match
     decode_invoke_request_json(

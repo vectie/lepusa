@@ -39,12 +39,20 @@ pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
 pub fn RuntimeHost::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::lifecycle_hooks(Self) -> Result[Array[@lepusa.RuntimeLifecycleHook], Array[String]]
+pub fn RuntimeHost::lifecycle_step(Self, RuntimeSession, @lepusa.LifecycleEvent) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
+pub fn RuntimeHost::startup_step(Self) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
+
+pub(all) enum RuntimeOperation {
+  RuntimeSendEvent(@lepusa.EventTarget, @lepusa.Event)
+  RuntimeRunEffect(String)
+  RuntimeNavigateWindow(String, String)
+} derive(Eq, @debug.Debug)
 
 pub struct RuntimeProtocolMapping {
   window_label : String
@@ -68,6 +76,7 @@ pub struct RuntimeSession {
   registered_routes : Array[String]
   bridge_source : String
 } derive(Eq, @debug.Debug)
+pub fn RuntimeSession::apply_actions(Self, Array[@lepusa.RuntimeAction]) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::asset_protocol(Self) -> String
 pub fn RuntimeSession::backend(Self) -> @lepusa.RuntimeBackend
 pub fn RuntimeSession::bridge_source(Self) -> String
@@ -81,6 +90,13 @@ pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetRespons
 pub fn RuntimeSession::startup_actions(Self) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
 pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
+
+pub struct RuntimeStep {
+  session : RuntimeSession
+  operations : Array[RuntimeOperation]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeStep::operations(Self) -> Array[RuntimeOperation]
+pub fn RuntimeStep::session(Self) -> RuntimeSession
 
 pub struct RuntimeVirtualFile {
   window_label : String

@@ -239,6 +239,11 @@ Lifecycle hooks use the same lowering path. App authors attach commands to
 `RuntimeHost::lifecycle_actions(event)` from their event loop.
 `startupActions` is the immediate boot queue; `lifecycleHooks` is the event-loop
 view of the same model for native runners that dispatch lifecycle events.
+`RuntimeSession::apply_actions(actions)` is the portable execution step: it
+returns backend operations to perform and an updated session with navigation
+asset mappings already applied. Native backends should translate
+`RuntimeSendEvent`, `RuntimeRunEffect`, and `RuntimeNavigateWindow` to platform
+calls instead of mutating session internals.
 
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
