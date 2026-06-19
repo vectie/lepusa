@@ -112,13 +112,19 @@ fn render_bundle_plan(args : Array[String]) -> CliResult {
     Ok(_) =>
       match sample_manifest().bundle_plan(sample_root(), target~) {
         Ok(plan) =>
-          ok(
-            "Lepusa bundle plan\n" +
-            "target: \{plan.target().name()}\n" +
-            "identifier: \{plan.identifier()}\n" +
-            "executable: \{plan.executable_name()}\n" +
-            "bundle: \{plan.bundle_name()}\n",
-          )
+          match plan.files() {
+            Ok(files) =>
+              ok(
+                "Lepusa bundle plan\n" +
+                "target: \{plan.target().name()}\n" +
+                "identifier: \{plan.identifier()}\n" +
+                "executable: \{plan.executable_name()}\n" +
+                "bundle: \{plan.bundle_name()}\n" +
+                "files: \{files.length()}\n",
+              )
+            Err(problems) =>
+              fail(render_problems("Lepusa bundle files", problems))
+          }
         Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
       }
     Err(problems) => fail(render_problems("Lepusa bundle plan", problems))

@@ -320,8 +320,54 @@ test "bundle plans derive executable and package names from metadata" {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
+          match plan.files() {
+            Ok(files) => {
+              assert_eq(files.length(), 4)
+              assert_eq(
+                files[0].path(),
+                "lepusa-example.app/Contents/Info.plist",
+              )
+              assert_true(files[0].content().contains("CFBundleIdentifier"))
+              assert_eq(
+                files[2].path(),
+                "lepusa-example.app/Contents/Resources/lepusa/runtime.json",
+              )
+              assert_true(files[3].content().contains("windowLabel"))
+            }
+            Err(_) => abort("unexpected invalid bundle files")
+          }
         }
         Err(_) => abort("unexpected invalid bundle plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "bundle files include platform metadata" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    source=@lepusa.Source::html("<main></main>"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(runtime) => {
+      let metadata = @lepusa.AppMetadata::new(
+        identifier="dev.vectie.files",
+        product_name="Files App",
+        version="0.3.0",
+      )
+      match @lepusa.BundleConfig::new(metadata, target=Linux).plan(runtime) {
+        Ok(plan) =>
+          match plan.files() {
+            Ok(files) => {
+              assert_eq(files[0].path(), "files-app/files-app.desktop")
+              assert_true(files[0].content().contains("Name=Files App"))
+              assert_true(files[1].content().contains("\"target\":\"linux\""))
+            }
+            Err(_) => abort("unexpected invalid linux bundle files")
+          }
+        Err(_) => abort("unexpected invalid linux bundle plan")
       }
     }
     Err(_) => abort("unexpected invalid runtime plan")

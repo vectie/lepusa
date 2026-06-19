@@ -75,6 +75,16 @@ pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : Strin
 pub fn BundleConfig::plan(Self, RuntimePlan) -> Result[BundlePlan, Array[String]]
 pub fn BundleConfig::validate(Self) -> Array[String]
 
+pub struct BundleFile {
+  path : String
+  content : String
+  executable : Bool
+} derive(Eq, @debug.Debug)
+pub fn BundleFile::content(Self) -> String
+pub fn BundleFile::executable(Self) -> Bool
+pub fn BundleFile::new(path~ : String, content~ : String, executable? : Bool) -> Self
+pub fn BundleFile::path(Self) -> String
+
 pub struct BundlePlan {
   metadata : AppMetadata
   target : BundleTarget
@@ -85,6 +95,7 @@ pub struct BundlePlan {
 } derive(Eq, @debug.Debug)
 pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
+pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
 pub fn BundlePlan::identifier(Self) -> String
 pub fn BundlePlan::target(Self) -> BundleTarget
 

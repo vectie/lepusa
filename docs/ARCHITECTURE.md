@@ -235,6 +235,16 @@ Lepusa's bundler should own platform templates:
 Consumer apps should provide metadata, assets, capabilities, sidecars, and
 signing configuration. They should not need to maintain native launcher code.
 
+`BundlePlan::files()` is the first artifact boundary. It generates platform
+metadata plus shared runtime assets:
+
+- macOS: `Contents/Info.plist`, launcher stub, runtime manifest, bridge
+- Windows: app manifest, runtime manifest, bridge
+- Linux: `.desktop` entry, runtime manifest, bridge
+
+The next bundler step should write these files and add platform signing or
+installer packaging without inventing another configuration model.
+
 ## CLI Boundary
 
 The CLI should be thin over public framework contracts. Early commands should
@@ -248,7 +258,7 @@ lepusa plan
   -> prints runtime backend, windows, plugins, capabilities, command routes
 
 lepusa bundle-plan <target>
-  -> prints platform bundle name, executable name, and app identifier
+  -> prints platform bundle name, executable name, app identifier, file count
 ```
 
 Native run/build/bundle commands should consume the same `RuntimePlan` and

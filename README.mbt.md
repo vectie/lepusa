@@ -113,6 +113,10 @@ runtime and bundler work concrete outputs to consume.
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.
 
+`lepusa bundle-plan` now also validates concrete bundle artifact plans through
+`BundlePlan::files()`: platform metadata plus `lepusa/runtime.json` and
+`lepusa/bridge.js`.
+
 ## Boundary
 
 Lepusa owns the reusable desktop framework:

@@ -32,6 +32,7 @@ test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
+  assert_true(result.output.contains("files: 3"))
 }
 
 ///|
