@@ -115,6 +115,7 @@ moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
@@ -389,6 +390,9 @@ by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 The generated launcher stubs call `lepusa-runtime --manifest <runtime.json>`;
 today that runtime command prints a no-window bundle manifest summary, and it is
 the narrow executable boundary for the future platform WebView loop.
+`lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
+manifest's runtime bridge, virtual files, local roots, and packaged roots using
+the same JSON envelope shape expected by native protocol handlers.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

@@ -489,6 +489,9 @@ lepusa run <target>
 lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a no-window launch summary
 
+lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
+  -> resolves bundled runtime assets for native protocol handlers
+
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count
 ```

@@ -17,6 +17,7 @@ fn drop_program(argv : Array[String]) -> Array[String] {
 async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
   match args.get(0) {
     Some("help") | Some("--help") | Some("-h") => runtime_ok(runtime_help())
+    Some("asset") => render_runtime_asset(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
       runtime_fail("unknown runtime command: \{command}\n\n" + runtime_help())
@@ -34,6 +35,26 @@ async fn render_runtime_manifest(args : Array[String]) -> RuntimeCliResult {
           )
       }
       render_runtime_manifest_text(path, text)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+async fn render_runtime_asset(args : Array[String]) -> RuntimeCliResult {
+  let url = args.get(1).unwrap_or("")
+  if url == "" || url == "--manifest" {
+    return runtime_fail("asset url is required\n")
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime asset\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_asset_text(path, text, url)
     }
     Err(problem) => runtime_fail(problem + "\n")
   }
@@ -115,6 +136,19 @@ fn runtime_manifest_arg(args : Array[String]) -> Result[String, String] {
 }
 
 ///|
+fn runtime_manifest_path(args : Array[String]) -> Result[String, String] {
+  for i in 0..<args.length() {
+    if args[i] == "--manifest" {
+      match args.get(i + 1) {
+        Some(path) if path != "" => return Ok(path)
+        _ => return Err("--manifest requires a file path")
+      }
+    }
+  }
+  Ok("lepusa/runtime.json")
+}
+
+///|
 fn optional_object(
   object : Map[String, Json],
   key : String,
@@ -158,6 +192,7 @@ fn runtime_help() -> String {
     #|
     #|Usage:
     #|  lepusa-runtime --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|
   )
 }

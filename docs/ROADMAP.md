@@ -76,6 +76,7 @@
   - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: reads bundled runtime data for launcher stubs.
+  - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
