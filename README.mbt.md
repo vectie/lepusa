@@ -443,8 +443,9 @@ macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
 package owns WebKitGTK source and packaged-window loops when GTK3 and
 WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
 callback for MoonBit-resolved runtime, virtual, local, and packaged assets.
-Windows manifests still report the shared unsupported status until their
-WebView2 creation loop lands.
+Windows source and packaged runs prepare typed WebView2 boot plans and pass
+through the platform-owned native launch ABI, which still reports unsupported
+until the WebView2 creation loop lands.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap

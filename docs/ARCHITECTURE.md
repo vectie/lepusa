@@ -433,10 +433,12 @@ MoonBit-produced response scripts so sync `window.lepusa.invoke(...)` calls can
 resolve in the opened window. The same native loop registers the generated
 asset protocol as a WebKitGTK URI scheme and asks MoonBit to resolve runtime,
 virtual, local, and packaged assets, so Linux packaged manifests can open their
-first `lepusa://` WebView through `launch_bundled(manifest)`. Windows exposes
-the same dry-run and
-launch-result boundary, but `WindowsOpenWindow` reports unsupported until its
-WebView2 creation path lands.
+first `lepusa://` WebView through `launch_bundled(manifest)`. The Windows
+package prepares typed WebView2 boot plans for source and packaged manifests,
+merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
+routes launch attempts through a package-owned native ABI. That ABI currently
+returns the shared unsupported status until the WebView2 COM creation path
+lands.
 
 ## Bundling
 

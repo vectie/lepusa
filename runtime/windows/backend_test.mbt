@@ -70,6 +70,31 @@ test "windows backend prepares run plan and reports unsupported launch" {
             result.plan().first_webview_url(),
             "lepusa://inline/main/index.html",
           )
+          assert_eq(
+            result.plan().first_webview_load_url(),
+            "lepusa://inline/main/index.html",
+          )
+          match result.plan().first_webview() {
+            Ok(webview) => {
+              assert_eq(webview.title(), "Windows")
+              assert_eq(webview.width(), 1000)
+              assert_eq(webview.height(), 720)
+              assert_eq(webview.native_hook(), "__lepusaInvoke")
+              assert_eq(webview.asset_protocol(), "lepusa")
+              assert_true(
+                webview.initialization_script().contains("__lepusaInvoke"),
+              )
+              assert_true(
+                webview
+                .initialization_script()
+                .contains("__lepusaInvokeResponse"),
+              )
+              assert_true(
+                webview.initialization_script().contains("chrome.webview"),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
           assert_eq(result.plan().startup_operation_count(), 1)
           assert_eq(
             result.plan().service_supervisor_plan().backend_name(),
@@ -113,6 +138,10 @@ test "windows backend prepares bundled runtime contract" {
             plan.first_webview_url(),
             "lepusa://rabbita/main/index.html",
           )
+          assert_eq(
+            plan.first_webview_load_url(),
+            "lepusa://rabbita/main/index.html",
+          )
           assert_eq(plan.startup_operation_count(), 2)
           assert_eq(plan.lifecycle_step_count(), 1)
           assert_true(
@@ -136,6 +165,16 @@ test "windows backend prepares bundled runtime contract" {
           assert_eq(report.backend_name(), "windows")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
+          match plan.first_webview() {
+            Ok(webview) => {
+              assert_eq(webview.asset_protocol(), "lepusa")
+              assert_eq(webview.native_hook(), "__lepusaInvoke")
+              assert_true(
+                webview.initialization_script().contains("chrome.webview"),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
         }
         Err(_) => abort("unexpected invalid Windows bundled run plan")
       }
@@ -146,6 +185,10 @@ test "windows backend prepares bundled runtime contract" {
           assert_eq(result.report().backend(), "windows")
           assert_eq(result.report().engine(), "WebView2")
           assert_eq(result.report().startup_operations(), 2)
+          assert_eq(
+            result.report().load_url(),
+            "lepusa://rabbita/main/index.html",
+          )
         }
         Err(_) => abort("unexpected invalid Windows bundled dry run")
       }

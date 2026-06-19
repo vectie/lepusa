@@ -1,6 +1,8 @@
 #include <moonbit.h>
 #include <string.h>
 
+typedef moonbit_bytes_t (*LepusaWindowsBytesCallback)(void *, moonbit_bytes_t);
+
 #if defined(_WIN32)
 #include <ctype.h>
 #include <stdio.h>
@@ -456,6 +458,36 @@ moonbit_bytes_t lepusa_windows_backend_engine_name(void) {
   moonbit_bytes_t bytes = moonbit_make_bytes(len, 0);
   memcpy(bytes, name, len);
   return bytes;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t lepusa_windows_run_webview(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  moonbit_bytes_t native_hook,
+  moonbit_bytes_t asset_protocol,
+  int32_t width,
+  int32_t height,
+  int32_t resizable,
+  LepusaWindowsBytesCallback call_dispatch,
+  void *dispatch,
+  LepusaWindowsBytesCallback call_resolve_asset,
+  void *resolve_asset
+) {
+  (void)title;
+  (void)url;
+  (void)initialization_script;
+  (void)native_hook;
+  (void)asset_protocol;
+  (void)width;
+  (void)height;
+  (void)resizable;
+  (void)call_dispatch;
+  (void)dispatch;
+  (void)call_resolve_asset;
+  (void)resolve_asset;
+  return 2;
 }
 
 MOONBIT_FFI_EXPORT
