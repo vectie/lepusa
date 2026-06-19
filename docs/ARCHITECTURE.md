@@ -277,6 +277,8 @@ The same startup queue is lowered to portable `NativeOperation` values in
 can service shutdown and window events from one backend-owned contract. Each
 lifecycle step carries the resulting `RuntimeSession` snapshot so navigations
 can update protocol mappings and virtual assets without re-reading manifests.
+`RuntimeRunnerPlan::lifecycle_step(event)` exposes the platform-neutral form,
+and `lepusa lifecycle <event> [window]` prints it for no-window smoke tests.
 
 `@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`, and
 `NativeRunnerPlan`, so platform packages only need to describe their native

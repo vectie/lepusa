@@ -23,6 +23,39 @@ pub fn RuntimeStep::operations(self : RuntimeStep) -> Array[RuntimeOperation] {
 }
 
 ///|
+pub fn RuntimeOperation::to_json(self : RuntimeOperation) -> String {
+  match self {
+    RuntimeStartService(service) =>
+      [
+        "{",
+        "\"kind\":\"start-service\",",
+        "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
+    RuntimeSendEvent(target, event) =>
+      [
+        "{",
+        "\"kind\":\"send-event\",",
+        "\"target\":\{target.to_json()},",
+        "\"event\":\{event.to_json()}",
+        "}",
+      ].join("")
+    RuntimeRunEffect(name) =>
+      ["{", "\"kind\":\"run-effect\",", "\"name\":\{name.json_string()}", "}"].join(
+        "",
+      )
+    RuntimeNavigateWindow(label, url) =>
+      [
+        "{",
+        "\"kind\":\"navigate-window\",",
+        "\"label\":\{label.json_string()},",
+        "\"url\":\{url.json_string()}",
+        "}",
+      ].join("")
+  }
+}
+
+///|
 pub fn RuntimeHost::startup_step(
   self : RuntimeHost,
 ) -> Result[RuntimeStep, Array[String]] {

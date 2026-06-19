@@ -151,6 +151,27 @@ pub fn RuntimeRunnerPlan::lifecycle_steps(
 }
 
 ///|
+pub fn RuntimeRunnerPlan::lifecycle_step(
+  self : RuntimeRunnerPlan,
+  event : @lepusa.LifecycleEvent,
+) -> RuntimeRunnerStep {
+  for step in self.lifecycle_steps {
+    if step.event() == event {
+      return step
+    }
+  }
+  match event {
+    AppStarted =>
+      {
+        event,
+        session: self.session,
+        operations: self.startup_operations.copy(),
+      }
+    _ => { event, session: self.session, operations: [] }
+  }
+}
+
+///|
 pub fn RuntimeRunnerStep::event(
   self : RuntimeRunnerStep,
 ) -> @lepusa.LifecycleEvent {
@@ -167,4 +188,15 @@ pub fn RuntimeRunnerStep::operations(
   self : RuntimeRunnerStep,
 ) -> Array[RuntimeOperation] {
   self.operations.copy()
+}
+
+///|
+pub fn RuntimeRunnerStep::to_json(self : RuntimeRunnerStep) -> String {
+  [
+    "{",
+    "\"event\":\{self.event.to_json()},",
+    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}],",
+    "\"session\":\{self.session.to_json()}",
+    "}",
+  ].join("")
 }

@@ -89,6 +89,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("plugin") => fail("plugin commands require the native async runner\n")
     Some("invoke") => fail("invoke requires the native async runner\n")
     Some("asset") => fail("asset requires the native async runner\n")
+    Some("lifecycle") => fail("lifecycle requires the native async runner\n")
     Some("bundle-write") =>
       fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
@@ -108,6 +109,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("plugin") => render_plugin(args)
     Some("invoke") => render_invoke_async(args)
     Some("asset") => render_asset_async(args)
+    Some("lifecycle") => render_lifecycle_async(args)
     Some("bundle-plan") => render_bundle_plan_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
@@ -140,6 +142,7 @@ fn help_text() -> String {
     #|  lepusa dev
     #|  lepusa invoke <window> <plugin.command> [payload]
     #|  lepusa asset <url>
+    #|  lepusa lifecycle <event> [window]
     #|  lepusa init [out-dir]
     #|  lepusa plugin new <name> [out-dir]
     #|  lepusa bundle-plan [macos|windows|linux]
@@ -322,6 +325,47 @@ async fn render_dev_async(args : Array[String]) -> CliResult {
         Err(problems) => fail(render_problems("Lepusa dev", problems))
       }
     Err(problems) => fail(render_problems("Lepusa dev", problems))
+  }
+}
+
+///|
+async fn render_lifecycle_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_lifecycle_event_args(values) {
+    Ok(event) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match host.runner_plan() {
+            Ok(plan) => ok(plan.lifecycle_step(event).to_json() + "\n")
+            Err(problems) => fail(render_problems("Lepusa lifecycle", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa lifecycle", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn parse_lifecycle_event_args(
+  values : Array[String],
+) -> Result[@lepusa.LifecycleEvent, String] {
+  match values.get(0) {
+    None => Err("lifecycle event is required")
+    Some("app-started") => Ok(@lepusa.LifecycleEvent::app_started())
+    Some("app-will-exit") => Ok(@lepusa.LifecycleEvent::app_will_exit())
+    Some("window-close-requested") =>
+      match values.get(1) {
+        Some(label) if label != "" =>
+          Ok(@lepusa.LifecycleEvent::window_close_requested(label))
+        _ => Err("lifecycle window is required")
+      }
+    Some("window-closed") =>
+      match values.get(1) {
+        Some(label) if label != "" =>
+          Ok(@lepusa.LifecycleEvent::window_closed(label))
+        _ => Err("lifecycle window is required")
+      }
+    Some(value) => Err("unknown lifecycle event: \{value}")
   }
 }
 

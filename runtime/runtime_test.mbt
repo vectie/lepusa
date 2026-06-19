@@ -557,6 +557,16 @@ test "runtime host builds generic runner plan" {
         plan.lifecycle_steps()[0].operations()[0] is RuntimeRunEffect("flush"),
       )
       assert_true(
+        plan.lifecycle_step(AppStarted).operations()[0]
+        is RuntimeRunEffect("boot"),
+      )
+      assert_true(
+        plan
+        .lifecycle_step(AppWillExit)
+        .to_json()
+        .contains("\"kind\":\"app-will-exit\""),
+      )
+      assert_true(
         plan.lifecycle_steps()[0]
         .session()
         .to_json()

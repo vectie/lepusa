@@ -128,6 +128,7 @@ pub(all) enum RuntimeOperation {
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
 } derive(Eq, @debug.Debug)
+pub fn RuntimeOperation::to_json(Self) -> String
 
 pub struct RuntimeProtocolMapping {
   window_label : String
@@ -146,6 +147,7 @@ pub struct RuntimeRunnerPlan {
   lifecycle_steps : Array[RuntimeRunnerStep]
 } derive(Eq, @debug.Debug)
 pub fn RuntimeRunnerPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
+pub fn RuntimeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> RuntimeRunnerStep
 pub fn RuntimeRunnerPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
 pub fn RuntimeRunnerPlan::session(Self) -> RuntimeSession
 pub fn RuntimeRunnerPlan::startup_operations(Self) -> Array[RuntimeOperation]
@@ -159,6 +161,7 @@ pub struct RuntimeRunnerStep {
 pub fn RuntimeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
 pub fn RuntimeRunnerStep::operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeRunnerStep::session(Self) -> RuntimeSession
+pub fn RuntimeRunnerStep::to_json(Self) -> String
 
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend

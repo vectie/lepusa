@@ -7,6 +7,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa asset"))
+  assert_true(result.output.contains("lepusa lifecycle"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa init"))
@@ -151,6 +152,41 @@ async test "generated project config resolves runtime assets" {
   assert_true(result.output.contains("\"ok\":true"))
   assert_true(result.output.contains("\"kind\":\"virtual\""))
   assert_true(result.output.contains("Hello Lepusa"))
+}
+
+///|
+async test "generated project config renders lifecycle steps" {
+  let root = "/tmp/lepusa-project-lifecycle-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let project = root + "/lepusa.json"
+  let startup = render_cli_async([
+    "lifecycle", "app-started", "--project", project,
+  ])
+  assert_eq(startup.exit_code, 0)
+  assert_true(startup.output.contains("\"kind\":\"app-started\""))
+  assert_true(startup.output.contains("\"kind\":\"run-effect\""))
+  assert_true(startup.output.contains("\"name\":\"boot\""))
+  let shutdown = render_cli_async([
+    "lifecycle", "app-will-exit", "--project", project,
+  ])
+  assert_eq(shutdown.exit_code, 0)
+  assert_true(shutdown.output.contains("\"kind\":\"app-will-exit\""))
+  assert_true(shutdown.output.contains("\"name\":\"shutdown\""))
+  assert_true(shutdown.output.contains("\"session\""))
+}
+
+///|
+async test "lifecycle command validates event arguments" {
+  let missing = render_cli_async(["lifecycle"])
+  assert_eq(missing.exit_code, 1)
+  assert_true(missing.output.contains("lifecycle event is required"))
+  let window = render_cli_async(["lifecycle", "window-close-requested"])
+  assert_eq(window.exit_code, 1)
+  assert_true(window.output.contains("lifecycle window is required"))
+  let unknown = render_cli_async(["lifecycle", "wat"])
+  assert_eq(unknown.exit_code, 1)
+  assert_true(unknown.output.contains("unknown lifecycle event: wat"))
 }
 
 ///|

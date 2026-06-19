@@ -109,6 +109,7 @@ moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa
 moon run cmd/main --target native -- native-plan linux --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- lifecycle app-will-exit --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -317,6 +318,9 @@ JSON response shape expected by `window.lepusa`.
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability
 grants.
+`lepusa lifecycle <event> [window] --project lepusa.json` prints the runtime
+step JSON for startup, shutdown, and window lifecycle events without starting a
+native window loop.
 
 The generated bridge also exposes `window.lepusa.listen(name, handler)` and
 installs `globalThis.__lepusaDispatchEvent(event)` for native-to-frontend
@@ -343,6 +347,8 @@ window loops will execute.
 launch manifest, resolved WebViews, stepped runtime session, and startup
 operations in one object. Platform packages map this plan to WKWebView,
 WebView2, or WebKitGTK without rebuilding app state.
+`RuntimeRunnerPlan::lifecycle_step(event)` returns the same operation/session
+shape that `lepusa lifecycle` prints.
 
 `@lepusa/runtime` also exposes `NativeBackend`, the shared lowering boundary
 for platform packages. `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
