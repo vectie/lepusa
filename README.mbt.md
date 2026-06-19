@@ -145,6 +145,23 @@ It also describes runtime behavior through `startup` and `lifecycle` commands:
 `lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
 native command registration, and a scoped capability helper.
 
+`@lepusa/plugins/log` is the first official plugin package. It declares
+`log.write`, provides scoped capability helpers, and can register a command
+handler backed by an in-memory `LogBuffer`:
+
+```moonbit nocheck
+///|
+let buffer = @log.LogBuffer::new()
+
+///|
+let registry = @log.registry(buffer~)
+
+///|
+let app = @lepusa.new(root)
+  .with_plugin(@log.plugin())
+  .with_capability(@log.capability_for_window("main"))
+```
+
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME

@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/log"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, buffer? : LogBuffer) -> @lepusa.CommandRegistry
+
+pub fn registry(buffer? : LogBuffer) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub struct LogBuffer {
+  entries : Array[LogEntry]
+}
+pub fn LogBuffer::entries(Self) -> Array[LogEntry]
+pub fn LogBuffer::new() -> Self
+pub fn LogBuffer::write(Self, LogEntry) -> Unit
+
+pub struct LogEntry {
+  level : String
+  message : String
+  target : String
+} derive(Eq, @debug.Debug)
+pub fn LogEntry::level(Self) -> String
+pub fn LogEntry::message(Self) -> String
+pub fn LogEntry::new(message~ : String, level? : String, target? : String) -> Self
+pub fn LogEntry::target(Self) -> String
+pub fn LogEntry::to_json(Self) -> String
+
+// Type aliases
+
+// Traits

@@ -84,7 +84,7 @@ Stabilize the cross-platform core set first:
 - process and shell with explicit permissions
 - clipboard
 - notification
-- log
+- log: initial pure command-registry package exists
 - store
 - localhost
 - single-instance

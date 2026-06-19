@@ -337,6 +337,20 @@ metadata plus shared runtime assets:
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.
 
+## Official Plugins
+
+Official plugins live under `vectie/lepusa/plugins/*`. Each plugin package
+should expose the same small surface:
+
+- a `plugin()` declaration for `ProjectManifest` and `App`
+- capability helpers scoped to all windows or one window
+- registry helpers that add native command handlers
+- package-local validation and payload decoding
+
+`@lepusa/plugins/log` is the first package following this shape. It is pure and
+cross-platform, so it establishes the plugin boundary before platform FFI
+plugins such as dialog, opener, clipboard, and filesystem are added.
+
 ## CLI Boundary
 
 The CLI should be thin over public framework contracts. Early commands should
