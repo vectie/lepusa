@@ -74,6 +74,7 @@ test "native plan prints backend bootstrap json" {
   assert_true(result.output.contains("\"webviewEngine\":\"WKWebView\""))
   assert_true(result.output.contains("\"webviewSpecs\""))
   assert_true(result.output.contains("\"startupOperations\""))
+  assert_true(result.output.contains("\"lifecycleOperations\""))
   assert_true(result.output.contains("\"nativeHook\":\"__lepusaInvoke\""))
 }
 
@@ -222,6 +223,7 @@ async test "generated project config drives native runner bootstrap" {
   assert_true(result.output.contains("\"store.set\""))
   assert_true(result.output.contains("\"webviewSpecs\""))
   assert_true(result.output.contains("\"startupOperations\""))
+  assert_true(result.output.contains("\"lifecycleOperations\""))
 }
 
 ///|

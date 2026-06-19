@@ -110,12 +110,16 @@ test "native backend lowers host runner plan with portable operations" {
       assert_eq(plan.webview_specs().length(), 1)
       assert_eq(plan.webview_specs()[0].native_hook(), "__lepusaInvoke")
       assert_true(plan.startup_operations()[0] is NativeRunEffect("boot"))
+      assert_eq(plan.lifecycle_steps().length(), 1)
+      assert_true(plan.lifecycle_steps()[0].event() is AppWillExit)
       match plan.lifecycle_step(AppWillExit) {
         Ok(step) => {
           assert_true(step.event() is AppWillExit)
           assert_true(step.operations()[0] is NativeRunEffect("flush"))
           assert_true(step.to_json().contains("\"kind\":\"app-will-exit\""))
           assert_true(step.to_json().contains("\"name\":\"flush\""))
+          assert_true(step.to_json().contains("\"session\""))
+          assert_true(step.to_json().contains("\"bridgeSource\""))
         }
         Err(_) => abort("unexpected invalid native lifecycle step")
       }
@@ -124,6 +128,9 @@ test "native backend lowers host runner plan with portable operations" {
       assert_true(json.contains("\"webviewSpecs\""))
       assert_true(json.contains("\"nativeHook\":\"__lepusaInvoke\""))
       assert_true(json.contains("\"startupOperations\""))
+      assert_true(json.contains("\"lifecycleOperations\""))
+      assert_true(json.contains("\"kind\":\"app-will-exit\""))
+      assert_true(json.contains("\"session\""))
     }
     Err(_) => abort("unexpected invalid native runner plan")
   }
@@ -519,6 +526,17 @@ test "runtime host builds generic runner plan" {
       )
       assert_eq(plan.startup_operations().length(), 1)
       assert_true(plan.startup_operations()[0] is RuntimeRunEffect("boot"))
+      assert_eq(plan.lifecycle_steps().length(), 1)
+      assert_true(plan.lifecycle_steps()[0].event() is AppWillExit)
+      assert_true(
+        plan.lifecycle_steps()[0].operations()[0] is RuntimeRunEffect("flush"),
+      )
+      assert_true(
+        plan.lifecycle_steps()[0]
+        .session()
+        .to_json()
+        .contains("\"assetProtocol\":\"lepusa\""),
+      )
     }
     Err(_) => abort("unexpected invalid runner plan")
   }
@@ -543,6 +561,7 @@ test "runtime runner starts services before app startup actions" {
           assert_eq(operations.length(), 2)
           assert_true(operations[0] is RuntimeStartService(_))
           assert_true(operations[1] is RuntimeRunEffect("boot"))
+          assert_eq(runner.lifecycle_steps().length(), 0)
         }
         Err(_) => abort("unexpected invalid runner plan")
       }

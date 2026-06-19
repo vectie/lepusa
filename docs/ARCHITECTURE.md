@@ -265,7 +265,11 @@ manifest, so native runners can emit frontend events, navigate windows, and
 run named effects without understanding the authoring `Cmd` tree.
 
 The same startup queue is lowered to portable `NativeOperation` values in
-`NativeRunnerPlan`.
+`NativeRunnerPlan`. Non-startup lifecycle hooks are prelowered into
+`lifecycleOperations` in the native runner bootstrap JSON, so platform runners
+can service shutdown and window events from one backend-owned contract. Each
+lifecycle step carries the resulting `RuntimeSession` snapshot so navigations
+can update protocol mappings and virtual assets without re-reading manifests.
 
 `@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`, and
 `NativeRunnerPlan`, so platform packages only need to describe their native

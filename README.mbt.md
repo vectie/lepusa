@@ -283,7 +283,8 @@ types, declared command routes, and registered native routes.
 
 `lepusa native-plan [macos|windows|linux]` emits the selected backend's
 `NativeRunnerPlan::bootstrap_json()`, including the portable runtime manifest,
-per-window WebView specs, and startup operations that a platform runner needs.
+per-window WebView specs, startup operations, and prelowered lifecycle
+operations that a platform runner needs.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
@@ -291,9 +292,10 @@ command dispatch through the declared capabilities.
 `NativeRunnerPlan` keeps full per-window `RuntimeWebViewSpec` records alongside
 the portable launch manifest so backend implementations can create windows
 without re-deriving bridge hooks or initialization scripts.
-It also exposes lifecycle steps from the current `RuntimeSession`, giving native
-backends shutdown and window-event operations without retaining app construction
-state.
+It also exposes `lifecycleOperations` from the current `RuntimeSession`; each
+step carries the operations and resulting session snapshot so native backends
+can resolve assets after shutdown or window-event navigation without retaining
+app construction state.
 
 `RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
 native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita

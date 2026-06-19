@@ -194,6 +194,28 @@ pub fn RuntimeSession::bridge_source(self : RuntimeSession) -> String {
 }
 
 ///|
+pub fn RuntimeSession::to_json(self : RuntimeSession) -> String {
+  [
+    "{",
+    "\"backend\":\{self.backend().name().json_string()},",
+    "\"devtools\":\{self.devtools.json_bool()},",
+    "\"assetProtocol\":\{self.asset_protocol.json_string()},",
+    "\"bridgeUrl\":\{self.bridge_url().json_string()},",
+    "\"bridgeSource\":\{self.bridge_source.json_string()},",
+    "\"windows\":[\{self.windows.map(runtime_window_json).join(",")}],",
+    "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_mapping_json).join(",")}],",
+    "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_file_json).join(",")}],",
+    "\"localServices\":[\{self.local_services.map(fn(service) { service.to_json() }).join(",")}],",
+    "\"filesystemScopes\":[\{self.filesystem_scopes.map(fn(scope) { scope.to_json() }).join(",")}],",
+    "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
+    "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
+    "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn RuntimeWindow::label(self : RuntimeWindow) -> String {
   self.label
 }
@@ -258,4 +280,42 @@ pub fn RuntimeVirtualFile::path(self : RuntimeVirtualFile) -> String {
 ///|
 pub fn RuntimeVirtualFile::content(self : RuntimeVirtualFile) -> String {
   self.content
+}
+
+///|
+fn runtime_window_json(window : RuntimeWindow) -> String {
+  [
+    "{",
+    "\"label\":\{window.label().json_string()},",
+    "\"title\":\{window.title().json_string()},",
+    "\"url\":\{window.url().json_string()},",
+    "\"width\":\{window.width()},",
+    "\"height\":\{window.height()},",
+    "\"resizable\":\{window.resizable().json_bool()},",
+    "\"titleBar\":\{window.title_bar().native_manifest_name().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn runtime_protocol_mapping_json(mapping : RuntimeProtocolMapping) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{mapping.window_label().json_string()},",
+    "\"scheme\":\{mapping.scheme().json_string()},",
+    "\"root\":\{mapping.root().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn runtime_virtual_file_json(file : RuntimeVirtualFile) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{file.window_label().json_string()},",
+    "\"path\":\{file.path().json_string()},",
+    "\"mimeType\":\{mime_type_for_path(file.path()).json_string()},",
+    "\"content\":\{file.content().json_string()}",
+    "}",
+  ].join("")
 }

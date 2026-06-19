@@ -4,6 +4,14 @@ pub struct RuntimeRunnerPlan {
   session : RuntimeSession
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
+  lifecycle_steps : Array[RuntimeRunnerStep]
+} derive(Debug, Eq)
+
+///|
+pub struct RuntimeRunnerStep {
+  event : @lepusa.LifecycleEvent
+  session : RuntimeSession
+  operations : Array[RuntimeOperation]
 } derive(Debug, Eq)
 
 ///|
@@ -15,6 +23,7 @@ pub fn RuntimeHost::runner_plan(
   let mut session : RuntimeSession? = None
   let webviews : Array[RuntimeWebViewSpec] = []
   let startup_operations : Array[RuntimeOperation] = []
+  let lifecycle_steps : Array[RuntimeRunnerStep] = []
   match self.launch_manifest() {
     Ok(manifest) => launch_manifest = Some(manifest)
     Err(manifest_problems) =>
@@ -41,6 +50,16 @@ pub fn RuntimeHost::runner_plan(
       for operation in step.operations() {
         startup_operations.push(operation)
       }
+      match runtime_lifecycle_steps_from_session(step.session()) {
+        Ok(steps) =>
+          for step in steps {
+            lifecycle_steps.push(step)
+          }
+        Err(lifecycle_problems) =>
+          for problem in lifecycle_problems {
+            problems.push(problem)
+          }
+      }
     }
     Err(step_problems) =>
       for problem in step_problems {
@@ -50,11 +69,51 @@ pub fn RuntimeHost::runner_plan(
   match (launch_manifest, session) {
     (Some(launch_manifest), Some(session)) =>
       if problems.is_empty() {
-        Ok({ launch_manifest, session, webviews, startup_operations })
+        Ok({
+          launch_manifest,
+          session,
+          webviews,
+          startup_operations,
+          lifecycle_steps,
+        })
       } else {
         Err(problems)
       }
     _ => Err(problems)
+  }
+}
+
+///|
+fn runtime_lifecycle_steps_from_session(
+  session : RuntimeSession,
+) -> Result[Array[RuntimeRunnerStep], Array[String]] {
+  let steps : Array[RuntimeRunnerStep] = []
+  let seen : Array[@lepusa.LifecycleEvent] = []
+  let problems : Array[String] = []
+  for hook in session.lifecycle_hooks() {
+    let event = hook.event()
+    if !(event is AppStarted) && !seen.contains(event) {
+      seen.push(event)
+      match session.lifecycle_step(event) {
+        Ok(step) =>
+          if !step.operations().is_empty() {
+            steps.push({
+              event,
+              session: step.session(),
+              operations: step.operations(),
+            })
+          }
+        Err(step_problems) =>
+          for problem in step_problems {
+            problems.push(problem)
+          }
+      }
+    }
+  }
+  if problems.is_empty() {
+    Ok(steps)
+  } else {
+    Err(problems)
   }
 }
 
@@ -82,4 +141,30 @@ pub fn RuntimeRunnerPlan::startup_operations(
   self : RuntimeRunnerPlan,
 ) -> Array[RuntimeOperation] {
   self.startup_operations.copy()
+}
+
+///|
+pub fn RuntimeRunnerPlan::lifecycle_steps(
+  self : RuntimeRunnerPlan,
+) -> Array[RuntimeRunnerStep] {
+  self.lifecycle_steps.copy()
+}
+
+///|
+pub fn RuntimeRunnerStep::event(
+  self : RuntimeRunnerStep,
+) -> @lepusa.LifecycleEvent {
+  self.event
+}
+
+///|
+pub fn RuntimeRunnerStep::session(self : RuntimeRunnerStep) -> RuntimeSession {
+  self.session
+}
+
+///|
+pub fn RuntimeRunnerStep::operations(
+  self : RuntimeRunnerStep,
+) -> Array[RuntimeOperation] {
+  self.operations.copy()
 }

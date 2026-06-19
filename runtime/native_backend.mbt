@@ -27,6 +27,7 @@ pub struct NativeRunnerPlan {
   session : RuntimeSession
   webview_specs : Array[RuntimeWebViewSpec]
   startup_operations : Array[NativeOperation]
+  lifecycle_steps : Array[NativeRunnerStep]
 } derive(Debug, Eq)
 
 ///|
@@ -90,6 +91,9 @@ pub fn NativeBackend::runner_plan(
         startup_operations: native_operations_from_runtime(
           plan.startup_operations(),
         ),
+        lifecycle_steps: native_lifecycle_steps_from_runtime(
+          plan.lifecycle_steps(),
+        ),
       })
     Err(problems) => Err(problems)
   }
@@ -149,6 +153,21 @@ fn native_operations_from_runtime(
   let native : Array[NativeOperation] = []
   for operation in operations {
     native.push(NativeOperation::from_runtime(operation))
+  }
+  native
+}
+
+///|
+fn native_lifecycle_steps_from_runtime(
+  steps : Array[RuntimeRunnerStep],
+) -> Array[NativeRunnerStep] {
+  let native : Array[NativeRunnerStep] = []
+  for step in steps {
+    native.push({
+      event: step.event(),
+      session: step.session(),
+      operations: native_operations_from_runtime(step.operations()),
+    })
   }
   native
 }
@@ -216,6 +235,13 @@ pub fn NativeRunnerPlan::startup_operations(
 }
 
 ///|
+pub fn NativeRunnerPlan::lifecycle_steps(
+  self : NativeRunnerPlan,
+) -> Array[NativeRunnerStep] {
+  self.lifecycle_steps.copy()
+}
+
+///|
 pub fn NativeRunnerPlan::webview_specs(
   self : NativeRunnerPlan,
 ) -> Array[RuntimeWebViewSpec] {
@@ -234,14 +260,23 @@ pub fn NativeRunnerPlan::lifecycle_step(
   self : NativeRunnerPlan,
   event : @lepusa.LifecycleEvent,
 ) -> Result[NativeRunnerStep, Array[String]] {
-  match self.session.lifecycle_step(event) {
-    Ok(step) =>
-      Ok({
-        event,
-        session: step.session(),
-        operations: native_operations_from_runtime(step.operations()),
-      })
-    Err(problems) => Err(problems)
+  for step in self.lifecycle_steps {
+    if step.event() == event {
+      return Ok(step)
+    }
+  }
+  match event {
+    AppStarted =>
+      match self.session.lifecycle_step(event) {
+        Ok(step) =>
+          Ok({
+            event,
+            session: step.session(),
+            operations: native_operations_from_runtime(step.operations()),
+          })
+        Err(problems) => Err(problems)
+      }
+    _ => Ok({ event, session: self.session, operations: [] })
   }
 }
 
@@ -253,7 +288,8 @@ pub fn NativeRunnerPlan::bootstrap_json(self : NativeRunnerPlan) -> String {
     "\"webviewEngine\":\{self.webview_engine.json_string()},",
     "\"runtime\":\{self.launch_plan.runtime_manifest().to_json()},",
     "\"webviewSpecs\":[\{self.webview_specs.map(fn(spec) { spec.to_json() }).join(",")}],",
-    "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}]",
+    "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
+    "\"lifecycleOperations\":[\{self.lifecycle_steps.map(fn(step) { step.to_json() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -282,7 +318,8 @@ pub fn NativeRunnerStep::to_json(self : NativeRunnerStep) -> String {
   [
     "{",
     "\"event\":\{self.event.to_json()},",
-    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}]",
+    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}],",
+    "\"session\":\{self.session.to_json()}",
     "}",
   ].join("")
 }

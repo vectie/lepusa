@@ -35,7 +35,8 @@
 - Add a portable runtime launch manifest for WebViews, bridge hooks, protocol
   mappings, and command routes.
 - Lower `Cmd` startup trees into backend-executable runtime actions.
-- Add runtime lifecycle hooks for startup, shutdown, and window close events.
+- Add runtime lifecycle hooks for startup, shutdown, and window close events:
+  initial generic and native runner lowering exists
 - Add shared `@lepusa/runtime` native backend lowering over portable runtime
   operations.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
