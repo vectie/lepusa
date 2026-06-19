@@ -33,6 +33,8 @@ The first implementation slice already owns the public MoonBit foundation:
   bundler code will consume next
 - `@lepusa/project` parsing for standalone `lepusa.json` app manifests,
   including official plugin expansion and capability-scoped command routing
+- `@lepusa/bundle` native bundle materialization from `BundlePlan` without
+  coupling build tools to CLI internals
 - `@lepusa/runtime` host/session snapshots that native WebView backends can
   consume without reinterpreting app configuration
 
@@ -205,8 +207,9 @@ steps can consume one bundle contract.
 
 `BundlePlan::resources()` exposes planned bundle resource mappings such as the
 application icon. The generated bundle runtime file includes these mappings
-under `resources`, and `lepusa bundle-write` copies them as file data next to
-generated bundle files without re-reading project configuration.
+under `resources`, and `@lepusa/bundle.write_plan` copies them as file data
+next to generated bundle files without re-reading project configuration.
+`lepusa bundle-write` is a thin CLI wrapper over that package.
 
 `@lepusa/plugins/log` is the first official plugin package. It declares
 `log.write`, provides scoped capability helpers, and can register a command
@@ -400,8 +403,9 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 `lepusa/runtime.json`, with per-window bridge initialization scripts embedded
 in the runtime manifest.
 
-`lepusa bundle-write` materializes those planned files under an output
-directory. Project bundles carry registered official plugin routes into
+`@lepusa/bundle.write_plan` materializes those planned files under an output
+directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
+registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 The generated launcher stubs call `lepusa-runtime --manifest <runtime.json>`;

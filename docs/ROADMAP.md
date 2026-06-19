@@ -85,6 +85,8 @@
 - Extract `@lepusa/project` as the reusable parser for standalone
   `lepusa.json` manifests, keeping CLI file loading separate from project
   semantics.
+- Extract `@lepusa/bundle` as the reusable native bundle writer over
+  `BundlePlan`, keeping filesystem materialization separate from CLI commands.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing

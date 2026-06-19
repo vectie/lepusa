@@ -359,9 +359,10 @@ translates portable `RuntimeOperation` values into macOS runner operations.
 `lepusa/runtime.json` without touching the filesystem. The runtime manifest
 includes per-window WebView boot data and initialization scripts, so bundle
 writers do not emit a separate default bridge file that can drift from
-multi-window runtime state. The native CLI owns materialization through
-`lepusa bundle-write`, which writes the planned files into an output directory
-and applies executable permissions where the plan asks for them.
+multi-window runtime state. `@lepusa/bundle` owns native filesystem
+materialization through `write_plan`, which writes the planned files into an
+output directory and applies executable permissions where the plan asks for
+them. The native CLI delegates `lepusa bundle-write` to that package.
 `BundlePlan::runtime_manifest()` exposes the same typed native-runner manifest
 without forcing tooling to scan `BundlePlan::files()`. When created from a
 registry-aware project path, it also preserves the registered native routes that
