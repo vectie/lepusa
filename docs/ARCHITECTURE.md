@@ -338,6 +338,9 @@ commands.
 declared services, startup services, start order, validation, and a
 `requiresSupervisor` flag so dev tools and native runners can supervise
 localhost sidecars without parsing project manifests or generic operation JSON.
+`BundledRuntimeManifest::service_plan()` provides the same sidecar view for
+packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
+supervision contracts aligned.
 `NativeRuntime::new(backend, host)` is the backend-owned wrapper over that
 handoff. It is the narrow surface a real WKWebView/WebView2/WebKitGTK loop
 needs while creating windows, serving custom protocol requests, handling bridge

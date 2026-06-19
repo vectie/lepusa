@@ -45,3 +45,12 @@ fn String::json_string(self : String) -> String {
   .replace_all(old="\t", new="\\t") +
   "\""
 }
+
+///|
+fn Bool::json_bool(self : Bool) -> String {
+  if self {
+    "true"
+  } else {
+    "false"
+  }
+}

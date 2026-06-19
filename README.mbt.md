@@ -436,7 +436,8 @@ window, so bundles have a cheap validation probe. `lepusa-runtime bootstrap
 --manifest <runtime.json>` still emits packaged runtime bootstrap JSON for
 platform loops: manifest path, bundle root, app metadata, target, and the
 canonical runtime object that a backend consumes.
-`lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe.
+`lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe and
+reports the bundled service supervisor requirement plus sidecar start order.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
 manifest's runtime bridge, virtual files, local roots, and packaged roots using
 the same JSON envelope shape expected by native protocol handlers.

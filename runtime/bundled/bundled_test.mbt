@@ -12,7 +12,53 @@ test "bundled runtime manifest summarizes launch data" {
         summary.contains("first-window-url: lepusa://rabbita/main/index.html"),
       )
       assert_true(summary.contains("local-services: 1"))
+      assert_true(summary.contains("service-supervisor: true"))
+      assert_true(summary.contains("service-start-order: api"))
     }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "bundled runtime manifest exposes service plan" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) =>
+      match runtime.service_plan() {
+        Ok(plan) => {
+          assert_eq(plan.services().length(), 1)
+          assert_eq(plan.service_names()[0], "api")
+          assert_eq(plan.startup_services().length(), 1)
+          assert_eq(plan.startup_service_names()[0], "api")
+          assert_true(plan.requires_supervisor())
+          assert_true(plan.to_json().contains("\"requiresSupervisor\":true"))
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "bundled runtime service plan validates service shape" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "localServices": [
+    #|      { "name": "api", "command": ["moon", "run", "cmd/server"] }
+    #|    ]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(runtime) =>
+      match runtime.service_plan() {
+        Ok(_) => abort("unexpected valid service plan")
+        Err(problem) =>
+          assert_eq(problem, "local service readiness url is required")
+      }
     Err(problem) => abort(problem)
   }
 }
@@ -252,7 +298,11 @@ fn sample_bundled_manifest() -> String {
     #|      }
     #|    ],
     #|    "localServices": [
-    #|      { "name": "api", "command": ["moon", "run", "cmd/server"] }
+    #|      {
+    #|        "name": "api",
+    #|        "command": ["moon", "run", "cmd/server"],
+    #|        "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|      }
     #|    ],
     #|    "startupActions": [
     #|      { "kind": "effect", "name": "boot" }

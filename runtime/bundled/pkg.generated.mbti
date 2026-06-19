@@ -58,10 +58,24 @@ pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
+pub fn BundledRuntimeManifest::service_plan(Self) -> Result[BundledServicePlan, String]
 pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::webview_count(Self) -> Int
 pub fn BundledRuntimeManifest::webviews(Self) -> Result[Array[BundledWebView], String]
+
+pub struct BundledServicePlan {
+  services : Array[@lepusa.LocalService]
+  startup_services : Array[@lepusa.LocalService]
+} derive(Eq, @debug.Debug)
+pub fn BundledServicePlan::new(services~ : Array[@lepusa.LocalService]) -> Self
+pub fn BundledServicePlan::requires_supervisor(Self) -> Bool
+pub fn BundledServicePlan::service_names(Self) -> Array[String]
+pub fn BundledServicePlan::services(Self) -> Array[@lepusa.LocalService]
+pub fn BundledServicePlan::startup_service_names(Self) -> Array[String]
+pub fn BundledServicePlan::startup_services(Self) -> Array[@lepusa.LocalService]
+pub fn BundledServicePlan::to_json(Self) -> String
+pub fn BundledServicePlan::validate(Self) -> Array[String]
 
 pub struct BundledWebView {
   label : String

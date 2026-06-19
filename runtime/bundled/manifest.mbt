@@ -34,6 +34,15 @@ pub fn BundledRuntimeManifest::parse(
 pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String {
   let webviews = optional_array(self.runtime, "webviews").unwrap_or([])
   let local_services = optional_array(self.runtime, "localServices").unwrap_or([])
+  let mut service_requires_supervisor = false
+  let mut service_start_order = ""
+  match self.service_plan() {
+    Ok(plan) => {
+      service_requires_supervisor = plan.requires_supervisor()
+      service_start_order = plan.startup_service_names().join(",")
+    }
+    Err(_) => ()
+  }
   let startup_actions = optional_array(self.runtime, "startupActions").unwrap_or([],
   )
   let lifecycle_hooks = optional_array(self.runtime, "lifecycleHooks").unwrap_or([],
@@ -51,6 +60,8 @@ pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String 
   "webviews: \{webviews.length()}\n" +
   "first-window-url: \{first_webview_url(webviews)}\n" +
   "local-services: \{local_services.length()}\n" +
+  "service-supervisor: \{service_requires_supervisor}\n" +
+  "service-start-order: \{service_start_order}\n" +
   "startup-actions: \{startup_actions.length()}\n" +
   "lifecycle-hooks: \{lifecycle_hooks.length()}\n" +
   "command-routes: \{routes.length()}\n" +

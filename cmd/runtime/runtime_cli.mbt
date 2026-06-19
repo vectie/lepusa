@@ -104,6 +104,7 @@ fn render_runtime_run_text(
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
     Ok(manifest) => {
+      let services = runtime_service_summary(manifest)
       let result = if launch {
         @macos.launch_bundled(manifest)
       } else {
@@ -114,15 +115,24 @@ fn render_runtime_run_text(
           runtime_fail(
             render_runtime_run_problems("Lepusa runtime run", problems),
           )
-        Ok(result) => runtime_ok(render_runtime_run_result(result, launch~))
+        Ok(result) =>
+          runtime_ok(render_runtime_run_result(result, services, launch~))
       }
     }
   }
 }
 
 ///|
+struct RuntimeServiceSummary {
+  service_count : Int
+  requires_supervisor : Bool
+  start_order : String
+} derive(Debug, Eq)
+
+///|
 fn render_runtime_run_result(
   result : @macos.MacOSRunResult,
+  services : RuntimeServiceSummary,
   launch~ : Bool,
 ) -> String {
   let plan = result.plan()
@@ -149,12 +159,35 @@ fn render_runtime_run_result(
     "title: \{title}",
     "first-window-url: \{first_window_url}",
     "load-url: \{load_url}",
+    "local-services: \{services.service_count}",
+    "service-supervisor: \{services.requires_supervisor}",
+    "service-start-order: \{services.start_order}",
     "startup-operations: \{plan.execution().startup_operations().length()}",
     "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}",
     "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}",
     "bridge-async-routes: \{plan.bridge().async_command_routes().length()}",
     "",
   ].join("\n")
+}
+
+///|
+fn runtime_service_summary(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> RuntimeServiceSummary {
+  match manifest.service_plan() {
+    Ok(plan) =>
+      {
+        service_count: plan.services().length(),
+        requires_supervisor: plan.requires_supervisor(),
+        start_order: plan.startup_service_names().join(","),
+      }
+    Err(_) =>
+      {
+        service_count: manifest.local_service_jsons().length(),
+        requires_supervisor: false,
+        start_order: "",
+      }
+  }
 }
 
 ///|

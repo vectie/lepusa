@@ -9,7 +9,11 @@ test "runtime cli summarizes bundled manifest envelope" {
     #|    "backend": "headless",
     #|    "bridgeUrl": "lepusa://runtime/bridge.js",
     #|    "webviews": [{ "url": "lepusa://rabbita/main/index.html" }],
-    #|    "localServices": [{ "name": "api" }],
+    #|    "localServices": [{
+    #|      "name": "api",
+    #|      "command": ["moon", "run", "cmd/server"],
+    #|      "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|    }],
     #|    "startupActions": [{ "kind": "event" }],
     #|    "lifecycleHooks": [{ "event": "app-started" }],
     #|    "commandRoutes": ["log.write"],
@@ -29,6 +33,8 @@ test "runtime cli summarizes bundled manifest envelope" {
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
   assert_true(result.output.contains("local-services: 1"))
+  assert_true(result.output.contains("service-supervisor: true"))
+  assert_true(result.output.contains("service-start-order: api"))
   assert_true(result.output.contains("startup-actions: 1"))
   assert_true(result.output.contains("lifecycle-hooks: 1"))
   assert_true(result.output.contains("command-routes: 1"))
@@ -101,6 +107,11 @@ test "runtime cli dry-runs bundled macos launch" {
     #|        "content": "<main></main>"
     #|      }
     #|    ],
+    #|    "localServices": [{
+    #|      "name": "api",
+    #|      "command": ["moon", "run", "cmd/server"],
+    #|      "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|    }],
     #|    "registeredRoutes": []
     #|  }
     #|}
@@ -119,7 +130,10 @@ test "runtime cli dry-runs bundled macos launch" {
   assert_true(
     result.output.contains("load-url: lepusa://rabbita/main/index.html"),
   )
-  assert_true(result.output.contains("startup-operations: 0"))
+  assert_true(result.output.contains("local-services: 1"))
+  assert_true(result.output.contains("service-supervisor: true"))
+  assert_true(result.output.contains("service-start-order: api"))
+  assert_true(result.output.contains("startup-operations: 1"))
   assert_true(result.output.contains("lifecycle-steps: 0"))
   assert_true(result.output.contains("bridge-sync-routes: 0"))
   assert_true(result.output.contains("bridge-async-routes: 0"))

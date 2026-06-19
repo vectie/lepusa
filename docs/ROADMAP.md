@@ -46,7 +46,7 @@
 - Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
   protocol asset resolution, bridge dispatch, and lifecycle steps.
 - Add `@lepusa/runtime/bundled` for packaged `lepusa/runtime.json` parsing,
-  asset lookup, and lifecycle action selection.
+  asset lookup, lifecycle action selection, and bundled service plans.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.
