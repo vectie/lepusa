@@ -39,6 +39,8 @@
   initial generic and native runner lowering exists
 - Add shared `@lepusa/runtime` native backend lowering over portable runtime
   operations.
+- Add `@lepusa/runtime/bundled` for packaged `lepusa/runtime.json` parsing,
+  asset lookup, and lifecycle action selection.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.

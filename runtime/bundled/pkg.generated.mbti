@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/runtime/bundled"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct BundledLifecycleEvent {
+  kind : String
+  label : String
+} derive(Eq, @debug.Debug)
+pub fn BundledLifecycleEvent::app_started() -> Self
+pub fn BundledLifecycleEvent::app_will_exit() -> Self
+pub fn BundledLifecycleEvent::kind(Self) -> String
+pub fn BundledLifecycleEvent::label(Self) -> String
+pub fn BundledLifecycleEvent::window_close_requested(String) -> Result[Self, String]
+pub fn BundledLifecycleEvent::window_closed(String) -> Result[Self, String]
+
+pub struct BundledRuntimeManifest {
+  path : String
+  bundle_root : String
+  bundle : Map[String, Json]
+  runtime : Map[String, Json]
+} derive(@debug.Debug)
+pub fn BundledRuntimeManifest::bundle_root(Self) -> String
+pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String
+pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
+pub fn BundledRuntimeManifest::path(Self) -> String
+pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
+pub fn BundledRuntimeManifest::summary(Self) -> String
+
+type ParsedRuntimeAssetUrl derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

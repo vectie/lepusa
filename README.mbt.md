@@ -397,6 +397,9 @@ the same JSON envelope shape expected by native protocol handlers.
 `lepusa-runtime lifecycle <event> [window] --manifest <runtime.json>` reads the
 same bundled manifest and returns the local services and portable actions a
 native loop should process for that lifecycle event.
+`@lepusa/runtime/bundled` owns the reusable manifest parser behind those
+commands, so native platform loops can consume bundled runtime data without
+depending on CLI internals.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

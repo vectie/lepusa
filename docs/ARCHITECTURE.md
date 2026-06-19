@@ -335,6 +335,10 @@ be declared by the plan, present in the registry, and granted by the active
 window capabilities before a handler can run.
 `RuntimeLaunchManifest::resolve_asset(url)` is the facade-level custom protocol
 resolver for native runners that consume only the launch manifest.
+`@lepusa/runtime/bundled` is the runtime-executable companion for packaged
+apps: it parses `lepusa/runtime.json`, resolves bundled asset URLs, and selects
+local services plus lifecycle actions without re-entering project
+configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is

@@ -133,30 +133,34 @@ test "runtime cli renders lifecycle actions from bundled manifest" {
     #|    ]
     #|  }
     #|}
-  let startup = render_runtime_lifecycle_text(manifest, {
-    kind: "app-started",
-    label: "",
-  })
+  let startup = render_runtime_lifecycle_text(
+    manifest,
+    @bundled.BundledLifecycleEvent::app_started(),
+  )
   assert_eq(startup.exit_code, 0)
   assert_true(startup.output.contains("\"localServices\""))
   assert_true(startup.output.contains("\"name\":\"api\""))
   assert_true(startup.output.contains("\"name\":\"boot\""))
-  let shutdown = render_runtime_lifecycle_text(manifest, {
-    kind: "app-will-exit",
-    label: "",
-  })
+  let shutdown = render_runtime_lifecycle_text(
+    manifest,
+    @bundled.BundledLifecycleEvent::app_will_exit(),
+  )
   assert_true(shutdown.output.contains("\"name\":\"flush\""))
   assert_false(shutdown.output.contains("\"name\":\"api\""))
-  let close = render_runtime_lifecycle_text(manifest, {
-    kind: "window-close-requested",
-    label: "main",
-  })
-  assert_true(close.output.contains("\"label\":\"main\""))
-  assert_true(close.output.contains("\"name\":\"closing\""))
-  let missing = render_runtime_lifecycle_text(manifest, {
-    kind: "window-closed",
-    label: "main",
-  })
+  match @bundled.BundledLifecycleEvent::window_close_requested("main") {
+    Ok(event) => {
+      let close = render_runtime_lifecycle_text(manifest, event)
+      assert_true(close.output.contains("\"label\":\"main\""))
+      assert_true(close.output.contains("\"name\":\"closing\""))
+    }
+    Err(problem) => abort(problem)
+  }
+  let missing_event = match
+    @bundled.BundledLifecycleEvent::window_closed("main") {
+    Ok(event) => event
+    Err(problem) => abort(problem)
+  }
+  let missing = render_runtime_lifecycle_text(manifest, missing_event)
   assert_true(missing.output.contains("\"actions\":[]"))
 }
 
@@ -171,9 +175,12 @@ test "runtime cli validates lifecycle arguments" {
     is Err("lifecycle window is required"),
   )
   assert_true(
-    runtime_lifecycle_event_arg(["lifecycle", "app-will-exit"])
-    is Ok({ kind: "app-will-exit", label: "" }),
+    runtime_lifecycle_event_arg(["lifecycle", "app-will-exit"]) is Ok(_),
   )
+  match runtime_lifecycle_event_arg(["lifecycle", "app-will-exit"]) {
+    Ok(event) => assert_eq(event.kind(), "app-will-exit")
+    Err(problem) => abort(problem)
+  }
 }
 
 ///|
