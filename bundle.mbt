@@ -96,12 +96,76 @@ pub struct BundleFile {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum SigningPrerequisiteKind {
+  SigningIdentity
+  SigningTool
+  NotarizationTool
+  RuntimeDependency
+  PackageValidator
+} derive(Debug, Eq)
+
+///|
+pub struct SigningPrerequisite {
+  kind : SigningPrerequisiteKind
+  name : String
+  description : String
+} derive(Debug, Eq)
+
+///|
 pub fn BundleFile::new(
   path~ : String,
   content~ : String,
   executable? : Bool = false,
 ) -> BundleFile {
   { path, content, executable }
+}
+
+///|
+pub fn SigningPrerequisite::new(
+  kind~ : SigningPrerequisiteKind,
+  name~ : String,
+  description~ : String,
+) -> SigningPrerequisite {
+  { kind, name, description }
+}
+
+///|
+pub fn SigningPrerequisite::kind(
+  self : SigningPrerequisite,
+) -> SigningPrerequisiteKind {
+  self.kind
+}
+
+///|
+pub fn SigningPrerequisite::name(self : SigningPrerequisite) -> String {
+  self.name
+}
+
+///|
+pub fn SigningPrerequisite::description(self : SigningPrerequisite) -> String {
+  self.description
+}
+
+///|
+pub fn SigningPrerequisiteKind::name(self : SigningPrerequisiteKind) -> String {
+  match self {
+    SigningIdentity => "signing-identity"
+    SigningTool => "signing-tool"
+    NotarizationTool => "notarization-tool"
+    RuntimeDependency => "runtime-dependency"
+    PackageValidator => "package-validator"
+  }
+}
+
+///|
+pub fn SigningPrerequisite::to_json(self : SigningPrerequisite) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.name().json_string()},",
+    "\"name\":\{self.name.json_string()},",
+    "\"description\":\{self.description.json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -151,6 +215,63 @@ pub fn BundlePlan::identifier(self : BundlePlan) -> String {
 ///|
 pub fn BundlePlan::executable_name(self : BundlePlan) -> String {
   self.executable_name
+}
+
+///|
+pub fn BundlePlan::signing_prerequisites(
+  self : BundlePlan,
+) -> Array[SigningPrerequisite] {
+  match self.target {
+    MacOS =>
+      [
+        SigningPrerequisite::new(
+          kind=SigningIdentity,
+          name="Developer ID Application certificate",
+          description="Required to sign distributable macOS apps outside the Mac App Store",
+        ),
+        SigningPrerequisite::new(
+          kind=SigningTool,
+          name="codesign",
+          description="Required to apply the app signature and hardened runtime options",
+        ),
+        SigningPrerequisite::new(
+          kind=NotarizationTool,
+          name="notarytool",
+          description="Required to submit signed macOS apps for Apple notarization",
+        ),
+      ]
+    Windows =>
+      [
+        SigningPrerequisite::new(
+          kind=SigningIdentity,
+          name="code signing certificate",
+          description="Required to sign Windows executables and installers",
+        ),
+        SigningPrerequisite::new(
+          kind=SigningTool,
+          name="signtool",
+          description="Required to apply Authenticode signatures",
+        ),
+        SigningPrerequisite::new(
+          kind=RuntimeDependency,
+          name="WebView2 Runtime",
+          description="Required on target machines unless bundled by the installer",
+        ),
+      ]
+    Linux =>
+      [
+        SigningPrerequisite::new(
+          kind=SigningIdentity,
+          name="package signing key",
+          description="Required for signed deb, rpm, or repository distribution",
+        ),
+        SigningPrerequisite::new(
+          kind=PackageValidator,
+          name="desktop-file-validate",
+          description="Required to validate Linux desktop integration metadata",
+        ),
+      ]
+  }
 }
 
 ///|
@@ -246,6 +367,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"productName\":\{self.metadata.product_name().json_string()},",
           "\"version\":\{self.metadata.version().json_string()},",
           "\"target\":\{self.target.name().json_string()},",
+          "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
           "\"runtime\":\{runtime_manifest}",
           "}",
         ].join(""),

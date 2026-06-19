@@ -71,6 +71,7 @@ test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
+  assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 2"))
 }
 
@@ -177,6 +178,7 @@ async test "generated project config drives manifest and bundle write" {
   assert_eq(build.exit_code, 0)
   assert_true(build.output.contains("target: linux"))
   assert_true(build.output.contains("local-services: 0"))
+  assert_true(build.output.contains("signing-prerequisites: 2"))
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
@@ -184,6 +186,7 @@ async test "generated project config drives manifest and bundle write" {
   assert_true(runtime_json.contains("\"registeredRoutes\""))
   assert_true(runtime_json.contains("\"log.write\""))
   assert_true(runtime_json.contains("\"store.set\""))
+  assert_true(runtime_json.contains("\"signingPrerequisites\""))
 }
 
 ///|
@@ -551,6 +554,7 @@ async test "bundle write materializes planned files" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
+  assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 2"))
   let bundle_root = root + "/lepusa-example"
   let desktop_path = bundle_root + "/lepusa-example.desktop"
@@ -562,6 +566,7 @@ async test "bundle write materializes planned files" {
   )
   let runtime_manifest = @fs.read_file(runtime_path).text()
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))
+  assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
 }

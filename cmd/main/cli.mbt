@@ -525,6 +525,7 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
         "bundle: \{plan.bundle_name()}\n" +
         "local-services: \{local_service_count}\n" +
         "filesystem-scopes: \{filesystem_scope_count}\n" +
+        "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
         "files: \{files.length()}\n",
       )
     }
@@ -556,6 +557,7 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 "root: \{result.root}\n" +
                 "local-services: \{local_service_count}\n" +
                 "filesystem-scopes: \{filesystem_scope_count}\n" +
+                "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
                 "files: \{result.files.length()}\n",
               )
             }

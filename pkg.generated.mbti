@@ -109,6 +109,7 @@ pub fn BundlePlan::identifier(Self) -> String
 pub fn BundlePlan::registered_routes(Self) -> Array[String]
 pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
+pub fn BundlePlan::signing_prerequisites(Self) -> Array[SigningPrerequisite]
 pub fn BundlePlan::target(Self) -> BundleTarget
 
 pub(all) enum BundleTarget {
@@ -586,6 +587,26 @@ pub fn RuntimeWebViewBoot::title(Self) -> String
 pub fn RuntimeWebViewBoot::title_bar(Self) -> TitleBarStyle
 pub fn RuntimeWebViewBoot::url(Self) -> String
 pub fn RuntimeWebViewBoot::width(Self) -> Int
+
+pub struct SigningPrerequisite {
+  kind : SigningPrerequisiteKind
+  name : String
+  description : String
+} derive(Eq, @debug.Debug)
+pub fn SigningPrerequisite::description(Self) -> String
+pub fn SigningPrerequisite::kind(Self) -> SigningPrerequisiteKind
+pub fn SigningPrerequisite::name(Self) -> String
+pub fn SigningPrerequisite::new(kind~ : SigningPrerequisiteKind, name~ : String, description~ : String) -> Self
+pub fn SigningPrerequisite::to_json(Self) -> String
+
+pub(all) enum SigningPrerequisiteKind {
+  SigningIdentity
+  SigningTool
+  NotarizationTool
+  RuntimeDependency
+  PackageValidator
+} derive(Eq, @debug.Debug)
+pub fn SigningPrerequisiteKind::name(Self) -> String
 
 pub(all) enum Source {
   InlineHtml(String)

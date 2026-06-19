@@ -395,6 +395,11 @@ metadata plus shared runtime assets:
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.
 
+`BundlePlan::signing_prerequisites()` is the signing boundary for that next
+step. It lists target-specific identities, tools, notarization tools, runtime
+dependencies, and validators, and the generated bundle runtime file includes
+the same list under `signingPrerequisites`.
+
 ## Official Plugins
 
 Official plugins live under `vectie/lepusa/plugins/*`. Each plugin package

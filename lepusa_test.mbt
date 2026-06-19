@@ -677,6 +677,10 @@ test "bundle plans derive executable and package names from metadata" {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
+          let signing = plan.signing_prerequisites()
+          assert_eq(signing.length(), 3)
+          assert_true(signing[0].kind() is SigningIdentity)
+          assert_eq(signing[1].name(), "codesign")
           match plan.runtime_manifest() {
             Ok(manifest) => {
               assert_eq(manifest.webviews().length(), 1)
@@ -710,6 +714,14 @@ test "bundle plans derive executable and package names from metadata" {
               assert_true(files[2].content().contains("\"webviews\""))
               assert_true(files[2].content().contains("windowLabel"))
               assert_true(files[2].content().contains("__lepusaInvoke"))
+              assert_true(
+                files[2].content().contains("\"signingPrerequisites\""),
+              )
+              assert_true(
+                files[2]
+                .content()
+                .contains("Developer ID Application certificate"),
+              )
             }
             Err(_) => abort("unexpected invalid bundle files")
           }
@@ -738,9 +750,13 @@ test "bundle files include platform metadata" {
         Ok(plan) =>
           match plan.files() {
             Ok(files) => {
+              assert_eq(plan.signing_prerequisites().length(), 2)
               assert_eq(files[0].path(), "files-app/files-app.desktop")
               assert_true(files[0].content().contains("Name=Files App"))
               assert_true(files[1].content().contains("\"target\":\"linux\""))
+              assert_true(
+                files[1].content().contains("\"name\":\"package signing key\""),
+              )
             }
             Err(_) => abort("unexpected invalid linux bundle files")
           }
