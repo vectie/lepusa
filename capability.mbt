@@ -2,6 +2,7 @@
 pub(all) enum Permission {
   FileSystemRead
   FileSystemWrite
+  FileDialog
   Network
   Shell
   Opener
@@ -24,6 +25,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
   match name {
     "filesystem.read" => Ok(FileSystemRead)
     "filesystem.write" => Ok(FileSystemWrite)
+    "file-dialog" => Ok(FileDialog)
     "network" => Ok(Network)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
@@ -52,6 +54,7 @@ pub fn Permission::name(self : Permission) -> String {
   match self {
     FileSystemRead => "filesystem.read"
     FileSystemWrite => "filesystem.write"
+    FileDialog => "file-dialog"
     Network => "network"
     Shell => "shell"
     Opener => "opener"

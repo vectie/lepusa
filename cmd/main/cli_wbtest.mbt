@@ -454,6 +454,7 @@ test "project config expands official plugin declarations" {
     #|  "plugins": [
     #|    { "name": "clipboard" },
     #|    { "name": "dialog" },
+    #|    { "name": "fileDialog" },
     #|    { "name": "log" },
     #|    { "name": "notification" },
     #|    { "name": "opener" },
@@ -467,7 +468,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["clipboard", "dialog", "filesystem.read", "notification", "opener", "process.info", "shell"]
+    #|      "permissions": ["clipboard", "dialog", "file-dialog", "filesystem.read", "notification", "opener", "process.info", "shell"]
     #|    }
     #|  ]
     #|}
@@ -479,6 +480,7 @@ test "project config expands official plugin declarations" {
           let routes = plan.command_routes()
           assert_true(routes.contains("clipboard.readText"))
           assert_true(routes.contains("dialog.message"))
+          assert_true(routes.contains("fileDialog.openFile"))
           assert_true(routes.contains("log.write"))
           assert_true(routes.contains("notification.show"))
           assert_true(routes.contains("opener.openUrl"))
@@ -496,6 +498,7 @@ test "project config expands official plugin declarations" {
           let window_routes = plan.window_command_routes("main")
           assert_true(window_routes.contains("clipboard.writeText"))
           assert_true(window_routes.contains("dialog.confirm"))
+          assert_true(window_routes.contains("fileDialog.saveFile"))
           assert_true(window_routes.contains("log.write"))
           assert_true(window_routes.contains("notification.requestPermission"))
           assert_true(window_routes.contains("opener.revealPath"))

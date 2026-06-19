@@ -144,10 +144,10 @@ requirements, capability grants, bundle icon resources, and bundle signing
 prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
 current directory, or a file passed with `--project`.
 Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
-`{ "name": "dialog" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
-`{ "name": "opener" }`, `{ "name": "process" }`, `{ "name": "shell" }`,
-`{ "name": "store" }`, or `{ "name": "fs" }`; Lepusa expands those
-declarations to the package's
+`{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
+`{ "name": "notification" }`, `{ "name": "log" }`, `{ "name": "opener" }`,
+`{ "name": "process" }`, `{ "name": "shell" }`, `{ "name": "store" }`, or
+`{ "name": "fs" }`; Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
 Projects can also declare `filesystemScopes`, named roots that are carried into
@@ -200,6 +200,11 @@ helpers. The package validates named scopes and relative paths; native backends
 own the actual OS filesystem implementation behind those routes.
 Core `FileSystemScope` values carry named roots through `ProjectManifest`,
 `RuntimePlan`, `RuntimeSession`, and `RuntimeLaunchManifest`.
+
+`@lepusa/plugins/file_dialog` defines file picker routes such as
+`fileDialog.openFile` and `fileDialog.saveFile`, plus scoped default-directory
+policy that points dialogs at declared filesystem scopes without widening core
+filesystem access.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

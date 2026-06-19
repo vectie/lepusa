@@ -337,6 +337,7 @@ type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
 pub(all) enum Permission {
   FileSystemRead
   FileSystemWrite
+  FileDialog
   Network
   Shell
   Opener

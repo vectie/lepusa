@@ -157,8 +157,8 @@ Command rules:
 - `Permission::command(route)` is the default permission for custom command
   routes.
 - Built-in permission names for project manifests are `filesystem.read`,
-  `filesystem.write`, `network`, `shell`, `dialog`, `opener`, `clipboard`,
-  `notification`, `process.info`, `process.environment`, and
+  `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
+  `clipboard`, `notification`, `process.info`, `process.environment`, and
   `process.control`; custom names use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to
@@ -421,8 +421,9 @@ should expose the same small surface:
 `@lepusa/plugins/log` and `@lepusa/plugins/store` are pure cross-platform
 packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, and scoped
-relative path policy. `@lepusa/plugins/dialog` declares message, confirm, and
-prompt routes. `@lepusa/plugins/clipboard` and
+relative path policy. `@lepusa/plugins/file_dialog` declares file picker routes
+and scoped default-directory policy. `@lepusa/plugins/dialog` declares message,
+confirm, and prompt routes. `@lepusa/plugins/clipboard` and
 `@lepusa/plugins/notification` declare clipboard and notification routes.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
 `@lepusa/plugins/process` declares process metadata, environment, and control

@@ -155,6 +155,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid named permission")
   }
+  match @lepusa.Permission::named("file-dialog") {
+    Ok(permission) => {
+      assert_true(permission is FileDialog)
+      assert_eq(permission.name(), "file-dialog")
+    }
+    Err(_) => abort("unexpected invalid file dialog permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")
