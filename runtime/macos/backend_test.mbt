@@ -33,6 +33,15 @@ test "macos backend lowers runtime host to launch plan" {
                   "__lepusaInvoke",
                 ),
               )
+              assert_eq(
+                plan.runtime_manifest().bridge_url(),
+                "lepusa://runtime/bridge.js",
+              )
+              let json = plan.manifest_json()
+              assert_true(json.contains("\"nativeBackend\":\"macos\""))
+              assert_true(json.contains("\"webviewEngine\":\"WKWebView\""))
+              assert_true(json.contains("\"runtime\""))
+              assert_true(json.contains("\"label\":\"main\""))
             }
             Err(_) => abort("unexpected invalid macOS launch plan")
           }

@@ -30,6 +30,8 @@
 - Add the native hook JSON codec from generated bridge requests to capability
   checked `CommandRegistry` dispatch.
 - Add per-window WebView boot specs for platform backends.
+- Add a portable runtime launch manifest for WebViews, bridge hooks, protocol
+  mappings, and command routes.
 - Add `@lepusa/runtime/macos` native backend package with WebKit availability
   validation and macOS launch-plan lowering.
 - Implement or port WebView window creation for macOS, Windows, and Linux.

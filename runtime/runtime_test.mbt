@@ -105,6 +105,33 @@ test "runtime host produces per-window webview boot specs" {
 }
 
 ///|
+test "runtime host serializes native launch manifest" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok(payload)
+  })
+  let host = RuntimeHost::new(test_plan(), registry~)
+  match host.launch_manifest() {
+    Ok(manifest) => {
+      assert_eq(manifest.backend(), "headless")
+      assert_eq(manifest.asset_protocol(), "lepusa")
+      assert_eq(manifest.bridge_url(), "lepusa://runtime/bridge.js")
+      assert_eq(manifest.webviews().length(), 1)
+      assert_eq(manifest.protocol_mappings().length(), 1)
+      assert_eq(manifest.command_routes()[0], "core.invoke")
+      assert_eq(manifest.registered_routes()[0], "core.invoke")
+      let json = manifest.to_json()
+      assert_true(json.contains("\"bridgeUrl\":\"lepusa://runtime/bridge.js\""))
+      assert_true(json.contains("\"titleBar\":\"native\""))
+      assert_true(json.contains("\"nativeHook\":\"__lepusaInvoke\""))
+      assert_true(json.contains("\"registeredRoutes\":[\"core.invoke\"]"))
+    }
+    Err(_) => abort("unexpected invalid runtime launch manifest")
+  }
+}
+
+///|
 test "runtime session resolves virtual runtime and window assets" {
   let host = RuntimeHost::new(test_plan())
   match host.snapshot() {

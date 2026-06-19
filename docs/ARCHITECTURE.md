@@ -223,11 +223,18 @@ name, and document-start initialization scripts. The platform layer should
 translate these specs to WKWebView, WebView2, or WebKitGTK calls without
 re-reading `App`, `WindowConfig`, or manifest state.
 
+`RuntimeHost::launch_manifest()` is the portable native-runner contract. It
+combines the `RuntimeSession` snapshot with per-window WebView boot specs and
+serializes backend, asset protocol, bridge URL, protocol mappings, command
+routes, registered native routes, and document-start scripts into stable JSON.
+Platform packages should consume this manifest instead of inventing their own
+runtime files.
+
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
-available and a MoonBit launch-plan layer that lowers generic runtime state to
-macOS `WKWebView` boot data. Objective-C window creation should live under this
-package, not in the portable facade or CLI.
+available and a MoonBit launch-plan layer that wraps the portable runtime
+launch manifest in a macOS envelope. Objective-C window creation should live
+under this package, not in the portable facade or CLI.
 
 ## Bundling
 

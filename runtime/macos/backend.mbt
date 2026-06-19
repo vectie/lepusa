@@ -37,12 +37,12 @@ pub fn MacOSBackend::plan(
   self : MacOSBackend,
   host : @runtime.RuntimeHost,
 ) -> Result[MacOSLaunchPlan, Array[String]] {
-  match host.webviews() {
-    Ok(webviews) =>
+  match host.launch_manifest() {
+    Ok(manifest) =>
       Ok({
         backend_name: self.name,
         webview_engine: self.webview_engine,
-        webviews,
+        manifest,
       })
     Err(problems) => Err(problems)
   }
@@ -52,7 +52,7 @@ pub fn MacOSBackend::plan(
 pub struct MacOSLaunchPlan {
   backend_name : String
   webview_engine : String
-  webviews : Array[@runtime.RuntimeWebViewSpec]
+  manifest : @runtime.RuntimeLaunchManifest
 } derive(Debug, Eq)
 
 ///|
@@ -69,5 +69,35 @@ pub fn MacOSLaunchPlan::webview_engine(self : MacOSLaunchPlan) -> String {
 pub fn MacOSLaunchPlan::webviews(
   self : MacOSLaunchPlan,
 ) -> Array[@runtime.RuntimeWebViewSpec] {
-  self.webviews.copy()
+  self.manifest.webviews()
+}
+
+///|
+pub fn MacOSLaunchPlan::runtime_manifest(
+  self : MacOSLaunchPlan,
+) -> @runtime.RuntimeLaunchManifest {
+  self.manifest
+}
+
+///|
+pub fn MacOSLaunchPlan::manifest_json(self : MacOSLaunchPlan) -> String {
+  [
+    "{",
+    "\"nativeBackend\":\{self.backend_name.json_string()},",
+    "\"webviewEngine\":\{self.webview_engine.json_string()},",
+    "\"runtime\":\{self.manifest.to_json()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn String::json_string(self : String) -> String {
+  "\"" +
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="\n", new="\\n")
+  .replace_all(old="\r", new="\\r")
+  .replace_all(old="\t", new="\\t") +
+  "\""
 }
