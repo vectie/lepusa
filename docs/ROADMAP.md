@@ -46,6 +46,7 @@
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa bundle-plan`: prints a target bundle plan.
+  - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`
   - `lepusa dev`
   - `lepusa build`

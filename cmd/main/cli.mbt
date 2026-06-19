@@ -22,7 +22,17 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("plan") => render_plan()
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
+    Some("bundle-write") =>
+      fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
+  }
+}
+
+///|
+async fn render_cli_async(args : Array[String]) -> CliResult {
+  match args.get(0) {
+    Some("bundle-write") => render_bundle_write(args)
+    _ => render_cli(args)
   }
 }
 
@@ -46,6 +56,7 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa bridge
     #|  lepusa bundle-plan [macos|windows|linux]
+    #|  lepusa bundle-write [macos|windows|linux] [out-dir]
     #|
   )
 }
@@ -101,34 +112,76 @@ fn render_bridge() -> CliResult {
 
 ///|
 fn render_bundle_plan(args : Array[String]) -> CliResult {
-  let target = match args.get(1) {
+  match parse_bundle_target(args.get(1)) {
+    Ok(target) =>
+      match sample_runtime_plan() {
+        Ok(_) =>
+          match sample_manifest().bundle_plan(sample_root(), target~) {
+            Ok(plan) =>
+              match plan.files() {
+                Ok(files) =>
+                  ok(
+                    "Lepusa bundle plan\n" +
+                    "target: \{plan.target().name()}\n" +
+                    "identifier: \{plan.identifier()}\n" +
+                    "executable: \{plan.executable_name()}\n" +
+                    "bundle: \{plan.bundle_name()}\n" +
+                    "files: \{files.length()}\n",
+                  )
+                Err(problems) =>
+                  fail(render_problems("Lepusa bundle files", problems))
+              }
+            Err(problems) =>
+              fail(render_problems("Lepusa bundle plan", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+async fn render_bundle_write(args : Array[String]) -> CliResult {
+  match parse_bundle_target(args.get(1)) {
+    Ok(target) => {
+      let out_dir = args.get(2).unwrap_or("_build/lepusa-bundle")
+      match sample_runtime_plan() {
+        Ok(_) =>
+          match sample_manifest().bundle_plan(sample_root(), target~) {
+            Ok(plan) =>
+              match write_bundle_plan(plan, out_dir) {
+                Ok(result) =>
+                  ok(
+                    "Lepusa bundle write\n" +
+                    "target: \{plan.target().name()}\n" +
+                    "root: \{result.root}\n" +
+                    "files: \{result.files.length()}\n",
+                  )
+                Err(problems) =>
+                  fail(render_problems("Lepusa bundle write", problems))
+              }
+            Err(problems) =>
+              fail(render_problems("Lepusa bundle write", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa bundle write", problems))
+      }
+    }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn parse_bundle_target(
+  target : String?,
+) -> Result[@lepusa.BundleTarget, String] {
+  let target = match target {
     None => @lepusa.MacOS
     Some("macos") => MacOS
     Some("windows") => Windows
     Some("linux") => Linux
-    Some(value) => return fail("unknown bundle target: \{value}\n")
+    Some(value) => return Err("unknown bundle target: \{value}")
   }
-  match sample_runtime_plan() {
-    Ok(_) =>
-      match sample_manifest().bundle_plan(sample_root(), target~) {
-        Ok(plan) =>
-          match plan.files() {
-            Ok(files) =>
-              ok(
-                "Lepusa bundle plan\n" +
-                "target: \{plan.target().name()}\n" +
-                "identifier: \{plan.identifier()}\n" +
-                "executable: \{plan.executable_name()}\n" +
-                "bundle: \{plan.bundle_name()}\n" +
-                "files: \{files.length()}\n",
-              )
-            Err(problems) =>
-              fail(render_problems("Lepusa bundle files", problems))
-          }
-        Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
-      }
-    Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
-  }
+  Ok(target)
 }
 
 ///|

@@ -199,6 +199,18 @@ local service.
 Native WebView backends should consume `ResolvedWindow::url()` and install the
 listed `ProtocolMapping` values instead of re-resolving app configuration.
 
+## Bundling
+
+`BundlePlan` is a pure framework contract: it computes platform metadata,
+`lepusa/runtime.json`, and the generated frontend bridge without touching the
+filesystem. The native CLI owns materialization through `lepusa bundle-write`,
+which writes the planned files into an output directory and applies executable
+permissions where the plan asks for them.
+
+This split keeps application configuration, runtime planning, and installer
+work separate. Future macOS, Windows, and Linux packaging code should consume
+`BundlePlan::files()` rather than duplicating bundle layout decisions.
+
 ## Local Services
 
 Some apps are gateway-first instead of static-asset-first. Lepusa should

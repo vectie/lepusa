@@ -6,6 +6,7 @@
 //
 // Or manually declare it in `import`, for example:
 import {
+  "moonbitlang/async@0.19.4",
   "moonbitlang/x@0.4.45",
 }
 

@@ -101,6 +101,7 @@ moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- bundle-plan macos
+moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle
 ```
 
 These commands exercise the public planning contracts and give the native
@@ -116,6 +117,10 @@ runtime and bundler work concrete outputs to consume.
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
 `BundlePlan::files()`: platform metadata plus `lepusa/runtime.json` and
 `lepusa/bridge.js`.
+
+`lepusa bundle-write` materializes those planned files under an output
+directory. This keeps the reusable framework boundary pure while giving native
+runtime and installer work real platform bundle artifacts to consume.
 
 ## Boundary
 
