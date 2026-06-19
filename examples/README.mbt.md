@@ -9,6 +9,5 @@ These examples exercise the three foundation app shapes Lepusa should support:
 ```bash
 moon run cmd/main --target native -- dev --project examples/rabbita/lepusa.json
 moon run cmd/main --target native -- bundle-write linux _build/examples/static --project examples/static/lepusa.json
-moon run cmd/main --target native -- doctor linux --project examples/gateway/lepusa.json
+moon run cmd/main --target native -- bundle-write linux _build/examples/gateway --project examples/gateway/lepusa.json
 ```
-

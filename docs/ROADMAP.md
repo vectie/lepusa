@@ -166,6 +166,6 @@ desktop core is reliable.
   - Localhost gateway app with sidecar/service readiness exists under
     `examples/gateway`.
 - Verify each example can run in dev mode and bundle mode: CLI smoke tests
-  cover dev mode for all three examples and bundle mode for the static example.
+  cover dev and bundle mode for all three examples.
 - Document how third-party MoonBit projects create, bundle, sign, and publish
   desktop apps.

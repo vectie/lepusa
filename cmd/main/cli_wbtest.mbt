@@ -432,22 +432,58 @@ async test "checked examples cover rabbita static and gateway modes" {
 }
 
 ///|
-async test "static example bundles with config-relative packaged assets" {
-  let out = "/tmp/lepusa-example-static-bundle-\{@async.now().to_int()}"
-  let result = render_cli_async([
-    "bundle-write", "linux", out, "--project", "examples/static/lepusa.json",
+async test "foundation examples write bundles with runtime contracts" {
+  let stamp = @async.now().to_int()
+  let rabbita_out = "/tmp/lepusa-example-rabbita-bundle-\{stamp}"
+  let rabbita = render_cli_async([
+    "bundle-write", "linux", rabbita_out, "--project", "examples/rabbita/lepusa.json",
   ])
-  assert_eq(result.exit_code, 0)
-  assert_true(result.output.contains("resources: 1"))
-  assert_true(result.output.contains("resources-written: 1"))
-  let bundle_root = out + "/lepusa-static-example"
-  assert_true(@fs.exists(bundle_root + "/lepusa/assets/main/index.html"))
-  assert_true(@fs.exists(bundle_root + "/lepusa/assets/main/app.css"))
-  let runtime_json = @fs.read_file(bundle_root + "/lepusa/runtime.json").text()
+  assert_eq(rabbita.exit_code, 0)
+  assert_true(rabbita.output.contains("resources: 0"))
+  assert_true(rabbita.output.contains("resources-written: 0"))
+  let rabbita_json = @fs.read_file(
+    rabbita_out + "/lepusa-rabbita-example/lepusa/runtime.json",
+  ).text()
+  assert_true(rabbita_json.contains("\"target\":\"linux\""))
+  assert_true(rabbita_json.contains("\"root\":\"memory:main\""))
+  assert_true(rabbita_json.contains("Lepusa Rabbita Example"))
+  assert_true(rabbita_json.contains("\"counter.increment\""))
+  assert_true(rabbita_json.contains("\"log.write\""))
+  let static_out = "/tmp/lepusa-example-static-bundle-\{stamp}"
+  let static_bundle = render_cli_async([
+    "bundle-write", "linux", static_out, "--project", "examples/static/lepusa.json",
+  ])
+  assert_eq(static_bundle.exit_code, 0)
+  assert_true(static_bundle.output.contains("resources: 1"))
+  assert_true(static_bundle.output.contains("resources-written: 1"))
+  let static_root = static_out + "/lepusa-static-example"
+  assert_true(@fs.exists(static_root + "/lepusa/assets/main/index.html"))
+  assert_true(@fs.exists(static_root + "/lepusa/assets/main/app.css"))
+  let runtime_json = @fs.read_file(static_root + "/lepusa/runtime.json").text()
   assert_true(runtime_json.contains("\"package:lepusa/assets/main\""))
   assert_false(
     runtime_json.contains("\"root\":\"package:examples/static/dist\""),
   )
+  let gateway_out = "/tmp/lepusa-example-gateway-bundle-\{stamp}"
+  let gateway = render_cli_async([
+    "bundle-write", "linux", gateway_out, "--project", "examples/gateway/lepusa.json",
+  ])
+  assert_eq(gateway.exit_code, 0)
+  assert_true(gateway.output.contains("local-services: 1"))
+  assert_true(gateway.output.contains("resources: 0"))
+  assert_true(gateway.output.contains("resources-written: 0"))
+  let gateway_json = @fs.read_file(
+    gateway_out + "/lepusa-gateway-example/lepusa/runtime.json",
+  ).text()
+  assert_true(gateway_json.contains("\"url\":\"http://127.0.0.1:4317/\""))
+  assert_true(
+    gateway_json.contains("\"readinessUrl\":\"http://127.0.0.1:4317/health\""),
+  )
+  assert_true(
+    gateway_json.contains("\"command\":[\"moon\",\"run\",\"cmd/server\"]"),
+  )
+  assert_true(gateway_json.contains("\"localhost.waitUntilReady\""))
+  assert_true(gateway_json.contains("\"serviceDiscovery.resolve\""))
 }
 
 ///|
