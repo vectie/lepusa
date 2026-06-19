@@ -54,6 +54,7 @@
 - Implement:
   - `lepusa doctor`: validates public planning boundaries.
   - `lepusa plan`: prints a runtime plan summary.
+  - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.

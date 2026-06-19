@@ -289,9 +289,9 @@ signing configuration. They should not need to maintain native launcher code.
 `BundlePlan::files()` is the first artifact boundary. It generates platform
 metadata plus shared runtime assets:
 
-- macOS: `Contents/Info.plist`, launcher stub, runtime manifest, bridge
-- Windows: app manifest, runtime manifest, bridge
-- Linux: `.desktop` entry, runtime manifest, bridge
+- macOS: `Contents/Info.plist`, launcher stub, runtime manifest
+- Windows: app manifest, runtime manifest
+- Linux: `.desktop` entry, runtime manifest
 
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.
@@ -307,6 +307,9 @@ lepusa doctor
 
 lepusa plan
   -> prints runtime backend, windows, plugins, capabilities, command routes
+
+lepusa manifest
+  -> prints the portable native-runner JSON manifest
 
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count

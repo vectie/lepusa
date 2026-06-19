@@ -101,6 +101,7 @@ The native CLI is intentionally small while the runtime backend is being built:
 ```bash
 moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
+moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle
@@ -111,6 +112,10 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+`lepusa manifest` emits the portable native-runner JSON from
+`RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
+document-start scripts, protocol mappings, and command routes.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
@@ -137,8 +142,8 @@ plan backed by `WKWebView` boot specs.
 `lepusa.core.invoke(payload)`.
 
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
-`BundlePlan::files()`: platform metadata plus `lepusa/runtime.json` and
-`lepusa/bridge.js`.
+`BundlePlan::files()`: platform metadata plus `lepusa/runtime.json`, with
+per-window bridge initialization scripts embedded in the runtime manifest.
 
 `lepusa bundle-write` materializes those planned files under an output
 directory. This keeps the reusable framework boundary pure while giving native

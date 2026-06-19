@@ -4,6 +4,7 @@ test "help text names available commands" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
+  assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa bundle-plan"))
   assert_true(result.output.contains("lepusa bundle-write"))
 }
@@ -14,6 +15,7 @@ test "doctor renders framework boundary checks" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("[ok] public-api"))
   assert_true(result.output.contains("backend=headless"))
+  assert_true(result.output.contains("[ok] manifest: webviews=1 routes=2"))
 }
 
 ///|
@@ -25,6 +27,22 @@ test "runtime plan prints command routes" {
     result.output.contains("first-window-url: lepusa://inline/main/index.html"),
   )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
+}
+
+///|
+test "manifest prints native runner json" {
+  let result = render_cli(["manifest"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"backend\":\"headless\""))
+  assert_true(result.output.contains("\"webviews\""))
+  assert_true(result.output.contains("\"protocolMappings\""))
+  assert_true(
+    result.output.contains(
+      "\"commandRoutes\":[\"core.invoke\",\"core.events\"]",
+    ),
+  )
+  assert_true(result.output.contains("\"initializationScripts\""))
+  assert_true(result.output.contains("__lepusaInvoke"))
 }
 
 ///|

@@ -20,6 +20,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("help") | Some("--help") | Some("-h") => ok(help_text())
     Some("doctor") => render_doctor()
     Some("plan") => render_plan()
+    Some("manifest") => render_manifest()
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
     Some("bundle-write") =>
@@ -54,6 +55,7 @@ fn help_text() -> String {
     #|Usage:
     #|  lepusa doctor
     #|  lepusa plan
+    #|  lepusa manifest
     #|  lepusa bridge
     #|  lepusa bundle-plan [macos|windows|linux]
     #|  lepusa bundle-write [macos|windows|linux] [out-dir]
@@ -65,13 +67,30 @@ fn help_text() -> String {
 fn render_doctor() -> CliResult {
   match sample_runtime_plan() {
     Ok(plan) =>
-      ok(
-        "Lepusa doctor\n" +
-        "[ok] public-api: root package can build launch/runtime plans\n" +
-        "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
-        "[ok] ipc: routes=\{plan.command_routes().length()}\n",
-      )
+      match plan.launch_manifest() {
+        Ok(manifest) =>
+          ok(
+            "Lepusa doctor\n" +
+            "[ok] public-api: root package can build launch/runtime plans\n" +
+            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
+            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
+            "[ok] ipc: routes=\{plan.command_routes().length()}\n",
+          )
+        Err(problems) => fail(render_problems("Lepusa doctor", problems))
+      }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
+fn render_manifest() -> CliResult {
+  match sample_runtime_plan() {
+    Ok(plan) =>
+      match plan.launch_manifest() {
+        Ok(manifest) => ok(manifest.to_json() + "\n")
+        Err(problems) => fail(render_problems("Lepusa manifest", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa manifest", problems))
   }
 }
 
