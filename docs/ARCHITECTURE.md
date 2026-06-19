@@ -157,8 +157,9 @@ Command rules:
 - `Permission::command(route)` is the default permission for custom command
   routes.
 - Built-in permission names for project manifests are `filesystem.read`,
-  `filesystem.write`, `network`, `shell`, `dialog`, `opener`, `clipboard`, and
-  `notification`; custom names use `custom:<name>`.
+  `filesystem.write`, `network`, `shell`, `dialog`, `opener`, `clipboard`,
+  `notification`, `process.info`, `process.environment`, and
+  `process.control`; custom names use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to
   that window.
@@ -424,6 +425,8 @@ relative path policy. `@lepusa/plugins/dialog` declares message, confirm, and
 prompt routes. `@lepusa/plugins/clipboard` and
 `@lepusa/plugins/notification` declare clipboard and notification routes.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
+`@lepusa/plugins/process` declares process metadata, environment, and control
+routes behind split process permissions.
 Native platform effects should be implemented by runtime backends behind those
 contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need

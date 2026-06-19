@@ -8,6 +8,9 @@ pub(all) enum Permission {
   Dialog
   Clipboard
   Notification
+  ProcessInfo
+  ProcessEnvironment
+  ProcessControl
   Custom(String)
 } derive(Debug, Eq)
 
@@ -27,6 +30,9 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "dialog" => Ok(Dialog)
     "clipboard" => Ok(Clipboard)
     "notification" => Ok(Notification)
+    "process.info" => Ok(ProcessInfo)
+    "process.environment" => Ok(ProcessEnvironment)
+    "process.control" => Ok(ProcessControl)
     _ =>
       if name.has_prefix("custom:") {
         let value = name[7:].to_owned()
@@ -52,6 +58,9 @@ pub fn Permission::name(self : Permission) -> String {
     Dialog => "dialog"
     Clipboard => "clipboard"
     Notification => "notification"
+    ProcessInfo => "process.info"
+    ProcessEnvironment => "process.environment"
+    ProcessControl => "process.control"
     Custom(value) => "custom:\{value}"
   }
 }

@@ -343,6 +343,9 @@ pub(all) enum Permission {
   Dialog
   Clipboard
   Notification
+  ProcessInfo
+  ProcessEnvironment
+  ProcessControl
   Custom(String)
 } derive(Eq, @debug.Debug)
 pub fn Permission::command(String) -> Self

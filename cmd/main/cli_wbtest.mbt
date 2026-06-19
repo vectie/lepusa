@@ -457,6 +457,7 @@ test "project config expands official plugin declarations" {
     #|    { "name": "log" },
     #|    { "name": "notification" },
     #|    { "name": "opener" },
+    #|    { "name": "process" },
     #|    { "name": "shell" },
     #|    { "name": "store" },
     #|    { "name": "fs" }
@@ -466,7 +467,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["clipboard", "dialog", "filesystem.read", "notification", "opener", "shell"]
+    #|      "permissions": ["clipboard", "dialog", "filesystem.read", "notification", "opener", "process.info", "shell"]
     #|    }
     #|  ]
     #|}
@@ -481,6 +482,7 @@ test "project config expands official plugin declarations" {
           assert_true(routes.contains("log.write"))
           assert_true(routes.contains("notification.show"))
           assert_true(routes.contains("opener.openUrl"))
+          assert_true(routes.contains("process.info"))
           assert_true(routes.contains("shell.execute"))
           assert_true(routes.contains("store.set"))
           assert_true(routes.contains("fs.readText"))
@@ -497,6 +499,8 @@ test "project config expands official plugin declarations" {
           assert_true(window_routes.contains("log.write"))
           assert_true(window_routes.contains("notification.requestPermission"))
           assert_true(window_routes.contains("opener.revealPath"))
+          assert_true(window_routes.contains("process.cwd"))
+          assert_false(window_routes.contains("process.env"))
           assert_true(window_routes.contains("shell.spawn"))
           assert_true(window_routes.contains("store.keys"))
           assert_true(window_routes.contains("fs.readText"))

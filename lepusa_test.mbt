@@ -166,6 +166,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid opener permission")
   }
+  match @lepusa.Permission::named("process.environment") {
+    Ok(permission) => {
+      assert_true(permission is ProcessEnvironment)
+      assert_eq(permission.name(), "process.environment")
+    }
+    Err(_) => abort("unexpected invalid process permission")
+  }
   match @lepusa.Permission::named("wat") {
     Ok(_) => abort("unexpected valid permission")
     Err(problem) => assert_eq(problem, "unknown permission: wat")

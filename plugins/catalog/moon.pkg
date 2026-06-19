@@ -6,6 +6,7 @@ import {
   "vectie/lepusa/plugins/log",
   "vectie/lepusa/plugins/notification",
   "vectie/lepusa/plugins/opener",
+  "vectie/lepusa/plugins/process",
   "vectie/lepusa/plugins/shell",
   "vectie/lepusa/plugins/store",
 }
