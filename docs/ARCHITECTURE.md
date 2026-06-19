@@ -159,9 +159,9 @@ Command rules:
 - Built-in permission names for project manifests are `filesystem.read`,
   `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
   `clipboard`, `notification`, `localhost`, `deep-link`, `single-instance`,
-  `tray`, `auto-launch`, `window-state`, `updater`, `process.info`,
-  `process.environment`, and `process.control`; custom names use
-  `custom:<name>`.
+  `tray`, `auto-launch`, `window-state`, `updater`, `service-discovery`,
+  `process.info`, `process.environment`, and `process.control`; custom names
+  use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to
   that window.
@@ -432,9 +432,11 @@ handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes. `@lepusa/plugins/auto_launch` declares launch-at-login
 status and enablement routes. `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
-download, install, and restart routes. `@lepusa/plugins/dialog` declares
-message, confirm, and prompt routes. `@lepusa/plugins/clipboard` and
-`@lepusa/plugins/notification` declare clipboard and notification routes.
+download, install, and restart routes. `@lepusa/plugins/service_discovery`
+declares service lookup, status, watch, and change-event routes.
+`@lepusa/plugins/dialog` declares message, confirm, and prompt routes.
+`@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare
+clipboard and notification routes.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split process permissions.
@@ -471,9 +473,9 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 
 Project manifests may declare official plugins by name only. The CLI expands
 official package names such as `autoLaunch`, `deepLink`, `singleInstance`,
-`tray`, `updater`, `windowState`, `log`, `store`, and `fs` to their official
-command contracts before planning, while plugins with explicit `commands`
-arrays keep their manifest-defined surface.
+`tray`, `updater`, `windowState`, `serviceDiscovery`, `log`, `store`, and `fs`
+to their official command contracts before planning, while plugins with
+explicit `commands` arrays keep their manifest-defined surface.
 They may also declare `filesystemScopes`, which lower into runtime sessions and
 native launch manifests as named roots. The scope data is separate from command
 capabilities: capabilities decide which windows may call filesystem commands,

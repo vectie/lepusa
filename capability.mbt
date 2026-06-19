@@ -11,6 +11,7 @@ pub(all) enum Permission {
   AutoLaunch
   WindowState
   Updater
+  ServiceDiscovery
   Shell
   Opener
   Dialog
@@ -41,6 +42,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "auto-launch" => Ok(AutoLaunch)
     "window-state" => Ok(WindowState)
     "updater" => Ok(Updater)
+    "service-discovery" => Ok(ServiceDiscovery)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
     "dialog" => Ok(Dialog)
@@ -77,6 +79,7 @@ pub fn Permission::name(self : Permission) -> String {
     AutoLaunch => "auto-launch"
     WindowState => "window-state"
     Updater => "updater"
+    ServiceDiscovery => "service-discovery"
     Shell => "shell"
     Opener => "opener"
     Dialog => "dialog"

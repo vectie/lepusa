@@ -98,7 +98,7 @@ Stabilize the cross-platform core set first:
 - autoLaunch: initial launch-at-login contract exists
 - windowState: initial window geometry persistence contract exists
 - updater: initial update lifecycle contract exists
-- service-discovery
+- serviceDiscovery: initial service lookup and status contract exists
 
 Plugins with mobile-only or platform-specific behavior can follow after the
 desktop core is reliable.

@@ -495,6 +495,7 @@ test "project config expands official plugin declarations" {
     #|    { "name": "notification" },
     #|    { "name": "opener" },
     #|    { "name": "process" },
+    #|    { "name": "serviceDiscovery" },
     #|    { "name": "shell" },
     #|    { "name": "singleInstance" },
     #|    { "name": "store" },
@@ -508,7 +509,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["auto-launch", "clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell", "single-instance", "tray", "updater", "window-state"]
+    #|      "permissions": ["auto-launch", "clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "service-discovery", "shell", "single-instance", "tray", "updater", "window-state"]
     #|    }
     #|  ]
     #|}
@@ -528,6 +529,7 @@ test "project config expands official plugin declarations" {
           assert_true(routes.contains("notification.show"))
           assert_true(routes.contains("opener.openUrl"))
           assert_true(routes.contains("process.info"))
+          assert_true(routes.contains("serviceDiscovery.list"))
           assert_true(routes.contains("shell.execute"))
           assert_true(routes.contains("singleInstance.acquire"))
           assert_true(routes.contains("store.set"))
@@ -555,6 +557,9 @@ test "project config expands official plugin declarations" {
           assert_true(window_routes.contains("opener.revealPath"))
           assert_true(window_routes.contains("process.cwd"))
           assert_false(window_routes.contains("process.env"))
+          assert_true(
+            window_routes.contains("serviceDiscovery.onServiceChanged"),
+          )
           assert_true(window_routes.contains("shell.spawn"))
           assert_true(window_routes.contains("singleInstance.onSecondLaunch"))
           assert_true(window_routes.contains("store.keys"))

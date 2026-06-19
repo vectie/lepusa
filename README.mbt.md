@@ -149,10 +149,11 @@ Official plugins can be declared by name, for example
 `{ "name": "autoLaunch" }`, `{ "name": "clipboard" }`,
 `{ "name": "deepLink" }`, `{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
 `{ "name": "localhost" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
-`{ "name": "opener" }`, `{ "name": "process" }`, `{ "name": "shell" }`,
-`{ "name": "singleInstance" }`, `{ "name": "store" }`,
-`{ "name": "tray" }`, `{ "name": "updater" }`,
-`{ "name": "windowState" }`, or `{ "name": "fs" }`;
+`{ "name": "opener" }`, `{ "name": "process" }`,
+`{ "name": "serviceDiscovery" }`, `{ "name": "shell" }`,
+`{ "name": "singleInstance" }`, `{ "name": "store" }`, `{ "name": "tray" }`,
+`{ "name": "updater" }`, `{ "name": "windowState" }`, or
+`{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
@@ -244,6 +245,12 @@ and storage.
 `updater.check`, `updater.download`, `updater.install`, and
 `updater.downloadAndInstall`, plus feed/channel policy metadata. Native
 backends own feed retrieval, signature verification, installation, and restart.
+
+`@lepusa/plugins/service_discovery` defines service lookup and status routes
+such as `serviceDiscovery.list`, `serviceDiscovery.resolve`,
+`serviceDiscovery.status`, and `serviceDiscovery.onServiceChanged`, plus
+endpoint policy metadata. Native backends own resolver integration, health
+checks, and change watching.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

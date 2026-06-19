@@ -346,6 +346,7 @@ pub(all) enum Permission {
   AutoLaunch
   WindowState
   Updater
+  ServiceDiscovery
   Shell
   Opener
   Dialog

@@ -22,6 +22,9 @@ test "lookup official plugins" {
   let shell = @catalog.plugin("shell").unwrap()
   assert_true(shell.command_routes().contains("shell.execute"))
 
+  let service = @catalog.plugin("serviceDiscovery").unwrap()
+  assert_true(service.command_routes().contains("serviceDiscovery.list"))
+
   let fs = @catalog.plugin("fs").unwrap()
   assert_true(fs.command_routes().contains("fs.readText"))
 

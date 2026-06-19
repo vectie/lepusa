@@ -11,6 +11,7 @@ pub fn plugin(name : String) -> @lepusa.Plugin? {
     "notification" => Some(@notification.plugin())
     "opener" => Some(@opener.plugin())
     "process" => Some(@process.plugin())
+    "serviceDiscovery" => Some(@service_discovery.plugin())
     "shell" => Some(@shell.plugin())
     "singleInstance" => Some(@single_instance.plugin())
     "store" => Some(@store.plugin())
@@ -43,7 +44,7 @@ pub fn registered_plugin_names() -> Array[String] {
 pub fn plugin_names() -> Array[String] {
   [
     "autoLaunch", "clipboard", "deepLink", "dialog", "fileDialog", "fs", "localhost",
-    "log", "notification", "opener", "process", "shell", "singleInstance", "store",
-    "tray", "updater", "windowState",
+    "log", "notification", "opener", "process", "serviceDiscovery", "shell", "singleInstance",
+    "store", "tray", "updater", "windowState",
   ]
 }
