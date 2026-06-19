@@ -97,7 +97,7 @@
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
   - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
   - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, and reports unsupported for Linux/Windows until their loops land.
-  - `lepusa-runtime bootstrap`: emits bundled bootstrap JSON for native loops.
+  - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.

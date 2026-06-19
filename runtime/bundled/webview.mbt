@@ -6,7 +6,13 @@ pub struct BundledWebView {
   width : Int
   height : Int
   resizable : Bool
+  title_bar : String
+  devtools : Bool
+  asset_protocol : String
+  bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
+  allowed_routes : Array[String]
   initialization_scripts : Array[String]
 } derive(Debug, Eq)
 
@@ -62,8 +68,24 @@ fn BundledRuntimeManifest::parse_webview(
         width: optional_int(webview, "width").unwrap_or(1000),
         height: optional_int(webview, "height").unwrap_or(720),
         resizable: optional_bool(webview, "resizable").unwrap_or(true),
+        title_bar: optional_string(webview, "titleBar").unwrap_or("native"),
+        devtools: optional_bool(webview, "devtools").unwrap_or(
+          optional_bool(self.runtime, "devtools").unwrap_or(false),
+        ),
+        asset_protocol: optional_string(webview, "assetProtocol").unwrap_or(
+          self.asset_protocol(),
+        ),
+        bridge_global_name: optional_string(webview, "bridgeGlobalName").unwrap_or(
+          "lepusa",
+        ),
         native_hook: optional_string(webview, "nativeHook").unwrap_or(
           "__lepusaInvoke",
+        ),
+        event_dispatch_hook: optional_string(webview, "eventDispatchHook").unwrap_or(
+          "__lepusaDispatchEvent",
+        ),
+        allowed_routes: strings_from_json_array(
+          optional_array(webview, "allowedRoutes").unwrap_or([]),
         ),
         initialization_scripts: optional_string_array(
           webview, "initializationScripts",
@@ -111,8 +133,38 @@ pub fn BundledWebView::resizable(self : BundledWebView) -> Bool {
 }
 
 ///|
+pub fn BundledWebView::title_bar(self : BundledWebView) -> String {
+  self.title_bar
+}
+
+///|
+pub fn BundledWebView::devtools(self : BundledWebView) -> Bool {
+  self.devtools
+}
+
+///|
+pub fn BundledWebView::asset_protocol(self : BundledWebView) -> String {
+  self.asset_protocol
+}
+
+///|
+pub fn BundledWebView::bridge_global_name(self : BundledWebView) -> String {
+  self.bridge_global_name
+}
+
+///|
 pub fn BundledWebView::native_hook(self : BundledWebView) -> String {
   self.native_hook
+}
+
+///|
+pub fn BundledWebView::event_dispatch_hook(self : BundledWebView) -> String {
+  self.event_dispatch_hook
+}
+
+///|
+pub fn BundledWebView::allowed_routes(self : BundledWebView) -> Array[String] {
+  self.allowed_routes.copy()
 }
 
 ///|

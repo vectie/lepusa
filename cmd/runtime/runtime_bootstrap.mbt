@@ -20,7 +20,12 @@ fn render_runtime_bootstrap_text(
   text : String,
 ) -> RuntimeCliResult {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
-    Ok(manifest) => runtime_ok(manifest.bootstrap_json() + "\n")
+    Ok(manifest) =>
+      match manifest.bootstrap_plan() {
+        Ok(plan) => runtime_ok(plan.to_json() + "\n")
+        Err(problem) =>
+          runtime_fail("Lepusa runtime bootstrap\n[fail] \{problem}\n")
+      }
     Err(problem) =>
       runtime_fail("Lepusa runtime bootstrap\n[fail] \{problem}\n")
   }

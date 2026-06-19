@@ -137,6 +137,12 @@ test "bundled runtime manifest exposes first webview" {
           assert_eq(webview.height(), 720)
           assert_eq(webview.resizable(), true)
           assert_eq(webview.native_hook(), "__lepusaInvoke")
+          assert_eq(webview.title_bar(), "native")
+          assert_eq(webview.devtools(), false)
+          assert_eq(webview.asset_protocol(), "lepusa")
+          assert_eq(webview.bridge_global_name(), "lepusa")
+          assert_eq(webview.event_dispatch_hook(), "__lepusaDispatchEvent")
+          assert_eq(webview.allowed_routes()[0], "log.write")
           assert_eq(webview.initialization_scripts().length(), 1)
           assert_eq(runtime.webview_count(), 1)
         }
@@ -162,9 +168,17 @@ test "bundled runtime manifest emits bootstrap json" {
       assert_true(bootstrap.contains("\"identifier\":\"dev.vectie.runtime\""))
       assert_true(bootstrap.contains("\"productName\":\"Runtime App\""))
       assert_true(bootstrap.contains("\"target\":\"linux\""))
+      assert_true(bootstrap.contains("\"nativeBackend\":\"linux\""))
+      assert_true(bootstrap.contains("\"webviewEngine\":\"WebKitGTK\""))
       assert_true(bootstrap.contains("\"runtime\":{"))
-      assert_true(bootstrap.contains("\"webviews\""))
-      assert_true(bootstrap.contains("\"startupActions\""))
+      assert_true(bootstrap.contains("\"webviewSpecs\""))
+      assert_true(bootstrap.contains("\"allowedRoutes\":[\"log.write\"]"))
+      assert_true(bootstrap.contains("\"startupOperations\""))
+      assert_true(bootstrap.contains("\"kind\":\"start-service\""))
+      assert_true(bootstrap.contains("\"kind\":\"run-effect\""))
+      assert_true(bootstrap.contains("\"lifecycleOperations\""))
+      assert_true(bootstrap.contains("\"kind\":\"app-will-exit\""))
+      assert_true(bootstrap.contains("\"bridgeRoutes\""))
     }
     Err(problem) => abort(problem)
   }
@@ -338,7 +352,10 @@ fn sample_bundled_manifest() -> String {
     #|    "backend": "headless",
     #|    "bridgeUrl": "lepusa://runtime/bridge.js",
     #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
     #|      "url": "lepusa://rabbita/main/index.html",
+    #|      "allowedRoutes": ["log.write"],
     #|      "initializationScripts": ["console.log(\"bridge\")"]
     #|    }],
     #|    "protocolMappings": [

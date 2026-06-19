@@ -11,6 +11,17 @@ import {
 // Errors
 
 // Types and methods
+pub struct BundledBootstrapPlan {
+  manifest : BundledRuntimeManifest
+  run_plan : BundledRunPlan
+  startup_operations : Array[String]
+  lifecycle_operations : Array[String]
+} derive(@debug.Debug)
+pub fn BundledBootstrapPlan::lifecycle_operations(Self) -> Array[String]
+pub fn BundledBootstrapPlan::run_plan(Self) -> BundledRunPlan
+pub fn BundledBootstrapPlan::startup_operations(Self) -> Array[String]
+pub fn BundledBootstrapPlan::to_json(Self) -> String
+
 pub struct BundledLifecycleEvent {
   kind : String
   label : String
@@ -83,6 +94,7 @@ pub struct BundledRuntimeManifest {
 } derive(@debug.Debug)
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
+pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
@@ -127,15 +139,27 @@ pub struct BundledWebView {
   width : Int
   height : Int
   resizable : Bool
+  title_bar : String
+  devtools : Bool
+  asset_protocol : String
+  bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
+  allowed_routes : Array[String]
   initialization_scripts : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn BundledWebView::allowed_routes(Self) -> Array[String]
+pub fn BundledWebView::asset_protocol(Self) -> String
+pub fn BundledWebView::bridge_global_name(Self) -> String
+pub fn BundledWebView::devtools(Self) -> Bool
+pub fn BundledWebView::event_dispatch_hook(Self) -> String
 pub fn BundledWebView::height(Self) -> Int
 pub fn BundledWebView::initialization_scripts(Self) -> Array[String]
 pub fn BundledWebView::label(Self) -> String
 pub fn BundledWebView::native_hook(Self) -> String
 pub fn BundledWebView::resizable(Self) -> Bool
 pub fn BundledWebView::title(Self) -> String
+pub fn BundledWebView::title_bar(Self) -> String
 pub fn BundledWebView::url(Self) -> String
 pub fn BundledWebView::width(Self) -> Int
 
