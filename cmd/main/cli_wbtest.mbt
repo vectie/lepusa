@@ -5,6 +5,9 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa manifest"))
+  assert_true(result.output.contains("lepusa init"))
+  assert_true(result.output.contains("lepusa build"))
+  assert_true(result.output.contains("lepusa bundle"))
   assert_true(result.output.contains("lepusa bundle-plan"))
   assert_true(result.output.contains("lepusa bundle-write"))
 }
@@ -64,6 +67,25 @@ test "bundle plan supports target selection" {
 }
 
 ///|
+async test "init writes standalone project skeleton" {
+  let root = "/tmp/lepusa-init-\{@async.now().to_int()}"
+  let result = render_cli_async(["init", root])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa init"))
+  assert_true(result.output.contains("files: 4"))
+  assert_true(@fs.exists(root + "/moon.mod"))
+  assert_true(@fs.exists(root + "/moon.pkg"))
+  assert_true(@fs.exists(root + "/main.mbt"))
+  assert_true(@fs.exists(root + "/README.mbt.md"))
+  let module_file = @fs.read_file(root + "/moon.mod").text()
+  assert_true(module_file.contains("vectie/lepusa"))
+  assert_true(module_file.contains("\"preferred-target\": \"native\""))
+  let main_file = @fs.read_file(root + "/main.mbt").text()
+  assert_true(main_file.contains("@lepusa.new(root)"))
+  assert_true(main_file.contains("RuntimeConfig::system_webview"))
+}
+
+///|
 async test "bundle write materializes planned files" {
   let root = "/tmp/lepusa-bundle-write-\{@async.now().to_int()}"
   let result = render_cli_async(["bundle-write", "linux", root])
@@ -82,6 +104,22 @@ async test "bundle write materializes planned files" {
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
+}
+
+///|
+async test "build and bundle aliases materialize planned files" {
+  let build_root = "/tmp/lepusa-build-\{@async.now().to_int()}"
+  let build = render_cli_async(["build", "macos", build_root])
+  assert_eq(build.exit_code, 0)
+  assert_true(build.output.contains("target: macos"))
+  assert_true(
+    @fs.exists(build_root + "/lepusa-example.app/Contents/Info.plist"),
+  )
+  let bundle_root = "/tmp/lepusa-bundle-alias-\{@async.now().to_int()}"
+  let bundle = render_cli_async(["bundle", "windows", bundle_root])
+  assert_eq(bundle.exit_code, 0)
+  assert_true(bundle.output.contains("target: windows"))
+  assert_true(@fs.exists(bundle_root + "/lepusa-example/app.manifest.xml"))
 }
 
 ///|

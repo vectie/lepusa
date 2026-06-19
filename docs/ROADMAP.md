@@ -62,10 +62,10 @@
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
-  - `lepusa init`
+  - `lepusa init`: writes a standalone MoonBit project skeleton.
+  - `lepusa build`: alias for materializing the current bundle plan.
+  - `lepusa bundle`: alias for materializing the current bundle plan.
   - `lepusa dev`
-  - `lepusa build`
-  - `lepusa bundle`
   - `lepusa plugin new`
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing prerequisites.

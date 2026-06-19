@@ -101,8 +101,11 @@ moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- bridge
+moon run cmd/main --target native -- init _build/lepusa-app
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle
+moon run cmd/main --target native -- build macos _build/lepusa-build
+moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
 
 These commands exercise the public planning contracts and give the native
@@ -121,6 +124,10 @@ application construction state.
 
 When a window omits `source`, `App` lowers the root `Cell` into a generated
 Rabbita-style HTML document served from the runtime manifest as a virtual file.
+
+`lepusa init` writes a standalone MoonBit project skeleton that imports
+`vectie/lepusa` directly. It is intentionally small: `moon.mod`, `moon.pkg`,
+`main.mbt`, and `README.mbt.md`.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,

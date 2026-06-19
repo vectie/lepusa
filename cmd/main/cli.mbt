@@ -14,6 +14,15 @@ fn drop_program(argv : Array[String]) -> Array[String] {
 }
 
 ///|
+fn Array::with_first(self : Array[String], value : String) -> Array[String] {
+  let args : Array[String] = [value]
+  for i in 1..<self.length() {
+    args.push(self[i])
+  }
+  args
+}
+
+///|
 fn render_cli(args : Array[String]) -> CliResult {
   match args.get(0) {
     None => ok(help_text())
@@ -23,6 +32,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("manifest") => render_manifest()
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
+    Some("init") => fail("init requires the native async runner\n")
     Some("bundle-write") =>
       fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
@@ -32,7 +42,10 @@ fn render_cli(args : Array[String]) -> CliResult {
 ///|
 async fn render_cli_async(args : Array[String]) -> CliResult {
   match args.get(0) {
+    Some("init") => render_init(args)
     Some("bundle-write") => render_bundle_write(args)
+    Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
+    Some("build") => render_bundle_write(args.with_first("bundle-write"))
     _ => render_cli(args)
   }
 }
@@ -57,10 +70,27 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa bridge
+    #|  lepusa init [out-dir]
     #|  lepusa bundle-plan [macos|windows|linux]
     #|  lepusa bundle-write [macos|windows|linux] [out-dir]
+    #|  lepusa build [macos|windows|linux] [out-dir]
+    #|  lepusa bundle [macos|windows|linux] [out-dir]
     #|
   )
+}
+
+///|
+async fn render_init(args : Array[String]) -> CliResult {
+  let out_dir = args.get(1).unwrap_or("lepusa-app")
+  match write_project_skeleton(out_dir) {
+    Ok(result) =>
+      ok(
+        "Lepusa init\n" +
+        "root: \{result.root}\n" +
+        "files: \{result.files.length()}\n",
+      )
+    Err(problems) => fail(render_problems("Lepusa init", problems))
+  }
 }
 
 ///|
