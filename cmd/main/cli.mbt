@@ -78,7 +78,7 @@ fn render_cli(args : Array[String]) -> CliResult {
   match args.get(0) {
     None => ok(help_text())
     Some("help") | Some("--help") | Some("-h") => ok(help_text())
-    Some("doctor") => render_doctor()
+    Some("doctor") => render_doctor(args)
     Some("plan") => render_plan()
     Some("manifest") => render_manifest()
     Some("native-plan") => render_native_plan(args)
@@ -134,7 +134,7 @@ fn help_text() -> String {
     #|lepusa: MoonBit-native desktop framework
     #|
     #|Usage:
-    #|  lepusa doctor
+    #|  lepusa doctor [macos|windows|linux]
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa native-plan [macos|windows|linux]
@@ -250,9 +250,18 @@ async fn render_plugin_new(args : Array[String]) -> CliResult {
 
 ///|
 async fn render_doctor_async(args : Array[String]) -> CliResult {
-  match project_runtime_host(args) {
-    Ok(host) => render_doctor_host(host)
-    Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match project_bundle_plan(args, target) {
+            Ok(bundle) => render_doctor_host(host, bundle)
+            Err(problems) => fail(render_problems("Lepusa doctor", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa doctor", problems))
+      }
+    Err(problem) => fail(problem + "\n")
   }
 }
 
@@ -433,28 +442,57 @@ fn parse_invoke_route(route : String) -> Result[(String, String), String] {
 }
 
 ///|
-fn render_doctor() -> CliResult {
-  match sample_runtime_plan() {
-    Ok(plan) => render_doctor_host(@runtime.RuntimeHost::new(plan))
+fn render_doctor(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match sample_runtime_plan() {
+        Ok(plan) =>
+          match sample_manifest().bundle_plan(sample_root(), target~) {
+            Ok(bundle) =>
+              render_doctor_host(@runtime.RuntimeHost::new(plan), bundle)
+            Err(problems) => fail(render_problems("Lepusa doctor", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa doctor", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn render_doctor_host(
+  host : @runtime.RuntimeHost,
+  bundle : @lepusa.BundlePlan,
+) -> CliResult {
+  let plan = host.plan()
+  match host.launch_manifest() {
+    Ok(manifest) =>
+      match bundle.files() {
+        Ok(files) =>
+          ok(
+            "Lepusa doctor\n" +
+            "[ok] public-api: root package can build launch/runtime plans\n" +
+            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
+            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
+            "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
+            "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+            "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
+            render_signing_prerequisites(bundle) +
+            render_native_backend_diagnostics(),
+          )
+        Err(problems) => fail(render_problems("Lepusa doctor", problems))
+      }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
   }
 }
 
 ///|
-fn render_doctor_host(host : @runtime.RuntimeHost) -> CliResult {
-  let plan = host.plan()
-  match host.launch_manifest() {
-    Ok(manifest) =>
-      ok(
-        "Lepusa doctor\n" +
-        "[ok] public-api: root package can build launch/runtime plans\n" +
-        "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
-        "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
-        "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
-        render_native_backend_diagnostics(),
-      )
-    Err(problems) => fail(render_problems("Lepusa doctor", problems))
+fn render_signing_prerequisites(bundle : @lepusa.BundlePlan) -> String {
+  let lines : Array[String] = []
+  for item in bundle.signing_prerequisites() {
+    lines.push("[info] signing: \{item.kind().name()} \{item.name()}\n")
   }
+  lines.join("")
 }
 
 ///|

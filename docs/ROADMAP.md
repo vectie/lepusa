@@ -59,7 +59,8 @@
 ## Milestone 4: CLI
 
 - Implement:
-  - `lepusa doctor`: validates public planning boundaries.
+  - `lepusa doctor`: validates public planning boundaries and reports target
+    signing prerequisites.
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.
@@ -77,8 +78,8 @@
   generation, and bundle materialization.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
-- Make `doctor` report platform WebView dependencies.
-- Make `doctor` report signing prerequisites.
+- Make `doctor` report platform WebView dependencies and signing
+  prerequisites.
 
 ## Milestone 5: Official Plugins
 

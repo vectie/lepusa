@@ -471,8 +471,8 @@ The CLI should be thin over public framework contracts. Early commands should
 exercise planning without reaching into private structs:
 
 ```text
-lepusa doctor
-  -> validates app/runtime planning
+lepusa doctor [macos|windows|linux]
+  -> validates app/runtime/bundle planning and reports signing prerequisites
 
 lepusa plan
   -> prints runtime backend, windows, plugins, capabilities, command routes

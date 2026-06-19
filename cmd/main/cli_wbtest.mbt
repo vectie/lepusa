@@ -26,10 +26,26 @@ test "doctor renders framework boundary checks" {
   assert_true(result.output.contains("[ok] public-api"))
   assert_true(result.output.contains("backend=headless"))
   assert_true(result.output.contains("[ok] manifest: webviews=1 routes=2"))
+  assert_true(result.output.contains("[ok] bundle: target=macos"))
+  assert_true(result.output.contains("[ok] signing: prerequisites=3"))
+  assert_true(result.output.contains("Developer ID Application certificate"))
   assert_true(result.output.contains("platform: macos"))
   assert_true(result.output.contains("engine=WKWebView"))
   assert_true(result.output.contains("platform: windows"))
   assert_true(result.output.contains("platform: linux"))
+}
+
+///|
+test "doctor supports target-specific signing diagnostics" {
+  let result = render_cli(["doctor", "linux"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("[ok] bundle: target=linux"))
+  assert_true(result.output.contains("[ok] signing: prerequisites=2"))
+  assert_false(result.output.contains("package-signing-key"))
+  assert_true(result.output.contains("package signing key"))
+  let unknown = render_cli(["doctor", "ios"])
+  assert_eq(unknown.exit_code, 1)
+  assert_true(unknown.output.contains("unknown bundle target: ios"))
 }
 
 ///|
@@ -236,9 +252,29 @@ async test "generated project config drives doctor backend diagnostics" {
   let result = render_cli_async(["doctor", "--project", root + "/lepusa.json"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("backend=system-webview"))
+  assert_true(result.output.contains("[ok] bundle: target=macos"))
+  assert_true(result.output.contains("[ok] signing: prerequisites=3"))
+  assert_true(result.output.contains("Developer ID Application certificate"))
   assert_true(result.output.contains("platform: macos"))
   assert_true(result.output.contains("platform: windows"))
   assert_true(result.output.contains("platform: linux"))
+}
+
+///|
+async test "generated project doctor supports target selection" {
+  let root = "/tmp/lepusa-project-doctor-target-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "doctor",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("[ok] bundle: target=linux"))
+  assert_true(result.output.contains("[ok] signing: prerequisites=2"))
+  assert_true(result.output.contains("package signing key"))
 }
 
 ///|
