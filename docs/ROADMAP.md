@@ -36,9 +36,11 @@
   mappings, and command routes.
 - Lower `Cmd` startup trees into backend-executable runtime actions.
 - Add runtime lifecycle hooks for startup, shutdown, and window close events.
-- Add `@lepusa/runtime/macos` native backend package with WebKit availability
-  validation and macOS launch-plan lowering.
-- Add macOS runner-plan lowering from portable runtime operations.
+- Add shared `@lepusa/runtime` native backend lowering over portable runtime
+  operations.
+- Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
+  `@lepusa/runtime/linux` backend descriptor packages with host availability
+  checks for WKWebView, WebView2, and WebKitGTK.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
 - Support `Source::html`, `Source::local_path`, `Source::url`,
   `Source::localhost`, and packaged assets.

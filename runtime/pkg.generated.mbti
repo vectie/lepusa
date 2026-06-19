@@ -14,6 +14,51 @@ pub fn encode_invoke_response_json(@lepusa.InvokeResponse) -> String
 // Errors
 
 // Types and methods
+pub struct NativeBackend {
+  name : String
+  webview_engine : String
+} derive(Eq, @debug.Debug)
+pub fn NativeBackend::name(Self) -> String
+pub fn NativeBackend::new(name~ : String, webview_engine~ : String) -> Self
+pub fn NativeBackend::plan(Self, RuntimeHost) -> Result[NativeLaunchPlan, Array[String]]
+pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan, Array[String]]
+pub fn NativeBackend::webview_engine(Self) -> String
+
+pub struct NativeLaunchPlan {
+  backend_name : String
+  webview_engine : String
+  manifest : @lepusa.RuntimeLaunchManifest
+} derive(Eq, @debug.Debug)
+pub fn NativeLaunchPlan::backend_name(Self) -> String
+pub fn NativeLaunchPlan::manifest_json(Self) -> String
+pub fn NativeLaunchPlan::runtime_manifest(Self) -> @lepusa.RuntimeLaunchManifest
+pub fn NativeLaunchPlan::webview_engine(Self) -> String
+pub fn NativeLaunchPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
+
+pub(all) enum NativeOperation {
+  NativeStartService(@lepusa.LocalService)
+  NativeSendEvent(@lepusa.EventTarget, @lepusa.Event)
+  NativeRunEffect(String)
+  NativeNavigateWindow(String, String)
+} derive(Eq, @debug.Debug)
+pub fn NativeOperation::from_runtime(RuntimeOperation) -> Self
+pub fn NativeOperation::to_json(Self) -> String
+
+pub struct NativeRunnerPlan {
+  backend_name : String
+  webview_engine : String
+  launch_plan : NativeLaunchPlan
+  session : RuntimeSession
+  startup_operations : Array[NativeOperation]
+} derive(Eq, @debug.Debug)
+pub fn NativeRunnerPlan::backend_name(Self) -> String
+pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
+pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
+pub fn NativeRunnerPlan::session(Self) -> RuntimeSession
+pub fn NativeRunnerPlan::startup_operations(Self) -> Array[NativeOperation]
+pub fn NativeRunnerPlan::webview_engine(Self) -> String
+pub fn NativeRunnerPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
+
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 
 pub(all) enum RuntimeAssetBody {

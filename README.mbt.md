@@ -240,10 +240,6 @@ are included in `RuntimePlan::launch_manifest()`.
 window frame data, load URL, asset protocol, native hook name, and document
 start scripts.
 
-`@lepusa/runtime/macos` is the first platform backend package. It validates the
-native WebKit runtime is present and lowers a `RuntimeHost` into a macOS launch
-plan backed by `WKWebView` boot specs.
-
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.
@@ -257,6 +253,12 @@ window loops will execute.
 launch manifest, resolved WebViews, stepped runtime session, and startup
 operations in one object. Platform packages map this plan to WKWebView,
 WebView2, or WebKitGTK without rebuilding app state.
+
+`@lepusa/runtime` also exposes `NativeBackend`, the shared lowering boundary
+for platform packages. `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
+`@lepusa/runtime/linux` now provide small backend descriptors and host
+availability checks for WKWebView, WebView2, and WebKitGTK while reusing the
+same portable runner plan.
 
 `Source::localhost(...)` supports gateway-style apps that load a local HTTP
 service and optionally declare the sidecar command plus readiness URL metadata.

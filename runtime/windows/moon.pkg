@@ -6,6 +6,6 @@ import {
 supported_targets = "native"
 
 options(
-  "native-stub": [ "macos_backend.c" ],
+  "native-stub": [ "windows_backend.c" ],
   test_import: [ "vectie/lepusa" ],
 )

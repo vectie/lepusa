@@ -100,6 +100,23 @@ test "runtime host carries localhost service metadata" {
 }
 
 ///|
+test "native backend lowers host runner plan with portable operations" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match backend.runner_plan(RuntimeHost::new(test_plan())) {
+    Ok(plan) => {
+      assert_eq(plan.backend_name(), "test")
+      assert_eq(plan.webview_engine(), "SystemWebView")
+      assert_eq(plan.webviews().length(), 1)
+      assert_true(plan.startup_operations()[0] is NativeRunEffect("boot"))
+      let json = plan.bootstrap_json()
+      assert_true(json.contains("\"nativeBackend\":\"test\""))
+      assert_true(json.contains("\"startupOperations\""))
+    }
+    Err(_) => abort("unexpected invalid native runner plan")
+  }
+}
+
+///|
 test "runtime host carries filesystem scope metadata" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let manifest = @lepusa.ProjectManifest::new(

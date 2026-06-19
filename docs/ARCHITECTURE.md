@@ -260,6 +260,21 @@ per-WebView `eventDispatchHook` from `RuntimeWebViewBoot` or
 `RuntimeAction` values. Startup commands become `startupActions` in the launch
 manifest, so native runners can emit frontend events, navigate windows, and
 run named effects without understanding the authoring `Cmd` tree.
+
+The same startup queue is lowered to portable `NativeOperation` values in
+`NativeRunnerPlan`.
+
+`@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`, and
+`NativeRunnerPlan`, so platform packages only need to describe their native
+engine and host availability:
+
+- `@lepusa/runtime/macos`: WKWebView via Cocoa/WebKit.
+- `@lepusa/runtime/windows`: WebView2.
+- `@lepusa/runtime/linux`: WebKitGTK.
+
+Each platform package consumes the same `RuntimeHost` boundary and must not
+re-read app manifests, capabilities, or source configuration.
+
 Lifecycle hooks use the same lowering path. App authors attach commands to
 `AppStarted`, `AppWillExit`, `WindowCloseRequested(label)`, or
 `WindowClosed(label)`, and platform backends call
