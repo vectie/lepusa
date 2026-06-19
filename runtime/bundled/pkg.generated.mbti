@@ -93,6 +93,7 @@ pub struct BundledRuntimeManifest {
   bundle : Map[String, Json]
   runtime : Map[String, Json]
 } derive(@debug.Debug)
+pub fn BundledRuntimeManifest::artifact_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
@@ -110,10 +111,15 @@ pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
+pub fn BundledRuntimeManifest::resource_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::run(Self, mode? : BundledRunMode) -> Result[BundledRunResult, String]
 pub fn BundledRuntimeManifest::run_plan(Self) -> Result[BundledRunPlan, String]
 pub fn BundledRuntimeManifest::runtime_backend(Self) -> String
 pub fn BundledRuntimeManifest::service_plan(Self) -> Result[BundledServicePlan, String]
+pub fn BundledRuntimeManifest::signing_configured(Self) -> Bool
+pub fn BundledRuntimeManifest::signing_json(Self) -> String
+pub fn BundledRuntimeManifest::signing_prerequisite_jsons(Self) -> Array[String]
+pub fn BundledRuntimeManifest::signing_step_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::target(Self) -> String

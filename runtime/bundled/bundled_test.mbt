@@ -8,12 +8,48 @@ test "bundled runtime manifest summarizes launch data" {
       assert_true(summary.contains("identifier: dev.vectie.runtime"))
       assert_true(summary.contains("product: Runtime App"))
       assert_true(summary.contains("target: linux"))
+      assert_true(summary.contains("artifacts: 2"))
+      assert_true(summary.contains("resources: 2"))
+      assert_true(summary.contains("signing-configured: true"))
+      assert_true(summary.contains("signing-prerequisites: 1"))
+      assert_true(summary.contains("signing-steps: 1"))
       assert_true(
         summary.contains("first-window-url: lepusa://rabbita/main/index.html"),
       )
       assert_true(summary.contains("local-services: 1"))
       assert_true(summary.contains("service-supervisor: true"))
       assert_true(summary.contains("service-start-order: api"))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "bundled runtime manifest exposes distribution envelope" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) => {
+      assert_eq(runtime.artifact_jsons().length(), 2)
+      assert_true(
+        runtime.artifact_jsons()[0].contains("\"kind\":\"portable-directory\""),
+      )
+      assert_eq(runtime.resource_jsons().length(), 2)
+      assert_true(runtime.resource_jsons()[0].contains("\"path\":\"assets\""))
+      assert_true(runtime.signing_configured())
+      assert_true(
+        runtime.signing_json().contains("\"identity\":\"Developer ID\""),
+      )
+      assert_eq(runtime.signing_prerequisite_jsons().length(), 1)
+      assert_true(
+        runtime.signing_prerequisite_jsons()[0].contains("codesign identity"),
+      )
+      assert_eq(runtime.signing_step_jsons().length(), 1)
+      assert_true(
+        runtime.signing_step_jsons()[0].contains("\"tool\":\"codesign\""),
+      )
     }
     Err(problem) => abort(problem)
   }
@@ -359,6 +395,34 @@ fn sample_bundled_manifest() -> String {
     #|  "identifier": "dev.vectie.runtime",
     #|  "productName": "Runtime App",
     #|  "target": "linux",
+    #|  "artifacts": [
+    #|    {
+    #|      "kind": "portable-directory",
+    #|      "path": "dist/runtime-app"
+    #|    },
+    #|    {
+    #|      "kind": "desktop-entry",
+    #|      "path": "dist/runtime-app.desktop"
+    #|    }
+    #|  ],
+    #|  "resources": [
+    #|    { "kind": "asset-dir", "path": "assets" },
+    #|    { "kind": "runtime-manifest", "path": "lepusa/runtime.json" }
+    #|  ],
+    #|  "signing": {
+    #|    "identity": "Developer ID",
+    #|    "notarize": false
+    #|  },
+    #|  "signingPrerequisites": [
+    #|    "codesign identity Developer ID"
+    #|  ],
+    #|  "signingSteps": [
+    #|    {
+    #|      "name": "sign executable",
+    #|      "tool": "codesign",
+    #|      "command": "codesign --sign Developer ID runtime-app"
+    #|    }
+    #|  ],
     #|  "runtime": {
     #|    "assetProtocol": "lepusa",
     #|    "backend": "headless",

@@ -32,6 +32,10 @@ pub fn BundledRuntimeManifest::parse(
 
 ///|
 pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String {
+  let artifacts = self.artifact_jsons()
+  let resources = self.resource_jsons()
+  let signing_prerequisites = self.signing_prerequisite_jsons()
+  let signing_steps = self.signing_step_jsons()
   let webviews = optional_array(self.runtime, "webviews").unwrap_or([])
   let local_services = optional_array(self.runtime, "localServices").unwrap_or([])
   let mut service_requires_supervisor = false
@@ -56,6 +60,11 @@ pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String 
   "identifier: \{optional_string(self.bundle, "identifier").unwrap_or("")}\n" +
   "product: \{optional_string(self.bundle, "productName").unwrap_or("")}\n" +
   "target: \{optional_string(self.bundle, "target").unwrap_or("")}\n" +
+  "artifacts: \{artifacts.length()}\n" +
+  "resources: \{resources.length()}\n" +
+  "signing-configured: \{self.signing_configured()}\n" +
+  "signing-prerequisites: \{signing_prerequisites.length()}\n" +
+  "signing-steps: \{signing_steps.length()}\n" +
   "backend: \{optional_string(self.runtime, "backend").unwrap_or("")}\n" +
   "bridge: \{optional_string(self.runtime, "bridgeUrl").unwrap_or("")}\n" +
   "webviews: \{webviews.length()}\n" +
@@ -108,6 +117,64 @@ pub fn BundledRuntimeManifest::bridge_url(
   self : BundledRuntimeManifest,
 ) -> String {
   optional_string(self.runtime, "bridgeUrl").unwrap_or("")
+}
+
+///|
+pub fn BundledRuntimeManifest::artifact_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.bundle, "artifacts").unwrap_or([]).map(json_value_string)
+}
+
+///|
+pub fn BundledRuntimeManifest::resource_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.bundle, "resources").unwrap_or([]).map(json_value_string)
+}
+
+///|
+pub fn BundledRuntimeManifest::signing_json(
+  self : BundledRuntimeManifest,
+) -> String {
+  match optional_object(self.bundle, "signing") {
+    Some(object) => json_object_string(object)
+    None => "{}"
+  }
+}
+
+///|
+pub fn BundledRuntimeManifest::signing_configured(
+  self : BundledRuntimeManifest,
+) -> Bool {
+  match optional_object(self.bundle, "signing") {
+    Some(object) => {
+      let keys : Array[String] = []
+      for key in object.keys() {
+        keys.push(key)
+      }
+      keys.length() > 0
+    }
+    None => false
+  }
+}
+
+///|
+pub fn BundledRuntimeManifest::signing_prerequisite_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.bundle, "signingPrerequisites")
+  .unwrap_or([])
+  .map(json_value_string)
+}
+
+///|
+pub fn BundledRuntimeManifest::signing_step_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.bundle, "signingSteps")
+  .unwrap_or([])
+  .map(json_value_string)
 }
 
 ///|

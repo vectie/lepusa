@@ -5,6 +5,22 @@ test "runtime cli summarizes bundled manifest envelope" {
     #|  "identifier": "dev.vectie.runtime",
     #|  "productName": "Runtime App",
     #|  "target": "linux",
+    #|  "artifacts": [
+    #|    { "kind": "portable-directory", "path": "dist/runtime-app" }
+    #|  ],
+    #|  "resources": [
+    #|    { "kind": "runtime-manifest", "path": "lepusa/runtime.json" }
+    #|  ],
+    #|  "signing": {
+    #|    "identity": "Developer ID",
+    #|    "notarize": false
+    #|  },
+    #|  "signingPrerequisites": ["codesign identity Developer ID"],
+    #|  "signingSteps": [{
+    #|    "name": "sign executable",
+    #|    "tool": "codesign",
+    #|    "command": "codesign --sign Developer ID runtime-app"
+    #|  }],
     #|  "runtime": {
     #|    "backend": "headless",
     #|    "bridgeUrl": "lepusa://runtime/bridge.js",
@@ -31,6 +47,11 @@ test "runtime cli summarizes bundled manifest envelope" {
   assert_true(result.output.contains("identifier: dev.vectie.runtime"))
   assert_true(result.output.contains("product: Runtime App"))
   assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("artifacts: 1"))
+  assert_true(result.output.contains("resources: 1"))
+  assert_true(result.output.contains("signing-configured: true"))
+  assert_true(result.output.contains("signing-prerequisites: 1"))
+  assert_true(result.output.contains("signing-steps: 1"))
   assert_true(result.output.contains("backend: headless"))
   assert_true(result.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(result.output.contains("webviews: 1"))
