@@ -165,22 +165,28 @@ pub fn register(
   ) {
     handle_create_dir(policy, payload)
   })
-  .register_async_fn("fs.readBytes", permission=FileSystemRead, handler=fn(_) {
-    Err("fs.readBytes is not implemented yet")
+  .register_async_fn("fs.readBytes", permission=FileSystemRead, handler=fn(
+    payload,
+  ) {
+    handle_read_bytes(policy, payload)
   })
   .register_async_fn("fs.writeBytes", permission=FileSystemWrite, handler=fn(
-    _,
+    payload,
   ) {
-    Err("fs.writeBytes is not implemented yet")
+    handle_write_bytes(policy, payload)
   })
-  .register_async_fn("fs.list", permission=FileSystemRead, handler=fn(_) {
-    Err("fs.list is not implemented yet")
+  .register_async_fn("fs.list", permission=FileSystemRead, handler=fn(payload) {
+    handle_list(policy, payload)
   })
-  .register_async_fn("fs.metadata", permission=FileSystemRead, handler=fn(_) {
-    Err("fs.metadata is not implemented yet")
+  .register_async_fn("fs.metadata", permission=FileSystemRead, handler=fn(
+    payload,
+  ) {
+    handle_metadata(policy, payload)
   })
-  .register_async_fn("fs.delete", permission=FileSystemWrite, handler=fn(_) {
-    Err("fs.delete is not implemented yet")
+  .register_async_fn("fs.delete", permission=FileSystemWrite, handler=fn(
+    payload,
+  ) {
+    handle_delete(policy, payload)
   })
 }
 
@@ -287,6 +293,170 @@ fn handle_create_dir(
 }
 
 ///|
+fn handle_read_bytes(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~) {
+        Ok(full_path) => {
+          let content = @xfs.read_file_to_bytes(full_path) catch {
+            _ => return Err("could not read filesystem bytes")
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "base64": Json::string(@base64.encode(content.view())),
+              "bytes": Json::number(
+                content.length().to_double(),
+                repr=content.length().to_string(),
+              ),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_write_bytes(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_bytes_payload(payload) {
+    Ok((scope_name, path, content)) =>
+      match policy.resolve(scope_name~, path~, write=true) {
+        Ok(full_path) => {
+          @xfs.write_bytes_to_file(full_path, content) catch {
+            _ => return Err("could not write filesystem bytes")
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "written": Json::boolean(true),
+              "bytes": Json::number(
+                content.length().to_double(),
+                repr=content.length().to_string(),
+              ),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_list(policy : FsPolicy, payload : String) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~) {
+        Ok(full_path) => {
+          let entries = @xfs.read_dir(full_path) catch {
+            _ => return Err("could not list filesystem directory")
+          }
+          entries.sort()
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "entries": Json::array(
+                entries.map(fn(entry) { Json::string(entry) }),
+              ),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_metadata(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~) {
+        Ok(full_path) => {
+          let exists = filesystem_path_exists(full_path)
+          let is_dir = if exists {
+            @xfs.is_dir(full_path) catch {
+              _ => false
+            }
+          } else {
+            false
+          }
+          let byte_count = if exists && !is_dir {
+            let bytes = @xfs.read_file_to_bytes(full_path) catch {
+              _ => Bytes::new(0)
+            }
+            bytes.length()
+          } else {
+            0
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "exists": Json::boolean(exists),
+              "isDirectory": Json::boolean(is_dir),
+              "isFile": Json::boolean(exists && !is_dir),
+              "bytes": Json::number(
+                byte_count.to_double(),
+                repr=byte_count.to_string(),
+              ),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_delete(policy : FsPolicy, payload : String) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~, write=true) {
+        Ok(full_path) => {
+          let existed = filesystem_path_exists(full_path)
+          if existed {
+            let is_dir = @xfs.is_dir(full_path) catch { _ => false }
+            if is_dir {
+              @xfs.remove_dir(full_path) catch {
+                _ => return Err("could not delete filesystem directory")
+              }
+            } else {
+              @xfs.remove_file(full_path) catch {
+                _ => return Err("could not delete filesystem file")
+              }
+            }
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "deleted": Json::boolean(existed),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
 fn decode_path_payload(payload : String) -> Result[(String, String), String] {
   match parse_payload(payload) {
     Ok(Object(object)) => {
@@ -330,6 +500,36 @@ fn decode_text_payload(
 }
 
 ///|
+fn decode_bytes_payload(
+  payload : String,
+) -> Result[(String, String, Bytes), String] {
+  match parse_payload(payload) {
+    Ok(Object(object)) => {
+      let scope_name = required_string_field(object, "scope")
+      let path = required_string_field(object, "path")
+      let encoded = required_string_field(object, "base64")
+      if scope_name == "" {
+        Err("filesystem scope is required")
+      } else if encoded == "" {
+        Err("filesystem base64 content is required")
+      } else {
+        match validate_relative_path(path) {
+          Some(problem) => Err(problem)
+          None => {
+            let content = @base64.decode(encoded) catch {
+              _ => return Err("invalid filesystem base64 content")
+            }
+            Ok((scope_name, path, content))
+          }
+        }
+      }
+    }
+    Ok(_) => Err("filesystem bytes payload must be an object")
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
 fn parse_payload(payload : String) -> Result[Json, String] {
   if payload == "" {
     return Err("filesystem payload is required")
@@ -355,7 +555,7 @@ fn filesystem_path_exists(path : String) -> Bool {
   if is_dir {
     true
   } else {
-    let _ = @xfs.read_file_to_string(path) catch { _ => return false }
+    let _ = @xfs.read_file_to_bytes(path) catch { _ => return false }
     true
   }
 }

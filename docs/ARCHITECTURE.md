@@ -469,9 +469,10 @@ should expose the same small surface:
 `@lepusa/plugins/log` and `@lepusa/plugins/store` are pure cross-platform
 packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, scoped
-relative path policy, and async handlers for scoped text reads, text writes,
-existence checks, and directory creation. `@lepusa/plugins/file_dialog`
-declares file picker routes and scoped default-directory policy.
+relative path policy, and async handlers for scoped text, bytes, list,
+metadata, delete, exists, and directory creation operations.
+`@lepusa/plugins/file_dialog` declares file picker routes and scoped
+default-directory policy.
 `@lepusa/plugins/localhost` declares local service lifecycle and readiness
 routes. `@lepusa/plugins/deep_link` declares app URL scheme registration and
 dispatch routes.

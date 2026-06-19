@@ -140,6 +140,58 @@ async test "fs registry handles scoped text operations" {
 }
 
 ///|
+async test "fs registry handles bytes list metadata and delete" {
+  let root = "/tmp/lepusa-fs-plugin-test"
+  @xfs.create_dir(root) catch {
+    _ => ()
+  }
+  @xfs.create_dir(root + "/binary") catch {
+    _ => ()
+  }
+  let policy = FsPolicy::new().scope(
+    @lepusa.FileSystemScope::new(name="data", root~, writable=true),
+  )
+  let registry = register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = read_write_capability_for_window("main")
+  let write = registry.dispatch_async(
+    fs_request(
+      "writeBytes", "{\"scope\":\"data\",\"path\":\"binary/data.bin\",\"base64\":\"aGVsbG8=\"}",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(write.payload().unwrap_or("").contains("\"bytes\":5"))
+  let read = registry.dispatch_async(
+    fs_request("readBytes", "{\"scope\":\"data\",\"path\":\"binary/data.bin\"}"),
+    capabilities=[grant],
+  )
+  assert_true(read.payload().unwrap_or("").contains("\"base64\":\"aGVsbG8=\""))
+  let list = registry.dispatch_async(
+    fs_request("list", "{\"scope\":\"data\",\"path\":\"binary\"}"),
+    capabilities=[grant],
+  )
+  assert_true(
+    list.payload().unwrap_or("").contains("\"entries\":[\"data.bin\"]"),
+  )
+  let metadata = registry.dispatch_async(
+    fs_request("metadata", "{\"scope\":\"data\",\"path\":\"binary/data.bin\"}"),
+    capabilities=[grant],
+  )
+  assert_true(metadata.payload().unwrap_or("").contains("\"exists\":true"))
+  assert_true(metadata.payload().unwrap_or("").contains("\"isFile\":true"))
+  assert_true(metadata.payload().unwrap_or("").contains("\"bytes\":5"))
+  let deleted = registry.dispatch_async(
+    fs_request("delete", "{\"scope\":\"data\",\"path\":\"binary/data.bin\"}"),
+    capabilities=[grant],
+  )
+  assert_true(deleted.payload().unwrap_or("").contains("\"deleted\":true"))
+  let missing = registry.dispatch_async(
+    fs_request("delete", "{\"scope\":\"data\",\"path\":\"binary/data.bin\"}"),
+    capabilities=[grant],
+  )
+  assert_true(missing.payload().unwrap_or("").contains("\"deleted\":false"))
+}
+
+///|
 async test "fs registry enforces scope policy" {
   let policy = FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="assets", root="/tmp/lepusa-assets"),
@@ -161,5 +213,15 @@ async test "fs registry enforces scope policy" {
   )
   assert_true(
     write is InvokeError("writeText", "filesystem scope is read-only: assets"),
+  )
+  let invalid_bytes = registry.dispatch_async(
+    fs_request(
+      "writeBytes", "{\"scope\":\"assets\",\"path\":\"file.bin\",\"base64\":\"%%%\"}",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(
+    invalid_bytes
+    is InvokeError("writeBytes", "invalid filesystem base64 content"),
   )
 }

@@ -243,8 +243,9 @@ declares `store.get`, `store.set`, `store.delete`, `store.clear`, and
 `@lepusa/plugins/fs` defines the official filesystem command contract and
 scoped path policy. It declares async routes such as `fs.readText`,
 `fs.writeText`, `fs.list`, and `fs.metadata`, plus split read/write capability
-helpers. The package validates named scopes and relative paths; native backends
-own the actual OS filesystem implementation behind those routes.
+helpers. The package validates named scopes and relative paths and provides
+MoonBit handlers for scoped text, bytes, list, metadata, delete, exists, and
+directory creation operations.
 Core `FileSystemScope` values carry named roots through `ProjectManifest`,
 `RuntimePlan`, `RuntimeSession`, and `RuntimeLaunchManifest`.
 

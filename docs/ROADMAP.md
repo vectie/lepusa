@@ -104,8 +104,8 @@ Stabilize the cross-platform core set first:
 
 - dialog: initial platform-neutral command contract exists
 - opener: initial platform-neutral command contract exists
-- fs: initial scoped permission contract, runtime scope manifest, and scoped
-  async text/exists/create-directory handlers exist
+- fs: scoped permission contract, runtime scope manifest, and async scoped
+  text/bytes/list/metadata/delete/exists/create-directory handlers exist
 - fileDialog: initial scoped default-directory contract exists
 - shell: initial platform-neutral command contract exists
 - process: initial explicit process permission contract exists
