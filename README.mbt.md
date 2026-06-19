@@ -60,7 +60,10 @@ For backend and packaging work, the app model can be lowered without pulling in
 product-specific code:
 
 ```moonbit nocheck
+///|
 let runtime = app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview())
+
+///|
 let bundle = @lepusa.BundleConfig::new(
   @lepusa.AppMetadata::new(
     identifier="dev.example.app",
@@ -69,6 +72,19 @@ let bundle = @lepusa.BundleConfig::new(
   ),
 )
 ```
+
+## CLI
+
+The native CLI is intentionally small while the runtime backend is being built:
+
+```bash
+moon run cmd/main --target native -- doctor
+moon run cmd/main --target native -- plan
+moon run cmd/main --target native -- bundle-plan macos
+```
+
+These commands exercise the public planning contracts and give the native
+runtime and bundler work concrete outputs to consume.
 
 ## Boundary
 

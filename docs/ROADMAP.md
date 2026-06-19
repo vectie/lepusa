@@ -41,11 +41,13 @@
 ## Milestone 4: CLI
 
 - Implement:
+  - `lepusa doctor`: validates public planning boundaries.
+  - `lepusa plan`: prints a runtime plan summary.
+  - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa init`
   - `lepusa dev`
   - `lepusa build`
   - `lepusa bundle`
-  - `lepusa doctor`
   - `lepusa plugin new`
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing prerequisites.

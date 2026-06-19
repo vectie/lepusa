@@ -5,9 +5,9 @@
 //   moon add moonbitlang/x
 //
 // Or manually declare it in `import`, for example:
-// import {
-//   "moonbitlang/x@0.4.6",
-// }
+import {
+  "moonbitlang/x@0.4.45",
+}
 
 name = "vectie/lepusa"
 

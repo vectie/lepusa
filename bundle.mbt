@@ -42,6 +42,21 @@ pub fn AppMetadata::executable_name(self : AppMetadata) -> String {
 }
 
 ///|
+pub fn AppMetadata::identifier(self : AppMetadata) -> String {
+  self.identifier
+}
+
+///|
+pub fn AppMetadata::product_name(self : AppMetadata) -> String {
+  self.product_name
+}
+
+///|
+pub fn AppMetadata::version(self : AppMetadata) -> String {
+  self.version
+}
+
+///|
 pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
@@ -75,6 +90,25 @@ pub struct BundlePlan {
 ///|
 pub fn BundlePlan::bundle_name(self : BundlePlan) -> String {
   self.bundle_name
+}
+
+///|
+pub fn BundleTarget::name(self : BundleTarget) -> String {
+  match self {
+    MacOS => "macos"
+    Windows => "windows"
+    Linux => "linux"
+  }
+}
+
+///|
+pub fn BundlePlan::target(self : BundlePlan) -> BundleTarget {
+  self.target
+}
+
+///|
+pub fn BundlePlan::identifier(self : BundlePlan) -> String {
+  self.metadata.identifier()
 }
 
 ///|

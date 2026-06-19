@@ -48,6 +48,39 @@ pub fn RuntimePlan::backend(self : RuntimePlan) -> RuntimeBackend {
 }
 
 ///|
+pub fn RuntimeBackend::name(self : RuntimeBackend) -> String {
+  match self {
+    SystemWebView => "system-webview"
+    Headless => "headless"
+  }
+}
+
+///|
+pub fn RuntimePlan::asset_protocol(self : RuntimePlan) -> String {
+  self.asset_protocol
+}
+
+///|
+pub fn RuntimePlan::devtools(self : RuntimePlan) -> Bool {
+  self.devtools
+}
+
+///|
+pub fn RuntimePlan::window_count(self : RuntimePlan) -> Int {
+  self.launch.window_count()
+}
+
+///|
+pub fn RuntimePlan::plugin_count(self : RuntimePlan) -> Int {
+  self.launch.plugin_count()
+}
+
+///|
+pub fn RuntimePlan::capability_count(self : RuntimePlan) -> Int {
+  self.launch.capability_count()
+}
+
+///|
 pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
   self.command_routes.copy()
 }

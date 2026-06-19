@@ -215,6 +215,25 @@ Lepusa's bundler should own platform templates:
 Consumer apps should provide metadata, assets, capabilities, sidecars, and
 signing configuration. They should not need to maintain native launcher code.
 
+## CLI Boundary
+
+The CLI should be thin over public framework contracts. Early commands should
+exercise planning without reaching into private structs:
+
+```text
+lepusa doctor
+  -> validates app/runtime planning
+
+lepusa plan
+  -> prints runtime backend, windows, plugins, capabilities, command routes
+
+lepusa bundle-plan <target>
+  -> prints platform bundle name, executable name, and app identifier
+```
+
+Native run/build/bundle commands should consume the same `RuntimePlan` and
+`BundlePlan` objects rather than maintaining parallel configuration paths.
+
 ## Non-Goals
 
 - Do not require Rust/Tauri glue in each MoonBit app.

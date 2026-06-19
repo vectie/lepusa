@@ -13,13 +13,28 @@ pub fn LaunchPlan::window_count(self : LaunchPlan) -> Int {
 }
 
 ///|
+pub fn LaunchPlan::windows(self : LaunchPlan) -> Array[WindowConfig] {
+  self.windows.copy()
+}
+
+///|
 pub fn LaunchPlan::plugin_count(self : LaunchPlan) -> Int {
   self.plugins.length()
 }
 
 ///|
+pub fn LaunchPlan::plugins(self : LaunchPlan) -> Array[Plugin] {
+  self.plugins.copy()
+}
+
+///|
 pub fn LaunchPlan::capability_count(self : LaunchPlan) -> Int {
   self.capabilities.length()
+}
+
+///|
+pub fn LaunchPlan::capabilities(self : LaunchPlan) -> Array[Capability] {
+  self.capabilities.copy()
 }
 
 ///|

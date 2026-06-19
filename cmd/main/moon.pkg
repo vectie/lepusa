@@ -1,7 +1,13 @@
-// import {
-//   "vectie/lepusa" @lib,
-// }
+import {
+  "moonbitlang/x/sys",
+  "vectie/lepusa",
+}
+
+supported_targets = "+native"
 
 options(
+  "bin-name": "lepusa",
+  "bin-target": "native",
   "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
 )
