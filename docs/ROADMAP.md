@@ -113,8 +113,8 @@ desktop core is reliable.
 - macOS `.app` and DMG path.
 - Windows executable and installer path.
 - Linux desktop integration and portable bundle path.
-- `BundlePlan::files()` emits platform metadata and one runtime manifest with
-  per-window bridge initialization scripts.
+- `BundlePlan::files()` emits platform metadata, launcher stubs, and one
+  runtime manifest with per-window bridge initialization scripts.
 - `BundlePlan::resources()` emits target resource mappings for app icons and
   packaged asset directories.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and

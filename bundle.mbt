@@ -422,7 +422,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
         ),
         BundleFile::new(
           path="\{self.bundle_name}/Contents/MacOS/\{self.executable_name}",
-          content="#!/bin/sh\nexec lepusa-runtime \"$@\"\n",
+          content=macos_launcher(),
           executable=true,
         ),
       ]
@@ -432,12 +432,21 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
           path="\{self.executable_name}/app.manifest.xml",
           content=self.windows_manifest(),
         ),
+        BundleFile::new(
+          path="\{self.executable_name}/\{self.executable_name}.cmd",
+          content=windows_launcher(),
+        ),
       ]
     Linux =>
       [
         BundleFile::new(
           path="\{self.executable_name}/\{self.executable_name}.desktop",
           content=self.desktop_entry(),
+        ),
+        BundleFile::new(
+          path="\{self.executable_name}/\{self.executable_name}",
+          content=linux_launcher(),
+          executable=true,
         ),
       ]
   }
@@ -568,6 +577,36 @@ fn BundlePlan::desktop_entry(self : BundlePlan) -> String {
     "Categories=Utility;",
     "",
   ].join("\n")
+}
+
+///|
+fn macos_launcher() -> String {
+  (
+    #|#!/bin/sh
+    #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+    #|exec lepusa-runtime --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
+    #|
+  )
+}
+
+///|
+fn windows_launcher() -> String {
+  (
+    #|@echo off
+    #|set "APP_DIR=%~dp0"
+    #|lepusa-runtime.exe --manifest "%APP_DIR%lepusa\runtime.json" %*
+    #|
+  )
+}
+
+///|
+fn linux_launcher() -> String {
+  (
+    #|#!/bin/sh
+    #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    #|exec lepusa-runtime --manifest "$APP_DIR/lepusa/runtime.json" "$@"
+    #|
+  )
 }
 
 ///|

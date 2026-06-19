@@ -408,8 +408,8 @@ signing configuration. They should not need to maintain native launcher code.
 metadata plus shared runtime assets:
 
 - macOS: `Contents/Info.plist`, launcher stub, runtime manifest
-- Windows: app manifest, runtime manifest
-- Linux: `.desktop` entry, runtime manifest
+- Windows: app manifest, command launcher, runtime manifest
+- Linux: `.desktop` entry, executable launcher, runtime manifest
 
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.

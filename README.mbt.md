@@ -377,8 +377,9 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 `localServices` for native runners to supervise.
 
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
-`BundlePlan::files()`: platform metadata plus `lepusa/runtime.json`, with
-per-window bridge initialization scripts embedded in the runtime manifest.
+`BundlePlan::files()`: platform metadata, manifest-aware launcher stubs, and
+`lepusa/runtime.json`, with per-window bridge initialization scripts embedded
+in the runtime manifest.
 
 `lepusa bundle-write` materializes those planned files under an output
 directory. Project bundles carry registered official plugin routes into

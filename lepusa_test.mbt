@@ -728,10 +728,10 @@ test "bundle plans include packaged asset resources" {
           match plan.files() {
             Ok(files) => {
               assert_true(
-                files[1].content().contains("\"package:lepusa/assets/main\""),
+                files[2].content().contains("\"package:lepusa/assets/main\""),
               )
-              assert_false(files[1].content().contains("\"package:dist\""))
-              assert_true(files[1].content().contains("\"kind\":\"asset\""))
+              assert_false(files[2].content().contains("\"package:dist\""))
+              assert_true(files[2].content().contains("\"kind\":\"asset\""))
             }
             Err(_) => abort("unexpected invalid bundle files")
           }
@@ -851,6 +851,15 @@ test "bundle plans derive executable and package names from metadata" {
               assert_true(files[0].content().contains("CFBundleIdentifier"))
               assert_true(files[0].content().contains("CFBundleIconFile"))
               assert_eq(
+                files[1].path(),
+                "lepusa-example.app/Contents/MacOS/lepusa-example",
+              )
+              assert_true(files[1].executable())
+              assert_true(files[1].content().contains("lepusa-runtime"))
+              assert_true(
+                files[1].content().contains("Resources/lepusa/runtime.json"),
+              )
+              assert_eq(
                 files[2].path(),
                 "lepusa-example.app/Contents/Resources/lepusa/runtime.json",
               )
@@ -896,11 +905,16 @@ test "bundle files include platform metadata" {
           match plan.files() {
             Ok(files) => {
               assert_eq(plan.signing_prerequisites().length(), 2)
+              assert_eq(files.length(), 3)
               assert_eq(files[0].path(), "files-app/files-app.desktop")
               assert_true(files[0].content().contains("Name=Files App"))
-              assert_true(files[1].content().contains("\"target\":\"linux\""))
+              assert_eq(files[1].path(), "files-app/files-app")
+              assert_true(files[1].executable())
+              assert_true(files[1].content().contains("lepusa-runtime"))
+              assert_true(files[1].content().contains("lepusa/runtime.json"))
+              assert_true(files[2].content().contains("\"target\":\"linux\""))
               assert_true(
-                files[1].content().contains("\"name\":\"package signing key\""),
+                files[2].content().contains("\"name\":\"package signing key\""),
               )
             }
             Err(_) => abort("unexpected invalid linux bundle files")

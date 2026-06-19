@@ -122,7 +122,7 @@ test "bundle plan supports target selection" {
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
-  assert_true(result.output.contains("files: 2"))
+  assert_true(result.output.contains("files: 3"))
 }
 
 ///|
@@ -898,15 +898,20 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 2"))
-  assert_true(result.output.contains("files: 2"))
+  assert_true(result.output.contains("files: 3"))
   let bundle_root = root + "/lepusa-example"
   let desktop_path = bundle_root + "/lepusa-example.desktop"
+  let launcher_path = bundle_root + "/lepusa-example"
   let runtime_path = bundle_root + "/lepusa/runtime.json"
   assert_true(@fs.exists(desktop_path))
+  assert_true(@fs.exists(launcher_path))
   assert_true(@fs.exists(runtime_path))
   assert_true(
     @fs.read_file(desktop_path).text().contains("Name=Lepusa Example"),
   )
+  let launcher = @fs.read_file(launcher_path).text()
+  assert_true(launcher.contains("lepusa-runtime"))
+  assert_true(launcher.contains("lepusa/runtime.json"))
   let runtime_manifest = @fs.read_file(runtime_path).text()
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))
   assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
@@ -1025,6 +1030,7 @@ async test "build and bundle aliases materialize planned files" {
   assert_eq(bundle.exit_code, 0)
   assert_true(bundle.output.contains("target: windows"))
   assert_true(@fs.exists(bundle_root + "/lepusa-example/app.manifest.xml"))
+  assert_true(@fs.exists(bundle_root + "/lepusa-example/lepusa-example.cmd"))
 }
 
 ///|
