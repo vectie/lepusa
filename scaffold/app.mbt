@@ -101,7 +101,7 @@ fn project_moon_mod() -> String {
     #|description = "A standalone Lepusa desktop app."
     #|
     #|import {
-    #|  "vectie/lepusa"
+    #|  "vectie/lepusa@0.1.0"
     #|}
     #|
     #|options(
@@ -132,7 +132,7 @@ fn project_lepusa_json() -> String {
     #|  "identifier": "dev.local.lepusa-app",
     #|  "productName": "Lepusa App",
     #|  "version": "0.1.0",
-    #|  "rootHtml": "<main>Hello Lepusa</main>",
+    #|  "rootHtml": "<main><h1>Lepusa App</h1><p>Count: 0</p><button data-route=\"core.invoke\">Increment</button></main>",
     #|  "runtime": {
     #|    "backend": "system-webview",
     #|    "assetProtocol": "lepusa",
@@ -192,8 +192,39 @@ fn project_lepusa_json() -> String {
 fn project_main_mbt() -> String {
   (
     #|///|
+    #|struct Model {
+    #|  count : Int
+    #|} derive(Debug, Eq)
+    #|
+    #|///|
+    #|enum Msg {
+    #|  Increment
+    #|  Reset
+    #|} derive(Debug, Eq)
+    #|
+    #|///|
+    #|fn update(msg : Msg, model : Model) -> (Model, @lepusa.Cmd) {
+    #|  match msg {
+    #|    Increment =>
+    #|      ({ count: model.count + 1 }, @lepusa.Cmd::effect("counter.increment"))
+    #|    Reset => ({ count: 0 }, @lepusa.Cmd::effect("counter.reset"))
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn view(_dispatch : @lepusa.Dispatch[Msg], model : Model) -> @lepusa.Html {
+    #|  @lepusa.Html::text(
+    #|    "<main><h1>Lepusa App</h1><p>Count: \{model.count}</p><button data-route=\"core.invoke\">Increment</button></main>",
+    #|  )
+    #|}
+    #|
+    #|///|
     #|fn main {
-    #|  let root = @lepusa.simple_cell(@lepusa.Html::text("<main>Hello Lepusa</main>"))
+    #|  let (_, root) = @lepusa.cell_with_dispatch(
+    #|    model={ count: 0 },
+    #|    update=update,
+    #|    view=view,
+    #|  )
     #|  let app = @lepusa.new(root)
     #|    .window(title="Lepusa App", width=1000, height=720)
     #|    .with_startup(@lepusa.Cmd::effect("boot"))

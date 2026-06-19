@@ -111,7 +111,7 @@ fn plugin_moon_mod(plugin_name : String) -> String {
     #|description = "A standalone Lepusa plugin."
     #|
     #|import {
-    #|  "vectie/lepusa"
+    #|  "vectie/lepusa@0.1.0"
     #|}
     #|
     #|options(
