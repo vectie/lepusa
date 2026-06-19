@@ -8,6 +8,7 @@ pub struct RuntimeLaunchManifest {
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
   startup_actions : Array[RuntimeAction]
+  lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -74,6 +75,7 @@ pub fn RuntimePlan::launch_manifest(
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
   let virtual_files : Array[RuntimeVirtualAsset] = []
   let startup_actions : Array[RuntimeAction] = []
+  let lifecycle_hooks : Array[RuntimeLifecycleHook] = []
   let problems : Array[String] = []
   for window in self.windows() {
     match
@@ -104,6 +106,16 @@ pub fn RuntimePlan::launch_manifest(
         problems.push(problem)
       }
   }
+  match self.lifecycle_hooks() {
+    Ok(hooks) =>
+      for hook in hooks {
+        lifecycle_hooks.push(hook)
+      }
+    Err(hook_problems) =>
+      for problem in hook_problems {
+        problems.push(problem)
+      }
+  }
   if problems.is_empty() {
     Ok({
       backend: self.backend().name(),
@@ -114,6 +126,7 @@ pub fn RuntimePlan::launch_manifest(
       protocol_mappings,
       virtual_files,
       startup_actions,
+      lifecycle_hooks,
       command_routes: self.command_routes(),
       registered_routes: registered_routes.copy(),
     })
@@ -220,6 +233,13 @@ pub fn RuntimeLaunchManifest::startup_actions(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::lifecycle_hooks(
+  self : RuntimeLaunchManifest,
+) -> Array[RuntimeLifecycleHook] {
+  self.lifecycle_hooks.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::command_routes(
   self : RuntimeLaunchManifest,
 ) -> Array[String] {
@@ -245,6 +265,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_binding_json).join(",")}],",
     "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
+    "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",

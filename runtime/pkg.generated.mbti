@@ -37,10 +37,13 @@ pub struct RuntimeHost {
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
+pub fn RuntimeHost::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
+pub fn RuntimeHost::lifecycle_hooks(Self) -> Result[Array[@lepusa.RuntimeLifecycleHook], Array[String]]
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
+pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
 
 pub struct RuntimeProtocolMapping {
@@ -59,6 +62,8 @@ pub struct RuntimeSession {
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
+  startup_actions : Array[@lepusa.RuntimeAction]
+  lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
   bridge_source : String
@@ -69,9 +74,11 @@ pub fn RuntimeSession::bridge_source(Self) -> String
 pub fn RuntimeSession::bridge_url(Self) -> String
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
+pub fn RuntimeSession::lifecycle_hooks(Self) -> Array[@lepusa.RuntimeLifecycleHook]
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
 pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]
+pub fn RuntimeSession::startup_actions(Self) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
 pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
 

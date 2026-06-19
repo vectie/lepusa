@@ -6,6 +6,8 @@ pub struct RuntimeSession {
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
+  startup_actions : Array[@lepusa.RuntimeAction]
+  lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
   bridge_source : String
@@ -40,6 +42,8 @@ pub struct RuntimeVirtualFile {
 fn RuntimeSession::from_plan(
   plan : @lepusa.RuntimePlan,
   bridge_source~ : String,
+  startup_actions~ : Array[@lepusa.RuntimeAction],
+  lifecycle_hooks~ : Array[@lepusa.RuntimeLifecycleHook],
   registered_routes~ : Array[String],
 ) -> RuntimeSession {
   let windows : Array[RuntimeWindow] = []
@@ -63,6 +67,8 @@ fn RuntimeSession::from_plan(
     windows,
     protocol_mappings,
     virtual_files,
+    startup_actions,
+    lifecycle_hooks,
     command_routes: plan.command_routes(),
     registered_routes,
     bridge_source,
@@ -132,6 +138,20 @@ pub fn RuntimeSession::virtual_files(
   self : RuntimeSession,
 ) -> Array[RuntimeVirtualFile] {
   self.virtual_files.copy()
+}
+
+///|
+pub fn RuntimeSession::startup_actions(
+  self : RuntimeSession,
+) -> Array[@lepusa.RuntimeAction] {
+  self.startup_actions.copy()
+}
+
+///|
+pub fn RuntimeSession::lifecycle_hooks(
+  self : RuntimeSession,
+) -> Array[@lepusa.RuntimeLifecycleHook] {
+  self.lifecycle_hooks.copy()
 }
 
 ///|

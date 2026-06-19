@@ -45,8 +45,9 @@ fn main {
     view=(dispatch, model) => render_app(dispatch, model),
   )
   let app = @lepusa.new(cell)
-  app.with_startup(load_initial_state(dispatch))
-  app.window(title="Hello Lepusa", width=1000, height=720)
+    .with_startup(load_initial_state(dispatch))
+    .on_shutdown(persist_state(dispatch))
+    .window(title="Hello Lepusa", width=1000, height=720)
   match app.launch_plan() {
     Ok(plan) => boot_native_runtime(plan)
     Err(problems) => fail_fast(problems)
@@ -113,6 +114,10 @@ runtime and bundler work concrete outputs to consume.
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
 routes for metadata and bundling.
+
+Lifecycle hooks lower to the same backend action model as startup commands, so
+platform backends can handle shutdown and window-close events without reading
+application construction state.
 
 When a window omits `source`, `App` lowers the root `Cell` into a generated
 Rabbita-style HTML document served from the runtime manifest as a virtual file.

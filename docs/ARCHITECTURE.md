@@ -44,6 +44,7 @@ let (dispatch, cell) = @lepusa.cell_with_dispatch(
 )
 let app = @lepusa.new(cell)
   .with_startup(load_initial_state(dispatch))
+  .on_window_close_requested("main", persist_state(dispatch))
   .window(
     title="Example",
     width=1000,
@@ -232,6 +233,12 @@ per-WebView `eventDispatchHook` from `RuntimeWebViewBoot` or
 `RuntimeAction` values. Startup commands become `startupActions` in the launch
 manifest, so native runners can emit frontend events, navigate windows, and
 run named effects without understanding the authoring `Cmd` tree.
+Lifecycle hooks use the same lowering path. App authors attach commands to
+`AppStarted`, `AppWillExit`, `WindowCloseRequested(label)`, or
+`WindowClosed(label)`, and platform backends call
+`RuntimeHost::lifecycle_actions(event)` from their event loop.
+`startupActions` is the immediate boot queue; `lifecycleHooks` is the event-loop
+view of the same model for native runners that dispatch lifecycle events.
 
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
@@ -242,8 +249,8 @@ without re-reading `App`, `WindowConfig`, or manifest state.
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol
 mappings, inline virtual files with MIME types, command routes, registered
-native routes, per-window allowed routes, and document-start scripts into stable
-JSON.
+native routes, per-window allowed routes, lifecycle hooks, and document-start
+scripts into stable JSON.
 `RuntimeHost::launch_manifest()` adds the concrete registered native routes
 from a command registry, while bundle and platform packages consume the same
 manifest instead of inventing their own runtime files.

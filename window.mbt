@@ -38,6 +38,11 @@ pub fn WindowConfig::with_source(
 }
 
 ///|
+pub fn WindowConfig::label(self : WindowConfig) -> String {
+  self.label
+}
+
+///|
 fn WindowConfig::with_default_source(
   self : WindowConfig,
   root : Cell,

@@ -23,12 +23,17 @@ pub struct App {
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Eq, @debug.Debug)
 pub fn App::launch_plan(Self) -> Result[LaunchPlan, Array[String]]
+pub fn App::on_shutdown(Self, Cmd) -> Self
+pub fn App::on_window_close_requested(Self, String, Cmd) -> Self
+pub fn App::on_window_closed(Self, String, Cmd) -> Self
 pub fn App::runtime_plan(Self, config? : RuntimeConfig) -> Result[RuntimePlan, Array[String]]
 pub fn App::validate(Self) -> Array[String]
 pub fn App::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
 pub fn App::with_capability(Self, Capability) -> Self
+pub fn App::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 pub fn App::with_plugin(Self, Plugin) -> Self
 pub fn App::with_startup(Self, Cmd) -> Self
 pub fn App::with_window(Self, WindowConfig) -> Self
@@ -229,15 +234,37 @@ pub struct LaunchPlan {
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Eq, @debug.Debug)
 pub fn LaunchPlan::capabilities(Self) -> Array[Capability]
 pub fn LaunchPlan::capability_count(Self) -> Int
 pub fn LaunchPlan::command_routes(Self) -> Array[String]
+pub fn LaunchPlan::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn LaunchPlan::plugin_count(Self) -> Int
 pub fn LaunchPlan::plugins(Self) -> Array[Plugin]
 pub fn LaunchPlan::startup(Self) -> Cmd
 pub fn LaunchPlan::window_count(Self) -> Int
 pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
+
+pub(all) enum LifecycleEvent {
+  AppStarted
+  AppWillExit
+  WindowCloseRequested(String)
+  WindowClosed(String)
+} derive(Eq, @debug.Debug)
+pub fn LifecycleEvent::app_started() -> Self
+pub fn LifecycleEvent::app_will_exit() -> Self
+pub fn LifecycleEvent::to_json(Self) -> String
+pub fn LifecycleEvent::window_close_requested(String) -> Self
+pub fn LifecycleEvent::window_closed(String) -> Self
+
+pub struct LifecycleHook {
+  event : LifecycleEvent
+  command : Cmd
+} derive(Eq, @debug.Debug)
+pub fn LifecycleHook::command(Self) -> Cmd
+pub fn LifecycleHook::event(Self) -> LifecycleEvent
+pub fn LifecycleHook::new(LifecycleEvent, Cmd) -> Self
 
 type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
 
@@ -275,20 +302,23 @@ pub struct ProjectManifest {
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
 } derive(Eq, @debug.Debug)
 pub fn ProjectManifest::app(Self, Cell) -> App
 pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget) -> Result[BundlePlan, Array[String]]
 pub fn ProjectManifest::capabilities(Self) -> Array[Capability]
 pub fn ProjectManifest::launch_plan(Self, Cell) -> Result[LaunchPlan, Array[String]]
+pub fn ProjectManifest::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn ProjectManifest::metadata(Self) -> AppMetadata
-pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], startup? : Cmd, runtime? : RuntimeConfig) -> Self
+pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], startup? : Cmd, lifecycle_hooks? : Array[LifecycleHook], runtime? : RuntimeConfig) -> Self
 pub fn ProjectManifest::plugins(Self) -> Array[Plugin]
 pub fn ProjectManifest::runtime(Self) -> RuntimeConfig
 pub fn ProjectManifest::runtime_plan(Self, Cell) -> Result[RuntimePlan, Array[String]]
 pub fn ProjectManifest::validate(Self) -> Array[String]
 pub fn ProjectManifest::windows(Self) -> Array[WindowConfig]
 pub fn ProjectManifest::with_capability(Self, Capability) -> Self
+pub fn ProjectManifest::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 pub fn ProjectManifest::with_plugin(Self, Plugin) -> Self
 pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self
 pub fn ProjectManifest::with_startup(Self, Cmd) -> Self
@@ -392,6 +422,7 @@ pub struct RuntimeLaunchManifest {
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
   startup_actions : Array[RuntimeAction]
+  lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -400,6 +431,7 @@ pub fn RuntimeLaunchManifest::backend(Self) -> String
 pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
 pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
+pub fn RuntimeLaunchManifest::lifecycle_hooks(Self) -> Array[RuntimeLifecycleHook]
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
@@ -407,6 +439,15 @@ pub fn RuntimeLaunchManifest::startup_actions(Self) -> Array[RuntimeAction]
 pub fn RuntimeLaunchManifest::to_json(Self) -> String
 pub fn RuntimeLaunchManifest::virtual_files(Self) -> Array[RuntimeVirtualAsset]
 pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]
+
+pub struct RuntimeLifecycleHook {
+  event : LifecycleEvent
+  actions : Array[RuntimeAction]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeLifecycleHook::actions(Self) -> Array[RuntimeAction]
+pub fn RuntimeLifecycleHook::event(Self) -> LifecycleEvent
+pub fn RuntimeLifecycleHook::new(LifecycleEvent, Array[RuntimeAction]) -> Self
+pub fn RuntimeLifecycleHook::to_json(Self) -> String
 
 pub struct RuntimePlan {
   launch : LaunchPlan
@@ -425,6 +466,8 @@ pub fn RuntimePlan::capability_count(Self) -> Int
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
+pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[RuntimeAction], Array[String]]
+pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::window_command_routes(Self, String) -> Array[String]
@@ -518,6 +561,7 @@ pub struct WindowConfig {
   title_bar : TitleBarStyle
   source : Source?
 } derive(Eq, @debug.Debug)
+pub fn WindowConfig::label(Self) -> String
 pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
 pub fn WindowConfig::resolve(Self, asset_protocol? : String) -> Result[ResolvedWindow, Array[String]]
 pub fn WindowConfig::validate(Self) -> Array[String]

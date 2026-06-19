@@ -5,6 +5,7 @@ pub struct LaunchPlan {
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Debug, Eq)
 
 ///|
@@ -54,17 +55,30 @@ pub fn LaunchPlan::startup(self : LaunchPlan) -> Cmd {
 }
 
 ///|
+pub fn LaunchPlan::lifecycle_hooks(self : LaunchPlan) -> Array[LifecycleHook] {
+  self.lifecycle_hooks.copy()
+}
+
+///|
 pub struct App {
   root : Cell
   windows : Array[WindowConfig]
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Debug, Eq)
 
 ///|
 pub fn new(root : Cell) -> App {
-  { root, windows: [], plugins: [], capabilities: [], startup: None }
+  {
+    root,
+    windows: [],
+    plugins: [],
+    capabilities: [],
+    startup: None,
+    lifecycle_hooks: [],
+  }
 }
 
 ///|
@@ -118,14 +132,52 @@ pub fn App::with_startup(self : App, startup : Cmd) -> App {
 }
 
 ///|
+pub fn App::with_lifecycle(
+  self : App,
+  event : LifecycleEvent,
+  command : Cmd,
+) -> App {
+  let lifecycle_hooks = self.lifecycle_hooks.copy()
+  lifecycle_hooks.push(LifecycleHook::new(event, command))
+  { ..self, lifecycle_hooks, }
+}
+
+///|
+pub fn App::on_shutdown(self : App, command : Cmd) -> App {
+  self.with_lifecycle(AppWillExit, command)
+}
+
+///|
+pub fn App::on_window_close_requested(
+  self : App,
+  label : String,
+  command : Cmd,
+) -> App {
+  self.with_lifecycle(WindowCloseRequested(label), command)
+}
+
+///|
+pub fn App::on_window_closed(self : App, label : String, command : Cmd) -> App {
+  self.with_lifecycle(WindowClosed(label), command)
+}
+
+///|
 pub fn App::validate(self : App) -> Array[String] {
   let problems : Array[String] = []
   if self.windows.is_empty() {
     problems.push("at least one window is required")
   }
-  for window in self.materialized_windows() {
+  let windows = self.materialized_windows()
+  let labels : Array[String] = []
+  for window in windows {
     for problem in window.validate_for_app() {
       problems.push(problem)
+    }
+    let label = window.label()
+    if label != "" && labels.contains(label) {
+      problems.push("window label must be unique: \{label}")
+    } else {
+      labels.push(label)
     }
   }
   for plugin in self.plugins {
@@ -135,6 +187,11 @@ pub fn App::validate(self : App) -> Array[String] {
   }
   for capability in self.capabilities {
     for problem in capability.validate() {
+      problems.push(problem)
+    }
+  }
+  for hook in self.lifecycle_hooks {
+    for problem in hook.event().validate(windows) {
       problems.push(problem)
     }
   }
@@ -151,6 +208,7 @@ pub fn App::launch_plan(self : App) -> Result[LaunchPlan, Array[String]] {
       plugins: self.plugins.copy(),
       capabilities: self.capabilities.copy(),
       startup: self.startup,
+      lifecycle_hooks: self.lifecycle_hooks.copy(),
     })
   } else {
     Err(problems)

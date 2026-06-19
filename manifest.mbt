@@ -5,6 +5,7 @@ pub struct ProjectManifest {
   plugins : Array[Plugin]
   capabilities : Array[Capability]
   startup : Cmd
+  lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
 } derive(Debug, Eq)
 
@@ -15,9 +16,18 @@ pub fn ProjectManifest::new(
   plugins? : Array[Plugin] = [],
   capabilities? : Array[Capability] = [],
   startup? : Cmd = None,
+  lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
 ) -> ProjectManifest {
-  { metadata, windows, plugins, capabilities, startup, runtime }
+  {
+    metadata,
+    windows,
+    plugins,
+    capabilities,
+    startup,
+    lifecycle_hooks,
+    runtime,
+  }
 }
 
 ///|
@@ -45,6 +55,13 @@ pub fn ProjectManifest::capabilities(
 ///|
 pub fn ProjectManifest::runtime(self : ProjectManifest) -> RuntimeConfig {
   self.runtime
+}
+
+///|
+pub fn ProjectManifest::lifecycle_hooks(
+  self : ProjectManifest,
+) -> Array[LifecycleHook] {
+  self.lifecycle_hooks.copy()
 }
 
 ///|
@@ -86,6 +103,17 @@ pub fn ProjectManifest::with_startup(
 }
 
 ///|
+pub fn ProjectManifest::with_lifecycle(
+  self : ProjectManifest,
+  event : LifecycleEvent,
+  command : Cmd,
+) -> ProjectManifest {
+  let lifecycle_hooks = self.lifecycle_hooks.copy()
+  lifecycle_hooks.push(LifecycleHook::new(event, command))
+  { ..self, lifecycle_hooks, }
+}
+
+///|
 pub fn ProjectManifest::with_runtime(
   self : ProjectManifest,
   runtime : RuntimeConfig,
@@ -102,9 +130,16 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   if self.windows.is_empty() {
     problems.push("at least one window is required")
   }
+  let labels : Array[String] = []
   for window in self.windows {
     for problem in window.validate_for_app() {
       problems.push(problem)
+    }
+    let label = window.label()
+    if label != "" && labels.contains(label) {
+      problems.push("window label must be unique: \{label}")
+    } else {
+      labels.push(label)
     }
   }
   for plugin in self.plugins {
@@ -114,6 +149,11 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   }
   for capability in self.capabilities {
     for problem in capability.validate() {
+      problems.push(problem)
+    }
+  }
+  for hook in self.lifecycle_hooks {
+    for problem in hook.event().validate(self.windows) {
       problems.push(problem)
     }
   }
@@ -131,6 +171,9 @@ pub fn ProjectManifest::app(self : ProjectManifest, root : Cell) -> App {
   }
   for capability in self.capabilities {
     app = app.with_capability(capability)
+  }
+  for hook in self.lifecycle_hooks {
+    app = app.with_lifecycle(hook.event(), hook.command())
   }
   app
 }

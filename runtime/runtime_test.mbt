@@ -13,6 +13,8 @@ fn test_plan() -> @lepusa.RuntimePlan {
     .with_capability(
       @lepusa.Capability::new("core").window("main").command("core.invoke"),
     )
+    .with_startup(@lepusa.Cmd::effect("boot"))
+    .on_shutdown(@lepusa.Cmd::effect("flush"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => plan
     Err(_) => abort("unexpected invalid runtime plan")
@@ -28,6 +30,9 @@ test "runtime host snapshots windows protocols and bridge" {
       assert_eq(session.asset_protocol(), "lepusa")
       assert_eq(session.command_routes()[0], "core.invoke")
       assert_eq(session.registered_routes().length(), 0)
+      assert_true(session.startup_actions()[0] is RuntimeEffect("boot"))
+      assert_true(session.lifecycle_hooks()[0].event() is AppStarted)
+      assert_true(session.lifecycle_hooks()[1].event() is AppWillExit)
       assert_true(session.bridge_source().contains("__lepusaInvoke"))
       let windows = session.windows()
       assert_eq(windows.length(), 1)
@@ -133,6 +138,9 @@ test "runtime host serializes native launch manifest" {
       assert_eq(manifest.virtual_files().length(), 1)
       assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
       assert_eq(manifest.virtual_files()[0].content(), "<main>runtime</main>")
+      assert_true(manifest.startup_actions()[0] is RuntimeEffect("boot"))
+      assert_true(manifest.lifecycle_hooks()[0].event() is AppStarted)
+      assert_true(manifest.lifecycle_hooks()[1].event() is AppWillExit)
       assert_eq(manifest.command_routes()[0], "core.invoke")
       assert_eq(manifest.registered_routes()[0], "core.invoke")
       let json = manifest.to_json()
@@ -143,6 +151,8 @@ test "runtime host serializes native launch manifest" {
       assert_true(
         json.contains("\"eventDispatchHook\":\"__lepusaDispatchEvent\""),
       )
+      assert_true(json.contains("\"lifecycleHooks\""))
+      assert_true(json.contains("\"kind\":\"app-will-exit\""))
       assert_true(json.contains("\"registeredRoutes\":[\"core.invoke\"]"))
     }
     Err(_) => abort("unexpected invalid runtime launch manifest")

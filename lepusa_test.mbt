@@ -260,6 +260,64 @@ test "runtime plans lower commands to backend actions" {
 }
 
 ///|
+test "runtime plans lower lifecycle hooks to backend actions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main")
+    .with_startup(@lepusa.Cmd::effect("boot"))
+    .on_shutdown(@lepusa.Cmd::effect("flush"))
+    .on_window_close_requested(
+      "main",
+      @lepusa.Cmd::emit(
+        @lepusa.Event::new("close-requested"),
+        target=WindowTarget("main"),
+      ),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      match plan.startup_actions() {
+        Ok(actions) => assert_true(actions[0] is RuntimeEffect("boot"))
+        Err(_) => abort("unexpected invalid startup actions")
+      }
+      match plan.lifecycle_actions(AppWillExit) {
+        Ok(actions) => assert_true(actions[0] is RuntimeEffect("flush"))
+        Err(_) => abort("unexpected invalid shutdown actions")
+      }
+      match plan.lifecycle_actions(WindowCloseRequested("main")) {
+        Ok(actions) =>
+          assert_true(actions[0] is RuntimeEmit(WindowTarget("main"), _))
+        Err(_) => abort("unexpected invalid close actions")
+      }
+      match plan.lifecycle_hooks() {
+        Ok(hooks) => {
+          assert_eq(hooks.length(), 3)
+          assert_true(hooks[0].event() is AppStarted)
+          assert_true(hooks[1].event() is AppWillExit)
+          assert_true(hooks[2].event() is WindowCloseRequested("main"))
+        }
+        Err(_) => abort("unexpected invalid lifecycle hooks")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "app validation rejects duplicate and missing lifecycle windows" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let duplicate = @lepusa.new(root)
+    .window(label="main")
+    .window(label="main")
+    .validate()
+  assert_true(duplicate.contains("window label must be unique: main"))
+  let missing = @lepusa.new(root)
+    .window(label="main")
+    .on_window_closed("missing", @lepusa.Cmd::effect("closed"))
+    .validate()
+  assert_true(missing.contains("lifecycle window not found: missing"))
+}
+
+///|
 test "runtime action lowering reports invalid commands" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(label="main")
@@ -666,10 +724,15 @@ test "project manifests build runtime and bundle plans" {
     )
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
     .with_capability(@lepusa.Capability::new("core").permission(Notification))
+    .with_lifecycle(AppWillExit, @lepusa.Cmd::effect("flush"))
   match manifest.runtime_plan(root) {
     Ok(runtime) => {
       assert_eq(runtime.window_count(), 1)
       assert_eq(runtime.command_routes()[0], "core.invoke")
+      match runtime.lifecycle_actions(AppWillExit) {
+        Ok(actions) => assert_true(actions[0] is RuntimeEffect("flush"))
+        Err(_) => abort("unexpected invalid lifecycle actions")
+      }
     }
     Err(_) => abort("unexpected invalid manifest runtime plan")
   }
