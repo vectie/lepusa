@@ -34,6 +34,14 @@ test "bundled runtime manifest exposes service plan" {
           assert_eq(plan.startup_services().length(), 1)
           assert_eq(plan.startup_service_names()[0], "api")
           assert_true(plan.requires_supervisor())
+          let supervisor = plan.supervisor_plan()
+          assert_eq(supervisor.start_order().length(), 1)
+          assert_eq(supervisor.start_order()[0], "api")
+          assert_true(supervisor.startup_actions()[0] is StartLocalService(_))
+          assert_true(
+            supervisor.startup_actions()[1] is WaitLocalServiceReady(_),
+          )
+          assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
           assert_true(plan.to_json().contains("\"requiresSupervisor\":true"))
         }
         Err(problem) => abort(problem)

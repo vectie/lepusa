@@ -129,6 +129,7 @@ pub fn BundledServicePlan::service_names(Self) -> Array[String]
 pub fn BundledServicePlan::services(Self) -> Array[@lepusa.LocalService]
 pub fn BundledServicePlan::startup_service_names(Self) -> Array[String]
 pub fn BundledServicePlan::startup_services(Self) -> Array[@lepusa.LocalService]
+pub fn BundledServicePlan::supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
 pub fn BundledServicePlan::to_json(Self) -> String
 pub fn BundledServicePlan::validate(Self) -> Array[String]
 

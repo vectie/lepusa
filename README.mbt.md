@@ -260,8 +260,9 @@ filesystem access.
 
 `@lepusa/plugins/localhost` defines local service lifecycle routes such as
 `localhost.status`, `localhost.start`, `localhost.stop`, and
-`localhost.waitUntilReady`, plus service metadata policy. Native backends own
-process supervision and readiness probing.
+`localhost.waitUntilReady`, plus service metadata policy. `LocalService` and
+`LocalServiceSupervisorPlan` provide the shared start, readiness, and shutdown
+handoff; native backends own process execution and HTTP probing.
 
 `@lepusa/plugins/deep_link` defines app URL scheme routes such as
 `deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus

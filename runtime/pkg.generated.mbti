@@ -198,6 +198,7 @@ pub fn RuntimeServicePlan::service_names(Self) -> Array[String]
 pub fn RuntimeServicePlan::services(Self) -> Array[@lepusa.LocalService]
 pub fn RuntimeServicePlan::startup_service_names(Self) -> Array[String]
 pub fn RuntimeServicePlan::startup_services(Self) -> Array[@lepusa.LocalService]
+pub fn RuntimeServicePlan::supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
 pub fn RuntimeServicePlan::to_json(Self) -> String
 pub fn RuntimeServicePlan::validate(Self) -> Array[String]
 

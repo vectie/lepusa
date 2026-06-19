@@ -93,6 +93,16 @@ pub fn BundledServicePlan::to_json(self : BundledServicePlan) -> String {
 }
 
 ///|
+pub fn BundledServicePlan::supervisor_plan(
+  self : BundledServicePlan,
+) -> @lepusa.LocalServiceSupervisorPlan {
+  @lepusa.LocalServiceSupervisorPlan::new(
+    services=self.services,
+    startup_services=self.startup_services,
+  )
+}
+
+///|
 fn bundled_service_from_json(
   item : Json,
 ) -> Result[@lepusa.LocalService, String] {

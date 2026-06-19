@@ -777,6 +777,26 @@ test "runtime service plan validates startup service declarations" {
 }
 
 ///|
+test "runtime service plan exposes supervisor handoff" {
+  let service = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/server"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let plan = RuntimeServicePlan::new(services=[service], startup_services=[
+    service,
+  ])
+  let supervisor = plan.supervisor_plan()
+  assert_true(supervisor.requires_supervisor())
+  assert_eq(supervisor.start_order().length(), 1)
+  assert_eq(supervisor.start_order()[0], "api")
+  assert_true(supervisor.startup_actions()[0] is StartLocalService(_))
+  assert_true(supervisor.startup_actions()[1] is WaitLocalServiceReady(_))
+  assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
+  assert_true(supervisor.to_json().contains("\"kind\":\"wait-ready\""))
+}
+
+///|
 test "runtime host applies lifecycle actions to an existing session" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

@@ -104,6 +104,60 @@ test "localhost source validates service gateway settings" {
 }
 
 ///|
+test "local service supervisor plan describes lifecycle handoff" {
+  let api = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/api"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let worker = @lepusa.LocalService::new(
+    name="worker",
+    command=["moon", "run", "cmd/worker"],
+    readiness_url="http://127.0.0.1:4318/ready",
+  )
+  let plan = @lepusa.LocalServiceSupervisorPlan::new(services=[api, worker], startup_services=[
+    api, worker,
+  ])
+  assert_true(plan.requires_supervisor())
+  let order = plan.start_order()
+  assert_eq(order.length(), 2)
+  assert_eq(order[0], "api")
+  assert_eq(order[1], "worker")
+  assert_eq(plan.startup_actions().length(), 4)
+  assert_true(plan.startup_actions()[0] is StartLocalService(_))
+  assert_true(plan.startup_actions()[1] is WaitLocalServiceReady(_))
+  assert_true(
+    plan.shutdown_actions()[0] is StopLocalService(service) &&
+    service.name() == "worker",
+  )
+  assert_true(
+    plan.shutdown_actions()[1] is StopLocalService(service) &&
+    service.name() == "api",
+  )
+  let json = plan.to_json()
+  assert_true(json.contains("\"kind\":\"start-service\""))
+  assert_true(json.contains("\"kind\":\"wait-ready\""))
+  assert_true(json.contains("\"kind\":\"stop-service\""))
+  assert_true(json.contains("\"startOrder\":[\"api\",\"worker\"]"))
+}
+
+///|
+test "local service supervisor plan validates declared startup services" {
+  let api = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/api"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let plan = @lepusa.LocalServiceSupervisorPlan::new(startup_services=[api])
+  let problems = plan.validate()
+  assert_eq(problems.length(), 1)
+  assert_eq(
+    problems[0],
+    "local service supervisor startup service is not declared: api",
+  )
+}
+
+///|
 test "windows resolve source and preserve frame config" {
   let window = @lepusa.WindowConfig::new(
     label="main",

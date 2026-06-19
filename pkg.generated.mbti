@@ -319,6 +319,31 @@ pub fn LocalService::readiness_url(Self) -> String
 pub fn LocalService::to_json(Self) -> String
 pub fn LocalService::validate(Self) -> Array[String]
 
+pub(all) enum LocalServiceSupervisorAction {
+  StartLocalService(LocalService)
+  WaitLocalServiceReady(LocalService)
+  StopLocalService(LocalService)
+} derive(Eq, @debug.Debug)
+pub fn LocalServiceSupervisorAction::kind(Self) -> String
+pub fn LocalServiceSupervisorAction::service(Self) -> LocalService
+pub fn LocalServiceSupervisorAction::to_json(Self) -> String
+
+pub struct LocalServiceSupervisorPlan {
+  services : Array[LocalService]
+  startup_services : Array[LocalService]
+  startup_actions : Array[LocalServiceSupervisorAction]
+  shutdown_actions : Array[LocalServiceSupervisorAction]
+} derive(Eq, @debug.Debug)
+pub fn LocalServiceSupervisorPlan::new(services? : Array[LocalService], startup_services? : Array[LocalService]) -> Self
+pub fn LocalServiceSupervisorPlan::requires_supervisor(Self) -> Bool
+pub fn LocalServiceSupervisorPlan::services(Self) -> Array[LocalService]
+pub fn LocalServiceSupervisorPlan::shutdown_actions(Self) -> Array[LocalServiceSupervisorAction]
+pub fn LocalServiceSupervisorPlan::start_order(Self) -> Array[String]
+pub fn LocalServiceSupervisorPlan::startup_actions(Self) -> Array[LocalServiceSupervisorAction]
+pub fn LocalServiceSupervisorPlan::startup_services(Self) -> Array[LocalService]
+pub fn LocalServiceSupervisorPlan::to_json(Self) -> String
+pub fn LocalServiceSupervisorPlan::validate(Self) -> Array[String]
+
 pub struct LocalhostSource {
   host : String
   port : Int

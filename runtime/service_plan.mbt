@@ -82,6 +82,16 @@ pub fn RuntimeServicePlan::to_json(self : RuntimeServicePlan) -> String {
 }
 
 ///|
+pub fn RuntimeServicePlan::supervisor_plan(
+  self : RuntimeServicePlan,
+) -> @lepusa.LocalServiceSupervisorPlan {
+  @lepusa.LocalServiceSupervisorPlan::new(
+    services=self.services,
+    startup_services=self.startup_services,
+  )
+}
+
+///|
 pub fn RuntimeHost::service_plan(
   self : RuntimeHost,
 ) -> Result[RuntimeServicePlan, Array[String]] {
