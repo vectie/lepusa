@@ -78,11 +78,7 @@ fn project_registry_from_plugins(
 ) -> @lepusa.CommandRegistry {
   let mut registry = @lepusa.CommandRegistry::new()
   for plugin in plugins {
-    match plugin.name() {
-      "log" => registry = @log.register(registry)
-      "store" => registry = @store.register(registry)
-      _ => ()
-    }
+    registry = @catalog.register(registry, plugin.name())
   }
   registry
 }
@@ -159,12 +155,7 @@ fn plugin_from_object(
 
 ///|
 fn official_plugin_from_name(name : String) -> @lepusa.Plugin? {
-  match name {
-    "log" => Some(@log.plugin())
-    "store" => Some(@store.plugin())
-    "fs" => Some(@fs_plugin.plugin())
-    _ => None
-  }
+  @catalog.plugin(name)
 }
 
 ///|

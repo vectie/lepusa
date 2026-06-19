@@ -179,6 +179,10 @@ scoped path policy. It declares async routes such as `fs.readText`,
 helpers. The package validates named scopes and relative paths; native backends
 own the actual OS filesystem implementation behind those routes.
 
+`@lepusa/plugins/catalog` centralizes official plugin lookup for framework
+tooling. Project parsing uses it to expand name-only official plugin
+declarations and bind pure MoonBit handlers where they exist.
+
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME

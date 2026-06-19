@@ -395,6 +395,9 @@ packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, and scoped
 relative path policy. Native filesystem IO should be implemented by runtime
 backends behind that contract, not by widening core filesystem access.
+`@lepusa/plugins/catalog` is the aggregate lookup package for tools that need
+official plugin declarations or pure MoonBit handler registration without
+importing every plugin package directly.
 
 ## CLI Boundary
 

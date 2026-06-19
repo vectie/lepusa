@@ -4,9 +4,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/sys",
   "vectie/lepusa",
-  "vectie/lepusa/plugins/fs" @fs_plugin,
-  "vectie/lepusa/plugins/log",
-  "vectie/lepusa/plugins/store",
+  "vectie/lepusa/plugins/catalog",
   "vectie/lepusa/runtime",
 }
 

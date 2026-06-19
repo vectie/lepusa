@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/catalog"
+
+import {
+  "vectie/lepusa",
+}
+
+// Values
+pub fn plugin(String) -> @lepusa.Plugin?
+
+pub fn plugin_names() -> Array[String]
+
+pub fn register(@lepusa.CommandRegistry, String) -> @lepusa.CommandRegistry
+
+pub fn registered_plugin_names() -> Array[String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
