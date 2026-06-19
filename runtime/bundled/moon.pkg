@@ -1,3 +1,9 @@
 import {
   "moonbitlang/core/json",
+  "vectie/lepusa",
+  "vectie/lepusa/plugins/catalog",
 }
+
+options(
+  test_import: [ "moonbitlang/async" ],
+)

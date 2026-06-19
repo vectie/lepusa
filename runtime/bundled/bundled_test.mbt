@@ -121,6 +121,41 @@ test "bundled runtime manifest validates input shape" {
 }
 
 ///|
+async test "bundled runtime preserves official plugin state" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      { "label": "main", "allowedRoutes": ["store.set", "store.get"] }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["store.set", "store.get"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let runtime = BundledRuntime::new(manifest)
+      let set = runtime.dispatch_json_async(
+        id="set",
+        window_label="main",
+        route="store.set",
+        payload="{\"key\":\"theme\",\"value\":\"dark\"}",
+      )
+      assert_true(set.contains("\"id\":\"set\""))
+      let get = runtime.dispatch_json_async(
+        id="get",
+        window_label="main",
+        route="store.get",
+        payload="{\"key\":\"theme\"}",
+      )
+      assert_true(get.contains("\\\"value\\\":\\\"dark\\\""))
+      assert_true(get.contains("\\\"found\\\":true"))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 fn sample_bundled_manifest() -> String {
   (
     #|{

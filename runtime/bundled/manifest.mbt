@@ -105,6 +105,15 @@ fn optional_string(object : Map[String, Json], key : String) -> String? {
 }
 
 ///|
+fn optional_bool(object : Map[String, Json], key : String) -> Bool? {
+  match object.get(key) {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+}
+
+///|
 fn bundle_root_for_manifest(path : String) -> String {
   let dir = parent_directory(path)
   if dir == "lepusa" || dir.has_suffix("/lepusa") || dir.has_suffix("\\lepusa") {

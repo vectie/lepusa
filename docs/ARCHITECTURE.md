@@ -359,8 +359,9 @@ startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
 file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, emits bundled bootstrap JSON for native
-loops, resolves bundled asset URLs, and selects local services plus lifecycle
-actions without re-entering project configuration.
+loops, resolves bundled asset URLs, dispatches registered official plugin
+commands, and selects local services plus lifecycle actions without re-entering
+project configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
@@ -528,9 +529,18 @@ lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
 lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
   -> selects bundled local services and actions for native lifecycle dispatch
 
+lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+  -> dispatches a packaged bridge command through registered official native handlers
+
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count
 ```
+
+The invoke command and reusable `BundledRuntime` object enforce the packaged
+manifest boundary: a route must be present in `registeredRoutes` and allowed by
+the target webview's `allowedRoutes` before it reaches the native registry.
+Platform loops should construct one `BundledRuntime` per app instance so
+stateful handlers such as `store` survive repeated bridge calls.
 
 Native run/build/bundle commands should consume the same `RuntimePlan` and
 `BundlePlan` objects rather than maintaining parallel configuration paths.

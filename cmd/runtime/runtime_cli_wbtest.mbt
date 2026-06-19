@@ -233,3 +233,112 @@ test "runtime cli parses manifest flag" {
     is Ok("runtime.json"),
   )
 }
+
+///|
+async test "runtime cli invokes bundled official plugins" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      {
+    #|        "label": "main",
+    #|        "allowedRoutes": ["log.write", "store.set", "store.get"]
+    #|      }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["log.write", "store.set", "store.get"]
+    #|  }
+    #|}
+  let log = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(log.exit_code, 0)
+  assert_true(log.output.contains("\"id\":\"cli\""))
+  assert_true(log.output.contains("\\\"message\\\":\\\"hello\\\""))
+  let store_set = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "store.set", "{\"key\":\"theme\",\"value\":\"dark\"}",
+  )
+  assert_true(store_set.output.contains("\\\"key\\\":\\\"theme\\\""))
+  let store_get = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "store.get", "{\"key\":\"theme\"}",
+  )
+  assert_true(store_get.output.contains("\\\"found\\\":false"))
+}
+
+///|
+async test "runtime cli enforces bundled route grants" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      { "label": "main", "allowedRoutes": ["log.write"] },
+    #|      { "label": "settings", "allowedRoutes": [] }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  let denied = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "settings", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(denied.exit_code, 0)
+  assert_true(
+    denied.output.contains("\"error\":\"permission denied: log.write\""),
+  )
+  let unknown = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "store.set", "{\"key\":\"theme\",\"value\":\"dark\"}",
+  )
+  assert_true(
+    unknown.output.contains("\"error\":\"unknown command: store.set\""),
+  )
+}
+
+///|
+async test "runtime cli invokes bundled scoped filesystem handlers" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-runtime-fs-\{stamp}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  let manifest = [
+    "{", "\"runtime\":{", "\"webviews\":[{\"label\":\"main\",\"allowedRoutes\":[\"fs.writeText\",\"fs.readText\"]}],",
+    "\"filesystemScopes\":[{\"name\":\"data\",\"root\":\"", root, "\",\"writable\":true}],",
+    "\"registeredRoutes\":[\"fs.writeText\",\"fs.readText\"]", "}", "}",
+  ].join("")
+  let write = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "fs.writeText", "{\"scope\":\"data\",\"path\":\"note.txt\",\"content\":\"hello fs\"}",
+  )
+  assert_eq(write.exit_code, 0)
+  assert_true(write.output.contains("\\\"written\\\":true"))
+  let read = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_true(read.output.contains("\\\"content\\\":\\\"hello fs\\\""))
+}
+
+///|
+async test "runtime cli invoke ignores manifest flag when payload is omitted" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-runtime-invoke-flags-\{stamp}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  let manifest_path = root + "/runtime.json"
+  @fs.write_file(
+    manifest_path,
+    (
+      #|{
+      #|  "runtime": {
+      #|    "webviews": [
+      #|      { "label": "main", "allowedRoutes": ["store.keys"] }
+      #|    ],
+      #|    "filesystemScopes": [],
+      #|    "registeredRoutes": ["store.keys"]
+      #|  }
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_runtime_cli_async([
+    "invoke", "main", "store.keys", "--manifest", manifest_path,
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\\\"keys\\\":[]"))
+}

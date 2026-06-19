@@ -20,6 +20,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("bootstrap") => render_runtime_bootstrap(args)
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
+    Some("invoke") => render_runtime_invoke(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
       runtime_fail("unknown runtime command: \{command}\n\n" + runtime_help())
@@ -119,6 +120,67 @@ fn runtime_help() -> String {
     #|  lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|
   )
+}
+
+///|
+async fn render_runtime_invoke(args : Array[String]) -> RuntimeCliResult {
+  let values = runtime_positional_args(args)
+  let window_label = values.get(1).unwrap_or("")
+  let route = values.get(2).unwrap_or("")
+  let payload = values.get(3).unwrap_or("")
+  if window_label == "" {
+    return runtime_fail("invoke window is required\n")
+  }
+  if route == "" || route == "--manifest" {
+    return runtime_fail("invoke route is required\n")
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime invoke\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_invoke_text(path, text, window_label, route, payload)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+fn runtime_positional_args(args : Array[String]) -> Array[String] {
+  let values : Array[String] = []
+  let mut skip_next = false
+  for arg in args {
+    if skip_next {
+      skip_next = false
+    } else if arg == "--manifest" {
+      skip_next = true
+    } else {
+      values.push(arg)
+    }
+  }
+  values
+}
+
+///|
+async fn render_runtime_invoke_text(
+  path : String,
+  text : String,
+  window_label : String,
+  route : String,
+  payload : String,
+) -> RuntimeCliResult {
+  match @bundled.BundledRuntimeManifest::parse(path, text) {
+    Ok(manifest) =>
+      runtime_ok(
+        manifest.dispatch_json_async(id="cli", window_label~, route~, payload~) +
+        "\n",
+      )
+    Err(problem) => runtime_fail("Lepusa runtime invoke\n[fail] \{problem}\n")
+  }
 }

@@ -138,6 +138,7 @@ moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-a
 moon run cmd/runtime --target native -- bootstrap --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- invoke main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
@@ -435,9 +436,17 @@ the same JSON envelope shape expected by native protocol handlers.
 `lepusa-runtime lifecycle <event> [window] --manifest <runtime.json>` reads the
 same bundled manifest and returns the local services and portable actions a
 native loop should process for that lifecycle event.
+`lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
+executes a packaged bridge command against the manifest's registered official
+native handlers. It checks the requested window's `allowedRoutes` before
+dispatching and returns the same JSON response shape as project-hosted
+`lepusa invoke`.
 `@lepusa/runtime/bundled` owns the reusable manifest parser and bootstrap,
-asset, and lifecycle JSON behind those commands, so native platform loops can
-consume bundled runtime data without depending on CLI internals.
+asset, lifecycle, and invoke JSON behind those commands, so native platform
+loops can consume bundled runtime data without depending on CLI internals.
+`BundledRuntime::new(manifest)` keeps the native command registry state alive
+for repeated bridge calls, while the manifest helper remains useful for
+one-shot probes.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that
