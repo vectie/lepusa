@@ -395,6 +395,11 @@ metadata plus shared runtime assets:
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.
 
+`BundlePlan::resources()` is the companion boundary for binary or externally
+owned assets. The first resource type is the application icon, mapped to the
+target's native bundle location and recorded in the generated bundle runtime
+file under `resources`.
+
 `BundlePlan::signing_prerequisites()` is the signing boundary for that next
 step. It lists target-specific identities, tools, notarization tools, runtime
 dependencies, and validators, and the generated bundle runtime file includes

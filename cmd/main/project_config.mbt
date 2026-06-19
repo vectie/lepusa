@@ -37,6 +37,7 @@ fn loaded_project_from_object(
   let root_html = optional_config_string(object, "rootHtml").unwrap_or(
     "<main>Hello Lepusa</main>",
   )
+  let icon_path = optional_config_string(object, "icon")
   let root = @lepusa.simple_cell(@lepusa.Html::text(root_html))
   let runtime = match optional_config_object(object, "runtime") {
     Some(runtime_object) => runtime_config_from_object(runtime_object, problems)
@@ -71,6 +72,10 @@ fn loaded_project_from_object(
     }
     for hook in lifecycle_hooks {
       manifest = manifest.with_lifecycle(hook.event(), hook.command())
+    }
+    match icon_path {
+      Some(icon_path) => manifest = manifest.with_icon_path(icon_path)
+      None => ()
     }
     Ok({ manifest, root, registry })
   } else {

@@ -672,11 +672,21 @@ test "bundle plans derive executable and package names from metadata" {
           version="0.1.0",
         ),
         target=MacOS,
+        icon_path="assets/app.icns",
       )
       match bundle.plan(runtime, registered_routes=["core.invoke"]) {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
+          assert_eq(plan.icon_path().unwrap(), "assets/app.icns")
+          let resources = plan.resources()
+          assert_eq(resources.length(), 1)
+          assert_true(resources[0].kind() is IconResource)
+          assert_eq(resources[0].source_path(), "assets/app.icns")
+          assert_eq(
+            resources[0].path(),
+            "lepusa-example.app/Contents/Resources/AppIcon.icns",
+          )
           let signing = plan.signing_prerequisites()
           assert_eq(signing.length(), 3)
           assert_true(signing[0].kind() is SigningIdentity)
@@ -707,11 +717,14 @@ test "bundle plans derive executable and package names from metadata" {
                 "lepusa-example.app/Contents/Info.plist",
               )
               assert_true(files[0].content().contains("CFBundleIdentifier"))
+              assert_true(files[0].content().contains("CFBundleIconFile"))
               assert_eq(
                 files[2].path(),
                 "lepusa-example.app/Contents/Resources/lepusa/runtime.json",
               )
               assert_true(files[2].content().contains("\"webviews\""))
+              assert_true(files[2].content().contains("\"resources\""))
+              assert_true(files[2].content().contains("assets/app.icns"))
               assert_true(files[2].content().contains("windowLabel"))
               assert_true(files[2].content().contains("__lepusaInvoke"))
               assert_true(
@@ -861,6 +874,7 @@ test "project manifests build runtime and bundle plans" {
     )
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
     .with_capability(@lepusa.Capability::new("core").permission(Notification))
+    .with_icon_path("assets/icon.png")
     .with_lifecycle(AppWillExit, @lepusa.Cmd::effect("flush"))
   match manifest.runtime_plan(root) {
     Ok(runtime) => {
@@ -877,6 +891,8 @@ test "project manifests build runtime and bundle plans" {
     Ok(bundle) => {
       assert_eq(bundle.identifier(), "dev.vectie.manifest")
       assert_eq(bundle.bundle_name(), "manifest-app")
+      assert_eq(bundle.resources().length(), 1)
+      assert_eq(bundle.resources()[0].path(), "manifest-app/manifest-app.png")
     }
     Err(_) => abort("unexpected invalid manifest bundle plan")
   }

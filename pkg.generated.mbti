@@ -105,12 +105,31 @@ pub struct BundlePlan {
 pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
 pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
+pub fn BundlePlan::icon_path(Self) -> String?
 pub fn BundlePlan::identifier(Self) -> String
 pub fn BundlePlan::registered_routes(Self) -> Array[String]
+pub fn BundlePlan::resources(Self) -> Array[BundleResource]
 pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
 pub fn BundlePlan::signing_prerequisites(Self) -> Array[SigningPrerequisite]
 pub fn BundlePlan::target(Self) -> BundleTarget
+
+pub struct BundleResource {
+  kind : BundleResourceKind
+  source_path : String
+  path : String
+} derive(Eq, @debug.Debug)
+pub fn BundleResource::kind(Self) -> BundleResourceKind
+pub fn BundleResource::new(kind~ : BundleResourceKind, source_path~ : String, path~ : String) -> Self
+pub fn BundleResource::path(Self) -> String
+pub fn BundleResource::source_path(Self) -> String
+pub fn BundleResource::to_json(Self) -> String
+
+pub(all) enum BundleResourceKind {
+  IconResource
+  AssetResource
+} derive(Eq, @debug.Debug)
+pub fn BundleResourceKind::name(Self) -> String
 
 pub(all) enum BundleTarget {
   MacOS
@@ -355,15 +374,17 @@ pub struct ProjectManifest {
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
+  icon_path : String?
 } derive(Eq, @debug.Debug)
 pub fn ProjectManifest::app(Self, Cell) -> App
 pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn ProjectManifest::capabilities(Self) -> Array[Capability]
 pub fn ProjectManifest::file_system_scopes(Self) -> Array[FileSystemScope]
+pub fn ProjectManifest::icon_path(Self) -> String?
 pub fn ProjectManifest::launch_plan(Self, Cell) -> Result[LaunchPlan, Array[String]]
 pub fn ProjectManifest::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn ProjectManifest::metadata(Self) -> AppMetadata
-pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], filesystem_scopes? : Array[FileSystemScope], startup? : Cmd, lifecycle_hooks? : Array[LifecycleHook], runtime? : RuntimeConfig) -> Self
+pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], filesystem_scopes? : Array[FileSystemScope], startup? : Cmd, lifecycle_hooks? : Array[LifecycleHook], runtime? : RuntimeConfig, icon_path? : String) -> Self
 pub fn ProjectManifest::plugins(Self) -> Array[Plugin]
 pub fn ProjectManifest::runtime(Self) -> RuntimeConfig
 pub fn ProjectManifest::runtime_plan(Self, Cell) -> Result[RuntimePlan, Array[String]]
@@ -371,6 +392,7 @@ pub fn ProjectManifest::validate(Self) -> Array[String]
 pub fn ProjectManifest::windows(Self) -> Array[WindowConfig]
 pub fn ProjectManifest::with_capability(Self, Capability) -> Self
 pub fn ProjectManifest::with_file_system_scope(Self, FileSystemScope) -> Self
+pub fn ProjectManifest::with_icon_path(Self, String) -> Self
 pub fn ProjectManifest::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 pub fn ProjectManifest::with_plugin(Self, Plugin) -> Self
 pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self

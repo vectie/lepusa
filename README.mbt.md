@@ -140,9 +140,9 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 
 `lepusa.json` is the app-neutral project boundary. It describes metadata,
 runtime backend, windows, plugin command routes, command permission
-requirements, capability grants, and bundle signing prerequisites. Native CLI
-commands consume the nearest `lepusa.json` from the current directory, or a file
-passed with `--project`.
+requirements, capability grants, bundle icon resources, and bundle signing
+prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
+current directory, or a file passed with `--project`.
 Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
 `{ "name": "dialog" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
 `{ "name": "opener" }`, `{ "name": "shell" }`, `{ "name": "store" }`, or
@@ -165,6 +165,11 @@ native command registration, and a scoped capability helper.
 requirements for macOS, Windows, and Linux. The generated bundle runtime file
 includes those prerequisites so future signing, notarization, and installer
 steps can consume one bundle contract.
+
+`BundlePlan::resources()` exposes planned bundle resource mappings such as the
+application icon. The generated bundle runtime file includes these mappings
+under `resources`; platform writers can copy or transform binary assets without
+re-reading project configuration.
 
 `@lepusa/plugins/log` is the first official plugin package. It declares
 `log.write`, provides scoped capability helpers, and can register a command

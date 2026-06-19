@@ -8,6 +8,7 @@ pub struct ProjectManifest {
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
+  icon_path : String?
 } derive(Debug, Eq)
 
 ///|
@@ -20,6 +21,7 @@ pub fn ProjectManifest::new(
   startup? : Cmd = None,
   lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
+  icon_path? : String,
 ) -> ProjectManifest {
   {
     metadata,
@@ -30,6 +32,7 @@ pub fn ProjectManifest::new(
     startup,
     lifecycle_hooks,
     runtime,
+    icon_path,
   }
 }
 
@@ -65,6 +68,11 @@ pub fn ProjectManifest::file_system_scopes(
 ///|
 pub fn ProjectManifest::runtime(self : ProjectManifest) -> RuntimeConfig {
   self.runtime
+}
+
+///|
+pub fn ProjectManifest::icon_path(self : ProjectManifest) -> String? {
+  self.icon_path
 }
 
 ///|
@@ -142,6 +150,14 @@ pub fn ProjectManifest::with_runtime(
 }
 
 ///|
+pub fn ProjectManifest::with_icon_path(
+  self : ProjectManifest,
+  icon_path : String,
+) -> ProjectManifest {
+  { ..self, icon_path: Some(icon_path) }
+}
+
+///|
 pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   let problems = self.metadata.validate()
   for problem in self.runtime.validate() {
@@ -188,6 +204,10 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
     for problem in hook.event().validate(self.windows) {
       problems.push(problem)
     }
+  }
+  match self.icon_path {
+    Some("") => problems.push("app icon path must not be empty")
+    _ => ()
   }
   problems
 }
@@ -248,11 +268,13 @@ pub fn ProjectManifest::bundle_plan(
   registered_routes? : Array[String] = [],
 ) -> Result[BundlePlan, Array[String]] {
   match self.runtime_plan(root) {
-    Ok(runtime) =>
-      BundleConfig::new(self.metadata, target~).plan(
-        runtime,
-        registered_routes~,
-      )
+    Ok(runtime) => {
+      let config = match self.icon_path {
+        Some(icon_path) => BundleConfig::new(self.metadata, target~, icon_path~)
+        None => BundleConfig::new(self.metadata, target~)
+      }
+      config.plan(runtime, registered_routes~)
+    }
     Err(problems) => Err(problems)
   }
 }

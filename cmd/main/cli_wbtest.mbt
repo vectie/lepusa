@@ -71,6 +71,7 @@ test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
+  assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 2"))
 }
@@ -178,6 +179,7 @@ async test "generated project config drives manifest and bundle write" {
   assert_eq(build.exit_code, 0)
   assert_true(build.output.contains("target: linux"))
   assert_true(build.output.contains("local-services: 0"))
+  assert_true(build.output.contains("resources: 0"))
   assert_true(build.output.contains("signing-prerequisites: 2"))
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
@@ -417,6 +419,31 @@ test "project config parses filesystem scopes" {
 }
 
 ///|
+test "project config parses bundle icon resources" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.icon",
+    #|  "productName": "Icon App",
+    #|  "version": "0.1.0",
+    #|  "icon": "assets/icon.png",
+    #|  "window": { "label": "main", "title": "Icon App" }
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.bundle_plan(project.root, target=Linux) {
+        Ok(plan) => {
+          assert_eq(plan.resources().length(), 1)
+          assert_eq(plan.resources()[0].source_path(), "assets/icon.png")
+          assert_eq(plan.resources()[0].path(), "icon-app/icon-app.png")
+        }
+        Err(_) => abort("unexpected invalid bundle plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config expands official plugin declarations" {
   let config =
     #|{
@@ -554,6 +581,7 @@ async test "bundle write materializes planned files" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
+  assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 2"))
   let bundle_root = root + "/lepusa-example"

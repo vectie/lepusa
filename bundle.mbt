@@ -89,6 +89,19 @@ pub struct BundlePlan {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum BundleResourceKind {
+  IconResource
+  AssetResource
+} derive(Debug, Eq)
+
+///|
+pub struct BundleResource {
+  kind : BundleResourceKind
+  source_path : String
+  path : String
+} derive(Debug, Eq)
+
+///|
 pub struct BundleFile {
   path : String
   content : String
@@ -118,6 +131,49 @@ pub fn BundleFile::new(
   executable? : Bool = false,
 ) -> BundleFile {
   { path, content, executable }
+}
+
+///|
+pub fn BundleResource::new(
+  kind~ : BundleResourceKind,
+  source_path~ : String,
+  path~ : String,
+) -> BundleResource {
+  { kind, source_path, path }
+}
+
+///|
+pub fn BundleResource::kind(self : BundleResource) -> BundleResourceKind {
+  self.kind
+}
+
+///|
+pub fn BundleResource::source_path(self : BundleResource) -> String {
+  self.source_path
+}
+
+///|
+pub fn BundleResource::path(self : BundleResource) -> String {
+  self.path
+}
+
+///|
+pub fn BundleResourceKind::name(self : BundleResourceKind) -> String {
+  match self {
+    IconResource => "icon"
+    AssetResource => "asset"
+  }
+}
+
+///|
+pub fn BundleResource::to_json(self : BundleResource) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.name().json_string()},",
+    "\"sourcePath\":\{self.source_path.json_string()},",
+    "\"path\":\{self.path.json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -218,6 +274,26 @@ pub fn BundlePlan::executable_name(self : BundlePlan) -> String {
 }
 
 ///|
+pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
+  self.icon_path
+}
+
+///|
+pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
+  match self.icon_path {
+    Some(source_path) =>
+      [
+        BundleResource::new(
+          kind=IconResource,
+          source_path~,
+          path=self.icon_resource_path(),
+        ),
+      ]
+    None => []
+  }
+}
+
+///|
 pub fn BundlePlan::signing_prerequisites(
   self : BundlePlan,
 ) -> Array[SigningPrerequisite] {
@@ -306,6 +382,15 @@ fn BundlePlan::shared_path(self : BundlePlan, path : String) -> String {
 }
 
 ///|
+fn BundlePlan::icon_resource_path(self : BundlePlan) -> String {
+  match self.target {
+    MacOS => "\{self.bundle_name}/Contents/Resources/AppIcon.icns"
+    Windows => "\{self.executable_name}/app.ico"
+    Linux => "\{self.executable_name}/\{self.executable_name}.png"
+  }
+}
+
+///|
 fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
   match self.target {
     MacOS =>
@@ -367,6 +452,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"productName\":\{self.metadata.product_name().json_string()},",
           "\"version\":\{self.metadata.version().json_string()},",
           "\"target\":\{self.target.name().json_string()},",
+          "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
           "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
           "\"runtime\":\{runtime_manifest}",
           "}",
@@ -393,6 +479,11 @@ fn BundlePlan::info_plist(self : BundlePlan) -> String {
     "<key>CFBundleExecutable</key><string>\{executable}</string>",
     "<key>CFBundleShortVersionString</key><string>\{version}</string>",
     "<key>CFBundleVersion</key><string>\{version}</string>",
+    if self.icon_path is Some(_) {
+      "<key>CFBundleIconFile</key><string>AppIcon</string>"
+    } else {
+      ""
+    },
     "</dict></plist>\n",
   ].join("")
 }

@@ -109,6 +109,8 @@ desktop core is reliable.
 - Linux desktop integration and portable bundle path.
 - `BundlePlan::files()` emits platform metadata and one runtime manifest with
   per-window bridge initialization scripts.
+- `BundlePlan::resources()` emits target resource mappings for app icons and
+  future packaged assets.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and
   package validation requirements.
 - App metadata manifest: id, product name, version, icons, capabilities,
