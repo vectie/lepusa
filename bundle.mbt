@@ -61,6 +61,7 @@ pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
   icon_path : String?
+  signing : SigningConfig
 } derive(Debug, Eq)
 
 ///|
@@ -68,13 +69,18 @@ pub fn BundleConfig::new(
   metadata : AppMetadata,
   target? : BundleTarget = MacOS,
   icon_path? : String,
+  signing? : SigningConfig = SigningConfig::new(),
 ) -> BundleConfig {
-  { metadata, target, icon_path }
+  { metadata, target, icon_path, signing }
 }
 
 ///|
 pub fn BundleConfig::validate(self : BundleConfig) -> Array[String] {
-  self.metadata.validate()
+  let problems = self.metadata.validate()
+  for problem in self.signing.validate() {
+    problems.push(problem)
+  }
+  problems
 }
 
 ///|
@@ -86,6 +92,7 @@ pub struct BundlePlan {
   executable_name : String
   bundle_name : String
   icon_path : String?
+  signing : SigningConfig
 } derive(Debug, Eq)
 
 ///|
@@ -123,6 +130,107 @@ pub struct SigningPrerequisite {
   name : String
   description : String
 } derive(Debug, Eq)
+
+///|
+pub struct SigningConfig {
+  identity : String?
+  team_id : String?
+  entitlements_path : String?
+  notarization_profile : String?
+  timestamp_url : String?
+} derive(Debug, Eq)
+
+///|
+pub fn SigningConfig::new(
+  identity? : String,
+  team_id? : String,
+  entitlements_path? : String,
+  notarization_profile? : String,
+  timestamp_url? : String,
+) -> SigningConfig {
+  { identity, team_id, entitlements_path, notarization_profile, timestamp_url }
+}
+
+///|
+pub fn SigningConfig::identity(self : SigningConfig) -> String? {
+  self.identity
+}
+
+///|
+pub fn SigningConfig::team_id(self : SigningConfig) -> String? {
+  self.team_id
+}
+
+///|
+pub fn SigningConfig::entitlements_path(self : SigningConfig) -> String? {
+  self.entitlements_path
+}
+
+///|
+pub fn SigningConfig::notarization_profile(self : SigningConfig) -> String? {
+  self.notarization_profile
+}
+
+///|
+pub fn SigningConfig::timestamp_url(self : SigningConfig) -> String? {
+  self.timestamp_url
+}
+
+///|
+pub fn SigningConfig::validate(self : SigningConfig) -> Array[String] {
+  let problems : Array[String] = []
+  if self.identity is Some("") {
+    problems.push("signing identity must not be empty")
+  }
+  if self.team_id is Some("") {
+    problems.push("signing team id must not be empty")
+  }
+  if self.entitlements_path is Some("") {
+    problems.push("signing entitlements path must not be empty")
+  }
+  if self.notarization_profile is Some("") {
+    problems.push("signing notarization profile must not be empty")
+  }
+  if self.timestamp_url is Some("") {
+    problems.push("signing timestamp url must not be empty")
+  }
+  problems
+}
+
+///|
+pub fn SigningConfig::configured(self : SigningConfig) -> Bool {
+  self.identity is Some(_) ||
+  self.team_id is Some(_) ||
+  self.entitlements_path is Some(_) ||
+  self.notarization_profile is Some(_) ||
+  self.timestamp_url is Some(_)
+}
+
+///|
+pub fn SigningConfig::to_json(self : SigningConfig) -> String {
+  let fields : Array[String] = []
+  match self.identity {
+    Some(value) => fields.push("\"identity\":\{value.json_string()}")
+    None => ()
+  }
+  match self.team_id {
+    Some(value) => fields.push("\"teamId\":\{value.json_string()}")
+    None => ()
+  }
+  match self.entitlements_path {
+    Some(value) => fields.push("\"entitlements\":\{value.json_string()}")
+    None => ()
+  }
+  match self.notarization_profile {
+    Some(value) => fields.push("\"notarizationProfile\":\{value.json_string()}")
+    None => ()
+  }
+  match self.timestamp_url {
+    Some(value) => fields.push("\"timestampUrl\":\{value.json_string()}")
+    None => ()
+  }
+  "{\{fields.join(",")}}"
+}
 
 ///|
 pub fn BundleFile::new(
@@ -276,6 +384,11 @@ pub fn BundlePlan::executable_name(self : BundlePlan) -> String {
 ///|
 pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
   self.icon_path
+}
+
+///|
+pub fn BundlePlan::signing(self : BundlePlan) -> SigningConfig {
+  self.signing
 }
 
 ///|
@@ -517,6 +630,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"version\":\{self.metadata.version().json_string()},",
           "\"target\":\{self.target.name().json_string()},",
           "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
+          "\"signing\":\{self.signing.to_json()},",
           "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
           "\"runtime\":\{runtime_manifest}",
           "}",
@@ -631,6 +745,7 @@ pub fn BundleConfig::plan(
       executable_name,
       bundle_name: executable_name + extension,
       icon_path: self.icon_path,
+      signing: self.signing,
     })
   } else {
     Err(problems)

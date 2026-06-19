@@ -164,7 +164,7 @@ desktop core is reliable.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and
   package validation requirements.
 - App metadata manifest: id, product name, version, icons, capabilities,
-  assets, sidecars, signing options.
+  assets, sidecars, and typed signing options now flow into bundle manifests.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof

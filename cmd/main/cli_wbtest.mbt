@@ -792,6 +792,13 @@ test "project config parses bundle icon resources" {
     #|  "productName": "Icon App",
     #|  "version": "0.1.0",
     #|  "icon": "assets/icon.png",
+    #|  "signing": {
+    #|    "identity": "Developer ID Application: Vectie",
+    #|    "teamId": "ABCDE12345",
+    #|    "entitlements": "macos/entitlements.plist",
+    #|    "notarizationProfile": "lepusa-notary",
+    #|    "timestampUrl": "https://timestamp.local"
+    #|  },
     #|  "window": { "label": "main", "title": "Icon App" }
     #|}
     #|
@@ -802,6 +809,25 @@ test "project config parses bundle icon resources" {
           assert_eq(plan.resources().length(), 1)
           assert_eq(plan.resources()[0].source_path(), "assets/icon.png")
           assert_eq(plan.resources()[0].path(), "icon-app/icon-app.png")
+          assert_true(plan.signing().configured())
+          assert_eq(
+            plan.signing().identity().unwrap(),
+            "Developer ID Application: Vectie",
+          )
+          assert_eq(plan.signing().team_id().unwrap(), "ABCDE12345")
+          assert_eq(
+            plan.signing().entitlements_path().unwrap(),
+            "macos/entitlements.plist",
+          )
+          match plan.files() {
+            Ok(files) =>
+              assert_true(
+                files[2]
+                .content()
+                .contains("\"timestampUrl\":\"https://timestamp.local\""),
+              )
+            Err(_) => abort("unexpected invalid bundle files")
+          }
         }
         Err(_) => abort("unexpected invalid bundle plan")
       }

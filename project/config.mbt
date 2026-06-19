@@ -49,6 +49,11 @@ fn loaded_project_from_object(
   let icon_path = optional_config_string(object, "icon").map(fn(path) {
     config_path(base_dir, path)
   })
+  let signing = match optional_config_object(object, "signing") {
+    Some(signing_object) =>
+      signing_config_from_object(signing_object, base_dir~, problems)
+    None => @lepusa.SigningConfig::new()
+  }
   let root = @lepusa.simple_cell(@lepusa.Html::text(root_html))
   let runtime = match optional_config_object(object, "runtime") {
     Some(runtime_object) => runtime_config_from_object(runtime_object, problems)
@@ -93,11 +98,42 @@ fn loaded_project_from_object(
       Some(icon_path) => manifest = manifest.with_icon_path(icon_path)
       None => ()
     }
+    manifest = manifest.with_signing(signing)
     let registry = project_registry_from_plugins(plugins, filesystem_scopes~)
     Ok({ manifest, root, registry })
   } else {
     Err(problems)
   }
+}
+
+///|
+fn signing_config_from_object(
+  object : Map[String, Json],
+  base_dir~ : String,
+  problems : Array[String],
+) -> @lepusa.SigningConfig {
+  let identity = optional_config_string(object, "identity")
+  let team_id = optional_config_string(object, "teamId")
+  let entitlements_path = optional_config_string(object, "entitlements").map(fn(
+    path,
+  ) {
+    config_path(base_dir, path)
+  })
+  let notarization_profile = optional_config_string(
+    object, "notarizationProfile",
+  )
+  let timestamp_url = optional_config_string(object, "timestampUrl")
+  let signing = @lepusa.SigningConfig::new(
+    identity?,
+    entitlements_path?,
+    team_id?,
+    notarization_profile?,
+    timestamp_url?,
+  )
+  for problem in signing.validate() {
+    problems.push(problem)
+  }
+  signing
 }
 
 ///|

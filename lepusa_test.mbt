@@ -954,12 +954,28 @@ test "bundle plans derive executable and package names from metadata" {
         ),
         target=MacOS,
         icon_path="assets/app.icns",
+        signing=@lepusa.SigningConfig::new(
+          identity="Developer ID Application: Vectie",
+          team_id="ABCDE12345",
+          entitlements_path="macos/entitlements.plist",
+          notarization_profile="lepusa-notary",
+        ),
       )
       match bundle.plan(runtime, registered_routes=["core.invoke"]) {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
           assert_eq(plan.icon_path().unwrap(), "assets/app.icns")
+          assert_true(plan.signing().configured())
+          assert_eq(
+            plan.signing().identity().unwrap(),
+            "Developer ID Application: Vectie",
+          )
+          assert_eq(plan.signing().team_id().unwrap(), "ABCDE12345")
+          assert_eq(
+            plan.signing().entitlements_path().unwrap(),
+            "macos/entitlements.plist",
+          )
           let resources = plan.resources()
           assert_eq(resources.length(), 1)
           assert_true(resources[0].kind() is IconResource)
@@ -1020,6 +1036,12 @@ test "bundle plans derive executable and package names from metadata" {
               assert_true(
                 files[2].content().contains("\"signingPrerequisites\""),
               )
+              assert_true(files[2].content().contains("\"signing\""))
+              assert_true(
+                files[2]
+                .content()
+                .contains("\"notarizationProfile\":\"lepusa-notary\""),
+              )
               assert_true(
                 files[2]
                 .content()
@@ -1034,6 +1056,21 @@ test "bundle plans derive executable and package names from metadata" {
     }
     Err(_) => abort("unexpected invalid runtime plan")
   }
+}
+
+///|
+test "signing config validates empty configured fields" {
+  let signing = @lepusa.SigningConfig::new(
+    identity="",
+    team_id="",
+    entitlements_path="",
+    notarization_profile="",
+    timestamp_url="",
+  )
+  let problems = signing.validate()
+  assert_eq(problems.length(), 5)
+  assert_eq(problems[0], "signing identity must not be empty")
+  assert_eq(problems[4], "signing timestamp url must not be empty")
 }
 
 ///|
@@ -1170,6 +1207,12 @@ test "project manifests build runtime and bundle plans" {
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
     .with_capability(@lepusa.Capability::new("core").permission(Notification))
     .with_icon_path("assets/icon.png")
+    .with_signing(
+      @lepusa.SigningConfig::new(
+        identity="Linux Package Key",
+        timestamp_url="https://timestamp.local",
+      ),
+    )
     .with_lifecycle(AppWillExit, @lepusa.Cmd::effect("flush"))
   match manifest.runtime_plan(root) {
     Ok(runtime) => {
@@ -1188,6 +1231,11 @@ test "project manifests build runtime and bundle plans" {
       assert_eq(bundle.bundle_name(), "manifest-app")
       assert_eq(bundle.resources().length(), 1)
       assert_eq(bundle.resources()[0].path(), "manifest-app/manifest-app.png")
+      assert_eq(bundle.signing().identity().unwrap(), "Linux Package Key")
+      assert_eq(
+        bundle.signing().timestamp_url().unwrap(),
+        "https://timestamp.local",
+      )
     }
     Err(_) => abort("unexpected invalid manifest bundle plan")
   }

@@ -9,6 +9,7 @@ pub struct ProjectManifest {
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
   icon_path : String?
+  signing : SigningConfig
 } derive(Debug, Eq)
 
 ///|
@@ -22,6 +23,7 @@ pub fn ProjectManifest::new(
   lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
   icon_path? : String,
+  signing? : SigningConfig = SigningConfig::new(),
 ) -> ProjectManifest {
   {
     metadata,
@@ -33,6 +35,7 @@ pub fn ProjectManifest::new(
     lifecycle_hooks,
     runtime,
     icon_path,
+    signing,
   }
 }
 
@@ -73,6 +76,11 @@ pub fn ProjectManifest::runtime(self : ProjectManifest) -> RuntimeConfig {
 ///|
 pub fn ProjectManifest::icon_path(self : ProjectManifest) -> String? {
   self.icon_path
+}
+
+///|
+pub fn ProjectManifest::signing(self : ProjectManifest) -> SigningConfig {
+  self.signing
 }
 
 ///|
@@ -158,6 +166,14 @@ pub fn ProjectManifest::with_icon_path(
 }
 
 ///|
+pub fn ProjectManifest::with_signing(
+  self : ProjectManifest,
+  signing : SigningConfig,
+) -> ProjectManifest {
+  { ..self, signing, }
+}
+
+///|
 pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   let problems = self.metadata.validate()
   for problem in self.runtime.validate() {
@@ -208,6 +224,9 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   match self.icon_path {
     Some("") => problems.push("app icon path must not be empty")
     _ => ()
+  }
+  for problem in self.signing.validate() {
+    problems.push(problem)
   }
   problems
 }
@@ -270,8 +289,14 @@ pub fn ProjectManifest::bundle_plan(
   match self.runtime_plan(root) {
     Ok(runtime) => {
       let config = match self.icon_path {
-        Some(icon_path) => BundleConfig::new(self.metadata, target~, icon_path~)
-        None => BundleConfig::new(self.metadata, target~)
+        Some(icon_path) =>
+          BundleConfig::new(
+            self.metadata,
+            target~,
+            icon_path~,
+            signing=self.signing,
+          )
+        None => BundleConfig::new(self.metadata, target~, signing=self.signing)
       }
       config.plan(runtime, registered_routes~)
     }
