@@ -74,6 +74,20 @@ pub fn NativeRunnerStep::operations(Self) -> Array[NativeOperation]
 pub fn NativeRunnerStep::session(Self) -> RuntimeSession
 pub fn NativeRunnerStep::to_json(Self) -> String
 
+pub struct NativeRuntime {
+  backend : NativeBackend
+  host : RuntimeHost
+  runner : NativeRunnerPlan
+}
+pub fn NativeRuntime::backend(Self) -> NativeBackend
+pub fn NativeRuntime::bootstrap_json(Self) -> String
+pub fn NativeRuntime::dispatch_json(Self, String) -> String
+pub fn NativeRuntime::host(Self) -> RuntimeHost
+pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Result[String, Array[String]]
+pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
+pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
+pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
+
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 
 pub(all) enum RuntimeAssetBody {
@@ -268,4 +282,3 @@ pub fn RuntimeWindow::width(Self) -> Int
 // Type aliases
 
 // Traits
-

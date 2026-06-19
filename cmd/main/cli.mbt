@@ -602,8 +602,9 @@ fn render_native_run_summary(
   backend : @runtime.NativeBackend,
   host : @runtime.RuntimeHost,
 ) -> CliResult {
-  match backend.runner_plan(host) {
-    Ok(plan) => {
+  match @runtime.NativeRuntime::new(backend, host) {
+    Ok(runtime) => {
+      let plan = runtime.runner_plan()
       let first_window = match plan.webview_specs().get(0) {
         Some(window) => window.url()
         None => ""
@@ -630,8 +631,8 @@ fn render_native_runner_plan(
   backend : @runtime.NativeBackend,
   host : @runtime.RuntimeHost,
 ) -> CliResult {
-  match backend.runner_plan(host) {
-    Ok(plan) => ok(plan.bootstrap_json() + "\n")
+  match @runtime.NativeRuntime::new(backend, host) {
+    Ok(runtime) => ok(runtime.bootstrap_json() + "\n")
     Err(problems) => fail(render_problems("Lepusa native plan", problems))
   }
 }

@@ -39,6 +39,8 @@
   initial generic and native runner lowering exists
 - Add shared `@lepusa/runtime` native backend lowering over portable runtime
   operations.
+- Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
+  protocol asset resolution, bridge dispatch, and lifecycle steps.
 - Add `@lepusa/runtime/bundled` for packaged `lepusa/runtime.json` parsing,
   asset lookup, and lifecycle action selection.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and

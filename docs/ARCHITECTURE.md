@@ -283,9 +283,15 @@ can update protocol mappings and virtual assets without re-reading manifests.
 `RuntimeRunnerPlan::lifecycle_step(event)` exposes the platform-neutral form,
 and `lepusa lifecycle <event> [window]` prints it for no-window smoke tests.
 
-`@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`, and
-`NativeRunnerPlan`, so platform packages only need to describe their native
-engine and host availability:
+`@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`,
+`NativeRunnerPlan`, and `NativeRuntime`. `NativeRuntime` is the platform-loop
+facade: it binds a backend and `RuntimeHost` once, then exposes bootstrap JSON,
+asset resolution JSON, IPC dispatch JSON, and lifecycle step JSON from one
+object. Platform packages should consume that facade instead of reassembling
+host, runner, protocol, and command dispatch paths themselves.
+
+Platform packages only need to describe their native engine and host
+availability:
 
 - `@lepusa/runtime/macos`: WKWebView via Cocoa/WebKit.
 - `@lepusa/runtime/windows`: WebView2.
@@ -321,6 +327,10 @@ adds the launch manifest to the resolved WebViews, stepped session, and startup
 operations so platform packages can translate a single runtime object. Local
 services are emitted as `RuntimeStartService` operations before app startup
 commands.
+`NativeRuntime::new(backend, host)` is the backend-owned wrapper over that
+handoff. It is the narrow surface a real WKWebView/WebView2/WebKitGTK loop
+needs while creating windows, serving custom protocol requests, handling bridge
+IPC, and dispatching lifecycle events.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol

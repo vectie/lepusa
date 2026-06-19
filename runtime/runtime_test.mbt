@@ -114,12 +114,19 @@ test "native backend lowers host runner plan with portable operations" {
       assert_true(plan.lifecycle_steps()[0].event() is AppWillExit)
       match plan.lifecycle_step(AppWillExit) {
         Ok(step) => {
+          let step_json = step.to_json()
           assert_true(step.event() is AppWillExit)
           assert_true(step.operations()[0] is NativeRunEffect("flush"))
-          assert_true(step.to_json().contains("\"kind\":\"app-will-exit\""))
-          assert_true(step.to_json().contains("\"name\":\"flush\""))
-          assert_true(step.to_json().contains("\"session\""))
-          assert_true(step.to_json().contains("\"bridgeSource\""))
+          assert_true(step_json.has_prefix("{\"event\":"))
+          assert_false(
+            step_json.contains(
+              "\"event\":{\"kind\":\"app-will-exit\"},\"event\"",
+            ),
+          )
+          assert_true(step_json.contains("\"kind\":\"app-will-exit\""))
+          assert_true(step_json.contains("\"name\":\"flush\""))
+          assert_true(step_json.contains("\"session\""))
+          assert_true(step_json.contains("\"bridgeSource\""))
         }
         Err(_) => abort("unexpected invalid native lifecycle step")
       }
@@ -133,6 +140,45 @@ test "native backend lowers host runner plan with portable operations" {
       assert_true(json.contains("\"session\""))
     }
     Err(_) => abort("unexpected invalid native runner plan")
+  }
+}
+
+///|
+test "native runtime facade exposes platform loop hooks" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok(payload)
+  })
+  let host = RuntimeHost::new(test_plan(), registry~)
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, host) {
+    Ok(runtime) => {
+      let bootstrap = runtime.bootstrap_json()
+      assert_true(runtime.backend().name() == "test")
+      assert_true(bootstrap.contains("\"nativeBackend\":\"test\""))
+      assert_true(bootstrap.contains("\"startupOperations\""))
+      assert_true(bootstrap.contains("\"webviewSpecs\""))
+      let asset = runtime.resolve_asset_json("lepusa://inline/main/index.html")
+      assert_true(asset.contains("\"ok\":true"))
+      assert_true(asset.contains("\"kind\":\"virtual\""))
+      let dispatch = runtime.dispatch_json(
+        "{\"id\":\"1\",\"windowLabel\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"ok\"}",
+      )
+      assert_true(dispatch.contains("\"payload\":\"ok\""))
+      match runtime.lifecycle_step_json(AppWillExit) {
+        Ok(step) => {
+          assert_true(step.has_prefix("{\"event\":"))
+          assert_false(
+            step.contains("\"event\":{\"kind\":\"app-will-exit\"},\"event\""),
+          )
+          assert_true(step.contains("\"kind\":\"app-will-exit\""))
+          assert_true(step.contains("\"name\":\"flush\""))
+        }
+        Err(_) => abort("unexpected invalid native runtime lifecycle step")
+      }
+    }
+    Err(_) => abort("unexpected invalid native runtime")
   }
 }
 

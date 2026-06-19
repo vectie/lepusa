@@ -39,6 +39,8 @@ The first implementation slice already owns the public MoonBit foundation:
   without shelling through `lepusa init`
 - `@lepusa/runtime` host/session snapshots that native WebView backends can
   consume without reinterpreting app configuration
+- `@lepusa/runtime.NativeRuntime` as the single native-loop facade over backend
+  bootstrap, asset protocol responses, IPC dispatch, and lifecycle steps
 
 The common authoring path is intentionally small:
 
@@ -392,8 +394,11 @@ WebView2, or WebKitGTK without rebuilding app state.
 `RuntimeRunnerPlan::lifecycle_step(event)` returns the same operation/session
 shape that `lepusa lifecycle` prints.
 
-`@lepusa/runtime` also exposes `NativeBackend`, the shared lowering boundary
-for platform packages. `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
+`@lepusa/runtime` also exposes `NativeBackend` and `NativeRuntime`, the shared
+lowering boundary for platform packages. `NativeRuntime` binds a backend and
+host once, then gives platform loops bootstrap JSON, asset JSON, dispatch JSON,
+and lifecycle step JSON without making each backend rebuild those paths.
+`@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK while reusing the
 same portable runner plan.
