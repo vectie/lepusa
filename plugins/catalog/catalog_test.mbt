@@ -1,15 +1,26 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 4)
+  assert_eq(names.length(), 6)
+  assert_true(names.contains("clipboard"))
   assert_true(names.contains("dialog"))
   assert_true(names.contains("fs"))
   assert_true(names.contains("log"))
+  assert_true(names.contains("notification"))
   assert_true(names.contains("store"))
+  assert_true(
+    plugin("clipboard").unwrap().command_routes().contains("clipboard.readText"),
+  )
   assert_true(
     plugin("dialog").unwrap().command_routes().contains("dialog.message"),
   )
   assert_true(plugin("log").unwrap().command_routes().contains("log.write"))
+  assert_true(
+    plugin("notification")
+    .unwrap()
+    .command_routes()
+    .contains("notification.show"),
+  )
   assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
   assert_true(plugin("fs").unwrap().command_routes().contains("fs.readText"))
   assert_true(plugin("missing") is None)

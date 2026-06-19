@@ -7,8 +7,14 @@ individual plugin package as the official ecosystem grows.
 ```moonbit nocheck
 ///|
 test "lookup official plugins" {
+  let clipboard = @catalog.plugin("clipboard").unwrap()
+  assert_true(clipboard.command_routes().contains("clipboard.readText"))
+
   let dialog = @catalog.plugin("dialog").unwrap()
   assert_true(dialog.command_routes().contains("dialog.message"))
+
+  let notification = @catalog.plugin("notification").unwrap()
+  assert_true(notification.command_routes().contains("notification.show"))
 
   let fs = @catalog.plugin("fs").unwrap()
   assert_true(fs.command_routes().contains("fs.readText"))

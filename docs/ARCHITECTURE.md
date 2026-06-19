@@ -394,8 +394,10 @@ should expose the same small surface:
 packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, and scoped
 relative path policy. `@lepusa/plugins/dialog` declares message, confirm, and
-prompt routes. Native platform effects should be implemented by runtime
-backends behind those contracts, not by widening core access.
+prompt routes. `@lepusa/plugins/clipboard` and
+`@lepusa/plugins/notification` declare clipboard and notification routes.
+Native platform effects should be implemented by runtime backends behind those
+contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need
 official plugin declarations or pure MoonBit handler registration without
 importing every plugin package directly.

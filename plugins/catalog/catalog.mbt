@@ -1,8 +1,10 @@
 ///|
 pub fn plugin(name : String) -> @lepusa.Plugin? {
   match name {
+    "clipboard" => Some(@clipboard.plugin())
     "dialog" => Some(@dialog.plugin())
     "log" => Some(@log.plugin())
+    "notification" => Some(@notification.plugin())
     "store" => Some(@store.plugin())
     "fs" => Some(@fs_plugin.plugin())
     _ => None
@@ -28,5 +30,5 @@ pub fn registered_plugin_names() -> Array[String] {
 
 ///|
 pub fn plugin_names() -> Array[String] {
-  ["dialog", "fs", "log", "store"]
+  ["clipboard", "dialog", "fs", "log", "notification", "store"]
 }

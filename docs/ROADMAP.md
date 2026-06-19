@@ -82,8 +82,8 @@ Stabilize the cross-platform core set first:
 - fs: initial scoped permission contract and runtime scope manifest exist
 - file-dialog with scoped default directories
 - process and shell with explicit permissions
-- clipboard
-- notification
+- clipboard: initial platform-neutral command contract exists
+- notification: initial platform-neutral command contract exists
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists
 - localhost
