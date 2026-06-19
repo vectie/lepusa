@@ -421,6 +421,11 @@ lepusa bundle-plan <target>
 Native run/build/bundle commands should consume the same `RuntimePlan` and
 `BundlePlan` objects rather than maintaining parallel configuration paths.
 
+Project manifests may declare official plugins by name only. The CLI expands
+`log`, `store`, and `fs` to their official command contracts before planning,
+while plugins with explicit `commands` arrays keep their manifest-defined
+surface.
+
 ## Manifest Boundary
 
 `ProjectManifest` owns reusable app-neutral configuration:

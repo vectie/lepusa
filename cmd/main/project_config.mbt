@@ -148,9 +148,35 @@ fn plugin_from_object(
       for command in commands {
         plugin = plugin_command_from_json(plugin, command, problems)
       }
-    None => ()
+    None =>
+      match official_plugin_from_name(name) {
+        Some(official) => plugin = official
+        None => ()
+      }
   }
   plugin
+}
+
+///|
+fn official_plugin_from_name(name : String) -> @lepusa.Plugin? {
+  match name {
+    "log" => Some(@log.plugin())
+    "store" => Some(@store.plugin())
+    "fs" =>
+      Some(
+        @lepusa.Plugin::new("fs")
+        .command_async("readText", permission=FileSystemRead)
+        .command_async("readBytes", permission=FileSystemRead)
+        .command_async("exists", permission=FileSystemRead)
+        .command_async("list", permission=FileSystemRead)
+        .command_async("metadata", permission=FileSystemRead)
+        .command_async("writeText", permission=FileSystemWrite)
+        .command_async("writeBytes", permission=FileSystemWrite)
+        .command_async("delete", permission=FileSystemWrite)
+        .command_async("createDir", permission=FileSystemWrite),
+      )
+    _ => None
+  }
 }
 
 ///|

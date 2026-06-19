@@ -144,20 +144,10 @@ fn project_lepusa_json() -> String {
     #|      ]
     #|    },
     #|    {
-    #|      "name": "log",
-    #|      "commands": [
-    #|        { "name": "write", "mode": "sync" }
-    #|      ]
+    #|      "name": "log"
     #|    },
     #|    {
-    #|      "name": "store",
-    #|      "commands": [
-    #|        { "name": "get", "mode": "sync" },
-    #|        { "name": "set", "mode": "sync" },
-    #|        { "name": "delete", "mode": "sync" },
-    #|        { "name": "clear", "mode": "sync" },
-    #|        { "name": "keys", "mode": "sync" }
-    #|      ]
+    #|      "name": "store"
     #|    }
     #|  ],
     #|  "capabilities": [
