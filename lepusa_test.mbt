@@ -976,6 +976,13 @@ test "bundle plans derive executable and package names from metadata" {
             plan.signing().entitlements_path().unwrap(),
             "macos/entitlements.plist",
           )
+          let steps = plan.signing_steps()
+          assert_eq(steps.length(), 2)
+          assert_eq(steps[0].name(), "codesign-app")
+          assert_eq(steps[0].tool(), "codesign")
+          assert_true(steps[0].arguments().contains("--entitlements"))
+          assert_true(steps[0].arguments().contains("macos/entitlements.plist"))
+          assert_eq(steps[1].name(), "notarize-app")
           let resources = plan.resources()
           assert_eq(resources.length(), 1)
           assert_true(resources[0].kind() is IconResource)
@@ -1037,6 +1044,8 @@ test "bundle plans derive executable and package names from metadata" {
                 files[2].content().contains("\"signingPrerequisites\""),
               )
               assert_true(files[2].content().contains("\"signing\""))
+              assert_true(files[2].content().contains("\"signingSteps\""))
+              assert_true(files[2].content().contains("\"codesign-app\""))
               assert_true(
                 files[2]
                 .content()
@@ -1236,6 +1245,9 @@ test "project manifests build runtime and bundle plans" {
         bundle.signing().timestamp_url().unwrap(),
         "https://timestamp.local",
       )
+      assert_eq(bundle.signing_prerequisites().length(), 3)
+      assert_eq(bundle.signing_steps().length(), 1)
+      assert_eq(bundle.signing_steps()[0].tool(), "gpg")
     }
     Err(_) => abort("unexpected invalid manifest bundle plan")
   }

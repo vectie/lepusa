@@ -132,6 +132,14 @@ pub struct SigningPrerequisite {
 } derive(Debug, Eq)
 
 ///|
+pub struct SigningStep {
+  name : String
+  tool : String
+  arguments : Array[String]
+  description : String
+} derive(Debug, Eq)
+
+///|
 pub struct SigningConfig {
   identity : String?
   team_id : String?
@@ -333,6 +341,48 @@ pub fn SigningPrerequisite::to_json(self : SigningPrerequisite) -> String {
 }
 
 ///|
+pub fn SigningStep::new(
+  name~ : String,
+  tool~ : String,
+  arguments~ : Array[String],
+  description~ : String,
+) -> SigningStep {
+  { name, tool, arguments, description }
+}
+
+///|
+pub fn SigningStep::name(self : SigningStep) -> String {
+  self.name
+}
+
+///|
+pub fn SigningStep::tool(self : SigningStep) -> String {
+  self.tool
+}
+
+///|
+pub fn SigningStep::arguments(self : SigningStep) -> Array[String] {
+  self.arguments.copy()
+}
+
+///|
+pub fn SigningStep::description(self : SigningStep) -> String {
+  self.description
+}
+
+///|
+pub fn SigningStep::to_json(self : SigningStep) -> String {
+  [
+    "{",
+    "\"name\":\{self.name.json_string()},",
+    "\"tool\":\{self.tool.json_string()},",
+    "\"arguments\":[\{self.arguments.map(fn(argument) { argument.json_string() }).join(",")}],",
+    "\"description\":\{self.description.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn BundleFile::path(self : BundleFile) -> String {
   self.path
 }
@@ -389,6 +439,15 @@ pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
 ///|
 pub fn BundlePlan::signing(self : BundlePlan) -> SigningConfig {
   self.signing
+}
+
+///|
+pub fn BundlePlan::signing_steps(self : BundlePlan) -> Array[SigningStep] {
+  match self.target {
+    MacOS => self.macos_signing_steps()
+    Windows => self.windows_signing_steps()
+    Linux => self.linux_signing_steps()
+  }
 }
 
 ///|
@@ -468,8 +527,8 @@ pub fn BundlePlan::signing_prerequisites(
           description="Required on target machines unless bundled by the installer",
         ),
       ]
-    Linux =>
-      [
+    Linux => {
+      let prerequisites = [
         SigningPrerequisite::new(
           kind=SigningIdentity,
           name="package signing key",
@@ -481,7 +540,120 @@ pub fn BundlePlan::signing_prerequisites(
           description="Required to validate Linux desktop integration metadata",
         ),
       ]
+      if self.signing.identity() is Some(_) {
+        prerequisites.push(
+          SigningPrerequisite::new(
+            kind=SigningTool,
+            name="gpg",
+            description="Required to create detached package signatures from configured signing identity",
+          ),
+        )
+      }
+      prerequisites
+    }
   }
+}
+
+///|
+fn BundlePlan::macos_signing_steps(self : BundlePlan) -> Array[SigningStep] {
+  let steps : Array[SigningStep] = []
+  match self.signing.identity() {
+    Some(identity) => {
+      let arguments = [
+        "--force", "--deep", "--options", "runtime", "--sign", identity,
+      ]
+      match self.signing.entitlements_path() {
+        Some(path) => {
+          arguments.push("--entitlements")
+          arguments.push(path)
+        }
+        None => ()
+      }
+      arguments.push(self.bundle_name())
+      steps.push(
+        SigningStep::new(
+          name="codesign-app",
+          tool="codesign",
+          arguments~,
+          description="Apply a hardened-runtime signature to the macOS app bundle",
+        ),
+      )
+    }
+    None => ()
+  }
+  match self.signing.notarization_profile() {
+    Some(profile) =>
+      steps.push(
+        SigningStep::new(
+          name="notarize-app",
+          tool="xcrun",
+          arguments=[
+            "notarytool",
+            "submit",
+            self.bundle_name(),
+            "--keychain-profile",
+            profile,
+            "--wait",
+          ],
+          description="Submit the signed macOS app bundle for notarization",
+        ),
+      )
+    None => ()
+  }
+  steps
+}
+
+///|
+fn BundlePlan::windows_signing_steps(self : BundlePlan) -> Array[SigningStep] {
+  let steps : Array[SigningStep] = []
+  match self.signing.identity() {
+    Some(identity) => {
+      let arguments = ["sign", "/fd", "SHA256", "/n", identity]
+      match self.signing.timestamp_url() {
+        Some(url) => {
+          arguments.push("/tr")
+          arguments.push(url)
+          arguments.push("/td")
+          arguments.push("SHA256")
+        }
+        None => ()
+      }
+      arguments.push(self.bundle_name())
+      steps.push(
+        SigningStep::new(
+          name="sign-executable",
+          tool="signtool",
+          arguments~,
+          description="Apply an Authenticode signature to the Windows executable",
+        ),
+      )
+    }
+    None => ()
+  }
+  steps
+}
+
+///|
+fn BundlePlan::linux_signing_steps(self : BundlePlan) -> Array[SigningStep] {
+  let steps : Array[SigningStep] = []
+  match self.signing.identity() {
+    Some(identity) =>
+      steps.push(
+        SigningStep::new(
+          name="sign-package",
+          tool="gpg",
+          arguments=[
+            "--detach-sign",
+            "--local-user",
+            identity,
+            self.executable_name(),
+          ],
+          description="Create a detached signature for the Linux package artifact",
+        ),
+      )
+    None => ()
+  }
+  steps
 }
 
 ///|
@@ -632,6 +804,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
           "\"signing\":\{self.signing.to_json()},",
           "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
+          "\"signingSteps\":[\{self.signing_steps().map(fn(step) { step.to_json() }).join(",")}],",
           "\"runtime\":\{runtime_manifest}",
           "}",
         ].join(""),

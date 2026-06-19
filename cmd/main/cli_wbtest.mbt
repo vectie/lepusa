@@ -819,13 +819,17 @@ test "project config parses bundle icon resources" {
             plan.signing().entitlements_path().unwrap(),
             "macos/entitlements.plist",
           )
+          assert_eq(plan.signing_steps().length(), 1)
+          assert_eq(plan.signing_steps()[0].tool(), "gpg")
           match plan.files() {
-            Ok(files) =>
+            Ok(files) => {
               assert_true(
                 files[2]
                 .content()
                 .contains("\"timestampUrl\":\"https://timestamp.local\""),
               )
+              assert_true(files[2].content().contains("\"signingSteps\""))
+            }
             Err(_) => abort("unexpected invalid bundle files")
           }
         }

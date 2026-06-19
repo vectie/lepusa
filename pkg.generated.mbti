@@ -115,6 +115,7 @@ pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array
 pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
 pub fn BundlePlan::signing(Self) -> SigningConfig
 pub fn BundlePlan::signing_prerequisites(Self) -> Array[SigningPrerequisite]
+pub fn BundlePlan::signing_steps(Self) -> Array[SigningStep]
 pub fn BundlePlan::target(Self) -> BundleTarget
 
 pub struct BundleResource {
@@ -773,6 +774,19 @@ pub(all) enum SigningPrerequisiteKind {
   PackageValidator
 } derive(Eq, @debug.Debug)
 pub fn SigningPrerequisiteKind::name(Self) -> String
+
+pub struct SigningStep {
+  name : String
+  tool : String
+  arguments : Array[String]
+  description : String
+} derive(Eq, @debug.Debug)
+pub fn SigningStep::arguments(Self) -> Array[String]
+pub fn SigningStep::description(Self) -> String
+pub fn SigningStep::name(Self) -> String
+pub fn SigningStep::new(name~ : String, tool~ : String, arguments~ : Array[String], description~ : String) -> Self
+pub fn SigningStep::to_json(Self) -> String
+pub fn SigningStep::tool(Self) -> String
 
 pub(all) enum Source {
   InlineHtml(String)
