@@ -122,6 +122,7 @@ moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- native-plan macos
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
+moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
 moon run cmd/main --target native -- init _build/lepusa-app

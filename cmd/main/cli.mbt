@@ -74,6 +74,16 @@ fn positional_args(args : Array[String]) -> Array[String] {
 }
 
 ///|
+fn has_flag(args : Array[String], flag : String) -> Bool {
+  for arg in args {
+    if arg == flag {
+      return true
+    }
+  }
+  false
+}
+
+///|
 fn render_cli(args : Array[String]) -> CliResult {
   match args.get(0) {
     None => ok(help_text())
@@ -140,7 +150,7 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa native-plan [macos|windows|linux]
-    #|  lepusa run [macos|windows|linux]
+    #|  lepusa run [macos|windows|linux] [--launch]
     #|  lepusa bridge
     #|  lepusa dev
     #|  lepusa invoke <window> <plugin.command> [payload]
@@ -322,7 +332,12 @@ async fn render_run_async(args : Array[String]) -> CliResult {
       match project_runtime_host(args) {
         Ok(host) =>
           match native_runtime_for_target(target, host) {
-            Ok(runtime) => render_native_run_summary(target, runtime)
+            Ok(runtime) =>
+              if has_flag(args, "--launch") {
+                render_native_launch(target, runtime)
+              } else {
+                render_native_run_summary(target, runtime)
+              }
             Err(problems) => fail(render_problems("Lepusa run", problems))
           }
         Err(problems) => fail(render_problems("Lepusa run", problems))
@@ -582,7 +597,12 @@ fn render_run(args : Array[String]) -> CliResult {
         Ok(plan) =>
           match
             native_runtime_for_target(target, @runtime.RuntimeHost::new(plan)) {
-            Ok(runtime) => render_native_run_summary(target, runtime)
+            Ok(runtime) =>
+              if has_flag(args, "--launch") {
+                render_native_launch(target, runtime)
+              } else {
+                render_native_run_summary(target, runtime)
+              }
             Err(problems) => fail(render_problems("Lepusa run", problems))
           }
         Err(problems) => fail(render_problems("Lepusa run", problems))
@@ -601,6 +621,45 @@ fn native_runtime_for_target(
     Windows => @windows_backend.runtime(host)
     Linux => @linux_backend.runtime(host)
   }
+}
+
+///|
+fn render_native_launch(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
+) -> CliResult {
+  match target {
+    MacOS =>
+      match @macos_backend.launch(runtime) {
+        Ok(result) => render_macos_launch_result(result)
+        Err(problems) => fail(render_problems("Lepusa launch", problems))
+      }
+    Windows | Linux =>
+      fail(
+        "Lepusa launch\n[fail] native launch is not implemented for target: \{target.name()}\n",
+      )
+  }
+}
+
+///|
+fn render_macos_launch_result(
+  result : @macos_backend.MacOSRunResult,
+) -> CliResult {
+  let status = match result.status() {
+    MacOSPrepared => "prepared"
+    MacOSLaunched => "launched"
+    MacOSLaunchFailed(_) => "failed"
+  }
+  ok(
+    "Lepusa launch\n" +
+    "target: macos\n" +
+    "backend: macos\n" +
+    "engine: WKWebView\n" +
+    "status: \{status}\n" +
+    "webviews: \{result.plan().webviews()}\n" +
+    "first-window-url: \{result.plan().url()}\n" +
+    "load-url: \{result.plan().load_url()}\n",
+  )
 }
 
 ///|

@@ -18,7 +18,8 @@
   `launch_plan` APIs with syntax close to Rabbita.
 - Lower source-less `App` windows into generated Rabbita-style HTML from the
   root `Cell`.
-- Add native `run` once the first runtime backend is wired.
+- Add native `run` once the first runtime backend is wired: macOS now has an
+  explicit `lepusa run macos --launch` path.
 - Run a desktop counter app authored in MoonBit model/update/view style.
 - Support direct `WindowConfig::new(..., source=...)` hosting for non-Rabbita
   assets.
@@ -47,7 +48,9 @@
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.
-- Implement or port WebView window creation for macOS, Windows, and Linux.
+- Implement or port WebView window creation for macOS, Windows, and Linux:
+  first macOS WKWebView launch path exists; custom protocol callbacks and
+  Linux/Windows launch loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

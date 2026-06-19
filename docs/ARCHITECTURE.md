@@ -365,11 +365,16 @@ project configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
-available and a MoonBit launch-plan layer that wraps the portable runtime
-launch manifest in a macOS envelope. Objective-C window creation should live
-under this package, not in the portable facade or CLI.
-`MacOSBackend::runner_plan(host)` consumes `RuntimeHost::runner_plan()` and
-translates portable `RuntimeOperation` values into macOS runner operations.
+available, prepares the first WebView load URL from typed runtime assets, and
+enters a Cocoa/WKWebView run loop through an explicit `launch(runtime)` call.
+Objective-C window creation lives under this package, not in the portable
+facade or CLI. `prepare_run(runtime)` is the testable boundary: it converts
+virtual Lepusa assets into `data:` URLs and local or packaged assets into
+`file:` URLs before a native window is opened.
+`lepusa run macos --launch` is the first explicit GUI entry point. Linux and
+Windows still expose runner contracts and host availability checks, but their
+native launch loops intentionally fail until those platform packages implement
+their WebView creation paths.
 
 ## Bundling
 
@@ -516,6 +521,9 @@ lepusa dev
 
 lepusa run <target>
   -> prints a no-window native runner smoke summary from NativeRunnerPlan
+
+lepusa run macos --launch
+  -> prepares and opens the first macOS WKWebView window
 
 lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a no-window launch summary

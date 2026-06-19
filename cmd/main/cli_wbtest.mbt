@@ -115,6 +115,13 @@ test "run prints native runner smoke summary" {
 }
 
 ///|
+test "run launch rejects unwired native targets" {
+  let result = render_cli(["run", "linux", "--launch"])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("native launch is not implemented"))
+}
+
+///|
 test "bundle plan supports target selection" {
   let result = render_cli(["bundle-plan", "windows"])
   assert_eq(result.exit_code, 0)

@@ -116,3 +116,40 @@ test "macos backend exposes native runtime facade" {
     Err(_) => abort("unexpected invalid macOS native runtime")
   }
 }
+
+///|
+test "macos backend prepares first webview load url" {
+  match runtime(test_host()) {
+    Ok(runtime) =>
+      match prepare_run(runtime) {
+        Ok(plan) => {
+          assert_eq(plan.title(), "macOS")
+          assert_eq(plan.url(), "lepusa://inline/main/index.html")
+          assert_true(plan.load_url().has_prefix("data:text/html;base64,"))
+          assert_false(plan.load_url().contains("lepusa://"))
+          assert_eq(plan.width(), 1000)
+          assert_eq(plan.height(), 720)
+          assert_eq(plan.webviews(), 1)
+        }
+        Err(_) => abort("unexpected invalid macOS run plan")
+      }
+    Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
+
+///|
+test "macos backend dry run does not enter native loop" {
+  match runtime(test_host()) {
+    Ok(runtime) =>
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is MacOSPrepared)
+          assert_true(
+            result.plan().load_url().has_prefix("data:text/html;base64,"),
+          )
+        }
+        Err(_) => abort("unexpected invalid macOS dry run")
+      }
+    Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
