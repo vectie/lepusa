@@ -34,6 +34,7 @@
 - Add per-window WebView boot specs for platform backends.
 - Add a portable runtime launch manifest for WebViews, bridge hooks, protocol
   mappings, and command routes.
+- Lower `Cmd` startup trees into backend-executable runtime actions.
 - Add `@lepusa/runtime/macos` native backend package with WebKit availability
   validation and macOS launch-plan lowering.
 - Implement or port WebView window creation for macOS, Windows, and Linux.

@@ -225,6 +225,11 @@ installs `window.lepusa.listen(name, handler)`,
 per-WebView `eventDispatchHook` from `RuntimeWebViewBoot` or
 `RuntimeWebViewSpec` when delivering `Event::to_json()` payloads into the page.
 
+`RuntimePlan::actions(cmd)` lowers app commands into backend-executable
+`RuntimeAction` values. Startup commands become `startupActions` in the launch
+manifest, so native runners can emit frontend events, navigate windows, and
+run named effects without understanding the authoring `Cmd` tree.
+
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
 name, and document-start initialization scripts. The platform layer should

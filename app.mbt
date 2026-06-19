@@ -49,6 +49,11 @@ pub fn LaunchPlan::command_routes(self : LaunchPlan) -> Array[String] {
 }
 
 ///|
+pub fn LaunchPlan::startup(self : LaunchPlan) -> Cmd {
+  self.startup
+}
+
+///|
 pub struct App {
   root : Cell
   windows : Array[WindowConfig]

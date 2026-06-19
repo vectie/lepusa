@@ -7,6 +7,7 @@ pub struct RuntimeLaunchManifest {
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
+  startup_actions : Array[RuntimeAction]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -71,6 +72,7 @@ pub fn RuntimePlan::launch_manifest(
   let webviews : Array[RuntimeWebViewBoot] = []
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
   let virtual_files : Array[RuntimeVirtualAsset] = []
+  let startup_actions : Array[RuntimeAction] = []
   let problems : Array[String] = []
   for window in self.windows() {
     match
@@ -91,6 +93,16 @@ pub fn RuntimePlan::launch_manifest(
       virtual_files.push(RuntimeVirtualAsset::from_file(window.label(), file))
     }
   }
+  match self.startup_actions() {
+    Ok(actions) =>
+      for action in actions {
+        startup_actions.push(action)
+      }
+    Err(action_problems) =>
+      for problem in action_problems {
+        problems.push(problem)
+      }
+  }
   if problems.is_empty() {
     Ok({
       backend: self.backend().name(),
@@ -100,6 +112,7 @@ pub fn RuntimePlan::launch_manifest(
       webviews,
       protocol_mappings,
       virtual_files,
+      startup_actions,
       command_routes: self.command_routes(),
       registered_routes: registered_routes.copy(),
     })
@@ -198,6 +211,13 @@ pub fn RuntimeLaunchManifest::virtual_files(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::startup_actions(
+  self : RuntimeLaunchManifest,
+) -> Array[RuntimeAction] {
+  self.startup_actions.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::command_routes(
   self : RuntimeLaunchManifest,
 ) -> Array[String] {
@@ -222,6 +242,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"webviews\":[\{self.webviews.map(runtime_webview_boot_json).join(",")}],",
     "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_binding_json).join(",")}],",
     "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
+    "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",

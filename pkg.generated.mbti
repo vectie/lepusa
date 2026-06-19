@@ -186,6 +186,7 @@ pub(all) enum EventTarget {
   WindowTarget(String)
   WebviewTarget(String)
 } derive(Eq, @debug.Debug)
+pub fn EventTarget::to_json(Self) -> String
 
 pub struct Html {
   content : String
@@ -232,6 +233,7 @@ pub fn LaunchPlan::capability_count(Self) -> Int
 pub fn LaunchPlan::command_routes(Self) -> Array[String]
 pub fn LaunchPlan::plugin_count(Self) -> Int
 pub fn LaunchPlan::plugins(Self) -> Array[Plugin]
+pub fn LaunchPlan::startup(Self) -> Cmd
 pub fn LaunchPlan::window_count(Self) -> Int
 pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
 
@@ -343,6 +345,13 @@ pub fn ResolvedWindow::title_bar(Self) -> TitleBarStyle
 pub fn ResolvedWindow::url(Self) -> String
 pub fn ResolvedWindow::width(Self) -> Int
 
+pub(all) enum RuntimeAction {
+  RuntimeEffect(String)
+  RuntimeEmit(EventTarget, Event)
+  RuntimeNavigate(String, ResolvedSource)
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAction::to_json(Self) -> String
+
 pub(all) enum RuntimeBackend {
   SystemWebView
   Headless
@@ -380,6 +389,7 @@ pub struct RuntimeLaunchManifest {
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
+  startup_actions : Array[RuntimeAction]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -391,6 +401,7 @@ pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
+pub fn RuntimeLaunchManifest::startup_actions(Self) -> Array[RuntimeAction]
 pub fn RuntimeLaunchManifest::to_json(Self) -> String
 pub fn RuntimeLaunchManifest::virtual_files(Self) -> Array[RuntimeVirtualAsset]
 pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]
@@ -403,6 +414,7 @@ pub struct RuntimePlan {
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
 } derive(Eq, @debug.Debug)
+pub fn RuntimePlan::actions(Self, Cmd) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::asset_protocol(Self) -> String
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
@@ -412,6 +424,7 @@ pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn RuntimePlan::plugin_count(Self) -> Int
+pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::window_count(Self) -> Int
 pub fn RuntimePlan::windows(Self) -> Array[ResolvedWindow]
 

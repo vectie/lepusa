@@ -132,6 +132,10 @@ The generated bridge also exposes `window.lepusa.listen(name, handler)` and
 installs `globalThis.__lepusaDispatchEvent(event)` for native-to-frontend
 events.
 
+`RuntimePlan::actions(cmd)` lowers `Cmd::emit`, `Cmd::navigate`, and
+`Cmd::effect` into backend-executable `RuntimeAction` values. Startup actions
+are included in `RuntimePlan::launch_manifest()`.
+
 `RuntimeHost::webviews()` produces per-window boot specs for native backends:
 window frame data, load URL, asset protocol, native hook name, and document
 start scripts.

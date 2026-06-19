@@ -215,6 +215,76 @@ test "events can become runtime commands" {
 }
 
 ///|
+test "runtime plans lower commands to backend actions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main")
+    .with_startup(
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::emit(
+          @lepusa.Event::new("ready", payload="{\"ok\":true}"),
+          target=WindowTarget("main"),
+        ),
+        @lepusa.Cmd::navigate("main", @lepusa.Source::html("<main>next</main>")),
+        @lepusa.Cmd::effect("boot"),
+      ]),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match plan.startup_actions() {
+        Ok(actions) => {
+          assert_eq(actions.length(), 3)
+          assert_true(actions[0] is RuntimeEmit(WindowTarget("main"), _))
+          assert_true(
+            actions[1]
+            is RuntimeNavigate(
+              "main",
+              { url: "lepusa://inline/main/index.html", .. }
+            ),
+          )
+          assert_true(actions[2] is RuntimeEffect("boot"))
+          match plan.launch_manifest() {
+            Ok(manifest) => {
+              assert_eq(manifest.startup_actions().length(), 3)
+              assert_true(manifest.to_json().contains("\"startupActions\""))
+              assert_true(manifest.to_json().contains("\"kind\":\"navigate\""))
+            }
+            Err(_) => abort("unexpected invalid launch manifest")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime actions")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime action lowering reports invalid commands" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(label="main")
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      match
+        plan.actions(
+          @lepusa.Cmd::navigate(
+            "missing",
+            @lepusa.Source::html("<main></main>"),
+          ),
+        ) {
+        Ok(_) => abort("unexpected valid missing navigation window")
+        Err(problems) =>
+          assert_eq(problems[0], "navigate window not found: missing")
+      }
+      match plan.actions(@lepusa.Cmd::emit(@lepusa.Event::new(""))) {
+        Ok(_) => abort("unexpected valid empty event")
+        Err(problems) => assert_eq(problems[0], "event name is required")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "app builds a launch plan as the native runtime boundary" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
