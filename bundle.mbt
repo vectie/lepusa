@@ -594,7 +594,7 @@ fn windows_launcher() -> String {
   (
     #|@echo off
     #|set "APP_DIR=%~dp0"
-    #|lepusa-runtime.exe bootstrap --manifest "%APP_DIR%lepusa\runtime.json" %*
+    #|lepusa-runtime.exe launch --manifest "%APP_DIR%lepusa\runtime.json" %*
     #|
   )
 }
@@ -604,7 +604,7 @@ fn linux_launcher() -> String {
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-    #|exec lepusa-runtime bootstrap --manifest "$APP_DIR/lepusa/runtime.json" "$@"
+    #|exec lepusa-runtime launch --manifest "$APP_DIR/lepusa/runtime.json" "$@"
     #|
   )
 }

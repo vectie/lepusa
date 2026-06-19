@@ -365,11 +365,11 @@ startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
 `ProjectManifest`, root `Cell`, and `CommandRegistry`. The CLI only reads a
 file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
-apps: it parses `lepusa/runtime.json`, emits bundled bootstrap JSON for native
-loops, exposes typed WebView boot data and target-aware bundled run plans,
-resolves bundled asset URLs, dispatches registered official plugin commands,
-and selects local services plus lifecycle actions without re-entering project
-configuration.
+apps: it parses `lepusa/runtime.json`, drives generated launcher stubs through
+target-aware bundled launch plans, emits bundled bootstrap JSON for native
+loops, exposes typed WebView boot data, resolves bundled asset URLs, dispatches
+registered official plugin commands, and selects local services plus lifecycle
+actions without re-entering project configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is

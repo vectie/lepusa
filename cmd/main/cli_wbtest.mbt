@@ -945,7 +945,7 @@ async test "bundle write materializes planned files" {
     @fs.read_file(desktop_path).text().contains("Name=Lepusa Example"),
   )
   let launcher = @fs.read_file(launcher_path).text()
-  assert_true(launcher.contains("lepusa-runtime bootstrap"))
+  assert_true(launcher.contains("lepusa-runtime launch"))
   assert_true(launcher.contains("lepusa/runtime.json"))
   let runtime_manifest = @fs.read_file(runtime_path).text()
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))

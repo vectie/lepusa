@@ -428,10 +428,10 @@ directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
 registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
-Generated macOS `.app` launcher stubs call
-`lepusa-runtime launch --manifest <runtime.json>`, which opens the first
-macOS WKWebView from the packaged `lepusa/runtime.json` and reports unsupported
-for Linux and Windows until those WebView loops land. `lepusa-runtime run
+Generated desktop launcher stubs call
+`lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
+macOS WKWebView from the packaged `lepusa/runtime.json` today and reports
+unsupported for Linux and Windows until those WebView loops land. `lepusa-runtime run
 --manifest <runtime.json>` uses a target-aware planning path without opening a
 window, so bundles have a cheap validation probe. `lepusa-runtime bootstrap
 --manifest <runtime.json>` still emits packaged runtime bootstrap JSON for
