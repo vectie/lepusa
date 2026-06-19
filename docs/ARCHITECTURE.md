@@ -355,7 +355,10 @@ without changing the app-facing service model.
 platform backend supplies start, readiness, and stop handlers, then executes
 startup or shutdown action sets and receives a `NativeServiceSupervisorReport`.
 This keeps process spawning and HTTP probing owned by platform code while
-preserving one framework-level service contract.
+preserving one framework-level service contract. macOS, Windows, and Linux
+packages expose platform service executor helpers today; they return explicit
+skipped statuses until native process supervisors and readiness pollers replace
+the stubs.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

@@ -80,6 +80,7 @@ test "windows backend prepares run plan and reports unsupported launch" {
           )
           assert_true(result.plan().service_supervisor_report().ok())
           assert_eq(result.plan().service_supervisor_report().action_count(), 0)
+          assert_eq(result.plan().execute_service_startup().action_count(), 0)
         }
         Err(_) => abort("unexpected invalid Windows dry run")
       }
@@ -135,6 +136,21 @@ test "windows backend prepares bundled runtime contract" {
           assert_eq(report.backend_name(), "windows")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
+          let startup = plan.execute_service_startup()
+          assert_true(startup.ok())
+          assert_eq(startup.action_count(), 2)
+          assert_true(
+            startup.action_reports()[0].status()
+            is NativeServiceActionSkipped(message) &&
+            message.contains("Windows service start"),
+          )
+          let shutdown = plan.execute_service_shutdown()
+          assert_eq(shutdown.action_count(), 1)
+          assert_true(
+            shutdown.action_reports()[0].status()
+            is NativeServiceActionSkipped(message) &&
+            message.contains("Windows service stop"),
+          )
         }
         Err(_) => abort("unexpected invalid Windows bundled run plan")
       }

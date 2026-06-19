@@ -236,6 +236,7 @@ test "macos backend prepares first webview load url" {
           let report = plan.service_supervisor_report()
           assert_true(report.ok())
           assert_eq(report.action_count(), 0)
+          assert_eq(plan.execute_service_startup().action_count(), 0)
           let bridge = plan.bridge()
           assert_eq(bridge.sync_command_routes().length(), 0)
           assert_eq(bridge.async_command_routes().length(), 0)
@@ -406,6 +407,21 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(report.backend_name(), "macos")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
+          let startup = plan.execute_service_startup()
+          assert_true(startup.ok())
+          assert_eq(startup.action_count(), 2)
+          assert_true(
+            startup.action_reports()[0].status()
+            is NativeServiceActionSkipped(message) &&
+            message.contains("macOS service start"),
+          )
+          let shutdown = plan.execute_service_shutdown()
+          assert_eq(shutdown.action_count(), 1)
+          assert_true(
+            shutdown.action_reports()[0].status()
+            is NativeServiceActionSkipped(message) &&
+            message.contains("macOS service stop"),
+          )
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }
