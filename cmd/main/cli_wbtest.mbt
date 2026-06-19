@@ -303,6 +303,48 @@ test "project config parses localhost source" {
 }
 
 ///|
+test "project config parses command and capability permissions" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.permissions",
+    #|  "productName": "Permissions",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Permissions" },
+    #|  "plugins": [
+    #|    {
+    #|      "name": "fs",
+    #|      "commands": [
+    #|        { "name": "read", "mode": "sync", "permission": "filesystem.read" }
+    #|      ]
+    #|    }
+    #|  ],
+    #|  "capabilities": [
+    #|    {
+    #|      "name": "main-files",
+    #|      "windows": ["main"],
+    #|      "permissions": ["filesystem.read"]
+    #|    }
+    #|  ]
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.runtime_plan(project.root) {
+        Ok(plan) => {
+          let routes = plan.window_command_routes("main")
+          assert_eq(routes.length(), 1)
+          assert_eq(routes[0], "fs.read")
+          assert_true(
+            plan.command_permission("fs.read") is Some(FileSystemRead),
+          )
+        }
+        Err(_) => abort("unexpected invalid runtime plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config validates required shape" {
   match parse_project_config("{}") {
     Ok(_) => abort("expected invalid project config")
@@ -311,6 +353,25 @@ test "project config validates required shape" {
       assert_true(problems.contains("project productName is required"))
       assert_true(problems.contains("project window is required"))
     }
+  }
+}
+
+///|
+test "project config rejects unknown permissions" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.bad-permission",
+    #|  "productName": "Bad Permission",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Bad Permission" },
+    #|  "capabilities": [
+    #|    { "name": "main", "permissions": ["root"] }
+    #|  ]
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(_) => abort("expected invalid project config")
+    Err(problems) => assert_true(problems.contains("unknown permission: root"))
   }
 }
 

@@ -16,6 +16,44 @@ pub fn Permission::command(route : String) -> Permission {
 }
 
 ///|
+pub fn Permission::named(name : String) -> Result[Permission, String] {
+  match name {
+    "filesystem.read" => Ok(FileSystemRead)
+    "filesystem.write" => Ok(FileSystemWrite)
+    "network" => Ok(Network)
+    "shell" => Ok(Shell)
+    "dialog" => Ok(Dialog)
+    "clipboard" => Ok(Clipboard)
+    "notification" => Ok(Notification)
+    _ =>
+      if name.has_prefix("custom:") {
+        let value = name[7:].to_owned()
+        if value == "" {
+          Err("custom permission name is required")
+        } else {
+          Ok(Custom(value))
+        }
+      } else {
+        Err("unknown permission: \{name}")
+      }
+  }
+}
+
+///|
+pub fn Permission::name(self : Permission) -> String {
+  match self {
+    FileSystemRead => "filesystem.read"
+    FileSystemWrite => "filesystem.write"
+    Network => "network"
+    Shell => "shell"
+    Dialog => "dialog"
+    Clipboard => "clipboard"
+    Notification => "notification"
+    Custom(value) => "custom:\{value}"
+  }
+}
+
+///|
 pub struct Capability {
   name : String
   windows : Array[String]
@@ -63,6 +101,11 @@ pub fn Capability::allows(
 ///|
 pub fn Capability::name(self : Capability) -> String {
   self.name
+}
+
+///|
+pub fn Capability::permissions(self : Capability) -> Array[Permission] {
+  self.permissions.copy()
 }
 
 ///|

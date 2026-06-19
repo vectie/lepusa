@@ -148,6 +148,21 @@ test "capabilities scope permissions by window" {
     capability.allows(window_label="settings", permission=FileSystemRead),
     false,
   )
+  match @lepusa.Permission::named("filesystem.read") {
+    Ok(permission) => {
+      assert_true(permission is FileSystemRead)
+      assert_eq(permission.name(), "filesystem.read")
+    }
+    Err(_) => abort("unexpected invalid named permission")
+  }
+  match @lepusa.Permission::named("custom:workspace.admin") {
+    Ok(permission) => assert_true(permission is Custom("workspace.admin"))
+    Err(_) => abort("unexpected invalid custom permission")
+  }
+  match @lepusa.Permission::named("wat") {
+    Ok(_) => abort("unexpected valid permission")
+    Err(problem) => assert_eq(problem, "unknown permission: wat")
+  }
 }
 
 ///|
@@ -510,6 +525,7 @@ test "runtime plans map command routes to explicit permissions" {
       let routes = plan.window_command_routes("main")
       assert_eq(routes.length(), 1)
       assert_eq(routes[0], "dialog.show")
+      assert_true(plan.command_permission("dialog.show") is Some(Dialog))
     }
     Err(_) => abort("unexpected invalid runtime plan")
   }

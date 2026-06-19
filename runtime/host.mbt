@@ -104,11 +104,14 @@ pub fn RuntimeHost::dispatch(
     return @lepusa.InvokeResponse::error(request.id(), request_problems[0])
   }
   let route = request.route()
-  if !self.plan.command_routes().contains(route) {
-    return @lepusa.InvokeResponse::error(
-      request.id(),
-      "unknown command: \{route}",
-    )
+  match self.plan.command_permission(route) {
+    None =>
+      @lepusa.InvokeResponse::error(request.id(), "unknown command: \{route}")
+    Some(permission) =>
+      self.registry.dispatch_with_permission(
+        request,
+        permission~,
+        capabilities=self.plan.capabilities(),
+      )
   }
-  self.registry.dispatch(request, capabilities=self.plan.capabilities())
 }

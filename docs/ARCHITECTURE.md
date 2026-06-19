@@ -156,6 +156,9 @@ Command rules:
 - Every command is denied by default unless a capability grants it.
 - `Permission::command(route)` is the default permission for custom command
   routes.
+- Built-in permission names for project manifests are `filesystem.read`,
+  `filesystem.write`, `network`, `shell`, `dialog`, `clipboard`, and
+  `notification`; custom names use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to
   that window.
@@ -166,13 +169,33 @@ Use a small manifest format before inventing a large policy engine:
 
 ```json
 {
-  "identifier": "main-window",
-  "windows": ["main"],
-  "permissions": [
-    "dialog:show",
-    "opener:open",
-    "fs:read:workspace"
+  "identifier": "dev.example.app",
+  "plugins": [
+    {
+      "name": "dialog",
+      "commands": [
+        { "name": "show", "permission": "dialog" }
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "main-dialog",
+      "windows": ["main"],
+      "permissions": ["dialog"]
+    }
   ]
+}
+```
+
+Route grants stay available for commands whose default permission is their own
+route:
+
+```json
+{
+  "name": "main-core",
+  "windows": ["main"],
+  "commands": ["core.invoke"]
 }
 ```
 
@@ -404,7 +427,7 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 - app metadata
 - windows and sources
 - plugins and command routes
-- capabilities
+- command permission requirements and capability grants
 - startup and lifecycle command trees
 - runtime config
 

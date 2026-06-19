@@ -92,6 +92,21 @@ pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
 }
 
 ///|
+pub fn RuntimePlan::command_permission(
+  self : RuntimePlan,
+  route : String,
+) -> Permission? {
+  for plugin in self.launch.plugins() {
+    for command in plugin.commands() {
+      if "\{plugin.name()}.\{command.name()}" == route {
+        return Some(command.permission())
+      }
+    }
+  }
+  None
+}
+
+///|
 pub fn RuntimePlan::window_command_routes(
   self : RuntimePlan,
   window_label : String,

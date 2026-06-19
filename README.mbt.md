@@ -135,9 +135,9 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 `lepusa.json`, `main.mbt`, and `README.mbt.md`.
 
 `lepusa.json` is the app-neutral project boundary. It describes metadata,
-runtime backend, windows, plugin command routes, and capability grants. Native
-CLI commands consume the nearest `lepusa.json` from the current directory, or a
-file passed with `--project`.
+runtime backend, windows, plugin command routes, command permission
+requirements, and capability grants. Native CLI commands consume the nearest
+`lepusa.json` from the current directory, or a file passed with `--project`.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.

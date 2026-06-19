@@ -101,17 +101,52 @@ pub fn CommandRegistry::dispatch(
   match self.commands.get(route) {
     None => InvokeResponse::error(request.id(), "unknown command: \{route}")
     Some(command) =>
-      if !capabilities.allow_invoke(
-          window_label=request.window_label(),
-          permission=command.permission(),
-        ) {
-        InvokeResponse::error(request.id(), "permission denied: \{route}")
-      } else {
-        match (command.handler)(request.payload()) {
-          Ok(payload) => InvokeResponse::ok(request.id(), payload)
-          Err(message) => InvokeResponse::error(request.id(), message)
-        }
-      }
+      dispatch_command(
+        request,
+        command,
+        permission=command.permission(),
+        capabilities,
+      )
+  }
+}
+
+///|
+pub fn CommandRegistry::dispatch_with_permission(
+  self : CommandRegistry,
+  request : InvokeRequest,
+  permission~ : Permission,
+  capabilities? : Array[Capability] = [],
+) -> InvokeResponse {
+  let request_problems = request.validate()
+  if !request_problems.is_empty() {
+    return InvokeResponse::error(request.id(), request_problems[0])
+  }
+  let route = request.route()
+  match self.commands.get(route) {
+    None => InvokeResponse::error(request.id(), "unknown command: \{route}")
+    Some(command) =>
+      dispatch_command(request, command, permission~, capabilities)
+  }
+}
+
+///|
+fn dispatch_command(
+  request : InvokeRequest,
+  command : RegisteredCommand,
+  permission~ : Permission,
+  capabilities : Array[Capability],
+) -> InvokeResponse {
+  let route = request.route()
+  if !capabilities.allow_invoke(
+      window_label=request.window_label(),
+      permission~,
+    ) {
+    InvokeResponse::error(request.id(), "permission denied: \{route}")
+  } else {
+    match (command.handler)(request.payload()) {
+      Ok(payload) => InvokeResponse::ok(request.id(), payload)
+      Err(message) => InvokeResponse::error(request.id(), message)
+    }
   }
 }
 

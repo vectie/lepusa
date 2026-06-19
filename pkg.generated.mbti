@@ -128,6 +128,7 @@ pub fn Capability::command(Self, String) -> Self
 pub fn Capability::name(Self) -> String
 pub fn Capability::new(String) -> Self
 pub fn Capability::permission(Self, Permission) -> Self
+pub fn Capability::permissions(Self) -> Array[Permission]
 pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
 
@@ -164,6 +165,7 @@ pub struct CommandRegistry {
 }
 pub fn CommandRegistry::contains(Self, String) -> Bool
 pub fn CommandRegistry::dispatch(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
+pub fn CommandRegistry::dispatch_with_permission(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
 pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
 pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
@@ -311,6 +313,8 @@ pub(all) enum Permission {
   Custom(String)
 } derive(Eq, @debug.Debug)
 pub fn Permission::command(String) -> Self
+pub fn Permission::name(Self) -> String
+pub fn Permission::named(String) -> Result[Self, String]
 
 pub struct Plugin {
   name : String
@@ -500,6 +504,7 @@ pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
+pub fn RuntimePlan::command_permission(Self, String) -> Permission?
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]

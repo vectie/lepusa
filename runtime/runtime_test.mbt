@@ -303,6 +303,42 @@ test "runtime host dispatches through plan capabilities" {
 }
 
 ///|
+test "runtime host dispatch uses plan command permissions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("fs").command_sync("read", permission=FileSystemRead),
+    )
+    .with_capability(
+      @lepusa.Capability::new("main-files")
+      .window("main")
+      .permission(FileSystemRead),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let registry = @lepusa.CommandRegistry::new().register_fn("fs.read", handler=fn(
+        payload,
+      ) {
+        Ok("file:\{payload}")
+      })
+      let host = RuntimeHost::new(plan, registry~)
+      let allowed = host.dispatch(
+        @lepusa.InvokeRequest::new(
+          id="1",
+          window_label="main",
+          plugin="fs",
+          command="read",
+          payload="/tmp/a.txt",
+        ),
+      )
+      assert_true(allowed is InvokeOk("1", "file:/tmp/a.txt"))
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime session applies startup actions as backend operations" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

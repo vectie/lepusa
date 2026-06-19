@@ -164,14 +164,19 @@ fn plugin_command_from_json(
     Object(object) => {
       let name = required_config_string(object, "name", problems)
       let mode = optional_config_string(object, "mode").unwrap_or("sync")
+      let permission = command_permission_from_object(
+        object,
+        route="\{plugin.name()}.\{name}",
+        problems,
+      )
       match mode {
-        "sync" => plugin.command_sync(name)
-        "async" => plugin.command_async(name)
-        "stream" => plugin.command_stream(name)
-        "event" => plugin.command_event(name)
+        "sync" => plugin.command_sync(name, permission?)
+        "async" => plugin.command_async(name, permission?)
+        "stream" => plugin.command_stream(name, permission?)
+        "event" => plugin.command_event(name, permission?)
         value => {
           problems.push("unknown plugin command mode: \{value}")
-          plugin.command_sync(name)
+          plugin.command_sync(name, permission?)
         }
       }
     }
@@ -179,6 +184,22 @@ fn plugin_command_from_json(
       problems.push("project plugin commands must be strings or objects")
       plugin
     }
+  }
+}
+
+///|
+fn command_permission_from_object(
+  object : Map[String, Json],
+  route~ : String,
+  problems : Array[String],
+) -> @lepusa.Permission? {
+  match optional_config_string(object, "permission") {
+    Some(name) =>
+      match permission_from_string(name, problems) {
+        Some(permission) => Some(permission)
+        None => Some(@lepusa.Permission::command(route))
+      }
+    None => None
   }
 }
 
@@ -231,7 +252,35 @@ fn capability_from_object(
       }
     None => ()
   }
+  match optional_config_array(object, "permissions") {
+    Some(permissions) =>
+      for permission in permissions {
+        match permission {
+          String(name) =>
+            match permission_from_string(name, problems) {
+              Some(permission) => capability = capability.permission(permission)
+              None => ()
+            }
+          _ => problems.push("project capability permissions must be strings")
+        }
+      }
+    None => ()
+  }
   capability
+}
+
+///|
+fn permission_from_string(
+  name : String,
+  problems : Array[String],
+) -> @lepusa.Permission? {
+  match @lepusa.Permission::named(name) {
+    Ok(permission) => Some(permission)
+    Err(problem) => {
+      problems.push(problem)
+      None
+    }
+  }
 }
 
 ///|
