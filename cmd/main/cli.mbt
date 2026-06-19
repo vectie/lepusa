@@ -631,98 +631,125 @@ fn render_native_launch(
   match target {
     MacOS =>
       match @macos_backend.launch(runtime) {
-        Ok(result) => render_macos_launch_result(result)
+        Ok(result) =>
+          render_native_run_report(
+            "Lepusa launch",
+            macos_launch_report(target, runtime, result),
+          )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
     Windows =>
       match @windows_backend.launch(runtime) {
-        Ok(result) => render_windows_launch_result(result)
+        Ok(result) =>
+          render_native_run_report(
+            "Lepusa launch",
+            @runtime.NativeRunReport::from_runtime(
+              target=target.name(),
+              runtime,
+              status=windows_run_status(result.status()),
+            ),
+          )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
     Linux =>
       match @linux_backend.launch(runtime) {
-        Ok(result) => render_linux_launch_result(result)
+        Ok(result) =>
+          render_native_run_report(
+            "Lepusa launch",
+            @runtime.NativeRunReport::from_runtime(
+              target=target.name(),
+              runtime,
+              status=linux_run_status(result.status()),
+            ),
+          )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
   }
 }
 
 ///|
-fn render_macos_launch_result(
+fn macos_launch_report(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
   result : @macos_backend.MacOSRunResult,
-) -> CliResult {
+) -> @runtime.NativeRunReport {
   let plan = result.plan()
-  let first_window = match plan.first_webview() {
-    Ok(webview) => webview.url()
-    Err(_) => ""
-  }
   let load_url = match plan.first_webview() {
     Ok(webview) => webview.load_url()
     Err(_) => ""
   }
-  let status = match result.status() {
-    MacOSPrepared => "prepared"
-    MacOSLaunched => "launched"
-    MacOSLaunchFailed(_) => "failed"
-    MacOSLaunchUnsupported(_) => "unsupported"
-  }
-  ok(
-    "Lepusa launch\n" +
-    "target: macos\n" +
-    "backend: macos\n" +
-    "engine: WKWebView\n" +
-    "status: \{status}\n" +
-    "webviews: \{plan.webviews().length()}\n" +
-    "first-window-url: \{first_window}\n" +
-    "load-url: \{load_url}\n" +
-    "startup-operations: \{plan.execution().startup_operations().length()}\n" +
-    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}\n" +
-    "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}\n" +
-    "bridge-async-routes: \{plan.bridge().async_command_routes().length()}\n",
+  @runtime.NativeRunReport::from_runtime(
+    target=target.name(),
+    runtime,
+    status=macos_run_status(result.status()),
+    load_url~,
+    bridge_sync_route_count=plan.bridge().sync_command_routes().length(),
+    bridge_async_route_count=plan.bridge().async_command_routes().length(),
   )
 }
 
 ///|
-fn render_linux_launch_result(
-  result : @linux_backend.LinuxRunResult,
-) -> CliResult {
-  let plan = result.plan()
-  let status = match result.status() {
-    LinuxPrepared => "prepared"
-    LinuxLaunchUnsupported(_) => "unsupported"
+fn macos_run_status(
+  status : @macos_backend.MacOSRunStatus,
+) -> @runtime.NativeRunStatus {
+  match status {
+    MacOSPrepared => NativeRunPrepared
+    MacOSLaunched => NativeRunLaunched
+    MacOSLaunchFailed(message) => NativeRunFailed(message)
+    MacOSLaunchUnsupported(message) => NativeRunUnsupported(message)
   }
-  ok(
-    "Lepusa launch\n" +
-    "target: linux\n" +
-    "backend: linux\n" +
-    "engine: WebKitGTK\n" +
-    "status: \{status}\n" +
-    "webviews: \{plan.webview_count()}\n" +
-    "first-window-url: \{plan.first_webview_url()}\n" +
-    "startup-operations: \{plan.startup_operation_count()}\n" +
-    "lifecycle-steps: \{plan.lifecycle_step_count()}\n",
-  )
 }
 
 ///|
-fn render_windows_launch_result(
-  result : @windows_backend.WindowsRunResult,
+fn linux_run_status(
+  status : @linux_backend.LinuxRunStatus,
+) -> @runtime.NativeRunStatus {
+  match status {
+    LinuxPrepared => NativeRunPrepared
+    LinuxLaunchUnsupported(message) => NativeRunUnsupported(message)
+  }
+}
+
+///|
+fn windows_run_status(
+  status : @windows_backend.WindowsRunStatus,
+) -> @runtime.NativeRunStatus {
+  match status {
+    WindowsPrepared => NativeRunPrepared
+    WindowsLaunchUnsupported(message) => NativeRunUnsupported(message)
+  }
+}
+
+///|
+fn render_native_run_report(
+  title : String,
+  report : @runtime.NativeRunReport,
 ) -> CliResult {
-  let plan = result.plan()
-  let status = match result.status() {
-    WindowsPrepared => "prepared"
-    WindowsLaunchUnsupported(_) => "unsupported"
+  let load_url = if report.load_url() == "" {
+    ""
+  } else {
+    "load-url: \{report.load_url()}\n"
+  }
+  let bridge_routes = if report.bridge_sync_route_count() == 0 &&
+    report.bridge_async_route_count() == 0 {
+    ""
+  } else {
+    "bridge-sync-routes: \{report.bridge_sync_route_count()}\n" +
+    "bridge-async-routes: \{report.bridge_async_route_count()}\n"
   }
   ok(
-    "Lepusa launch\n" +
-    "target: windows\n" +
-    "backend: windows\n" +
-    "engine: WebView2\n" +
-    "status: \{status}\n" +
-    "webviews: \{plan.webview_count()}\n" +
-    "first-window-url: \{plan.first_webview_url()}\n" +
-    "startup-operations: \{plan.startup_operation_count()}\n" +
-    "lifecycle-steps: \{plan.lifecycle_step_count()}\n",
+    title +
+    "\n" +
+    "target: \{report.target()}\n" +
+    "backend: \{report.backend_name()}\n" +
+    "engine: \{report.webview_engine()}\n" +
+    "status: \{report.status().name()}\n" +
+    "webviews: \{report.webview_count()}\n" +
+    "first-window-url: \{report.first_window_url()}\n" +
+    load_url +
+    "startup-operations: \{report.startup_operation_count()}\n" +
+    "lifecycle-steps: \{report.lifecycle_step_count()}\n" +
+    bridge_routes,
   )
 }
 
