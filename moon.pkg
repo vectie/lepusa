@@ -1,1 +1,5 @@
+// Root Lepusa package configuration.
 
+options(
+  test_import: [ "moonbitlang/async" ],
+)

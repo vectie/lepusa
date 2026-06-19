@@ -92,9 +92,10 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "fs")
   assert_true(registry.contains("log.write"))
   assert_true(registry.contains("store.set"))
-  assert_false(registry.contains("fs.readText"))
+  assert_true(registry.contains("fs.readText"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 2)
+  assert_eq(names.length(), 3)
+  assert_true(names.contains("fs"))
   assert_true(names.contains("log"))
   assert_true(names.contains("store"))
 }

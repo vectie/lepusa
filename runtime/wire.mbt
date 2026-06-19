@@ -65,6 +65,18 @@ pub fn RuntimeHost::dispatch_json(self : RuntimeHost, input : String) -> String 
 }
 
 ///|
+pub async fn RuntimeHost::dispatch_json_async(
+  self : RuntimeHost,
+  input : String,
+) -> String {
+  match decode_invoke_request_json(input) {
+    Ok(request) => encode_invoke_response_json(self.dispatch_async(request))
+    Err(problem) =>
+      encode_invoke_response_json(@lepusa.InvokeResponse::error("", problem))
+  }
+}
+
+///|
 fn required_string_field(object : Map[String, Json], key : String) -> String {
   string_field(object, key).unwrap_or("")
 }

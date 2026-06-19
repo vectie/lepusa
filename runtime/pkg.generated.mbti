@@ -82,6 +82,7 @@ pub struct NativeRuntime {
 pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::dispatch_json(Self, String) -> String
+pub async fn NativeRuntime::dispatch_json_async(Self, String) -> String
 pub fn NativeRuntime::host(Self) -> RuntimeHost
 pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Result[String, Array[String]]
 pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
@@ -122,7 +123,9 @@ pub struct RuntimeHost {
 }
 pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
+pub async fn RuntimeHost::dispatch_async(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
+pub async fn RuntimeHost::dispatch_json_async(Self, String) -> String
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
 pub fn RuntimeHost::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::lifecycle_hooks(Self) -> Result[Array[@lepusa.RuntimeLifecycleHook], Array[String]]

@@ -438,7 +438,8 @@ async fn render_invoke_async(args : Array[String]) -> CliResult {
             payload~,
           )
           ok(
-            @runtime.encode_invoke_response_json(host.dispatch(request)) + "\n",
+            @runtime.encode_invoke_response_json(host.dispatch_async(request)) +
+            "\n",
           )
         }
         Err(problems) => fail(render_problems("Lepusa invoke", problems))

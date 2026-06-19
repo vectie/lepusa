@@ -53,6 +53,14 @@ pub fn NativeRuntime::dispatch_json(
 }
 
 ///|
+pub async fn NativeRuntime::dispatch_json_async(
+  self : NativeRuntime,
+  input : String,
+) -> String {
+  self.host.dispatch_json_async(input)
+}
+
+///|
 pub fn NativeRuntime::lifecycle_step_json(
   self : NativeRuntime,
   event : @lepusa.LifecycleEvent,

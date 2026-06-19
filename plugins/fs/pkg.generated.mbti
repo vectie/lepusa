@@ -17,6 +17,10 @@ pub fn read_write_capability(name? : String) -> @lepusa.Capability
 
 pub fn read_write_capability_for_window(String, name? : String) -> @lepusa.Capability
 
+pub fn register(@lepusa.CommandRegistry, policy? : FsPolicy) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : FsPolicy) -> @lepusa.CommandRegistry
+
 pub fn write_capability(name? : String) -> @lepusa.Capability
 
 pub fn write_capability_for_window(String, name? : String) -> @lepusa.Capability

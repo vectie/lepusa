@@ -133,6 +133,234 @@ pub fn read_write_capability_for_window(
 }
 
 ///|
+pub fn registry(
+  policy? : FsPolicy = FsPolicy::new(),
+) -> @lepusa.CommandRegistry {
+  register(@lepusa.CommandRegistry::new(), policy~)
+}
+
+///|
+pub fn register(
+  registry : @lepusa.CommandRegistry,
+  policy? : FsPolicy = FsPolicy::new(),
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_async_fn("fs.readText", permission=FileSystemRead, handler=fn(
+    payload,
+  ) {
+    handle_read_text(policy, payload)
+  })
+  .register_async_fn("fs.writeText", permission=FileSystemWrite, handler=fn(
+    payload,
+  ) {
+    handle_write_text(policy, payload)
+  })
+  .register_async_fn("fs.exists", permission=FileSystemRead, handler=fn(
+    payload,
+  ) {
+    handle_exists(policy, payload)
+  })
+  .register_async_fn("fs.createDir", permission=FileSystemWrite, handler=fn(
+    payload,
+  ) {
+    handle_create_dir(policy, payload)
+  })
+  .register_async_fn("fs.readBytes", permission=FileSystemRead, handler=fn(_) {
+    Err("fs.readBytes is not implemented yet")
+  })
+  .register_async_fn("fs.writeBytes", permission=FileSystemWrite, handler=fn(
+    _,
+  ) {
+    Err("fs.writeBytes is not implemented yet")
+  })
+  .register_async_fn("fs.list", permission=FileSystemRead, handler=fn(_) {
+    Err("fs.list is not implemented yet")
+  })
+  .register_async_fn("fs.metadata", permission=FileSystemRead, handler=fn(_) {
+    Err("fs.metadata is not implemented yet")
+  })
+  .register_async_fn("fs.delete", permission=FileSystemWrite, handler=fn(_) {
+    Err("fs.delete is not implemented yet")
+  })
+}
+
+///|
+fn handle_read_text(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~) {
+        Ok(full_path) => {
+          let content = @xfs.read_file_to_string(full_path) catch {
+            _ => return Err("could not read filesystem path")
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "content": Json::string(content),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_write_text(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_text_payload(payload) {
+    Ok((scope_name, path, content)) =>
+      match policy.resolve(scope_name~, path~, write=true) {
+        Ok(full_path) => {
+          @xfs.write_string_to_file(full_path, content) catch {
+            _ => return Err("could not write filesystem path")
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "written": Json::boolean(true),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_exists(policy : FsPolicy, payload : String) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~) {
+        Ok(full_path) => {
+          let exists = filesystem_path_exists(full_path)
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "exists": Json::boolean(exists),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_create_dir(
+  policy : FsPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~, write=true) {
+        Ok(full_path) => {
+          @xfs.create_dir(full_path) catch {
+            _ =>
+              if !filesystem_path_exists(full_path) {
+                return Err("could not create filesystem directory")
+              }
+          }
+          Ok(
+            Json::object({
+              "scope": Json::string(scope_name),
+              "path": Json::string(path),
+              "created": Json::boolean(true),
+            }).stringify(),
+          )
+        }
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn decode_path_payload(payload : String) -> Result[(String, String), String] {
+  match parse_payload(payload) {
+    Ok(Object(object)) => {
+      let scope_name = required_string_field(object, "scope")
+      let path = required_string_field(object, "path")
+      if scope_name == "" {
+        Err("filesystem scope is required")
+      } else {
+        match validate_relative_path(path) {
+          Some(problem) => Err(problem)
+          None => Ok((scope_name, path))
+        }
+      }
+    }
+    Ok(_) => Err("filesystem path payload must be an object")
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn decode_text_payload(
+  payload : String,
+) -> Result[(String, String, String), String] {
+  match parse_payload(payload) {
+    Ok(Object(object)) => {
+      let scope_name = required_string_field(object, "scope")
+      let path = required_string_field(object, "path")
+      let content = required_string_field(object, "content")
+      if scope_name == "" {
+        Err("filesystem scope is required")
+      } else {
+        match validate_relative_path(path) {
+          Some(problem) => Err(problem)
+          None => Ok((scope_name, path, content))
+        }
+      }
+    }
+    Ok(_) => Err("filesystem text payload must be an object")
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn parse_payload(payload : String) -> Result[Json, String] {
+  if payload == "" {
+    return Err("filesystem payload is required")
+  }
+  try @json.parse(payload) catch {
+    error => Err("invalid filesystem payload: \{error}")
+  } noraise {
+    json => Ok(json)
+  }
+}
+
+///|
+fn required_string_field(object : Map[String, Json], key : String) -> String {
+  match object.get(key) {
+    Some(String(value)) => value
+    _ => ""
+  }
+}
+
+///|
+fn filesystem_path_exists(path : String) -> Bool {
+  let is_dir = @xfs.is_dir(path) catch { _ => false }
+  if is_dir {
+    true
+  } else {
+    let _ = @xfs.read_file_to_string(path) catch { _ => return false }
+    true
+  }
+}
+
+///|
 fn validate_relative_path(path : String) -> String? {
   if path == "" {
     return Some("filesystem path is required")

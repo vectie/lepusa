@@ -261,6 +261,11 @@ bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,
 `command`, and string `payload`; the runtime decodes it into `InvokeRequest`,
 dispatches through `CommandRegistry` with plan capabilities, and encodes the
 `{id,payload}` or `{id,error}` response expected by the frontend bridge.
+`CommandRegistry` supports both sync and async command handlers. Native loops
+should use `RuntimeHost::dispatch_json_async(input)` so platform plugins can
+perform filesystem, process, network, or OS work without blocking the bridge
+contract. The sync dispatch methods remain for pure in-memory handlers and
+tests.
 
 Native-to-frontend events use the matching generated bridge hook. The bridge
 installs `window.lepusa.listen(name, handler)`,
@@ -458,16 +463,18 @@ should expose the same small surface:
 
 - a `plugin()` declaration for `ProjectManifest` and `App`
 - capability helpers scoped to all windows or one window
-- registry helpers when the plugin can be implemented purely in MoonBit
+- registry helpers when the plugin can be implemented in MoonBit
 - package-local validation, payload decoding, and policy contracts
 
 `@lepusa/plugins/log` and `@lepusa/plugins/store` are pure cross-platform
 packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
-official filesystem command routes, read/write capability helpers, and scoped
-relative path policy. `@lepusa/plugins/file_dialog` declares file picker routes
-and scoped default-directory policy. `@lepusa/plugins/localhost` declares local
-service lifecycle and readiness routes. `@lepusa/plugins/deep_link` declares
-app URL scheme registration and dispatch routes.
+official filesystem command routes, read/write capability helpers, scoped
+relative path policy, and async handlers for scoped text reads, text writes,
+existence checks, and directory creation. `@lepusa/plugins/file_dialog`
+declares file picker routes and scoped default-directory policy.
+`@lepusa/plugins/localhost` declares local service lifecycle and readiness
+routes. `@lepusa/plugins/deep_link` declares app URL scheme registration and
+dispatch routes.
 `@lepusa/plugins/single_instance` declares app lock, focus, and second-launch
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes. `@lepusa/plugins/auto_launch` declares launch-at-login
@@ -484,8 +491,8 @@ routes behind split process permissions.
 Native platform effects should be implemented by runtime backends behind those
 contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need
-official plugin declarations or pure MoonBit handler registration without
-importing every plugin package directly.
+official plugin declarations or MoonBit handler registration without importing
+every plugin package directly.
 
 ## CLI Boundary
 

@@ -31,6 +31,7 @@
   local assets: typed and JSON protocol-handler envelopes exist
 - Add the native hook JSON codec from generated bridge requests to capability
   checked `CommandRegistry` dispatch.
+- Add async command registry dispatch for native plugin handlers.
 - Add per-window WebView boot specs for platform backends.
 - Add a portable runtime launch manifest for WebViews, bridge hooks, protocol
   mappings, and command routes.
@@ -103,7 +104,8 @@ Stabilize the cross-platform core set first:
 
 - dialog: initial platform-neutral command contract exists
 - opener: initial platform-neutral command contract exists
-- fs: initial scoped permission contract and runtime scope manifest exist
+- fs: initial scoped permission contract, runtime scope manifest, and scoped
+  async text/exists/create-directory handlers exist
 - fileDialog: initial scoped default-directory contract exists
 - shell: initial platform-neutral command contract exists
 - process: initial explicit process permission contract exists

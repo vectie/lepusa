@@ -2,3 +2,7 @@ import {
   "moonbitlang/core/json",
   "vectie/lepusa",
 }
+
+options(
+  test_import: [ "moonbitlang/async" ],
+)

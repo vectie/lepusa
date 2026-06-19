@@ -2,10 +2,19 @@
 pub type CommandHandler = (String) -> Result[String, String]
 
 ///|
+pub type AsyncCommandHandler = async (String) -> Result[String, String]
+
+///|
+enum RegisteredCommandHandler {
+  SyncCommandHandler(CommandHandler)
+  AsyncCommandHandler(AsyncCommandHandler)
+}
+
+///|
 pub struct RegisteredCommand {
   route : String
   permission : Permission
-  handler : CommandHandler
+  handler : RegisteredCommandHandler
 }
 
 ///|
@@ -14,7 +23,16 @@ pub fn RegisteredCommand::new(
   permission? : Permission = Permission::command(route),
   handler~ : CommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, handler }
+  { route, permission, handler: SyncCommandHandler(handler) }
+}
+
+///|
+pub fn RegisteredCommand::new_async(
+  route : String,
+  permission? : Permission = Permission::command(route),
+  handler~ : AsyncCommandHandler,
+) -> RegisteredCommand {
+  { route, permission, handler: AsyncCommandHandler(handler) }
 }
 
 ///|
@@ -55,6 +73,16 @@ pub fn CommandRegistry::register_fn(
   handler~ : CommandHandler,
 ) -> CommandRegistry {
   self.register(RegisteredCommand::new(route, permission~, handler~))
+}
+
+///|
+pub fn CommandRegistry::register_async_fn(
+  self : CommandRegistry,
+  route : String,
+  permission? : Permission = Permission::command(route),
+  handler~ : AsyncCommandHandler,
+) -> CommandRegistry {
+  self.register(RegisteredCommand::new_async(route, permission~, handler~))
 }
 
 ///|
@@ -130,6 +158,48 @@ pub fn CommandRegistry::dispatch_with_permission(
 }
 
 ///|
+pub async fn CommandRegistry::dispatch_async(
+  self : CommandRegistry,
+  request : InvokeRequest,
+  capabilities? : Array[Capability] = [],
+) -> InvokeResponse {
+  let request_problems = request.validate()
+  if !request_problems.is_empty() {
+    return InvokeResponse::error(request.id(), request_problems[0])
+  }
+  let route = request.route()
+  match self.commands.get(route) {
+    None => InvokeResponse::error(request.id(), "unknown command: \{route}")
+    Some(command) =>
+      dispatch_command_async(
+        request,
+        command,
+        permission=command.permission(),
+        capabilities,
+      )
+  }
+}
+
+///|
+pub async fn CommandRegistry::dispatch_with_permission_async(
+  self : CommandRegistry,
+  request : InvokeRequest,
+  permission~ : Permission,
+  capabilities? : Array[Capability] = [],
+) -> InvokeResponse {
+  let request_problems = request.validate()
+  if !request_problems.is_empty() {
+    return InvokeResponse::error(request.id(), request_problems[0])
+  }
+  let route = request.route()
+  match self.commands.get(route) {
+    None => InvokeResponse::error(request.id(), "unknown command: \{route}")
+    Some(command) =>
+      dispatch_command_async(request, command, permission~, capabilities)
+  }
+}
+
+///|
 fn dispatch_command(
   request : InvokeRequest,
   command : RegisteredCommand,
@@ -143,9 +213,46 @@ fn dispatch_command(
     ) {
     InvokeResponse::error(request.id(), "permission denied: \{route}")
   } else {
-    match (command.handler)(request.payload()) {
-      Ok(payload) => InvokeResponse::ok(request.id(), payload)
-      Err(message) => InvokeResponse::error(request.id(), message)
+    match command.handler {
+      SyncCommandHandler(handler) =>
+        match handler(request.payload()) {
+          Ok(payload) => InvokeResponse::ok(request.id(), payload)
+          Err(message) => InvokeResponse::error(request.id(), message)
+        }
+      AsyncCommandHandler(_) =>
+        InvokeResponse::error(
+          request.id(),
+          "command requires async dispatch: \{route}",
+        )
+    }
+  }
+}
+
+///|
+async fn dispatch_command_async(
+  request : InvokeRequest,
+  command : RegisteredCommand,
+  permission~ : Permission,
+  capabilities : Array[Capability],
+) -> InvokeResponse {
+  let route = request.route()
+  if !capabilities.allow_invoke(
+      window_label=request.window_label(),
+      permission~,
+    ) {
+    InvokeResponse::error(request.id(), "permission denied: \{route}")
+  } else {
+    match command.handler {
+      SyncCommandHandler(handler) =>
+        match handler(request.payload()) {
+          Ok(payload) => InvokeResponse::ok(request.id(), payload)
+          Err(message) => InvokeResponse::error(request.id(), message)
+        }
+      AsyncCommandHandler(handler) =>
+        match handler(request.payload()) {
+          Ok(payload) => InvokeResponse::ok(request.id(), payload)
+          Err(message) => InvokeResponse::error(request.id(), message)
+        }
     }
   }
 }

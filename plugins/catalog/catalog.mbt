@@ -28,16 +28,27 @@ pub fn register(
   registry : @lepusa.CommandRegistry,
   plugin_name : String,
 ) -> @lepusa.CommandRegistry {
+  register_with_filesystem_scopes(registry, plugin_name, scopes=[])
+}
+
+///|
+pub fn register_with_filesystem_scopes(
+  registry : @lepusa.CommandRegistry,
+  plugin_name : String,
+  scopes~ : Array[@lepusa.FileSystemScope],
+) -> @lepusa.CommandRegistry {
   match plugin_name {
     "log" => @log.register(registry)
     "store" => @store.register(registry)
+    "fs" =>
+      @fs_plugin.register(registry, policy=@fs_plugin.FsPolicy::new(scopes~))
     _ => registry
   }
 }
 
 ///|
 pub fn registered_plugin_names() -> Array[String] {
-  ["log", "store"]
+  ["fs", "log", "store"]
 }
 
 ///|

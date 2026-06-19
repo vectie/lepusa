@@ -115,3 +115,25 @@ pub fn RuntimeHost::dispatch(
       )
   }
 }
+
+///|
+pub async fn RuntimeHost::dispatch_async(
+  self : RuntimeHost,
+  request : @lepusa.InvokeRequest,
+) -> @lepusa.InvokeResponse {
+  let request_problems = request.validate()
+  if !request_problems.is_empty() {
+    return @lepusa.InvokeResponse::error(request.id(), request_problems[0])
+  }
+  let route = request.route()
+  match self.plan.command_permission(route) {
+    None =>
+      @lepusa.InvokeResponse::error(request.id(), "unknown command: \{route}")
+    Some(permission) =>
+      self.registry.dispatch_with_permission_async(
+        request,
+        permission~,
+        capabilities=self.plan.capabilities(),
+      )
+  }
+}

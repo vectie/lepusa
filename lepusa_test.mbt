@@ -291,6 +291,32 @@ test "command registry dispatches allowed invokes" {
 }
 
 ///|
+async test "command registry dispatches async handlers" {
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok("async:\{payload}") },
+  )
+  let request = @lepusa.InvokeRequest::new(
+    id="async",
+    window_label="main",
+    plugin="core",
+    command="invoke",
+    payload="payload",
+  )
+  let response = registry.dispatch_async(request, capabilities=[
+    @lepusa.Capability::new("core").command("core.invoke"),
+  ])
+  assert_true(response is InvokeOk("async", "async:payload"))
+  let sync_response = registry.dispatch(request, capabilities=[
+    @lepusa.Capability::new("core").command("core.invoke"),
+  ])
+  assert_true(
+    sync_response
+    is InvokeError("async", "command requires async dispatch: core.invoke"),
+  )
+}
+
+///|
 test "command registry denies missing capability" {
   let registry = @lepusa.CommandRegistry::new().register_fn(
     "shell.open",

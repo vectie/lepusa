@@ -811,3 +811,25 @@ test "runtime host dispatches bridge json through capability checks" {
   let malformed = host.dispatch_json("{}")
   assert_true(malformed.contains("\"error\":\"invoke id is required\""))
 }
+
+///|
+async test "runtime host dispatches async bridge handlers" {
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok("{\"async\":\{payload}}") },
+  )
+  let host = RuntimeHost::new(test_plan(), registry~)
+  let response = host.dispatch_json_async(
+    "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
+  )
+  assert_true(response.contains("\"id\":\"1\""))
+  assert_true(response.contains("\"payload\":\"{\\\"async\\\":true}\""))
+  let sync_response = host.dispatch_json(
+    "{\"id\":\"2\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
+  )
+  assert_true(
+    sync_response.contains(
+      "\"error\":\"command requires async dispatch: core.invoke\"",
+    ),
+  )
+}

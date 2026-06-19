@@ -86,3 +86,80 @@ test "fs policy reports invalid and duplicate scopes" {
   )
   assert_true(problems.contains("filesystem scope must be unique: bad/name"))
 }
+
+///|
+fn fs_request(command : String, payload : String) -> @lepusa.InvokeRequest {
+  @lepusa.InvokeRequest::new(
+    id=command,
+    window_label="main",
+    plugin="fs",
+    command~,
+    payload~,
+  )
+}
+
+///|
+async test "fs registry handles scoped text operations" {
+  let root = "/tmp/lepusa-fs-plugin-test"
+  @xfs.create_dir(root) catch {
+    _ => ()
+  }
+  let policy = FsPolicy::new().scope(
+    @lepusa.FileSystemScope::new(name="data", root~, writable=true),
+  )
+  let registry = register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = read_write_capability_for_window("main")
+  let create = registry.dispatch_async(
+    fs_request("createDir", "{\"scope\":\"data\",\"path\":\"nested\"}"),
+    capabilities=[grant],
+  )
+  assert_true(create is InvokeOk(_, _))
+  let write = registry.dispatch_async(
+    fs_request(
+      "writeText", "{\"scope\":\"data\",\"path\":\"nested/file.txt\",\"content\":\"hello\"}",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(write is InvokeOk(_, _))
+  let exists = registry.dispatch_async(
+    fs_request("exists", "{\"scope\":\"data\",\"path\":\"nested/file.txt\"}"),
+    capabilities=[grant],
+  )
+  assert_true(exists.payload().unwrap_or("").contains("\"exists\":true"))
+  let read = registry.dispatch_async(
+    fs_request("readText", "{\"scope\":\"data\",\"path\":\"nested/file.txt\"}"),
+    capabilities=[grant],
+  )
+  assert_true(read.payload().unwrap_or("").contains("\"content\":\"hello\""))
+  let denied = registry.dispatch_async(
+    fs_request("readText", "{\"scope\":\"data\",\"path\":\"nested/file.txt\"}"),
+  )
+  assert_true(
+    denied is InvokeError("readText", "permission denied: fs.readText"),
+  )
+}
+
+///|
+async test "fs registry enforces scope policy" {
+  let policy = FsPolicy::new().scope(
+    @lepusa.FileSystemScope::new(name="assets", root="/tmp/lepusa-assets"),
+  )
+  let registry = register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = read_write_capability_for_window("main")
+  let unsafe_read = registry.dispatch_async(
+    fs_request("readText", "{\"scope\":\"assets\",\"path\":\"../secret\"}"),
+    capabilities=[grant],
+  )
+  assert_true(
+    unsafe_read is InvokeError("readText", "unsafe filesystem path: ../secret"),
+  )
+  let write = registry.dispatch_async(
+    fs_request(
+      "writeText", "{\"scope\":\"assets\",\"path\":\"file.txt\",\"content\":\"no\"}",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(
+    write is InvokeError("writeText", "filesystem scope is read-only: assets"),
+  )
+}

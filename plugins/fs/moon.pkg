@@ -1,3 +1,9 @@
 import {
+  "moonbitlang/core/json",
+  "moonbitlang/x/fs" @xfs,
   "vectie/lepusa",
 }
+
+options(
+  test_import: [ "moonbitlang/async" ],
+)

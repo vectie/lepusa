@@ -56,7 +56,6 @@ fn loaded_project_from_object(
   }
   let windows = project_windows_from_object(object, base_dir~, problems)
   let plugins = project_plugins_from_object(object, problems)
-  let registry = project_registry_from_plugins(plugins)
   let capabilities = project_capabilities_from_object(object, problems)
   let filesystem_scopes = project_filesystem_scopes_from_object(
     object,
@@ -94,6 +93,7 @@ fn loaded_project_from_object(
       Some(icon_path) => manifest = manifest.with_icon_path(icon_path)
       None => ()
     }
+    let registry = project_registry_from_plugins(plugins, filesystem_scopes~)
     Ok({ manifest, root, registry })
   } else {
     Err(problems)
@@ -103,10 +103,15 @@ fn loaded_project_from_object(
 ///|
 fn project_registry_from_plugins(
   plugins : Array[@lepusa.Plugin],
+  filesystem_scopes~ : Array[@lepusa.FileSystemScope],
 ) -> @lepusa.CommandRegistry {
   let mut registry = @lepusa.CommandRegistry::new()
   for plugin in plugins {
-    registry = @catalog.register(registry, plugin.name())
+    registry = @catalog.register_with_filesystem_scopes(
+      registry,
+      plugin.name(),
+      scopes=filesystem_scopes,
+    )
   }
   registry
 }

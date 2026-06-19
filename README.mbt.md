@@ -195,9 +195,10 @@ runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
-When a project declares official `log` or `store` plugins, the CLI binds their
-MoonBit-native handlers into the project `RuntimeHost` without adding
-moon-suite-specific behavior.
+When a project declares official `log`, `store`, or `fs` plugins, the CLI binds
+their MoonBit-native handlers into the project `RuntimeHost` without adding
+moon-suite-specific behavior. `fs` handlers run through the async command
+registry and are constrained by named `filesystemScopes`.
 
 The `examples/` directory contains checked project manifests for the three
 foundation app shapes: Rabbita-style MoonBit UI, packaged static assets, and a
@@ -313,7 +314,8 @@ routes behind split `process.info`, `process.environment`, and
 
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin
-declarations and bind pure MoonBit handlers where they exist.
+declarations and bind MoonBit handlers where they exist, including scoped async
+filesystem handlers.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
@@ -357,6 +359,8 @@ desktop projects can smoke-test the custom protocol without starting a WebView.
 It decodes the bridge request object, verifies the route is declared by the
 runtime plan, checks capabilities through the command registry, and returns the
 JSON response shape expected by `window.lepusa`.
+`RuntimeHost::dispatch_json_async(input)` is the native loop path for async
+plugin handlers; sync handlers still run through the same permission checks.
 
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test

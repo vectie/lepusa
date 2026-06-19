@@ -648,7 +648,7 @@ test "project config parses command and capability permissions" {
 }
 
 ///|
-test "project config parses filesystem scopes" {
+async test "project config parses filesystem scopes" {
   let config =
     #|{
     #|  "identifier": "dev.local.scopes",
@@ -683,6 +683,21 @@ test "project config parses filesystem scopes" {
           )
           assert_true(
             plan.window_command_routes("main").contains("fs.writeText"),
+          )
+          let exists = project
+            .registry()
+            .dispatch_async(
+              @lepusa.InvokeRequest::new(
+                id="exists",
+                window_label="main",
+                plugin="fs",
+                command="exists",
+                payload="{\"scope\":\"assets\",\"path\":\"missing.txt\"}",
+              ),
+              capabilities=plan.capabilities(),
+            )
+          assert_true(
+            exists.payload().unwrap_or("").contains("\"exists\":false"),
           )
           match plan.launch_manifest() {
             Ok(manifest) => {

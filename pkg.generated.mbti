@@ -185,9 +185,12 @@ pub struct CommandRegistry {
 }
 pub fn CommandRegistry::contains(Self, String) -> Bool
 pub fn CommandRegistry::dispatch(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
+pub async fn CommandRegistry::dispatch_async(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
 pub fn CommandRegistry::dispatch_with_permission(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
+pub async fn CommandRegistry::dispatch_with_permission_async(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
 pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
+pub fn CommandRegistry::register_async_fn(Self, String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::routes(Self) -> Array[String]
 pub fn CommandRegistry::validate(Self) -> Array[String]
@@ -422,11 +425,14 @@ pub fn ProtocolMapping::scheme(Self) -> String
 pub struct RegisteredCommand {
   route : String
   permission : Permission
-  handler : (String) -> Result[String, String]
+  handler : RegisteredCommandHandler
 }
 pub fn RegisteredCommand::new(String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
+pub fn RegisteredCommand::new_async(String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::permission(Self) -> Permission
 pub fn RegisteredCommand::route(Self) -> String
+
+type RegisteredCommandHandler
 
 pub struct ResolvedSource {
   kind : ResolvedSourceKind
@@ -692,9 +698,10 @@ pub fn WindowConfig::validate(Self) -> Array[String]
 pub fn WindowConfig::with_source(Self, Source) -> Self
 
 // Type aliases
+pub type AsyncCommandHandler = async (String) -> Result[String, String]
+
 pub type CommandHandler = (String) -> Result[String, String]
 
 pub type Dispatch[Msg] = (Msg) -> Cmd
 
 // Traits
-

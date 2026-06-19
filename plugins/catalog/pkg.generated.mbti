@@ -12,6 +12,8 @@ pub fn plugin_names() -> Array[String]
 
 pub fn register(@lepusa.CommandRegistry, String) -> @lepusa.CommandRegistry
 
+pub fn register_with_filesystem_scopes(@lepusa.CommandRegistry, String, scopes~ : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+
 pub fn registered_plugin_names() -> Array[String]
 
 // Errors
