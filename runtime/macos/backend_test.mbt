@@ -260,6 +260,23 @@ test "macos backend marks async bridge routes" {
 }
 
 ///|
+test "macos open-window launch reports unsupported async bridge routes" {
+  match runtime(async_bridge_test_host()) {
+    Ok(runtime) =>
+      match run(runtime, mode=MacOSOpenWindow) {
+        Ok(result) =>
+          match result.status() {
+            MacOSLaunchUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected async macOS launch status")
+          }
+        Err(_) => abort("unexpected invalid async macOS run")
+      }
+    Err(_) => abort("unexpected invalid async macOS runtime")
+  }
+}
+
+///|
 test "macos backend preserves all webviews in run plan" {
   match runtime(multi_window_test_host()) {
     Ok(runtime) =>
@@ -370,6 +387,27 @@ test "macos backend prepares bundled runtime manifest" {
           assert_true(bridge.requires_async_dispatch())
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "macos bundled open-window launch reports unsupported async bridge routes" {
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/Example.app/Contents/Resources/lepusa/runtime.json",
+      bundled_macos_manifest(),
+    ) {
+    Ok(manifest) =>
+      match run_bundled(manifest, mode=MacOSOpenWindow) {
+        Ok(result) =>
+          match result.status() {
+            MacOSLaunchUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected bundled async macOS launch status")
+          }
+        Err(_) => abort("unexpected invalid bundled macOS launch")
       }
     Err(problem) => abort(problem)
   }

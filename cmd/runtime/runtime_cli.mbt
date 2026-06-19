@@ -163,6 +163,7 @@ fn macos_status_name(status : @macos.MacOSRunStatus) -> String {
     MacOSPrepared => "prepared"
     MacOSLaunched => "launched"
     MacOSLaunchFailed(_) => "launch-failed"
+    MacOSLaunchUnsupported(_) => "launch-unsupported"
   }
 }
 

@@ -392,7 +392,10 @@ the command. The prepared message can then dispatch through
 `NativeRuntime.dispatch_json_async` and return the JavaScript source that calls
 the matching response hook in the page. Scheduling that prepared message from
 the Objective-C handler onto the runtime event loop is the remaining native
-integration step for async commands.
+integration step for async commands. `MacOSOpenWindow` reports
+`MacOSLaunchUnsupported` when the plan contains async command routes, so the
+current sync Objective-C callback cannot accidentally launch a partially working
+async bridge.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows still expose runner contracts and host availability checks, but their
 native launch loops intentionally fail until those platform packages implement

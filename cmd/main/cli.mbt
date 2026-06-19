@@ -658,6 +658,7 @@ fn render_macos_launch_result(
     MacOSPrepared => "prepared"
     MacOSLaunched => "launched"
     MacOSLaunchFailed(_) => "failed"
+    MacOSLaunchUnsupported(_) => "unsupported"
   }
   ok(
     "Lepusa launch\n" +

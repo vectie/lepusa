@@ -9,6 +9,7 @@ pub(all) enum MacOSRunStatus {
   MacOSPrepared
   MacOSLaunched
   MacOSLaunchFailed(String)
+  MacOSLaunchUnsupported(String)
 } derive(Debug, Eq)
 
 ///|
@@ -574,6 +575,12 @@ fn run_plan(
   match mode {
     MacOSDryRun => Ok({ plan, status: MacOSPrepared })
     MacOSOpenWindow => {
+      if plan.bridge().requires_async_dispatch() {
+        return Ok({
+          plan,
+          status: MacOSLaunchUnsupported(async_bridge_launch_message(plan)),
+        })
+      }
       let webview = match plan.first_webview() {
         Ok(webview) => webview
         Err(problem) => return Err([problem])
@@ -603,6 +610,12 @@ fn run_plan(
       }
     }
   }
+}
+
+///|
+fn async_bridge_launch_message(plan : MacOSRunPlan) -> String {
+  let routes = plan.bridge().async_command_routes()
+  "macOS launch requires native async bridge scheduling for \{routes.length()} async command route(s)"
 }
 
 ///|
