@@ -68,7 +68,7 @@ async fn copy_bundle_resource(
   destination : String,
   problems : Array[String],
 ) -> Unit {
-  let content = @fs.read_file(resource.source_path()).text() catch {
+  let content = @fs.read_file(resource.source_path()) catch {
     error => {
       problems.push(
         "could not read bundle resource \{resource.source_path()}: \{error}",

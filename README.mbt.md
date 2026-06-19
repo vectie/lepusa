@@ -168,10 +168,8 @@ steps can consume one bundle contract.
 
 `BundlePlan::resources()` exposes planned bundle resource mappings such as the
 application icon. The generated bundle runtime file includes these mappings
-under `resources`; platform writers can copy or transform binary assets without
-re-reading project configuration.
-`lepusa bundle-write` materializes these planned resources next to generated
-bundle files.
+under `resources`, and `lepusa bundle-write` copies them as file data next to
+generated bundle files without re-reading project configuration.
 
 `@lepusa/plugins/log` is the first official plugin package. It declares
 `log.write`, provides scoped capability helpers, and can register a command

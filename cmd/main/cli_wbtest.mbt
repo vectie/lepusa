@@ -608,7 +608,7 @@ async test "bundle write materializes planned resources" {
   @fs.mkdir(root + "/assets", recursive=true, permission=0o755)
   @fs.write_file(
     root + "/assets/icon.png",
-    "icon-bytes",
+    b"icon-bytes",
     create_mode=CreateOrTruncate,
     permission=0o644,
   )
