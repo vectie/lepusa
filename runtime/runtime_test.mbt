@@ -107,9 +107,13 @@ test "native backend lowers host runner plan with portable operations" {
       assert_eq(plan.backend_name(), "test")
       assert_eq(plan.webview_engine(), "SystemWebView")
       assert_eq(plan.webviews().length(), 1)
+      assert_eq(plan.webview_specs().length(), 1)
+      assert_eq(plan.webview_specs()[0].native_hook(), "__lepusaInvoke")
       assert_true(plan.startup_operations()[0] is NativeRunEffect("boot"))
       let json = plan.bootstrap_json()
       assert_true(json.contains("\"nativeBackend\":\"test\""))
+      assert_true(json.contains("\"webviewSpecs\""))
+      assert_true(json.contains("\"nativeHook\":\"__lepusaInvoke\""))
       assert_true(json.contains("\"startupOperations\""))
     }
     Err(_) => abort("unexpected invalid native runner plan")

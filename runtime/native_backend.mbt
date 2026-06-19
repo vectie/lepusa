@@ -25,6 +25,7 @@ pub struct NativeRunnerPlan {
   webview_engine : String
   launch_plan : NativeLaunchPlan
   session : RuntimeSession
+  webview_specs : Array[RuntimeWebViewSpec]
   startup_operations : Array[NativeOperation]
 } derive(Debug, Eq)
 
@@ -82,6 +83,7 @@ pub fn NativeBackend::runner_plan(
           manifest: plan.launch_manifest(),
         },
         session: plan.session(),
+        webview_specs: plan.webviews(),
         startup_operations,
       })
     }
@@ -199,6 +201,13 @@ pub fn NativeRunnerPlan::startup_operations(
 }
 
 ///|
+pub fn NativeRunnerPlan::webview_specs(
+  self : NativeRunnerPlan,
+) -> Array[RuntimeWebViewSpec] {
+  self.webview_specs.copy()
+}
+
+///|
 pub fn NativeRunnerPlan::webviews(
   self : NativeRunnerPlan,
 ) -> Array[@lepusa.RuntimeWebViewBoot] {
@@ -212,6 +221,7 @@ pub fn NativeRunnerPlan::bootstrap_json(self : NativeRunnerPlan) -> String {
     "\"nativeBackend\":\{self.backend_name.json_string()},",
     "\"webviewEngine\":\{self.webview_engine.json_string()},",
     "\"runtime\":\{self.launch_plan.runtime_manifest().to_json()},",
+    "\"webviewSpecs\":[\{self.webview_specs.map(fn(spec) { spec.to_json() }).join(",")}],",
     "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")
@@ -227,4 +237,24 @@ fn String::json_string(self : String) -> String {
   .replace_all(old="\r", new="\\r")
   .replace_all(old="\t", new="\\t") +
   "\""
+}
+
+///|
+fn Bool::json_bool(self : Bool) -> String {
+  if self {
+    "true"
+  } else {
+    "false"
+  }
+}
+
+///|
+fn @lepusa.TitleBarStyle::native_manifest_name(
+  self : @lepusa.TitleBarStyle,
+) -> String {
+  match self {
+    Native => "native"
+    Transparent => "transparent"
+    Hidden => "hidden"
+  }
 }

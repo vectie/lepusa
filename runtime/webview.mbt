@@ -153,3 +153,25 @@ pub fn RuntimeWebViewSpec::initialization_scripts(
 ) -> Array[String] {
   self.initialization_scripts.copy()
 }
+
+///|
+pub fn RuntimeWebViewSpec::to_json(self : RuntimeWebViewSpec) -> String {
+  [
+    "{",
+    "\"label\":\{self.label.json_string()},",
+    "\"title\":\{self.title.json_string()},",
+    "\"url\":\{self.url.json_string()},",
+    "\"width\":\{self.width},",
+    "\"height\":\{self.height},",
+    "\"resizable\":\{self.resizable.json_bool()},",
+    "\"titleBar\":\{self.title_bar.native_manifest_name().json_string()},",
+    "\"devtools\":\{self.devtools.json_bool()},",
+    "\"assetProtocol\":\{self.asset_protocol.json_string()},",
+    "\"bridgeGlobalName\":\{self.bridge_global_name.json_string()},",
+    "\"nativeHook\":\{self.native_hook.json_string()},",
+    "\"eventDispatchHook\":\{self.event_dispatch_hook.json_string()},",
+    "\"allowedRoutes\":[\{self.allowed_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"initializationScripts\":[\{self.initialization_scripts.map(fn(script) { script.json_string() }).join(",")}]",
+    "}",
+  ].join("")
+}

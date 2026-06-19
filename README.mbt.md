@@ -238,6 +238,9 @@ types, declared command routes, and registered native routes.
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
 command dispatch through the declared capabilities.
+`NativeRunnerPlan` keeps full per-window `RuntimeWebViewSpec` records alongside
+the portable launch manifest so backend implementations can create windows
+without re-deriving bridge hooks or initialization scripts.
 
 `RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
 native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
