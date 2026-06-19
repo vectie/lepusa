@@ -222,8 +222,9 @@ window loops will execute.
 per-window bridge initialization scripts embedded in the runtime manifest.
 
 `lepusa bundle-write` materializes those planned files under an output
-directory. This keeps the reusable framework boundary pure while giving native
-runtime and installer work real platform bundle artifacts to consume.
+directory. Project bundles carry registered official plugin routes into
+`lepusa/runtime.json`, so packaged runtime data matches the same host path used
+by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 
 ## Boundary
 

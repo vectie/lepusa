@@ -80,7 +80,7 @@ pub struct BundleConfig {
   icon_path : String?
 } derive(Eq, @debug.Debug)
 pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : String) -> Self
-pub fn BundleConfig::plan(Self, RuntimePlan) -> Result[BundlePlan, Array[String]]
+pub fn BundleConfig::plan(Self, RuntimePlan, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn BundleConfig::validate(Self) -> Array[String]
 
 pub struct BundleFile {
@@ -97,6 +97,7 @@ pub struct BundlePlan {
   metadata : AppMetadata
   target : BundleTarget
   runtime : RuntimePlan
+  registered_routes : Array[String]
   executable_name : String
   bundle_name : String
   icon_path : String?
@@ -105,6 +106,7 @@ pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
 pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
 pub fn BundlePlan::identifier(Self) -> String
+pub fn BundlePlan::registered_routes(Self) -> Array[String]
 pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
 pub fn BundlePlan::target(Self) -> BundleTarget
@@ -306,7 +308,7 @@ pub struct ProjectManifest {
   runtime : RuntimeConfig
 } derive(Eq, @debug.Debug)
 pub fn ProjectManifest::app(Self, Cell) -> App
-pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget) -> Result[BundlePlan, Array[String]]
+pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn ProjectManifest::capabilities(Self) -> Array[Capability]
 pub fn ProjectManifest::launch_plan(Self, Cell) -> Result[LaunchPlan, Array[String]]
 pub fn ProjectManifest::lifecycle_hooks(Self) -> Array[LifecycleHook]

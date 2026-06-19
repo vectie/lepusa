@@ -209,9 +209,14 @@ pub fn ProjectManifest::bundle_plan(
   self : ProjectManifest,
   root : Cell,
   target? : BundleTarget = MacOS,
+  registered_routes? : Array[String] = [],
 ) -> Result[BundlePlan, Array[String]] {
   match self.runtime_plan(root) {
-    Ok(runtime) => BundleConfig::new(self.metadata, target~).plan(runtime)
+    Ok(runtime) =>
+      BundleConfig::new(self.metadata, target~).plan(
+        runtime,
+        registered_routes~,
+      )
     Err(problems) => Err(problems)
   }
 }

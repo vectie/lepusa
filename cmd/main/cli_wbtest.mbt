@@ -161,6 +161,10 @@ async test "generated project config drives manifest and bundle write" {
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
+  let runtime_json = @fs.read_file(bundle_root + "/lepusa/runtime.json").text()
+  assert_true(runtime_json.contains("\"registeredRoutes\""))
+  assert_true(runtime_json.contains("\"log.write\""))
+  assert_true(runtime_json.contains("\"store.set\""))
 }
 
 ///|

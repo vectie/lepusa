@@ -619,7 +619,7 @@ test "bundle plans derive executable and package names from metadata" {
         ),
         target=MacOS,
       )
-      match bundle.plan(runtime) {
+      match bundle.plan(runtime, registered_routes=["core.invoke"]) {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
@@ -627,6 +627,7 @@ test "bundle plans derive executable and package names from metadata" {
             Ok(manifest) => {
               assert_eq(manifest.webviews().length(), 1)
               assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
+              assert_eq(manifest.registered_routes()[0], "core.invoke")
             }
             Err(_) => abort("unexpected invalid bundle runtime manifest")
           }
@@ -634,6 +635,9 @@ test "bundle plans derive executable and package names from metadata" {
             Ok(json) => {
               assert_true(json.contains("\"webviews\""))
               assert_true(json.contains("\"virtualFiles\""))
+              assert_true(
+                json.contains("\"registeredRoutes\":[\"core.invoke\"]"),
+              )
             }
             Err(_) => abort("unexpected invalid bundle runtime manifest json")
           }

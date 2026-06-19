@@ -201,7 +201,12 @@ async fn project_bundle_plan(
   match project_config_path(args) {
     Some(path) =>
       match load_project_config(path) {
-        Ok(project) => project.manifest.bundle_plan(project.root, target~)
+        Ok(project) =>
+          project.manifest.bundle_plan(
+            project.root,
+            target~,
+            registered_routes=project.registry.routes(),
+          )
         Err(problems) => Err(problems)
       }
     None => sample_manifest().bundle_plan(sample_root(), target~)

@@ -82,6 +82,7 @@ pub struct BundlePlan {
   metadata : AppMetadata
   target : BundleTarget
   runtime : RuntimePlan
+  registered_routes : Array[String]
   executable_name : String
   bundle_name : String
   icon_path : String?
@@ -135,6 +136,11 @@ pub fn BundleTarget::name(self : BundleTarget) -> String {
 ///|
 pub fn BundlePlan::target(self : BundlePlan) -> BundleTarget {
   self.target
+}
+
+///|
+pub fn BundlePlan::registered_routes(self : BundlePlan) -> Array[String] {
+  self.registered_routes.copy()
 }
 
 ///|
@@ -214,7 +220,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
 pub fn BundlePlan::runtime_manifest(
   self : BundlePlan,
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
-  self.runtime.launch_manifest()
+  self.runtime.launch_manifest(registered_routes=self.registered_routes)
 }
 
 ///|
@@ -300,6 +306,7 @@ fn BundlePlan::desktop_entry(self : BundlePlan) -> String {
 pub fn BundleConfig::plan(
   self : BundleConfig,
   runtime : RuntimePlan,
+  registered_routes? : Array[String] = [],
 ) -> Result[BundlePlan, Array[String]] {
   let problems = self.validate()
   if problems.is_empty() {
@@ -313,6 +320,7 @@ pub fn BundleConfig::plan(
       metadata: self.metadata,
       target: self.target,
       runtime,
+      registered_routes: registered_routes.copy(),
       executable_name,
       bundle_name: executable_name + extension,
       icon_path: self.icon_path,

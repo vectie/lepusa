@@ -288,7 +288,9 @@ multi-window runtime state. The native CLI owns materialization through
 `lepusa bundle-write`, which writes the planned files into an output directory
 and applies executable permissions where the plan asks for them.
 `BundlePlan::runtime_manifest()` exposes the same typed native-runner manifest
-without forcing tooling to scan `BundlePlan::files()`.
+without forcing tooling to scan `BundlePlan::files()`. When created from a
+registry-aware project path, it also preserves the registered native routes that
+the host exposes to command dispatch.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume
