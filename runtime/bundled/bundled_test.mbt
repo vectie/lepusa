@@ -56,6 +56,7 @@ test "bundled runtime manifest builds target-aware run plan" {
         Ok(result) => {
           assert_true(result.status() is BundledPrepared)
           let plan = result.plan()
+          let report = result.report()
           assert_eq(plan.target(), "linux")
           assert_eq(plan.backend(), "linux")
           assert_eq(plan.webview_engine(), "WebKitGTK")
@@ -66,6 +67,20 @@ test "bundled runtime manifest builds target-aware run plan" {
           assert_eq(plan.lifecycle_step_count(), 2)
           assert_eq(plan.sync_route_count(), 1)
           assert_eq(plan.async_route_count(), 0)
+          assert_eq(report.target(), "linux")
+          assert_eq(report.backend(), "linux")
+          assert_eq(report.engine(), "WebKitGTK")
+          assert_eq(report.status().name(), "prepared")
+          assert_eq(report.first_window_title(), "Runtime App")
+          assert_eq(
+            report.first_window_url(),
+            "lepusa://rabbita/main/index.html",
+          )
+          assert_eq(report.load_url(), "lepusa://rabbita/main/index.html")
+          assert_eq(report.local_services(), 1)
+          assert_eq(report.service_start_order()[0], "api")
+          assert_eq(report.startup_operations(), 2)
+          assert_eq(report.bridge_sync_routes(), 1)
         }
         Err(problem) => abort(problem)
       }

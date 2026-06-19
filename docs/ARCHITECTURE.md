@@ -293,7 +293,10 @@ and `lepusa lifecycle <event> [window]` prints it for no-window smoke tests.
 facade: it binds a backend and `RuntimeHost` once, then exposes bootstrap JSON,
 asset resolution JSON, IPC dispatch JSON, and lifecycle step JSON from one
 object. Platform packages should consume that facade instead of reassembling
-host, runner, protocol, and command dispatch paths themselves.
+host, runner, protocol, and command dispatch paths themselves. Source and
+packaged runtime paths both lower launch summaries into root `@lepusa.RunReport`
+values so backends, CLI probes, and future supervisors share one status and
+counter contract.
 
 Platform packages only need to describe their native engine and host
 availability:

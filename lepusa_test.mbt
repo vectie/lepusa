@@ -1077,3 +1077,42 @@ test "project manifests build runtime and bundle plans" {
     Err(_) => abort("unexpected invalid manifest bundle plan")
   }
 }
+
+///|
+test "run report summarizes desktop launch state" {
+  let report = @lepusa.RunReport::new(
+    target="linux",
+    backend="linux",
+    engine="WebKitGTK",
+    status=RunUnsupported("loop pending"),
+    webviews=1,
+    first_window_title="Main",
+    first_window_url="lepusa://rabbita/main/index.html",
+    load_url="lepusa://rabbita/main/index.html",
+    local_services=1,
+    service_supervisor=true,
+    service_start_order=["api"],
+    startup_operations=2,
+    lifecycle_steps=1,
+    bridge_sync_routes=1,
+    bridge_async_routes=0,
+  )
+  let order = report.service_start_order()
+  order.push("mutated")
+  assert_eq(report.target(), "linux")
+  assert_eq(report.backend(), "linux")
+  assert_eq(report.engine(), "WebKitGTK")
+  assert_eq(report.status().name(), "unsupported")
+  assert_eq(report.status().message(), "loop pending")
+  assert_eq(report.webviews(), 1)
+  assert_eq(report.first_window_title(), "Main")
+  assert_eq(report.local_services(), 1)
+  assert_eq(report.service_start_order().length(), 1)
+  assert_eq(report.startup_operations(), 2)
+  assert_eq(report.lifecycle_steps(), 1)
+  assert_eq(report.bridge_sync_routes(), 1)
+  let json = report.to_json()
+  assert_true(json.contains("\"target\":\"linux\""))
+  assert_true(json.contains("\"firstWindowTitle\":\"Main\""))
+  assert_true(json.contains("\"serviceStartOrder\":[\"api\"]"))
+}

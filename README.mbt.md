@@ -407,6 +407,9 @@ shape that `lepusa lifecycle` prints.
 lowering boundary for platform packages. `NativeRuntime` binds a backend and
 host once, then gives platform loops bootstrap JSON, asset JSON, dispatch JSON,
 and lifecycle step JSON without making each backend rebuild those paths.
+`@lepusa.RunReport` is the shared launch summary returned by source and
+packaged runtime adapters, so CLI output and future native loops use one status
+vocabulary for prepared, launched, failed, and unsupported runs.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

@@ -91,6 +91,21 @@ pub fn BundledRunResult::status(self : BundledRunResult) -> BundledRunStatus {
 }
 
 ///|
+pub fn BundledRunResult::report(self : BundledRunResult) -> @lepusa.RunReport {
+  self.plan.report(status=self.status.to_run_status())
+}
+
+///|
+pub fn BundledRunStatus::to_run_status(
+  self : BundledRunStatus,
+) -> @lepusa.RunStatus {
+  match self {
+    BundledPrepared => RunPrepared
+    BundledLaunchUnsupported(message) => RunUnsupported(message)
+  }
+}
+
+///|
 pub fn BundledRunPlan::target(self : BundledRunPlan) -> String {
   self.target
 }
@@ -140,6 +155,40 @@ pub fn BundledRunPlan::sync_route_count(self : BundledRunPlan) -> Int {
 ///|
 pub fn BundledRunPlan::async_route_count(self : BundledRunPlan) -> Int {
   self.async_route_count
+}
+
+///|
+pub fn BundledRunPlan::report(
+  self : BundledRunPlan,
+  status~ : @lepusa.RunStatus,
+  load_url? : String = "",
+) -> @lepusa.RunReport {
+  let services = self.service_plan()
+  let first_window_url = match self.first_webview() {
+    Some(webview) => webview.url()
+    None => ""
+  }
+  let first_window_title = match self.first_webview() {
+    Some(webview) => webview.title()
+    None => ""
+  }
+  @lepusa.RunReport::new(
+    target=self.target,
+    backend=self.backend,
+    engine=self.webview_engine,
+    status~,
+    webviews=self.webviews.length(),
+    first_window_title~,
+    first_window_url~,
+    load_url=if load_url == "" { first_window_url } else { load_url },
+    local_services=services.services().length(),
+    service_supervisor=services.requires_supervisor(),
+    service_start_order=services.startup_service_names(),
+    startup_operations=self.startup_operation_count,
+    lifecycle_steps=self.lifecycle_step_count,
+    bridge_sync_routes=self.sync_route_count,
+    bridge_async_routes=self.async_route_count,
+  )
 }
 
 ///|

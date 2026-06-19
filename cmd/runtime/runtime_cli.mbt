@@ -133,19 +133,26 @@ fn render_macos_runtime_run(
     Err(problems) =>
       runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
     Ok(result) =>
-      runtime_ok(render_macos_runtime_run_result(result, services, launch~))
+      runtime_ok(
+        render_runtime_run_report(
+          macos_runtime_run_report(result, services),
+          launch~,
+          include_title=true,
+          include_load_url=true,
+          include_bridge_routes=true,
+        ),
+      )
   }
 }
 
 ///|
-fn render_macos_runtime_run_result(
+fn macos_runtime_run_report(
   result : @macos.MacOSRunResult,
   services : @bundled.BundledServicePlan,
-  launch~ : Bool,
-) -> String {
+) -> @lepusa.RunReport {
   let plan = result.plan()
   let first_webview = plan.first_webview()
-  let title = match first_webview {
+  let first_window_title = match first_webview {
     Ok(webview) => webview.title()
     Err(_) => ""
   }
@@ -157,26 +164,23 @@ fn render_macos_runtime_run_result(
     Ok(webview) => webview.load_url()
     Err(_) => ""
   }
-  [
-    "Lepusa runtime run",
-    "mode: \{if launch { "launch" } else { "dry-run" }}",
-    "target: macos",
-    "backend: macos",
-    "engine: WKWebView",
-    "status: \{macos_status_name(result.status())}",
-    "webviews: \{plan.webviews().length()}",
-    "title: \{title}",
-    "first-window-url: \{first_window_url}",
-    "load-url: \{load_url}",
-    "local-services: \{services.services().length()}",
-    "service-supervisor: \{services.requires_supervisor()}",
-    "service-start-order: \{services.startup_service_names().join(",")}",
-    "startup-operations: \{plan.execution().startup_operations().length()}",
-    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}",
-    "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}",
-    "bridge-async-routes: \{plan.bridge().async_command_routes().length()}",
-    "",
-  ].join("\n")
+  @lepusa.RunReport::new(
+    target="macos",
+    backend="macos",
+    engine="WKWebView",
+    status=macos_run_status(result.status()),
+    webviews=plan.webviews().length(),
+    first_window_title~,
+    first_window_url~,
+    load_url~,
+    local_services=services.services().length(),
+    service_supervisor=services.requires_supervisor(),
+    service_start_order=services.startup_service_names(),
+    startup_operations=plan.execution().startup_operations().length(),
+    lifecycle_steps=plan.execution().lifecycle_steps().length(),
+    bridge_sync_routes=plan.bridge().sync_command_routes().length(),
+    bridge_async_routes=plan.bridge().async_command_routes().length(),
+  )
 }
 
 ///|
@@ -184,35 +188,54 @@ fn render_bundled_runtime_run_result(
   result : @bundled.BundledRunResult,
   launch~ : Bool,
 ) -> String {
-  let plan = result.plan()
-  let services = plan.service_plan()
-  let first_webview = plan.first_webview()
-  let title = match first_webview {
-    Some(webview) => webview.title()
-    None => ""
+  render_runtime_run_report(
+    result.report(),
+    launch~,
+    include_title=true,
+    include_load_url=true,
+    include_bridge_routes=true,
+  )
+}
+
+///|
+fn render_runtime_run_report(
+  report : @lepusa.RunReport,
+  launch~ : Bool,
+  include_title? : Bool = false,
+  include_load_url? : Bool = false,
+  include_bridge_routes? : Bool = false,
+) -> String {
+  let title = if include_title {
+    "title: \{report.first_window_title()}\n"
+  } else {
+    ""
   }
-  let first_window_url = match first_webview {
-    Some(webview) => webview.url()
-    None => ""
+  let load_url = if include_load_url {
+    "load-url: \{report.load_url()}\n"
+  } else {
+    ""
+  }
+  let bridge_routes = if include_bridge_routes {
+    "bridge-sync-routes: \{report.bridge_sync_routes()}\n" +
+    "bridge-async-routes: \{report.bridge_async_routes()}\n"
+  } else {
+    ""
   }
   [
     "Lepusa runtime run",
     "mode: \{if launch { "launch" } else { "dry-run" }}",
-    "target: \{plan.target()}",
-    "backend: \{plan.backend()}",
-    "engine: \{plan.webview_engine()}",
-    "status: \{bundled_status_name(result.status())}",
-    "webviews: \{plan.webviews().length()}",
-    "title: \{title}",
-    "first-window-url: \{first_window_url}",
-    "load-url: \{first_window_url}",
-    "local-services: \{services.services().length()}",
-    "service-supervisor: \{services.requires_supervisor()}",
-    "service-start-order: \{services.startup_service_names().join(",")}",
-    "startup-operations: \{plan.startup_operation_count()}",
-    "lifecycle-steps: \{plan.lifecycle_step_count()}",
-    "bridge-sync-routes: \{plan.sync_route_count()}",
-    "bridge-async-routes: \{plan.async_route_count()}",
+    "target: \{report.target()}",
+    "backend: \{report.backend()}",
+    "engine: \{report.engine()}",
+    "status: \{report.status().name()}",
+    "webviews: \{report.webviews()}",
+    title + "first-window-url: \{report.first_window_url()}",
+    load_url + "local-services: \{report.local_services()}",
+    "service-supervisor: \{report.service_supervisor()}",
+    "service-start-order: \{report.service_start_order().join(",")}",
+    "startup-operations: \{report.startup_operations()}",
+    "lifecycle-steps: \{report.lifecycle_steps()}",
+    bridge_routes,
     "",
   ].join("\n")
 }
@@ -228,20 +251,12 @@ fn runtime_service_summary(
 }
 
 ///|
-fn macos_status_name(status : @macos.MacOSRunStatus) -> String {
+fn macos_run_status(status : @macos.MacOSRunStatus) -> @lepusa.RunStatus {
   match status {
-    MacOSPrepared => "prepared"
-    MacOSLaunched => "launched"
-    MacOSLaunchFailed(_) => "launch-failed"
-    MacOSLaunchUnsupported(_) => "launch-unsupported"
-  }
-}
-
-///|
-fn bundled_status_name(status : @bundled.BundledRunStatus) -> String {
-  match status {
-    BundledPrepared => "prepared"
-    BundledLaunchUnsupported(_) => "launch-unsupported"
+    MacOSPrepared => RunPrepared
+    MacOSLaunched => RunLaunched
+    MacOSLaunchFailed(message) => RunFailed(message)
+    MacOSLaunchUnsupported(message) => RunUnsupported(message)
   }
 }
 

@@ -188,26 +188,26 @@ test "native run report normalizes launch summaries" {
   let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
   match NativeRuntime::new(backend, host) {
     Ok(runtime) => {
-      let report = NativeRunReport::from_runtime(
+      let report = runtime.run_report(
         target="test",
-        runtime,
-        status=NativeRunUnsupported("not wired"),
+        status=RunUnsupported("not wired"),
         load_url="file:///tmp/index.html",
-        bridge_sync_route_count=1,
-        bridge_async_route_count=2,
+        bridge_sync_routes=1,
+        bridge_async_routes=2,
       )
       assert_eq(report.target(), "test")
-      assert_eq(report.backend_name(), "test")
-      assert_eq(report.webview_engine(), "SystemWebView")
+      assert_eq(report.backend(), "test")
+      assert_eq(report.engine(), "SystemWebView")
       assert_eq(report.status().name(), "unsupported")
       assert_eq(report.status().message(), "not wired")
-      assert_eq(report.webview_count(), 1)
+      assert_eq(report.webviews(), 1)
+      assert_eq(report.first_window_title(), "Runtime")
       assert_eq(report.first_window_url(), "lepusa://inline/main/index.html")
       assert_eq(report.load_url(), "file:///tmp/index.html")
-      assert_eq(report.startup_operation_count(), 1)
-      assert_eq(report.lifecycle_step_count(), 1)
-      assert_eq(report.bridge_sync_route_count(), 1)
-      assert_eq(report.bridge_async_route_count(), 2)
+      assert_eq(report.startup_operations(), 1)
+      assert_eq(report.lifecycle_steps(), 1)
+      assert_eq(report.bridge_sync_routes(), 1)
+      assert_eq(report.bridge_async_routes(), 2)
       let json = report.to_json()
       assert_true(json.contains("\"target\":\"test\""))
       assert_true(json.contains("\"name\":\"unsupported\""))

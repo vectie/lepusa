@@ -44,43 +44,6 @@ pub(all) enum NativeOperation {
 pub fn NativeOperation::from_runtime(RuntimeOperation) -> Self
 pub fn NativeOperation::to_json(Self) -> String
 
-pub struct NativeRunReport {
-  target : String
-  backend_name : String
-  webview_engine : String
-  status : NativeRunStatus
-  webview_count : Int
-  first_window_url : String
-  load_url : String
-  startup_operation_count : Int
-  lifecycle_step_count : Int
-  bridge_sync_route_count : Int
-  bridge_async_route_count : Int
-} derive(Eq, @debug.Debug)
-pub fn NativeRunReport::backend_name(Self) -> String
-pub fn NativeRunReport::bridge_async_route_count(Self) -> Int
-pub fn NativeRunReport::bridge_sync_route_count(Self) -> Int
-pub fn NativeRunReport::first_window_url(Self) -> String
-pub fn NativeRunReport::from_runtime(target~ : String, NativeRuntime, status~ : NativeRunStatus, load_url? : String, bridge_sync_route_count? : Int, bridge_async_route_count? : Int) -> Self
-pub fn NativeRunReport::lifecycle_step_count(Self) -> Int
-pub fn NativeRunReport::load_url(Self) -> String
-pub fn NativeRunReport::startup_operation_count(Self) -> Int
-pub fn NativeRunReport::status(Self) -> NativeRunStatus
-pub fn NativeRunReport::target(Self) -> String
-pub fn NativeRunReport::to_json(Self) -> String
-pub fn NativeRunReport::webview_count(Self) -> Int
-pub fn NativeRunReport::webview_engine(Self) -> String
-
-pub(all) enum NativeRunStatus {
-  NativeRunPrepared
-  NativeRunLaunched
-  NativeRunFailed(String)
-  NativeRunUnsupported(String)
-} derive(Eq, @debug.Debug)
-pub fn NativeRunStatus::message(Self) -> String
-pub fn NativeRunStatus::name(Self) -> String
-pub fn NativeRunStatus::to_json(Self) -> String
-
 pub struct NativeRunnerPlan {
   backend_name : String
   webview_engine : String
@@ -125,6 +88,7 @@ pub fn NativeRuntime::host(Self) -> RuntimeHost
 pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Result[String, Array[String]]
 pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
+pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 
 type ParsedAssetUrl derive(Eq, @debug.Debug)

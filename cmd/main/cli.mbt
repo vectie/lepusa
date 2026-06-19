@@ -643,9 +643,8 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            @runtime.NativeRunReport::from_runtime(
+            runtime.run_report(
               target=target.name(),
-              runtime,
               status=windows_run_status(result.status()),
             ),
           )
@@ -656,9 +655,8 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            @runtime.NativeRunReport::from_runtime(
+            runtime.run_report(
               target=target.name(),
-              runtime,
               status=linux_run_status(result.status()),
             ),
           )
@@ -672,83 +670,82 @@ fn macos_launch_report(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
   result : @macos_backend.MacOSRunResult,
-) -> @runtime.NativeRunReport {
+) -> @lepusa.RunReport {
   let plan = result.plan()
   let load_url = match plan.first_webview() {
     Ok(webview) => webview.load_url()
     Err(_) => ""
   }
-  @runtime.NativeRunReport::from_runtime(
+  runtime.run_report(
     target=target.name(),
-    runtime,
     status=macos_run_status(result.status()),
     load_url~,
-    bridge_sync_route_count=plan.bridge().sync_command_routes().length(),
-    bridge_async_route_count=plan.bridge().async_command_routes().length(),
+    bridge_sync_routes=plan.bridge().sync_command_routes().length(),
+    bridge_async_routes=plan.bridge().async_command_routes().length(),
   )
 }
 
 ///|
 fn macos_run_status(
   status : @macos_backend.MacOSRunStatus,
-) -> @runtime.NativeRunStatus {
+) -> @lepusa.RunStatus {
   match status {
-    MacOSPrepared => NativeRunPrepared
-    MacOSLaunched => NativeRunLaunched
-    MacOSLaunchFailed(message) => NativeRunFailed(message)
-    MacOSLaunchUnsupported(message) => NativeRunUnsupported(message)
+    MacOSPrepared => RunPrepared
+    MacOSLaunched => RunLaunched
+    MacOSLaunchFailed(message) => RunFailed(message)
+    MacOSLaunchUnsupported(message) => RunUnsupported(message)
   }
 }
 
 ///|
 fn linux_run_status(
   status : @linux_backend.LinuxRunStatus,
-) -> @runtime.NativeRunStatus {
+) -> @lepusa.RunStatus {
   match status {
-    LinuxPrepared => NativeRunPrepared
-    LinuxLaunchUnsupported(message) => NativeRunUnsupported(message)
+    LinuxPrepared => RunPrepared
+    LinuxLaunchUnsupported(message) => RunUnsupported(message)
   }
 }
 
 ///|
 fn windows_run_status(
   status : @windows_backend.WindowsRunStatus,
-) -> @runtime.NativeRunStatus {
+) -> @lepusa.RunStatus {
   match status {
-    WindowsPrepared => NativeRunPrepared
-    WindowsLaunchUnsupported(message) => NativeRunUnsupported(message)
+    WindowsPrepared => RunPrepared
+    WindowsLaunchUnsupported(message) => RunUnsupported(message)
   }
 }
 
 ///|
 fn render_native_run_report(
   title : String,
-  report : @runtime.NativeRunReport,
+  report : @lepusa.RunReport,
 ) -> CliResult {
   let load_url = if report.load_url() == "" {
     ""
   } else {
     "load-url: \{report.load_url()}\n"
   }
-  let bridge_routes = if report.bridge_sync_route_count() == 0 &&
-    report.bridge_async_route_count() == 0 {
+  let bridge_routes = if report.bridge_sync_routes() == 0 &&
+    report.bridge_async_routes() == 0 {
     ""
   } else {
-    "bridge-sync-routes: \{report.bridge_sync_route_count()}\n" +
-    "bridge-async-routes: \{report.bridge_async_route_count()}\n"
+    "bridge-sync-routes: \{report.bridge_sync_routes()}\n" +
+    "bridge-async-routes: \{report.bridge_async_routes()}\n"
   }
   ok(
     title +
     "\n" +
     "target: \{report.target()}\n" +
-    "backend: \{report.backend_name()}\n" +
-    "engine: \{report.webview_engine()}\n" +
+    "backend: \{report.backend()}\n" +
+    "engine: \{report.engine()}\n" +
     "status: \{report.status().name()}\n" +
-    "webviews: \{report.webview_count()}\n" +
+    "webviews: \{report.webviews()}\n" +
     "first-window-url: \{report.first_window_url()}\n" +
     load_url +
-    "startup-operations: \{report.startup_operation_count()}\n" +
-    "lifecycle-steps: \{report.lifecycle_step_count()}\n" +
+    "startup-operations: \{report.startup_operations()}\n" +
+    "lifecycle-steps: \{report.lifecycle_steps()}\n" +
     bridge_routes,
   )
 }
