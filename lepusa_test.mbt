@@ -183,6 +183,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid single instance permission")
   }
+  match @lepusa.Permission::named("tray") {
+    Ok(permission) => {
+      assert_true(permission is Tray)
+      assert_eq(permission.name(), "tray")
+    }
+    Err(_) => abort("unexpected invalid tray permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")

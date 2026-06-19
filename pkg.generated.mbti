@@ -342,6 +342,7 @@ pub(all) enum Permission {
   Localhost
   DeepLink
   SingleInstance
+  Tray
   Shell
   Opener
   Dialog

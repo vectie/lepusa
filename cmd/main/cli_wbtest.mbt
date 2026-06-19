@@ -497,6 +497,7 @@ test "project config expands official plugin declarations" {
     #|    { "name": "shell" },
     #|    { "name": "singleInstance" },
     #|    { "name": "store" },
+    #|    { "name": "tray" },
     #|    { "name": "fs" }
     #|  ],
     #|  "capabilities": [
@@ -504,7 +505,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell", "single-instance"]
+    #|      "permissions": ["clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell", "single-instance", "tray"]
     #|    }
     #|  ]
     #|}
@@ -526,6 +527,7 @@ test "project config expands official plugin declarations" {
           assert_true(routes.contains("shell.execute"))
           assert_true(routes.contains("singleInstance.acquire"))
           assert_true(routes.contains("store.set"))
+          assert_true(routes.contains("tray.setMenu"))
           assert_true(routes.contains("fs.readText"))
           assert_true(routes.contains("fs.writeText"))
           assert_true(
@@ -549,6 +551,7 @@ test "project config expands official plugin declarations" {
           assert_true(window_routes.contains("shell.spawn"))
           assert_true(window_routes.contains("singleInstance.onSecondLaunch"))
           assert_true(window_routes.contains("store.keys"))
+          assert_true(window_routes.contains("tray.onMenuItemClick"))
           assert_true(window_routes.contains("fs.readText"))
           assert_false(window_routes.contains("fs.writeText"))
         }

@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/tray"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+// Errors
+
+// Types and methods
+pub struct TrayMenuItem {
+  id : String
+  label : String
+  kind : TrayMenuItemKind
+  enabled : Bool
+  checked : Bool
+} derive(Eq, @debug.Debug)
+pub fn TrayMenuItem::action(id~ : String, label~ : String, enabled? : Bool) -> Self
+pub fn TrayMenuItem::check(id~ : String, label~ : String, checked? : Bool, enabled? : Bool) -> Self
+pub fn TrayMenuItem::checked(Self) -> Bool
+pub fn TrayMenuItem::enabled(Self) -> Bool
+pub fn TrayMenuItem::id(Self) -> String
+pub fn TrayMenuItem::kind(Self) -> TrayMenuItemKind
+pub fn TrayMenuItem::label(Self) -> String
+pub fn TrayMenuItem::separator() -> Self
+pub fn TrayMenuItem::validate(Self) -> Array[String]
+
+pub(all) enum TrayMenuItemKind {
+  Action
+  Separator
+  Check
+} derive(Eq, @debug.Debug)
+
+pub struct TrayPolicy {
+  icon_path : String?
+  tooltip : String?
+  menu : Array[TrayMenuItem]
+} derive(Eq, @debug.Debug)
+pub fn TrayPolicy::icon_path(Self) -> String?
+pub fn TrayPolicy::item(Self, TrayMenuItem) -> Self
+pub fn TrayPolicy::menu(Self) -> Array[TrayMenuItem]
+pub fn TrayPolicy::new(icon_path? : String, tooltip? : String, menu? : Array[TrayMenuItem]) -> Self
+pub fn TrayPolicy::tooltip(Self) -> String?
+pub fn TrayPolicy::validate(Self) -> Array[String]
+
+// Type aliases
+
+// Traits

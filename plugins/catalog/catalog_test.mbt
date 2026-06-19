@@ -1,7 +1,7 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 13)
+  assert_eq(names.length(), 14)
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
   assert_true(names.contains("dialog"))
@@ -15,6 +15,7 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("shell"))
   assert_true(names.contains("singleInstance"))
   assert_true(names.contains("store"))
+  assert_true(names.contains("tray"))
   assert_true(
     plugin("clipboard").unwrap().command_routes().contains("clipboard.readText"),
   )
@@ -59,6 +60,7 @@ test "catalog exposes official plugin declarations" {
     .contains("singleInstance.acquire"),
   )
   assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
+  assert_true(plugin("tray").unwrap().command_routes().contains("tray.setMenu"))
   assert_true(plugin("fs").unwrap().command_routes().contains("fs.readText"))
   assert_true(plugin("missing") is None)
 }

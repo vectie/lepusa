@@ -94,7 +94,7 @@ Stabilize the cross-platform core set first:
 - localhost: initial local service lifecycle contract exists
 - deepLink: initial app URL scheme contract exists
 - singleInstance: initial app lock and launch handoff contract exists
-- tray
+- tray: initial status icon and menu contract exists
 - auto-launch
 - window-state
 - updater
