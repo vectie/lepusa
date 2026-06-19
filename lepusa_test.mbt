@@ -84,13 +84,14 @@ test "windows resolve source and preserve frame config" {
 test "plugins expose command metadata without owning app domain behavior" {
   let plugin = @lepusa.Plugin::new("workspace")
     .command_sync("read_config")
-    .command_stream("events")
+    .command_stream("events", permission=Notification)
   assert_eq(plugin.name(), "workspace")
   let command_names = plugin.command_names()
   assert_eq(command_names.length(), 2)
   assert_eq(command_names[0], "read_config")
   assert_eq(command_names[1], "events")
   assert_true(plugin.commands()[1].mode() is Stream)
+  assert_true(plugin.commands()[1].permission() is Notification)
 }
 
 ///|
@@ -360,11 +361,80 @@ test "runtime plans collect plugin command routes" {
 }
 
 ///|
+test "runtime plans expose bridge routes per window capability" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .window(label="admin", source=@lepusa.Source::html("<aside></aside>"))
+    .with_plugin(
+      @lepusa.Plugin::new("core").command_sync("open").command_sync("admin"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("main-open").window("main").command("core.open"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("admin-only")
+      .window("admin")
+      .command("core.admin"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let main_routes = plan.window_command_routes("main")
+      assert_eq(main_routes.length(), 1)
+      assert_eq(main_routes[0], "core.open")
+      let admin_routes = plan.window_command_routes("admin")
+      assert_eq(admin_routes.length(), 1)
+      assert_eq(admin_routes[0], "core.admin")
+      match
+        plan.bridge_script(
+          config=@lepusa.BridgeConfig::new(window_label="main"),
+        ) {
+        Ok(script) => assert_true(script.source().contains("\"core.open\""))
+        Err(_) => abort("unexpected invalid main bridge")
+      }
+      match plan.launch_manifest() {
+        Ok(manifest) => {
+          assert_eq(manifest.webviews()[0].allowed_routes()[0], "core.open")
+          assert_eq(manifest.webviews()[1].allowed_routes()[0], "core.admin")
+          assert_true(manifest.to_json().contains("\"allowedRoutes\""))
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime plans map command routes to explicit permissions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("dialog").command_sync("show", permission=Dialog),
+    )
+    .with_capability(
+      @lepusa.Capability::new("main-dialog").window("main").permission(Dialog),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let routes = plan.window_command_routes("main")
+      assert_eq(routes.length(), 1)
+      assert_eq(routes[0], "dialog.show")
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime plans expose portable launch manifest" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
     .window(title="Launch", source=@lepusa.Source::html("<main></main>"))
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("main-core").window("main").command("core.invoke"),
+    )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
       match plan.launch_manifest(registered_routes=["core.invoke"]) {
@@ -375,6 +445,7 @@ test "runtime plans expose portable launch manifest" {
             manifest.webviews()[0].event_dispatch_hook(),
             "__lepusaDispatchEvent",
           )
+          assert_eq(manifest.webviews()[0].allowed_routes()[0], "core.invoke")
           assert_eq(manifest.protocol_mappings()[0].root(), "memory:main")
           assert_eq(manifest.virtual_files()[0].path(), "index.html")
           assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
@@ -434,6 +505,9 @@ test "runtime plans generate frontend bridge script" {
   let app = @lepusa.new(root)
     .window(source=@lepusa.Source::html("<main></main>"))
     .with_plugin(@lepusa.Plugin::new("dialog").command_sync("show"))
+    .with_capability(
+      @lepusa.Capability::new("dialog").window("main").command("dialog.show"),
+    )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
       match

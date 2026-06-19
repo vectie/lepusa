@@ -141,10 +141,10 @@ await window.lepusa.dialog.show({ message: "Hello" })
 ```
 
 `RuntimePlan::bridge_script()` generates the first bridge. It installs
-`window.lepusa`, validates known routes, calls the backend-provided
-`globalThis.__lepusaInvoke(request)` hook, and exposes namespace helpers for all
-registered routes. This bridge is framework-neutral and can be used from
-Rabbita, React, Vue, Svelte, or plain JavaScript.
+`window.lepusa`, validates routes allowed for the configured window, calls the
+backend-provided `globalThis.__lepusaInvoke(request)` hook, and exposes
+namespace helpers for those granted routes. This bridge is framework-neutral and
+can be used from Rabbita, React, Vue, Svelte, or plain JavaScript.
 
 Command rules:
 
@@ -154,6 +154,9 @@ Command rules:
 - Every command is denied by default unless a capability grants it.
 - `Permission::command(route)` is the default permission for custom command
   routes.
+- `RuntimePlan::command_routes()` lists every declared route, while
+  `RuntimePlan::window_command_routes(label)` returns only routes granted to
+  that window.
 
 ## Capabilities
 
@@ -232,14 +235,15 @@ run named effects without understanding the authoring `Cmd` tree.
 
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
-name, and document-start initialization scripts. The platform layer should
-translate these specs to WKWebView, WebView2, or WebKitGTK calls without
-re-reading `App`, `WindowConfig`, or manifest state.
+names, allowed routes, and document-start initialization scripts. The platform
+layer should translate these specs to WKWebView, WebView2, or WebKitGTK calls
+without re-reading `App`, `WindowConfig`, or manifest state.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol
 mappings, inline virtual files with MIME types, command routes, registered
-native routes, and document-start scripts into stable JSON.
+native routes, per-window allowed routes, and document-start scripts into stable
+JSON.
 `RuntimeHost::launch_manifest()` adds the concrete registered native routes
 from a command registry, while bundle and platform packages consume the same
 manifest instead of inventing their own runtime files.

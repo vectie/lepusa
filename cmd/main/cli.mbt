@@ -223,7 +223,11 @@ fn sample_manifest() -> @lepusa.ProjectManifest {
   .with_plugin(
     @lepusa.Plugin::new("core").command_sync("invoke").command_stream("events"),
   )
-  .with_capability(@lepusa.Capability::new("core").permission(Notification))
+  .with_capability(
+    @lepusa.Capability::new("core")
+    .command("core.invoke")
+    .command("core.events"),
+  )
 }
 
 ///|

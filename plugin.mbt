@@ -10,14 +10,16 @@ pub(all) enum CommandMode {
 pub struct CommandSpec {
   name : String
   mode : CommandMode
+  permission : Permission
 } derive(Debug, Eq)
 
 ///|
 pub fn CommandSpec::new(
   name : String,
   mode? : CommandMode = Sync,
+  permission? : Permission = Permission::command(name),
 ) -> CommandSpec {
-  { name, mode }
+  { name, mode, permission }
 }
 
 ///|
@@ -28,6 +30,11 @@ pub fn CommandSpec::name(self : CommandSpec) -> String {
 ///|
 pub fn CommandSpec::mode(self : CommandSpec) -> CommandMode {
   self.mode
+}
+
+///|
+pub fn CommandSpec::permission(self : CommandSpec) -> Permission {
+  self.permission
 }
 
 ///|
@@ -46,30 +53,49 @@ pub fn Plugin::command(
   self : Plugin,
   name : String,
   mode? : CommandMode = Sync,
+  permission? : Permission,
 ) -> Plugin {
   let commands = self.commands.copy()
-  commands.push(CommandSpec::new(name, mode~))
+  let route = "\{self.name}.\{name}"
+  let permission = permission.unwrap_or(Permission::command(route))
+  commands.push(CommandSpec::new(name, mode~, permission~))
   { ..self, commands, }
 }
 
 ///|
-pub fn Plugin::command_sync(self : Plugin, name : String) -> Plugin {
-  self.command(name, mode=Sync)
+pub fn Plugin::command_sync(
+  self : Plugin,
+  name : String,
+  permission? : Permission,
+) -> Plugin {
+  self.command(name, mode=Sync, permission?)
 }
 
 ///|
-pub fn Plugin::command_async(self : Plugin, name : String) -> Plugin {
-  self.command(name, mode=Async)
+pub fn Plugin::command_async(
+  self : Plugin,
+  name : String,
+  permission? : Permission,
+) -> Plugin {
+  self.command(name, mode=Async, permission?)
 }
 
 ///|
-pub fn Plugin::command_stream(self : Plugin, name : String) -> Plugin {
-  self.command(name, mode=Stream)
+pub fn Plugin::command_stream(
+  self : Plugin,
+  name : String,
+  permission? : Permission,
+) -> Plugin {
+  self.command(name, mode=Stream, permission?)
 }
 
 ///|
-pub fn Plugin::command_event(self : Plugin, name : String) -> Plugin {
-  self.command(name, mode=Event)
+pub fn Plugin::command_event(
+  self : Plugin,
+  name : String,
+  permission? : Permission,
+) -> Plugin {
+  self.command(name, mode=Event, permission?)
 }
 
 ///|

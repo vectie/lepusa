@@ -80,7 +80,9 @@ let manifest = @lepusa.ProjectManifest::new(metadata)
     @lepusa.WindowConfig::new(source=@lepusa.Source::local_path("dist")),
   )
   .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
-  .with_capability(@lepusa.Capability::new("main").command("core.invoke"))
+  .with_capability(
+    @lepusa.Capability::new("main").window("main").command("core.invoke"),
+  )
 
 ///|
 let runtime = manifest.runtime_plan(root)
@@ -107,6 +109,10 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+Generated bridges only expose command routes granted to the current window by
+capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
+routes for metadata and bundling.
 
 When a window omits `source`, `App` lowers the root `Cell` into a generated
 Rabbita-style HTML document served from the runtime manifest as a virtual file.

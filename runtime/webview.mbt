@@ -12,6 +12,7 @@ pub struct RuntimeWebViewSpec {
   bridge_global_name : String
   native_hook : String
   event_dispatch_hook : String
+  allowed_routes : Array[String]
   initialization_scripts : Array[String]
 } derive(Debug, Eq)
 
@@ -68,6 +69,7 @@ fn RuntimeWebViewSpec::from_window(
     bridge_global_name: bridge.global_name(),
     native_hook: bridge.native_hook(),
     event_dispatch_hook: bridge.event_dispatch_hook(),
+    allowed_routes: bridge.routes(),
     initialization_scripts: [bridge.source()],
   }
 }
@@ -136,6 +138,13 @@ pub fn RuntimeWebViewSpec::event_dispatch_hook(
   self : RuntimeWebViewSpec,
 ) -> String {
   self.event_dispatch_hook
+}
+
+///|
+pub fn RuntimeWebViewSpec::allowed_routes(
+  self : RuntimeWebViewSpec,
+) -> Array[String] {
+  self.allowed_routes.copy()
 }
 
 ///|

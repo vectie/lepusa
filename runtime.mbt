@@ -92,6 +92,25 @@ pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
 }
 
 ///|
+pub fn RuntimePlan::window_command_routes(
+  self : RuntimePlan,
+  window_label : String,
+) -> Array[String] {
+  let routes : Array[String] = []
+  for plugin in self.launch.plugins() {
+    for command in plugin.commands() {
+      let route = "\{plugin.name()}.\{command.name()}"
+      if self
+        .capabilities()
+        .allow_invoke(window_label~, permission=command.permission()) {
+        routes.push(route)
+      }
+    }
+  }
+  routes
+}
+
+///|
 pub fn RuntimePlan::capabilities(self : RuntimePlan) -> Array[Capability] {
   self.launch.capabilities()
 }

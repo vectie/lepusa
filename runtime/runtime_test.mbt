@@ -68,6 +68,14 @@ test "runtime host produces per-window webview boot specs" {
       source=@lepusa.Source::html("<section></section>"),
     )
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("main-core").window("main").command("core.invoke"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("settings-core")
+      .window("settings")
+      .command("core.invoke"),
+    )
   match
     app.runtime_plan(
       config=@lepusa.RuntimeConfig::system_webview(devtools=true),
@@ -83,6 +91,7 @@ test "runtime host produces per-window webview boot specs" {
           assert_eq(specs[0].asset_protocol(), "lepusa")
           assert_eq(specs[0].native_hook(), "__lepusaInvoke")
           assert_eq(specs[0].event_dispatch_hook(), "__lepusaDispatchEvent")
+          assert_eq(specs[0].allowed_routes()[0], "core.invoke")
           assert_eq(specs[0].initialization_scripts().length(), 1)
           assert_true(
             specs[0].initialization_scripts()[0].contains(
@@ -93,6 +102,7 @@ test "runtime host produces per-window webview boot specs" {
           assert_eq(specs[1].width(), 700)
           assert_eq(specs[1].height(), 520)
           assert_eq(specs[1].resizable(), false)
+          assert_eq(specs[1].allowed_routes()[0], "core.invoke")
           assert_true(
             specs[1].initialization_scripts()[0].contains(
               "const windowLabel = \"settings\";",

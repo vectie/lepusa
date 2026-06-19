@@ -97,8 +97,10 @@ pub struct RuntimeWebViewSpec {
   bridge_global_name : String
   native_hook : String
   event_dispatch_hook : String
+  allowed_routes : Array[String]
   initialization_scripts : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn RuntimeWebViewSpec::allowed_routes(Self) -> Array[String]
 pub fn RuntimeWebViewSpec::asset_protocol(Self) -> String
 pub fn RuntimeWebViewSpec::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewSpec::devtools(Self) -> Bool

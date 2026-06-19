@@ -166,10 +166,12 @@ pub fn CommandRegistry::validate(Self) -> Array[String]
 pub struct CommandSpec {
   name : String
   mode : CommandMode
+  permission : Permission
 } derive(Eq, @debug.Debug)
 pub fn CommandSpec::mode(Self) -> CommandMode
 pub fn CommandSpec::name(Self) -> String
-pub fn CommandSpec::new(String, mode? : CommandMode) -> Self
+pub fn CommandSpec::new(String, mode? : CommandMode, permission? : Permission) -> Self
+pub fn CommandSpec::permission(Self) -> Permission
 
 pub struct Event {
   name : String
@@ -255,13 +257,13 @@ pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
 } derive(Eq, @debug.Debug)
-pub fn Plugin::command(Self, String, mode? : CommandMode) -> Self
-pub fn Plugin::command_async(Self, String) -> Self
-pub fn Plugin::command_event(Self, String) -> Self
+pub fn Plugin::command(Self, String, mode? : CommandMode, permission? : Permission) -> Self
+pub fn Plugin::command_async(Self, String, permission? : Permission) -> Self
+pub fn Plugin::command_event(Self, String, permission? : Permission) -> Self
 pub fn Plugin::command_names(Self) -> Array[String]
 pub fn Plugin::command_routes(Self) -> Array[String]
-pub fn Plugin::command_stream(Self, String) -> Self
-pub fn Plugin::command_sync(Self, String) -> Self
+pub fn Plugin::command_stream(Self, String, permission? : Permission) -> Self
+pub fn Plugin::command_sync(Self, String, permission? : Permission) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
 pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self
@@ -425,6 +427,7 @@ pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
+pub fn RuntimePlan::window_command_routes(Self, String) -> Array[String]
 pub fn RuntimePlan::window_count(Self) -> Int
 pub fn RuntimePlan::windows(Self) -> Array[ResolvedWindow]
 
@@ -461,8 +464,10 @@ pub struct RuntimeWebViewBoot {
   bridge_global_name : String
   native_hook : String
   event_dispatch_hook : String
+  allowed_routes : Array[String]
   initialization_scripts : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn RuntimeWebViewBoot::allowed_routes(Self) -> Array[String]
 pub fn RuntimeWebViewBoot::asset_protocol(Self) -> String
 pub fn RuntimeWebViewBoot::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewBoot::devtools(Self) -> Bool

@@ -80,7 +80,7 @@ pub fn RuntimePlan::bridge_script(
   config? : BridgeConfig = BridgeConfig::new(),
 ) -> Result[BridgeScript, Array[String]] {
   let problems = config.validate()
-  let routes = self.command_routes()
+  let routes = self.window_command_routes(config.window_label)
   for route in routes {
     if route == "" {
       problems.push("bridge route is required")
