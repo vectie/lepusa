@@ -29,6 +29,7 @@
   local assets.
 - Add the native hook JSON codec from generated bridge requests to capability
   checked `CommandRegistry` dispatch.
+- Add per-window WebView boot specs for platform backends.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
 - Support `Source::html`, `Source::local_path`, `Source::url`, and packaged
   assets.

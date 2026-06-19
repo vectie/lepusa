@@ -217,6 +217,12 @@ bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,
 dispatches through `CommandRegistry` with plan capabilities, and encodes the
 `{id,payload}` or `{id,error}` response expected by the frontend bridge.
 
+`RuntimeHost::webviews()` produces the pending WebView creation specs platform
+backends need: resolved load URL, frame options, asset protocol, native hook
+name, and document-start initialization scripts. The platform layer should
+translate these specs to WKWebView, WebView2, or WebKitGTK calls without
+re-reading `App`, `WindowConfig`, or manifest state.
+
 ## Bundling
 
 `BundlePlan` is a pure framework contract: it computes platform metadata,

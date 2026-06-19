@@ -49,6 +49,62 @@ test "runtime host snapshots windows protocols and bridge" {
 }
 
 ///|
+test "runtime host produces per-window webview boot specs" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Main",
+      width=900,
+      height=640,
+      source=@lepusa.Source::html("<main></main>"),
+    )
+    .window(
+      label="settings",
+      title="Settings",
+      width=700,
+      height=520,
+      resizable=false,
+      source=@lepusa.Source::html("<section></section>"),
+    )
+    .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+  match
+    app.runtime_plan(
+      config=@lepusa.RuntimeConfig::system_webview(devtools=true),
+    ) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).webviews() {
+        Ok(specs) => {
+          assert_eq(specs.length(), 2)
+          assert_eq(specs[0].label(), "main")
+          assert_eq(specs[0].title(), "Main")
+          assert_eq(specs[0].url(), "lepusa://inline/main/index.html")
+          assert_true(specs[0].devtools())
+          assert_eq(specs[0].asset_protocol(), "lepusa")
+          assert_eq(specs[0].native_hook(), "__lepusaInvoke")
+          assert_eq(specs[0].initialization_scripts().length(), 1)
+          assert_true(
+            specs[0].initialization_scripts()[0].contains(
+              "const windowLabel = \"main\";",
+            ),
+          )
+          assert_eq(specs[1].label(), "settings")
+          assert_eq(specs[1].width(), 700)
+          assert_eq(specs[1].height(), 520)
+          assert_eq(specs[1].resizable(), false)
+          assert_true(
+            specs[1].initialization_scripts()[0].contains(
+              "const windowLabel = \"settings\";",
+            ),
+          )
+        }
+        Err(_) => abort("unexpected invalid webview specs")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime session resolves virtual runtime and window assets" {
   let host = RuntimeHost::new(test_plan())
   match host.snapshot() {

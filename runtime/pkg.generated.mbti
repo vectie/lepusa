@@ -40,6 +40,7 @@ pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
+pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
 
 pub struct RuntimeProtocolMapping {
   window_label : String
@@ -81,6 +82,33 @@ pub struct RuntimeVirtualFile {
 pub fn RuntimeVirtualFile::content(Self) -> String
 pub fn RuntimeVirtualFile::path(Self) -> String
 pub fn RuntimeVirtualFile::window_label(Self) -> String
+
+pub struct RuntimeWebViewSpec {
+  label : String
+  title : String
+  url : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : @lepusa.TitleBarStyle
+  devtools : Bool
+  asset_protocol : String
+  bridge_global_name : String
+  native_hook : String
+  initialization_scripts : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeWebViewSpec::asset_protocol(Self) -> String
+pub fn RuntimeWebViewSpec::bridge_global_name(Self) -> String
+pub fn RuntimeWebViewSpec::devtools(Self) -> Bool
+pub fn RuntimeWebViewSpec::height(Self) -> Int
+pub fn RuntimeWebViewSpec::initialization_scripts(Self) -> Array[String]
+pub fn RuntimeWebViewSpec::label(Self) -> String
+pub fn RuntimeWebViewSpec::native_hook(Self) -> String
+pub fn RuntimeWebViewSpec::resizable(Self) -> Bool
+pub fn RuntimeWebViewSpec::title(Self) -> String
+pub fn RuntimeWebViewSpec::title_bar(Self) -> @lepusa.TitleBarStyle
+pub fn RuntimeWebViewSpec::url(Self) -> String
+pub fn RuntimeWebViewSpec::width(Self) -> Int
 
 pub struct RuntimeWindow {
   label : String
