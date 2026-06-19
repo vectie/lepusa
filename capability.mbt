@@ -4,6 +4,7 @@ pub(all) enum Permission {
   FileSystemWrite
   FileDialog
   Network
+  Localhost
   Shell
   Opener
   Dialog
@@ -27,6 +28,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "filesystem.write" => Ok(FileSystemWrite)
     "file-dialog" => Ok(FileDialog)
     "network" => Ok(Network)
+    "localhost" => Ok(Localhost)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
     "dialog" => Ok(Dialog)
@@ -56,6 +58,7 @@ pub fn Permission::name(self : Permission) -> String {
     FileSystemWrite => "filesystem.write"
     FileDialog => "file-dialog"
     Network => "network"
+    Localhost => "localhost"
     Shell => "shell"
     Opener => "opener"
     Dialog => "dialog"

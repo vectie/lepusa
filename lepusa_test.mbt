@@ -162,6 +162,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid file dialog permission")
   }
+  match @lepusa.Permission::named("localhost") {
+    Ok(permission) => {
+      assert_true(permission is Localhost)
+      assert_eq(permission.name(), "localhost")
+    }
+    Err(_) => abort("unexpected invalid localhost permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")

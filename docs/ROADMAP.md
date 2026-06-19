@@ -91,7 +91,7 @@ Stabilize the cross-platform core set first:
 - notification: initial platform-neutral command contract exists
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists
-- localhost
+- localhost: initial local service lifecycle contract exists
 - single-instance
 - deep-link
 - tray

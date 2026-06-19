@@ -339,6 +339,7 @@ pub(all) enum Permission {
   FileSystemWrite
   FileDialog
   Network
+  Localhost
   Shell
   Opener
   Dialog
