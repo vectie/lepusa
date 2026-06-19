@@ -1,6 +1,7 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
+  "moonbitlang/core/json",
   "moonbitlang/x/sys",
   "vectie/lepusa",
 }

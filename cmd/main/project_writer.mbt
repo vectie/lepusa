@@ -73,6 +73,7 @@ fn project_skeleton_files() -> Array[ProjectFile] {
   [
     ProjectFile::new(path="moon.mod", content=project_moon_mod()),
     ProjectFile::new(path="moon.pkg", content=project_moon_pkg()),
+    ProjectFile::new(path="lepusa.json", content=project_lepusa_json()),
     ProjectFile::new(path="main.mbt", content=project_main_mbt()),
     ProjectFile::new(path="README.mbt.md", content=project_readme()),
   ]
@@ -110,6 +111,47 @@ fn project_moon_pkg() -> String {
     #|options(
     #|  "is-main": true,
     #|)
+    #|
+  )
+}
+
+///|
+fn project_lepusa_json() -> String {
+  (
+    #|{
+    #|  "identifier": "dev.local.lepusa-app",
+    #|  "productName": "Lepusa App",
+    #|  "version": "0.1.0",
+    #|  "rootHtml": "<main>Hello Lepusa</main>",
+    #|  "runtime": {
+    #|    "backend": "system-webview",
+    #|    "assetProtocol": "lepusa",
+    #|    "devtools": false
+    #|  },
+    #|  "window": {
+    #|    "label": "main",
+    #|    "title": "Lepusa App",
+    #|    "width": 1000,
+    #|    "height": 720,
+    #|    "resizable": true
+    #|  },
+    #|  "plugins": [
+    #|    {
+    #|      "name": "core",
+    #|      "commands": [
+    #|        { "name": "invoke", "mode": "sync" },
+    #|        { "name": "events", "mode": "stream" }
+    #|      ]
+    #|    }
+    #|  ],
+    #|  "capabilities": [
+    #|    {
+    #|      "name": "main",
+    #|      "windows": ["main"],
+    #|      "commands": ["core.invoke", "core.events"]
+    #|    }
+    #|  ]
+    #|}
     #|
   )
 }

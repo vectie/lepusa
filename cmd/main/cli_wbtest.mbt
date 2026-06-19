@@ -11,6 +11,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa plugin new"))
   assert_true(result.output.contains("lepusa bundle-plan"))
   assert_true(result.output.contains("lepusa bundle-write"))
+  assert_true(result.output.contains("--project <lepusa.json>"))
 }
 
 ///|
@@ -73,17 +74,82 @@ async test "init writes standalone project skeleton" {
   let result = render_cli_async(["init", root])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("Lepusa init"))
-  assert_true(result.output.contains("files: 4"))
+  assert_true(result.output.contains("files: 5"))
   assert_true(@fs.exists(root + "/moon.mod"))
   assert_true(@fs.exists(root + "/moon.pkg"))
+  assert_true(@fs.exists(root + "/lepusa.json"))
   assert_true(@fs.exists(root + "/main.mbt"))
   assert_true(@fs.exists(root + "/README.mbt.md"))
   let module_file = @fs.read_file(root + "/moon.mod").text()
   assert_true(module_file.contains("vectie/lepusa"))
   assert_true(module_file.contains("\"preferred-target\": \"native\""))
+  let config_file = @fs.read_file(root + "/lepusa.json").text()
+  assert_true(config_file.contains("\"productName\": \"Lepusa App\""))
+  assert_true(
+    config_file.contains("\"commands\": [\"core.invoke\", \"core.events\"]"),
+  )
   let main_file = @fs.read_file(root + "/main.mbt").text()
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
+}
+
+///|
+async test "generated project config drives runtime plan" {
+  let root = "/tmp/lepusa-project-plan-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async(["plan", "--project", root + "/lepusa.json"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("backend: system-webview"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
+  )
+  assert_true(result.output.contains("plugins: 1"))
+  assert_true(result.output.contains("capabilities: 1"))
+  assert_true(result.output.contains("routes: core.invoke,core.events"))
+}
+
+///|
+async test "generated project config drives manifest and bundle write" {
+  let root = "/tmp/lepusa-project-bundle-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let project = root + "/lepusa.json"
+  let manifest = render_cli_async(["manifest", "--project", project])
+  assert_eq(manifest.exit_code, 0)
+  assert_true(manifest.output.contains("\"backend\":\"system-webview\""))
+  assert_true(
+    manifest.output.contains(
+      "\"commandRoutes\":[\"core.invoke\",\"core.events\"]",
+    ),
+  )
+  assert_true(manifest.output.contains("Hello Lepusa"))
+  let out = "/tmp/lepusa-project-bundle-out-\{@async.now().to_int()}"
+  let build = render_cli_async(["build", "linux", out, "--project", project])
+  assert_eq(build.exit_code, 0)
+  assert_true(build.output.contains("target: linux"))
+  let bundle_root = out + "/lepusa-app"
+  assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
+  assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
+}
+
+///|
+test "project config validates required shape" {
+  match parse_project_config("{}") {
+    Ok(_) => abort("expected invalid project config")
+    Err(problems) => {
+      assert_true(problems.contains("project identifier is required"))
+      assert_true(problems.contains("project productName is required"))
+      assert_true(problems.contains("project window is required"))
+    }
+  }
+}
+
+///|
+async test "project option requires path" {
+  let result = render_cli_async(["plan", "--project"])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("--project requires a file path"))
 }
 
 ///|

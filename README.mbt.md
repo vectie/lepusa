@@ -102,10 +102,12 @@ moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- init _build/lepusa-app
+moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
-moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle
-moon run cmd/main --target native -- build macos _build/lepusa-build
+moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
 
@@ -128,7 +130,12 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 
 `lepusa init` writes a standalone MoonBit project skeleton that imports
 `vectie/lepusa` directly. It is intentionally small: `moon.mod`, `moon.pkg`,
-`main.mbt`, and `README.mbt.md`.
+`lepusa.json`, `main.mbt`, and `README.mbt.md`.
+
+`lepusa.json` is the app-neutral project boundary. It describes metadata,
+runtime backend, windows, plugin command routes, and capability grants. Native
+CLI commands consume the nearest `lepusa.json` from the current directory, or a
+file passed with `--project`.
 
 `lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
 native command registration, and a scoped capability helper.

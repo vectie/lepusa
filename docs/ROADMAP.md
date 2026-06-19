@@ -67,6 +67,8 @@
   - `lepusa bundle`: alias for materializing the current bundle plan.
   - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`
+- Consume standalone `lepusa.json` project manifests for planning, manifest
+  generation, and bundle materialization.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing prerequisites.
 

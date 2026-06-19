@@ -23,6 +23,57 @@ fn Array::with_first(self : Array[String], value : String) -> Array[String] {
 }
 
 ///|
+fn project_path_arg(args : Array[String]) -> String? {
+  for i in 0..<args.length() {
+    if args[i] == "--project" {
+      return args.get(i + 1)
+    }
+  }
+  None
+}
+
+///|
+fn project_flag_missing_value(args : Array[String]) -> Bool {
+  for i in 0..<args.length() {
+    if args[i] == "--project" && args.get(i + 1) is None {
+      return true
+    }
+  }
+  false
+}
+
+///|
+async fn project_config_path(args : Array[String]) -> String? {
+  match project_path_arg(args) {
+    Some(path) => Some(path)
+    None => {
+      let found = @fs.exists("lepusa.json") catch { _ => false }
+      if found {
+        Some("lepusa.json")
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
+fn positional_args(args : Array[String]) -> Array[String] {
+  let values : Array[String] = []
+  let mut skip_next = false
+  for i in 1..<args.length() {
+    if skip_next {
+      skip_next = false
+    } else if args[i] == "--project" {
+      skip_next = true
+    } else {
+      values.push(args[i])
+    }
+  }
+  values
+}
+
+///|
 fn render_cli(args : Array[String]) -> CliResult {
   match args.get(0) {
     None => ok(help_text())
@@ -43,8 +94,13 @@ fn render_cli(args : Array[String]) -> CliResult {
 ///|
 async fn render_cli_async(args : Array[String]) -> CliResult {
   match args.get(0) {
+    Some("doctor") => render_doctor_async(args)
+    Some("plan") => render_plan_async(args)
+    Some("manifest") => render_manifest_async(args)
+    Some("bridge") => render_bridge_async(args)
     Some("init") => render_init(args)
     Some("plugin") => render_plugin(args)
+    Some("bundle-plan") => render_bundle_plan_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
     Some("build") => render_bundle_write(args.with_first("bundle-write"))
@@ -79,7 +135,45 @@ fn help_text() -> String {
     #|  lepusa build [macos|windows|linux] [out-dir]
     #|  lepusa bundle [macos|windows|linux] [out-dir]
     #|
+    #|Options:
+    #|  --project <lepusa.json>
+    #|
   )
+}
+
+///|
+async fn project_runtime_plan(
+  args : Array[String],
+) -> Result[@lepusa.RuntimePlan, Array[String]] {
+  if project_flag_missing_value(args) {
+    return Err(["--project requires a file path"])
+  }
+  match project_config_path(args) {
+    Some(path) =>
+      match load_project_config(path) {
+        Ok(project) => project.manifest.runtime_plan(project.root)
+        Err(problems) => Err(problems)
+      }
+    None => sample_runtime_plan()
+  }
+}
+
+///|
+async fn project_bundle_plan(
+  args : Array[String],
+  target : @lepusa.BundleTarget,
+) -> Result[@lepusa.BundlePlan, Array[String]] {
+  if project_flag_missing_value(args) {
+    return Err(["--project requires a file path"])
+  }
+  match project_config_path(args) {
+    Some(path) =>
+      match load_project_config(path) {
+        Ok(project) => project.manifest.bundle_plan(project.root, target~)
+        Err(problems) => Err(problems)
+      }
+    None => sample_manifest().bundle_plan(sample_root(), target~)
+  }
 }
 
 ///|
@@ -109,6 +203,25 @@ async fn render_plugin_new(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_doctor_async(args : Array[String]) -> CliResult {
+  match project_runtime_plan(args) {
+    Ok(plan) =>
+      match plan.launch_manifest() {
+        Ok(manifest) =>
+          ok(
+            "Lepusa doctor\n" +
+            "[ok] public-api: root package can build launch/runtime plans\n" +
+            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
+            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
+            "[ok] ipc: routes=\{plan.command_routes().length()}\n",
+          )
+        Err(problems) => fail(render_problems("Lepusa doctor", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
 async fn render_init(args : Array[String]) -> CliResult {
   let out_dir = args.get(1).unwrap_or("lepusa-app")
   match write_project_skeleton(out_dir) {
@@ -119,6 +232,38 @@ async fn render_init(args : Array[String]) -> CliResult {
         "files: \{result.files.length()}\n",
       )
     Err(problems) => fail(render_problems("Lepusa init", problems))
+  }
+}
+
+///|
+async fn render_manifest_async(args : Array[String]) -> CliResult {
+  match project_runtime_plan(args) {
+    Ok(plan) =>
+      match plan.launch_manifest() {
+        Ok(manifest) => ok(manifest.to_json() + "\n")
+        Err(problems) => fail(render_problems("Lepusa manifest", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa manifest", problems))
+  }
+}
+
+///|
+async fn render_plan_async(args : Array[String]) -> CliResult {
+  match project_runtime_plan(args) {
+    Ok(plan) => render_runtime_plan(plan)
+    Err(problems) => fail(render_problems("Lepusa runtime plan", problems))
+  }
+}
+
+///|
+async fn render_bridge_async(args : Array[String]) -> CliResult {
+  match project_runtime_plan(args) {
+    Ok(plan) =>
+      match plan.bridge_script() {
+        Ok(script) => ok(script.source())
+        Err(problems) => fail(render_problems("Lepusa bridge", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa bridge", problems))
   }
 }
 
@@ -156,24 +301,27 @@ fn render_manifest() -> CliResult {
 ///|
 fn render_plan() -> CliResult {
   match sample_runtime_plan() {
-    Ok(plan) => {
-      let routes = plan.command_routes().join(",")
-      let first_window = match plan.windows().get(0) {
-        Some(window) => window.url()
-        None => ""
-      }
-      ok(
-        "Lepusa runtime plan\n" +
-        "backend: \{plan.backend().name()}\n" +
-        "windows: \{plan.window_count()}\n" +
-        "first-window-url: \{first_window}\n" +
-        "plugins: \{plan.plugin_count()}\n" +
-        "capabilities: \{plan.capability_count()}\n" +
-        "routes: \{routes}\n",
-      )
-    }
+    Ok(plan) => render_runtime_plan(plan)
     Err(problems) => fail(render_problems("Lepusa runtime plan", problems))
   }
+}
+
+///|
+fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
+  let routes = plan.command_routes().join(",")
+  let first_window = match plan.windows().get(0) {
+    Some(window) => window.url()
+    None => ""
+  }
+  ok(
+    "Lepusa runtime plan\n" +
+    "backend: \{plan.backend().name()}\n" +
+    "windows: \{plan.window_count()}\n" +
+    "first-window-url: \{first_window}\n" +
+    "plugins: \{plan.plugin_count()}\n" +
+    "capabilities: \{plan.capability_count()}\n" +
+    "routes: \{routes}\n",
+  )
 }
 
 ///|
@@ -195,20 +343,7 @@ fn render_bundle_plan(args : Array[String]) -> CliResult {
       match sample_runtime_plan() {
         Ok(_) =>
           match sample_manifest().bundle_plan(sample_root(), target~) {
-            Ok(plan) =>
-              match plan.files() {
-                Ok(files) =>
-                  ok(
-                    "Lepusa bundle plan\n" +
-                    "target: \{plan.target().name()}\n" +
-                    "identifier: \{plan.identifier()}\n" +
-                    "executable: \{plan.executable_name()}\n" +
-                    "bundle: \{plan.bundle_name()}\n" +
-                    "files: \{files.length()}\n",
-                  )
-                Err(problems) =>
-                  fail(render_problems("Lepusa bundle files", problems))
-              }
+            Ok(plan) => render_bundle_plan_summary(plan)
             Err(problems) =>
               fail(render_problems("Lepusa bundle plan", problems))
           }
@@ -219,29 +354,54 @@ fn render_bundle_plan(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bundle_plan_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match project_bundle_plan(args, target) {
+        Ok(plan) => render_bundle_plan_summary(plan)
+        Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
+  match plan.files() {
+    Ok(files) =>
+      ok(
+        "Lepusa bundle plan\n" +
+        "target: \{plan.target().name()}\n" +
+        "identifier: \{plan.identifier()}\n" +
+        "executable: \{plan.executable_name()}\n" +
+        "bundle: \{plan.bundle_name()}\n" +
+        "files: \{files.length()}\n",
+      )
+    Err(problems) => fail(render_problems("Lepusa bundle files", problems))
+  }
+}
+
+///|
 async fn render_bundle_write(args : Array[String]) -> CliResult {
-  match parse_bundle_target(args.get(1)) {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
     Ok(target) => {
-      let out_dir = args.get(2).unwrap_or("_build/lepusa-bundle")
-      match sample_runtime_plan() {
-        Ok(_) =>
-          match sample_manifest().bundle_plan(sample_root(), target~) {
-            Ok(plan) =>
-              match write_bundle_plan(plan, out_dir) {
-                Ok(result) =>
-                  ok(
-                    "Lepusa bundle write\n" +
-                    "target: \{plan.target().name()}\n" +
-                    "root: \{result.root}\n" +
-                    "files: \{result.files.length()}\n",
-                  )
-                Err(problems) =>
-                  fail(render_problems("Lepusa bundle write", problems))
-              }
+      let out_dir = values.get(1).unwrap_or("_build/lepusa-bundle")
+      match project_bundle_plan(args, target) {
+        Ok(plan) =>
+          match write_bundle_plan(plan, out_dir) {
+            Ok(result) =>
+              ok(
+                "Lepusa bundle write\n" +
+                "target: \{plan.target().name()}\n" +
+                "root: \{result.root}\n" +
+                "files: \{result.files.length()}\n",
+              )
             Err(problems) =>
               fail(render_problems("Lepusa bundle write", problems))
           }
-        Err(problems) => fail(render_problems("Lepusa bundle write", problems))
+        Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
       }
     }
     Err(problem) => fail(problem + "\n")
