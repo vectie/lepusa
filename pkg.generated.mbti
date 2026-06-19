@@ -97,6 +97,8 @@ pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
 pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
 pub fn BundlePlan::identifier(Self) -> String
+pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
+pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
 pub fn BundlePlan::target(Self) -> BundleTarget
 
 pub(all) enum BundleTarget {

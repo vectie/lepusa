@@ -249,6 +249,8 @@ writers do not emit a separate default bridge file that can drift from
 multi-window runtime state. The native CLI owns materialization through
 `lepusa bundle-write`, which writes the planned files into an output directory
 and applies executable permissions where the plan asks for them.
+`BundlePlan::runtime_manifest()` exposes the same typed native-runner manifest
+without forcing tooling to scan `BundlePlan::files()`.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

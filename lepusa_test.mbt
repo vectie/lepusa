@@ -414,6 +414,20 @@ test "bundle plans derive executable and package names from metadata" {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
+          match plan.runtime_manifest() {
+            Ok(manifest) => {
+              assert_eq(manifest.webviews().length(), 1)
+              assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
+            }
+            Err(_) => abort("unexpected invalid bundle runtime manifest")
+          }
+          match plan.runtime_manifest_json() {
+            Ok(json) => {
+              assert_true(json.contains("\"webviews\""))
+              assert_true(json.contains("\"virtualFiles\""))
+            }
+            Err(_) => abort("unexpected invalid bundle runtime manifest json")
+          }
           match plan.files() {
             Ok(files) => {
               assert_eq(files.length(), 3)

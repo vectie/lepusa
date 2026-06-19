@@ -151,8 +151,8 @@ pub fn BundlePlan::executable_name(self : BundlePlan) -> String {
 pub fn BundlePlan::files(
   self : BundlePlan,
 ) -> Result[Array[BundleFile], Array[String]] {
-  match self.runtime_manifest_json() {
-    Ok(runtime_manifest) => {
+  match self.runtime_manifest_file_json() {
+    Ok(runtime_manifest_file) => {
       let files : Array[BundleFile] = []
       for file in self.platform_files() {
         files.push(file)
@@ -160,7 +160,7 @@ pub fn BundlePlan::files(
       files.push(
         BundleFile::new(
           path=self.shared_path("lepusa/runtime.json"),
-          content=runtime_manifest,
+          content=runtime_manifest_file,
         ),
       )
       Ok(files)
@@ -211,10 +211,27 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
 }
 
 ///|
-fn BundlePlan::runtime_manifest_json(
+pub fn BundlePlan::runtime_manifest(
+  self : BundlePlan,
+) -> Result[RuntimeLaunchManifest, Array[String]] {
+  self.runtime.launch_manifest()
+}
+
+///|
+pub fn BundlePlan::runtime_manifest_json(
   self : BundlePlan,
 ) -> Result[String, Array[String]] {
-  match self.runtime.launch_manifest() {
+  match self.runtime_manifest() {
+    Ok(runtime_manifest) => Ok(runtime_manifest.to_json())
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
+fn BundlePlan::runtime_manifest_file_json(
+  self : BundlePlan,
+) -> Result[String, Array[String]] {
+  match self.runtime_manifest_json() {
     Ok(runtime_manifest) =>
       Ok(
         [
@@ -223,7 +240,7 @@ fn BundlePlan::runtime_manifest_json(
           "\"productName\":\{self.metadata.product_name().json_string()},",
           "\"version\":\{self.metadata.version().json_string()},",
           "\"target\":\{self.target.name().json_string()},",
-          "\"runtime\":\{runtime_manifest.to_json()}",
+          "\"runtime\":\{runtime_manifest}",
           "}",
         ].join(""),
       )
