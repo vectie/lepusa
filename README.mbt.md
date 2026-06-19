@@ -300,6 +300,10 @@ app construction state.
 `RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
 native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
 virtual files, and safe local asset paths without doing platform file IO.
+`RuntimeSession::resolve_asset_json(url)` and
+`RuntimeHost::resolve_asset_json(url)` expose the same boundary as a stable
+JSON envelope for native protocol handlers: virtual content, local file paths,
+or a structured error.
 
 `RuntimeHost::dispatch_json(input)` is the native hook boundary for WebView IPC.
 It decodes the bridge request object, verifies the route is declared by the

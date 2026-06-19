@@ -309,6 +309,21 @@ test "runtime session resolves virtual runtime and window assets" {
         Ok(response) => assert_eq(response.mime_type(), "text/html")
         Err(_) => abort("unexpected missing inline asset with suffix")
       }
+      let bridge_json = session.resolve_asset_json("lepusa://runtime/bridge.js")
+      assert_true(bridge_json.contains("\"ok\":true"))
+      assert_true(bridge_json.contains("\"kind\":\"virtual\""))
+      assert_true(
+        bridge_json.contains("\"mimeType\":\"application/javascript\""),
+      )
+      let missing_json = session.resolve_asset_json(
+        "lepusa://inline/main/missing.js",
+      )
+      assert_true(missing_json.contains("\"ok\":false"))
+      assert_true(
+        missing_json.contains(
+          "\"error\":\"virtual asset not found: main/missing.js\"",
+        ),
+      )
     }
     Err(_) => abort("unexpected invalid runtime session")
   }
@@ -334,6 +349,16 @@ test "runtime session maps local assets without allowing traversal" {
             Err(problem) =>
               assert_eq(problem, "unsafe asset path: ../secret.txt")
           }
+          let local_json = session.resolve_asset_json(
+            "lepusa://local/main/app.css",
+          )
+          assert_true(local_json.contains("\"kind\":\"local-file\""))
+          assert_true(local_json.contains("\"path\":\"dist/app.css\""))
+          let host_json = RuntimeHost::new(plan).resolve_asset_json(
+            "lepusa://local/main/app.css",
+          )
+          assert_true(host_json.contains("\"ok\":true"))
+          assert_true(host_json.contains("\"mimeType\":\"text/css\""))
         }
         Err(_) => abort("unexpected invalid runtime session")
       }

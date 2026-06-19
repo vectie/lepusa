@@ -36,8 +36,63 @@ pub fn RuntimeAssetResponse::body(
 }
 
 ///|
+pub fn RuntimeAssetResponse::to_json(self : RuntimeAssetResponse) -> String {
+  [
+    "{",
+    "\"ok\":true,",
+    "\"url\":\{self.url.json_string()},",
+    "\"mimeType\":\{self.mime_type.json_string()},",
+    "\"body\":\{self.body.to_json()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn RuntimeAssetBody::to_json(self : RuntimeAssetBody) -> String {
+  match self {
+    VirtualContent(content) =>
+      [
+        "{",
+        "\"kind\":\"virtual\",",
+        "\"content\":\{content.json_string()}",
+        "}",
+      ].join("")
+    LocalFile(path) =>
+      ["{", "\"kind\":\"local-file\",", "\"path\":\{path.json_string()}", "}"].join(
+        "",
+      )
+  }
+}
+
+///|
 pub fn RuntimeSession::bridge_url(self : RuntimeSession) -> String {
   "\{self.asset_protocol}://runtime/bridge.js"
+}
+
+///|
+pub fn RuntimeHost::resolve_asset_json(
+  self : RuntimeHost,
+  url : String,
+) -> String {
+  match self.snapshot() {
+    Ok(session) => session.resolve_asset_json(url)
+    Err(problems) =>
+      runtime_asset_error_json(
+        url,
+        problems.get(0).unwrap_or("runtime session is invalid"),
+      )
+  }
+}
+
+///|
+pub fn RuntimeSession::resolve_asset_json(
+  self : RuntimeSession,
+  url : String,
+) -> String {
+  match self.resolve_asset(url) {
+    Ok(response) => response.to_json()
+    Err(problem) => runtime_asset_error_json(url, problem)
+  }
 }
 
 ///|
@@ -235,4 +290,15 @@ fn mime_type_for_path(path : String) -> String {
   } else {
     "application/octet-stream"
   }
+}
+
+///|
+fn runtime_asset_error_json(url : String, problem : String) -> String {
+  [
+    "{",
+    "\"ok\":false,",
+    "\"url\":\{url.json_string()},",
+    "\"error\":\{problem.json_string()}",
+    "}",
+  ].join("")
 }

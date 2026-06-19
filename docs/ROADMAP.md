@@ -28,7 +28,7 @@
 
 - Add `@lepusa/runtime` host/session boundary over `RuntimePlan`.
 - Add pure custom-protocol asset resolution for bridge, inline, Rabbita, and
-  local assets.
+  local assets: typed and JSON protocol-handler envelopes exist
 - Add the native hook JSON codec from generated bridge requests to capability
   checked `CommandRegistry` dispatch.
 - Add per-window WebView boot specs for platform backends.

@@ -245,6 +245,10 @@ back into app construction APIs.
 backends should call from their WebView protocol handler. It resolves the
 generated bridge, inline virtual files, and safe local asset paths while
 rejecting traversal attempts before platform file IO happens.
+`RuntimeSession::resolve_asset_json(url)` and
+`RuntimeHost::resolve_asset_json(url)` expose the same decision as a compact
+backend wire envelope: `{ok,url,mimeType,body}` for virtual content or local
+file paths, and `{ok:false,url,error}` for denial or misses.
 
 `RuntimeHost::dispatch_json(input)` is the native hook contract. The generated
 bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,
