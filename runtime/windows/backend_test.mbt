@@ -136,21 +136,6 @@ test "windows backend prepares bundled runtime contract" {
           assert_eq(report.backend_name(), "windows")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
-          let startup = plan.execute_service_startup()
-          assert_true(startup.ok())
-          assert_eq(startup.action_count(), 2)
-          assert_true(
-            startup.action_reports()[0].status()
-            is NativeServiceActionSkipped(message) &&
-            message.contains("Windows service start"),
-          )
-          let shutdown = plan.execute_service_shutdown()
-          assert_eq(shutdown.action_count(), 1)
-          assert_true(
-            shutdown.action_reports()[0].status()
-            is NativeServiceActionSkipped(message) &&
-            message.contains("Windows service stop"),
-          )
         }
         Err(_) => abort("unexpected invalid Windows bundled run plan")
       }
@@ -176,6 +161,39 @@ test "windows backend prepares bundled runtime contract" {
     }
     Err(problem) => abort(problem)
   }
+}
+
+///|
+test "windows service executor reports native service failures" {
+  let service = @lepusa.LocalService::new(
+    name="missing",
+    command=["C:\\definitely\\not\\a\\lepusa\\service.exe"],
+    readiness_url="not-a-url",
+  )
+  let plan = @runtime.NativeServiceSupervisorPlan::new(
+    backend_name="windows",
+    webview_engine="WebView2",
+    plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
+      service,
+    ]),
+  )
+  let startup = service_executor().execute_startup(plan)
+  assert_false(startup.ok())
+  assert_eq(startup.action_count(), 2)
+  assert_true(
+    startup.action_reports()[0].status() is NativeServiceActionFailed(message) &&
+    message.contains("Windows service start failed"),
+  )
+  assert_true(
+    startup.action_reports()[1].status() is NativeServiceActionFailed(message) &&
+    message.contains("Windows service readiness failed"),
+  )
+  let shutdown = service_executor().execute_shutdown(plan)
+  assert_true(shutdown.ok())
+  assert_true(
+    shutdown.action_reports()[0].status() is NativeServiceActionSkipped(message) &&
+    message.contains("process is not tracked"),
+  )
 }
 
 ///|
