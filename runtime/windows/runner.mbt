@@ -16,6 +16,17 @@ pub struct WindowsRunResult {
 } derive(Debug, Eq)
 
 ///|
+pub struct WindowsBundledRunPlan {
+  bootstrap : @bundled.BundledBootstrapPlan
+} derive(Debug)
+
+///|
+pub struct WindowsBundledRunResult {
+  plan : WindowsBundledRunPlan
+  status : @lepusa.RunStatus
+} derive(Debug)
+
+///|
 pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[WindowsRunPlan, Array[String]] {
@@ -46,6 +57,47 @@ pub fn launch(
   runtime : @runtime.NativeRuntime,
 ) -> Result[WindowsRunResult, Array[String]] {
   run(runtime, mode=WindowsOpenWindow)
+}
+
+///|
+pub fn prepare_bundled_run(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[WindowsBundledRunPlan, Array[String]] {
+  if manifest.target() != "windows" {
+    return Err([
+      "Windows bundled run requires target windows: \{manifest.target()}",
+    ])
+  }
+  match manifest.bootstrap_plan() {
+    Ok(bootstrap) => Ok({ bootstrap, })
+    Err(problem) => Err([problem])
+  }
+}
+
+///|
+pub fn run_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+  mode? : WindowsRunMode = WindowsDryRun,
+) -> Result[WindowsBundledRunResult, Array[String]] {
+  match prepare_bundled_run(manifest) {
+    Err(problems) => Err(problems)
+    Ok(plan) =>
+      Ok({
+        plan,
+        status: match mode {
+          WindowsDryRun => RunPrepared
+          WindowsOpenWindow =>
+            RunUnsupported("Windows WebView2 launch loop is not implemented")
+        },
+      })
+  }
+}
+
+///|
+pub fn launch_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[WindowsBundledRunResult, Array[String]] {
+  run_bundled(manifest, mode=WindowsOpenWindow)
 }
 
 ///|
@@ -86,4 +138,70 @@ pub fn WindowsRunResult::plan(self : WindowsRunResult) -> WindowsRunPlan {
 ///|
 pub fn WindowsRunResult::status(self : WindowsRunResult) -> @lepusa.RunStatus {
   self.status
+}
+
+///|
+pub fn WindowsBundledRunPlan::bootstrap(
+  self : WindowsBundledRunPlan,
+) -> @bundled.BundledBootstrapPlan {
+  self.bootstrap
+}
+
+///|
+pub fn WindowsBundledRunPlan::bootstrap_json(
+  self : WindowsBundledRunPlan,
+) -> String {
+  self.bootstrap.to_json()
+}
+
+///|
+pub fn WindowsBundledRunPlan::webview_count(
+  self : WindowsBundledRunPlan,
+) -> Int {
+  self.bootstrap.run_plan().webviews().length()
+}
+
+///|
+pub fn WindowsBundledRunPlan::first_webview_url(
+  self : WindowsBundledRunPlan,
+) -> String {
+  match self.bootstrap.run_plan().first_webview() {
+    Some(webview) => webview.url()
+    None => ""
+  }
+}
+
+///|
+pub fn WindowsBundledRunPlan::startup_operation_count(
+  self : WindowsBundledRunPlan,
+) -> Int {
+  self.bootstrap.startup_operations().length()
+}
+
+///|
+pub fn WindowsBundledRunPlan::lifecycle_step_count(
+  self : WindowsBundledRunPlan,
+) -> Int {
+  self.bootstrap.lifecycle_operations().length()
+}
+
+///|
+pub fn WindowsBundledRunResult::plan(
+  self : WindowsBundledRunResult,
+) -> WindowsBundledRunPlan {
+  self.plan
+}
+
+///|
+pub fn WindowsBundledRunResult::status(
+  self : WindowsBundledRunResult,
+) -> @lepusa.RunStatus {
+  self.status
+}
+
+///|
+pub fn WindowsBundledRunResult::report(
+  self : WindowsBundledRunResult,
+) -> @lepusa.RunReport {
+  self.plan.bootstrap().run_plan().report(status=self.status)
 }

@@ -209,6 +209,46 @@ test "runtime cli dry-runs bundled linux manifest by target" {
 }
 
 ///|
+test "runtime cli dry-runs bundled windows manifest by target" {
+  let manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "windows",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html"
+    #|    }],
+    #|    "localServices": [],
+    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  let dry_run = render_runtime_run_text("/app/lepusa/runtime.json", manifest)
+  assert_eq(dry_run.exit_code, 0)
+  assert_true(dry_run.output.contains("target: windows"))
+  assert_true(dry_run.output.contains("backend: windows"))
+  assert_true(dry_run.output.contains("engine: WebView2"))
+  assert_true(dry_run.output.contains("status: prepared"))
+  assert_true(dry_run.output.contains("bridge: lepusa://runtime/bridge.js"))
+  assert_true(dry_run.output.contains("startup-operations: 1"))
+  let launch = render_runtime_run_text(
+    "/app/lepusa/runtime.json",
+    manifest,
+    launch=true,
+  )
+  assert_eq(launch.exit_code, 0)
+  assert_true(launch.output.contains("mode: launch"))
+  assert_true(launch.output.contains("status: unsupported"))
+  assert_true(launch.output.contains("engine: WebView2"))
+}
+
+///|
 test "runtime cli resolves bundled runtime assets" {
   let manifest =
     #|{

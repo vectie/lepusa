@@ -60,8 +60,8 @@
   message preparation separates native capture from async dispatch; open-window
   macOS launches now report unsupported when async routes require native
   scheduling; Linux and Windows expose dry-run and unsupported-launch runner
-  contracts; native async bridge scheduling and Linux/Windows WebView creation
-  loops remain.
+  contracts for source runtimes and packaged bundled manifests; native async
+  bridge scheduling and Linux/Windows WebView creation loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
@@ -96,7 +96,7 @@
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
   - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
-  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, and reports unsupported for Linux/Windows until their loops land.
+  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, and routes Linux/Windows bundled manifests through package-owned unsupported-launch contracts until their loops land.
   - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.

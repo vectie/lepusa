@@ -410,7 +410,10 @@ async bridge.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows expose the same package-owned dry-run and launch-result boundary, but
 their `LinuxOpenWindow` and `WindowsOpenWindow` modes report unsupported until
-those platform packages implement their WebView creation paths.
+those platform packages implement their WebView creation paths. Packaged Linux
+and Windows manifests use the same package-owned boundary through
+`run_bundled(manifest)` and `launch_bundled(manifest)`, with target mismatch
+rejection before a native loop can consume the bootstrap plan.
 
 ## Bundling
 

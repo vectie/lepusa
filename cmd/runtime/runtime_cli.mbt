@@ -104,20 +104,11 @@ fn render_runtime_run_text(
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
     Ok(manifest) =>
-      if launch && manifest.target() == "macos" {
-        render_macos_runtime_run(manifest, launch~)
-      } else {
-        let mode : @bundled.BundledRunMode = if launch {
-          BundledOpenWindow
-        } else {
-          BundledDryRun
-        }
-        match manifest.run(mode~) {
-          Ok(result) =>
-            runtime_ok(render_bundled_runtime_run_result(result, launch~))
-          Err(problem) =>
-            runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
-        }
+      match manifest.target() {
+        "macos" => render_macos_runtime_run(manifest, launch~)
+        "linux" => render_linux_runtime_run(manifest, launch~)
+        "windows" => render_windows_runtime_run(manifest, launch~)
+        _ => render_portable_runtime_run(manifest, launch~)
       }
   }
 }
@@ -128,7 +119,11 @@ fn render_macos_runtime_run(
   launch~ : Bool,
 ) -> RuntimeCliResult {
   let services = runtime_service_summary(manifest)
-  let result = @macos.launch_bundled(manifest)
+  let result = if launch {
+    @macos.launch_bundled(manifest)
+  } else {
+    @macos.run_bundled(manifest)
+  }
   match result {
     Err(problems) =>
       runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
@@ -143,6 +138,59 @@ fn render_macos_runtime_run(
           include_bridge_routes=true,
         ),
       )
+  }
+}
+
+///|
+fn render_linux_runtime_run(
+  manifest : @bundled.BundledRuntimeManifest,
+  launch~ : Bool,
+) -> RuntimeCliResult {
+  let result = if launch {
+    @linux.launch_bundled(manifest)
+  } else {
+    @linux.run_bundled(manifest)
+  }
+  match result {
+    Err(problems) =>
+      runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
+    Ok(result) =>
+      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+  }
+}
+
+///|
+fn render_windows_runtime_run(
+  manifest : @bundled.BundledRuntimeManifest,
+  launch~ : Bool,
+) -> RuntimeCliResult {
+  let result = if launch {
+    @windows.launch_bundled(manifest)
+  } else {
+    @windows.run_bundled(manifest)
+  }
+  match result {
+    Err(problems) =>
+      runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
+    Ok(result) =>
+      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+  }
+}
+
+///|
+fn render_portable_runtime_run(
+  manifest : @bundled.BundledRuntimeManifest,
+  launch~ : Bool,
+) -> RuntimeCliResult {
+  let mode : @bundled.BundledRunMode = if launch {
+    BundledOpenWindow
+  } else {
+    BundledDryRun
+  }
+  match manifest.run(mode~) {
+    Ok(result) =>
+      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+    Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
   }
 }
 
@@ -185,12 +233,12 @@ fn macos_runtime_run_report(
 }
 
 ///|
-fn render_bundled_runtime_run_result(
-  result : @bundled.BundledRunResult,
+fn render_bundled_runtime_run_report(
+  report : @lepusa.RunReport,
   launch~ : Bool,
 ) -> String {
   render_runtime_run_report(
-    result.report(),
+    report,
     launch~,
     include_title=true,
     include_load_url=true,

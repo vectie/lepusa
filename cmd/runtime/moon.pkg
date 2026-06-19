@@ -4,7 +4,9 @@ import {
   "moonbitlang/x/sys",
   "vectie/lepusa",
   "vectie/lepusa/runtime/bundled",
+  "vectie/lepusa/runtime/linux",
   "vectie/lepusa/runtime/macos",
+  "vectie/lepusa/runtime/windows",
 }
 
 supported_targets = "+native"

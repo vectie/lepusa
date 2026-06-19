@@ -87,3 +87,111 @@ test "windows backend prepares run plan and reports unsupported launch" {
     Err(_) => abort("unexpected invalid Windows native runtime")
   }
 }
+
+///|
+test "windows backend prepares bundled runtime contract" {
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      windows_bundled_manifest(),
+    ) {
+    Ok(manifest) => {
+      match prepare_bundled_run(manifest) {
+        Ok(plan) => {
+          assert_eq(plan.webview_count(), 1)
+          assert_eq(
+            plan.first_webview_url(),
+            "lepusa://rabbita/main/index.html",
+          )
+          assert_eq(plan.startup_operation_count(), 2)
+          assert_eq(plan.lifecycle_step_count(), 1)
+          assert_true(
+            plan.bootstrap_json().contains("\"nativeBackend\":\"windows\""),
+          )
+          assert_true(
+            plan.bootstrap_json().contains("\"webviewEngine\":\"WebView2\""),
+          )
+        }
+        Err(_) => abort("unexpected invalid Windows bundled run plan")
+      }
+      match run_bundled(manifest) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          assert_eq(result.report().target(), "windows")
+          assert_eq(result.report().backend(), "windows")
+          assert_eq(result.report().engine(), "WebView2")
+          assert_eq(result.report().startup_operations(), 2)
+        }
+        Err(_) => abort("unexpected invalid Windows bundled dry run")
+      }
+      match launch_bundled(manifest) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) =>
+              assert_true(message.contains("WebView2 launch loop"))
+            _ => abort("unexpected Windows bundled launch status")
+          }
+        Err(_) => abort("unexpected invalid Windows bundled launch plan")
+      }
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "windows backend rejects mismatched bundled target" {
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      windows_bundled_manifest().replace_all(
+        old="\"target\": \"windows\"",
+        new="\"target\": \"linux\"",
+      ),
+    ) {
+    Ok(manifest) =>
+      match prepare_bundled_run(manifest) {
+        Ok(_) => abort("unexpected Windows bundled target match")
+        Err(problems) =>
+          assert_eq(
+            problems[0],
+            "Windows bundled run requires target windows: linux",
+          )
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+fn windows_bundled_manifest() -> String {
+  (
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "windows",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html",
+    #|      "allowedRoutes": ["log.write"]
+    #|    }],
+    #|    "localServices": [{
+    #|      "name": "api",
+    #|      "command": ["moon", "run", "cmd/server"],
+    #|      "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|    }],
+    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "lifecycleHooks": [
+    #|      {
+    #|        "event": { "kind": "app-will-exit" },
+    #|        "actions": [{ "kind": "effect", "name": "flush" }]
+    #|      }
+    #|    ],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  )
+}

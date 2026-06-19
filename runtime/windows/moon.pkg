@@ -2,6 +2,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "vectie/lepusa",
   "vectie/lepusa/runtime",
+  "vectie/lepusa/runtime/bundled",
 }
 
 supported_targets = "native"
