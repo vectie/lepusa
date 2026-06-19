@@ -375,6 +375,10 @@ Lepusa bridge with a macOS-native hook bootstrap script. The C stub installs
 that combined source as a `WKUserScript` at document start, so launched pages
 receive `window.lepusa`, `__lepusaInvoke`, and the future
 `__lepusaInvokeResponse` callback surface before application code runs.
+`dispatch_bridge_message(runtime, message)` is the MoonBit-owned bridge
+message boundary for macOS: it accepts the JSON posted by the WebView,
+dispatches through `NativeRuntime.dispatch_json_async`, and returns the
+JavaScript source that calls the matching response hook in the page.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows still expose runner contracts and host availability checks, but their
 native launch loops intentionally fail until those platform packages implement

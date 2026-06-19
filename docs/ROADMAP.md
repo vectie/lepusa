@@ -50,7 +50,8 @@
   checks for WKWebView, WebView2, and WebKitGTK.
 - Implement or port WebView window creation for macOS, Windows, and Linux:
   first macOS WKWebView launch path and document-start bridge injection exist;
-  macOS script message dispatch, custom protocol callbacks, and Linux/Windows
+  MoonBit-side macOS bridge message dispatch exists; Objective-C
+  WKScriptMessageHandler wiring, custom protocol callbacks, and Linux/Windows
   launch loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.

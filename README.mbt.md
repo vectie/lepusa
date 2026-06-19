@@ -451,6 +451,8 @@ one-shot probes.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap for the future
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path.
+`dispatch_bridge_message(runtime, message)` already owns the MoonBit side of
+that path by turning a posted bridge request into a response-callback script.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

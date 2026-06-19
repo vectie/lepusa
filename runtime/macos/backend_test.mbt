@@ -23,6 +23,28 @@ fn test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn bridge_test_host() -> @runtime.RuntimeHost {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(title="macOS", source=@lepusa.Source::html("<main>macOS</main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.invoke"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => {
+      let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+        payload,
+      ) {
+        Ok("{\"seen\":\{payload}}")
+      })
+      @runtime.RuntimeHost::new(plan, registry~)
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "macos backend exposes wkwebview descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "macos")
@@ -160,6 +182,51 @@ test "macos backend dry run does not enter native loop" {
         }
         Err(_) => abort("unexpected invalid macOS dry run")
       }
+    Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
+
+///|
+async test "macos bridge dispatch returns response callback script" {
+  match runtime(bridge_test_host()) {
+    Ok(runtime) => {
+      let message = "{\"id\":\"42\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
+      match dispatch_bridge_message(runtime, message) {
+        Ok(dispatch) => {
+          assert_eq(dispatch.window_label(), "main")
+          assert_eq(dispatch.response_hook(), "__lepusaInvokeResponse")
+          assert_eq(dispatch.message(), message)
+          assert_true(dispatch.response_json().contains("\"id\":\"42\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("\"payload\":\"{\\\"seen\\\":true}\""),
+          )
+          assert_true(
+            dispatch
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(dispatch.evaluation_script().contains("\"id\":\"42\""))
+        }
+        Err(_) => abort("unexpected bridge dispatch failure")
+      }
+    }
+    Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
+
+///|
+async test "macos bridge dispatch reports missing window" {
+  match runtime(bridge_test_host()) {
+    Ok(runtime) => {
+      let message = "{\"id\":\"43\",\"window_label\":\"other\",\"plugin\":\"core\",\"command\":\"invoke\"}"
+      match dispatch_bridge_message(runtime, message) {
+        Ok(_) => abort("unexpected bridge dispatch success")
+        Err(problems) =>
+          assert_eq(problems[0], "macOS bridge window not found: other")
+      }
+    }
     Err(_) => abort("unexpected invalid macOS native runtime")
   }
 }
