@@ -5,14 +5,6 @@ pub(all) enum MacOSRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum MacOSRunStatus {
-  MacOSPrepared
-  MacOSLaunched
-  MacOSLaunchFailed(String)
-  MacOSLaunchUnsupported(String)
-} derive(Debug, Eq)
-
-///|
 pub struct MacOSWebViewPlan {
   label : String
   title : String
@@ -54,7 +46,7 @@ pub struct MacOSRunPlan {
 ///|
 pub struct MacOSRunResult {
   plan : MacOSRunPlan
-  status : MacOSRunStatus
+  status : @lepusa.RunStatus
 } derive(Debug, Eq)
 
 ///|
@@ -516,7 +508,7 @@ pub fn MacOSRunResult::plan(self : MacOSRunResult) -> MacOSRunPlan {
 }
 
 ///|
-pub fn MacOSRunResult::status(self : MacOSRunResult) -> MacOSRunStatus {
+pub fn MacOSRunResult::status(self : MacOSRunResult) -> @lepusa.RunStatus {
   self.status
 }
 
@@ -573,12 +565,12 @@ fn run_plan(
   resolve_asset~ : (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
-    MacOSDryRun => Ok({ plan, status: MacOSPrepared })
+    MacOSDryRun => Ok({ plan, status: RunPrepared })
     MacOSOpenWindow => {
       if plan.bridge().requires_async_dispatch() {
         return Ok({
           plan,
-          status: MacOSLaunchUnsupported(async_bridge_launch_message(plan)),
+          status: RunUnsupported(async_bridge_launch_message(plan)),
         })
       }
       let webview = match plan.first_webview() {
@@ -604,9 +596,9 @@ fn run_plan(
         resolve_asset,
       )
       if exit_code == 0 {
-        Ok({ plan, status: MacOSLaunched })
+        Ok({ plan, status: RunLaunched })
       } else {
-        Ok({ plan, status: MacOSLaunchFailed("macOS WebView launch failed") })
+        Ok({ plan, status: RunFailed("macOS WebView launch failed") })
       }
     }
   }

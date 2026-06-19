@@ -266,7 +266,7 @@ test "macos open-window launch reports unsupported async bridge routes" {
       match run(runtime, mode=MacOSOpenWindow) {
         Ok(result) =>
           match result.status() {
-            MacOSLaunchUnsupported(message) =>
+            RunUnsupported(message) =>
               assert_true(message.contains("1 async command route"))
             _ => abort("unexpected async macOS launch status")
           }
@@ -314,7 +314,7 @@ test "macos backend dry run does not enter native loop" {
     Ok(runtime) =>
       match run(runtime) {
         Ok(result) => {
-          assert_true(result.status() is MacOSPrepared)
+          assert_true(result.status() is RunPrepared)
           match result.plan().first_webview() {
             Ok(webview) =>
               assert_eq(webview.load_url(), "lepusa://inline/main/index.html")
@@ -403,7 +403,7 @@ test "macos bundled open-window launch reports unsupported async bridge routes" 
       match run_bundled(manifest, mode=MacOSOpenWindow) {
         Ok(result) =>
           match result.status() {
-            MacOSLaunchUnsupported(message) =>
+            RunUnsupported(message) =>
               assert_true(message.contains("1 async command route"))
             _ => abort("unexpected bundled async macOS launch status")
           }

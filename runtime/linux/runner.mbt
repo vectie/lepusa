@@ -5,12 +5,6 @@ pub(all) enum LinuxRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum LinuxRunStatus {
-  LinuxPrepared
-  LinuxLaunchUnsupported(String)
-} derive(Debug, Eq)
-
-///|
 pub struct LinuxRunPlan {
   runner : @runtime.NativeRunnerPlan
 } derive(Debug, Eq)
@@ -18,7 +12,7 @@ pub struct LinuxRunPlan {
 ///|
 pub struct LinuxRunResult {
   plan : LinuxRunPlan
-  status : LinuxRunStatus
+  status : @lepusa.RunStatus
 } derive(Debug, Eq)
 
 ///|
@@ -39,11 +33,9 @@ pub fn run(
       Ok({
         plan,
         status: match mode {
-          LinuxDryRun => LinuxPrepared
+          LinuxDryRun => RunPrepared
           LinuxOpenWindow =>
-            LinuxLaunchUnsupported(
-              "Linux WebKitGTK launch loop is not implemented",
-            )
+            RunUnsupported("Linux WebKitGTK launch loop is not implemented")
         },
       })
   }
@@ -90,6 +82,6 @@ pub fn LinuxRunResult::plan(self : LinuxRunResult) -> LinuxRunPlan {
 }
 
 ///|
-pub fn LinuxRunResult::status(self : LinuxRunResult) -> LinuxRunStatus {
+pub fn LinuxRunResult::status(self : LinuxRunResult) -> @lepusa.RunStatus {
   self.status
 }

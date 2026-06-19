@@ -643,10 +643,7 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            runtime.run_report(
-              target=target.name(),
-              status=windows_run_status(result.status()),
-            ),
+            runtime.run_report(target=target.name(), status=result.status()),
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -655,10 +652,7 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            runtime.run_report(
-              target=target.name(),
-              status=linux_run_status(result.status()),
-            ),
+            runtime.run_report(target=target.name(), status=result.status()),
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -678,43 +672,11 @@ fn macos_launch_report(
   }
   runtime.run_report(
     target=target.name(),
-    status=macos_run_status(result.status()),
+    status=result.status(),
     load_url~,
     bridge_sync_routes=plan.bridge().sync_command_routes().length(),
     bridge_async_routes=plan.bridge().async_command_routes().length(),
   )
-}
-
-///|
-fn macos_run_status(
-  status : @macos_backend.MacOSRunStatus,
-) -> @lepusa.RunStatus {
-  match status {
-    MacOSPrepared => RunPrepared
-    MacOSLaunched => RunLaunched
-    MacOSLaunchFailed(message) => RunFailed(message)
-    MacOSLaunchUnsupported(message) => RunUnsupported(message)
-  }
-}
-
-///|
-fn linux_run_status(
-  status : @linux_backend.LinuxRunStatus,
-) -> @lepusa.RunStatus {
-  match status {
-    LinuxPrepared => RunPrepared
-    LinuxLaunchUnsupported(message) => RunUnsupported(message)
-  }
-}
-
-///|
-fn windows_run_status(
-  status : @windows_backend.WindowsRunStatus,
-) -> @lepusa.RunStatus {
-  match status {
-    WindowsPrepared => RunPrepared
-    WindowsLaunchUnsupported(message) => RunUnsupported(message)
-  }
 }
 
 ///|

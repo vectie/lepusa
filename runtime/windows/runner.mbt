@@ -5,12 +5,6 @@ pub(all) enum WindowsRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum WindowsRunStatus {
-  WindowsPrepared
-  WindowsLaunchUnsupported(String)
-} derive(Debug, Eq)
-
-///|
 pub struct WindowsRunPlan {
   runner : @runtime.NativeRunnerPlan
 } derive(Debug, Eq)
@@ -18,7 +12,7 @@ pub struct WindowsRunPlan {
 ///|
 pub struct WindowsRunResult {
   plan : WindowsRunPlan
-  status : WindowsRunStatus
+  status : @lepusa.RunStatus
 } derive(Debug, Eq)
 
 ///|
@@ -39,11 +33,9 @@ pub fn run(
       Ok({
         plan,
         status: match mode {
-          WindowsDryRun => WindowsPrepared
+          WindowsDryRun => RunPrepared
           WindowsOpenWindow =>
-            WindowsLaunchUnsupported(
-              "Windows WebView2 launch loop is not implemented",
-            )
+            RunUnsupported("Windows WebView2 launch loop is not implemented")
         },
       })
   }
@@ -92,6 +84,6 @@ pub fn WindowsRunResult::plan(self : WindowsRunResult) -> WindowsRunPlan {
 }
 
 ///|
-pub fn WindowsRunResult::status(self : WindowsRunResult) -> WindowsRunStatus {
+pub fn WindowsRunResult::status(self : WindowsRunResult) -> @lepusa.RunStatus {
   self.status
 }

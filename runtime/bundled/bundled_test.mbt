@@ -54,7 +54,7 @@ test "bundled runtime manifest builds target-aware run plan" {
       assert_eq(runtime.runtime_backend(), "headless")
       match runtime.run() {
         Ok(result) => {
-          assert_true(result.status() is BundledPrepared)
+          assert_true(result.status() is RunPrepared)
           let plan = result.plan()
           let report = result.report()
           assert_eq(plan.target(), "linux")
@@ -87,7 +87,7 @@ test "bundled runtime manifest builds target-aware run plan" {
       match runtime.run(mode=BundledOpenWindow) {
         Ok(result) =>
           match result.status() {
-            BundledLaunchUnsupported(message) =>
+            RunUnsupported(message) =>
               assert_true(message.contains("WebKitGTK launch loop"))
             _ => abort("unexpected bundled launch status")
           }

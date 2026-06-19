@@ -168,7 +168,7 @@ fn macos_runtime_run_report(
     target="macos",
     backend="macos",
     engine="WKWebView",
-    status=macos_run_status(result.status()),
+    status=result.status(),
     webviews=plan.webviews().length(),
     first_window_title~,
     first_window_url~,
@@ -247,16 +247,6 @@ fn runtime_service_summary(
   match manifest.service_plan() {
     Ok(plan) => plan
     Err(_) => @bundled.BundledServicePlan::new(services=[])
-  }
-}
-
-///|
-fn macos_run_status(status : @macos.MacOSRunStatus) -> @lepusa.RunStatus {
-  match status {
-    MacOSPrepared => RunPrepared
-    MacOSLaunched => RunLaunched
-    MacOSLaunchFailed(message) => RunFailed(message)
-    MacOSLaunchUnsupported(message) => RunUnsupported(message)
   }
 }
 

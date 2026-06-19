@@ -59,7 +59,7 @@ test "linux backend prepares run plan and reports unsupported launch" {
     Ok(runtime) => {
       match run(runtime) {
         Ok(result) => {
-          assert_true(result.status() is LinuxPrepared)
+          assert_true(result.status() is RunPrepared)
           assert_eq(result.plan().webview_count(), 1)
           assert_eq(
             result.plan().first_webview_url(),
@@ -72,7 +72,7 @@ test "linux backend prepares run plan and reports unsupported launch" {
       match launch(runtime) {
         Ok(result) =>
           match result.status() {
-            LinuxLaunchUnsupported(message) =>
+            RunUnsupported(message) =>
               assert_true(message.contains("WebKitGTK launch loop"))
             _ => abort("unexpected Linux launch status")
           }

@@ -5,12 +5,6 @@ pub(all) enum BundledRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub(all) enum BundledRunStatus {
-  BundledPrepared
-  BundledLaunchUnsupported(String)
-} derive(Debug, Eq)
-
-///|
 pub struct BundledRunPlan {
   target : String
   backend : String
@@ -26,7 +20,7 @@ pub struct BundledRunPlan {
 ///|
 pub struct BundledRunResult {
   plan : BundledRunPlan
-  status : BundledRunStatus
+  status : @lepusa.RunStatus
 } derive(Debug, Eq)
 
 ///|
@@ -70,9 +64,9 @@ pub fn BundledRuntimeManifest::run(
       Ok({
         plan,
         status: match mode {
-          BundledDryRun => BundledPrepared
+          BundledDryRun => RunPrepared
           BundledOpenWindow =>
-            BundledLaunchUnsupported(
+            RunUnsupported(
               "\{plan.webview_engine()} launch loop is not implemented for target: \{plan.target()}",
             )
         },
@@ -86,23 +80,13 @@ pub fn BundledRunResult::plan(self : BundledRunResult) -> BundledRunPlan {
 }
 
 ///|
-pub fn BundledRunResult::status(self : BundledRunResult) -> BundledRunStatus {
+pub fn BundledRunResult::status(self : BundledRunResult) -> @lepusa.RunStatus {
   self.status
 }
 
 ///|
 pub fn BundledRunResult::report(self : BundledRunResult) -> @lepusa.RunReport {
-  self.plan.report(status=self.status.to_run_status())
-}
-
-///|
-pub fn BundledRunStatus::to_run_status(
-  self : BundledRunStatus,
-) -> @lepusa.RunStatus {
-  match self {
-    BundledPrepared => RunPrepared
-    BundledLaunchUnsupported(message) => RunUnsupported(message)
-  }
+  self.plan.report(status=self.status)
 }
 
 ///|

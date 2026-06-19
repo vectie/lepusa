@@ -59,17 +59,11 @@ pub fn BundledRunPlan::webviews(Self) -> Array[BundledWebView]
 
 pub struct BundledRunResult {
   plan : BundledRunPlan
-  status : BundledRunStatus
+  status : @lepusa.RunStatus
 } derive(Eq, @debug.Debug)
 pub fn BundledRunResult::plan(Self) -> BundledRunPlan
 pub fn BundledRunResult::report(Self) -> @lepusa.RunReport
-pub fn BundledRunResult::status(Self) -> BundledRunStatus
-
-pub(all) enum BundledRunStatus {
-  BundledPrepared
-  BundledLaunchUnsupported(String)
-} derive(Eq, @debug.Debug)
-pub fn BundledRunStatus::to_run_status(Self) -> @lepusa.RunStatus
+pub fn BundledRunResult::status(Self) -> @lepusa.RunStatus
 
 pub struct BundledRuntime {
   manifest : BundledRuntimeManifest

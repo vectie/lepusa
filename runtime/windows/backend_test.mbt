@@ -64,7 +64,7 @@ test "windows backend prepares run plan and reports unsupported launch" {
     Ok(runtime) => {
       match run(runtime) {
         Ok(result) => {
-          assert_true(result.status() is WindowsPrepared)
+          assert_true(result.status() is RunPrepared)
           assert_eq(result.plan().webview_count(), 1)
           assert_eq(
             result.plan().first_webview_url(),
@@ -77,7 +77,7 @@ test "windows backend prepares run plan and reports unsupported launch" {
       match launch(runtime) {
         Ok(result) =>
           match result.status() {
-            WindowsLaunchUnsupported(message) =>
+            RunUnsupported(message) =>
               assert_true(message.contains("WebView2 launch loop"))
             _ => abort("unexpected Windows launch status")
           }
