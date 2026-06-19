@@ -169,3 +169,52 @@ test "bundle plans derive executable and package names from metadata" {
     Err(_) => abort("unexpected invalid runtime plan")
   }
 }
+
+///|
+test "project manifests validate reusable app configuration" {
+  let manifest = @lepusa.ProjectManifest::new(
+    @lepusa.AppMetadata::new(
+      identifier="",
+      product_name="Example",
+      version="0.1.0",
+    ),
+  )
+  let problems = manifest.validate()
+  assert_eq(problems.length(), 2)
+  assert_eq(problems[0], "app identifier is required")
+  assert_eq(problems[1], "at least one window is required")
+}
+
+///|
+test "project manifests build runtime and bundle plans" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let manifest = @lepusa.ProjectManifest::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.vectie.manifest",
+        product_name="Manifest App",
+        version="0.2.0",
+      ),
+      runtime=@lepusa.RuntimeConfig::headless(),
+    )
+    .with_window(
+      @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
+    )
+    .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("core").permission(@lepusa.Notification),
+    )
+  match manifest.runtime_plan(root) {
+    Ok(runtime) => {
+      assert_eq(runtime.window_count(), 1)
+      assert_eq(runtime.command_routes()[0], "core.invoke")
+    }
+    Err(_) => abort("unexpected invalid manifest runtime plan")
+  }
+  match manifest.bundle_plan(root, target=@lepusa.Linux) {
+    Ok(bundle) => {
+      assert_eq(bundle.identifier(), "dev.vectie.manifest")
+      assert_eq(bundle.bundle_name(), "manifest-app")
+    }
+    Err(_) => abort("unexpected invalid manifest bundle plan")
+  }
+}

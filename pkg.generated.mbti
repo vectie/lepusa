@@ -204,6 +204,31 @@ pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self
 pub fn Plugin::validate(Self) -> Array[String]
 
+pub struct ProjectManifest {
+  metadata : AppMetadata
+  windows : Array[WindowConfig]
+  plugins : Array[Plugin]
+  capabilities : Array[Capability]
+  startup : Cmd
+  runtime : RuntimeConfig
+} derive(Eq, @debug.Debug)
+pub fn ProjectManifest::app(Self, Cell) -> App
+pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget) -> Result[BundlePlan, Array[String]]
+pub fn ProjectManifest::capabilities(Self) -> Array[Capability]
+pub fn ProjectManifest::launch_plan(Self, Cell) -> Result[LaunchPlan, Array[String]]
+pub fn ProjectManifest::metadata(Self) -> AppMetadata
+pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], startup? : Cmd, runtime? : RuntimeConfig) -> Self
+pub fn ProjectManifest::plugins(Self) -> Array[Plugin]
+pub fn ProjectManifest::runtime(Self) -> RuntimeConfig
+pub fn ProjectManifest::runtime_plan(Self, Cell) -> Result[RuntimePlan, Array[String]]
+pub fn ProjectManifest::validate(Self) -> Array[String]
+pub fn ProjectManifest::windows(Self) -> Array[WindowConfig]
+pub fn ProjectManifest::with_capability(Self, Capability) -> Self
+pub fn ProjectManifest::with_plugin(Self, Plugin) -> Self
+pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self
+pub fn ProjectManifest::with_startup(Self, Cmd) -> Self
+pub fn ProjectManifest::with_window(Self, WindowConfig) -> Self
+
 pub(all) enum RuntimeBackend {
   SystemWebView
   Headless

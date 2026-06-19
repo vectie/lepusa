@@ -100,6 +100,7 @@ pub type RuntimeConfig
 pub type RuntimePlan
 pub type BundleConfig
 pub type BundlePlan
+pub type ProjectManifest
 pub type Html
 pub type Dispatch
 
@@ -233,6 +234,21 @@ lepusa bundle-plan <target>
 
 Native run/build/bundle commands should consume the same `RuntimePlan` and
 `BundlePlan` objects rather than maintaining parallel configuration paths.
+
+## Manifest Boundary
+
+`ProjectManifest` owns reusable app-neutral configuration:
+
+- app metadata
+- windows and sources
+- plugins and command routes
+- capabilities
+- startup command
+- runtime config
+
+It intentionally does not own product routes, schemas, persistent state, or
+frontend component code. It lowers into `App`, `LaunchPlan`, `RuntimePlan`, and
+`BundlePlan`.
 
 ## Non-Goals
 

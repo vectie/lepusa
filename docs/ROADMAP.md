@@ -7,6 +7,7 @@
   packages.
 - Own `LaunchPlan`, `RuntimePlan`, and `BundlePlan` as the first native backend
   boundaries.
+- Own `ProjectManifest` as the app-neutral configuration boundary.
 - Import useful runtime ideas from existing experiments without making Lepusa a
   wrapper layer over them.
 - Keep product-specific requirements out of core packages.

@@ -90,9 +90,8 @@ fn render_bundle_plan(args : Array[String]) -> CliResult {
     Some(value) => return fail("unknown bundle target: \{value}\n")
   }
   match sample_runtime_plan() {
-    Ok(runtime) => {
-      let config = @lepusa.BundleConfig::new(sample_metadata(), target~)
-      match config.plan(runtime) {
+    Ok(_) =>
+      match sample_manifest().bundle_plan(sample_root(), target~) {
         Ok(plan) =>
           ok(
             "Lepusa bundle plan\n" +
@@ -103,20 +102,29 @@ fn render_bundle_plan(args : Array[String]) -> CliResult {
           )
         Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
       }
-    }
     Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
   }
 }
 
 ///|
 fn sample_runtime_plan() -> Result[@lepusa.RuntimePlan, Array[String]] {
-  sample_app().runtime_plan(config=@lepusa.RuntimeConfig::headless())
+  sample_manifest().runtime_plan(sample_root())
 }
 
 ///|
-fn sample_app() -> @lepusa.App {
-  @lepusa.new(@lepusa.simple_cell(@lepusa.Html::text("<main></main>")))
-  .window(source=@lepusa.Source::html("<main></main>"))
+fn sample_root() -> @lepusa.Cell {
+  @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+}
+
+///|
+fn sample_manifest() -> @lepusa.ProjectManifest {
+  @lepusa.ProjectManifest::new(
+    sample_metadata(),
+    runtime=@lepusa.RuntimeConfig::headless(),
+  )
+  .with_window(
+    @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
+  )
   .with_plugin(
     @lepusa.Plugin::new("core").command_sync("invoke").command_stream("events"),
   )

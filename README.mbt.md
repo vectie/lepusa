@@ -28,8 +28,9 @@ The first implementation slice already owns the public MoonBit foundation:
 - Rabbita-style `cell_with_dispatch` and `new(cell)` app construction
 - `WindowConfig`, `Source`, `Plugin`, `Capability`, `Cmd`, `Event`, and typed
   IPC request/response contracts
-- validation, `LaunchPlan`, `RuntimePlan`, and `BundlePlan` generation as the
-  boundaries native runtime and platform bundler code will consume next
+- `ProjectManifest` validation plus `LaunchPlan`, `RuntimePlan`, and
+  `BundlePlan` generation as the boundaries native runtime and platform
+  bundler code will consume next
 
 The common authoring path is intentionally small:
 
@@ -71,6 +72,26 @@ let bundle = @lepusa.BundleConfig::new(
     version="0.1.0",
   ),
 )
+```
+
+For reusable project configuration, use `ProjectManifest`:
+
+```moonbit nocheck
+///|
+let manifest = @lepusa.ProjectManifest::new(metadata)
+  .with_window(
+    @lepusa.WindowConfig::new(source=@lepusa.Source::local_path("dist")),
+  )
+  .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+  .with_capability(
+    @lepusa.Capability::new("main").permission(@lepusa.Notification),
+  )
+
+///|
+let runtime = manifest.runtime_plan(root)
+
+///|
+let bundle = manifest.bundle_plan(root, target=@lepusa.MacOS)
 ```
 
 ## CLI
