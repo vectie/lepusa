@@ -40,8 +40,8 @@
   validation and macOS launch-plan lowering.
 - Add macOS runner-plan lowering from portable runtime operations.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
-- Support `Source::html`, `Source::local_path`, `Source::url`, and packaged
-  assets.
+- Support `Source::html`, `Source::local_path`, `Source::url`,
+  `Source::localhost`, and packaged assets.
 - Validate native link behavior on each supported platform.
 
 ## Milestone 3: Typed IPC And Capabilities

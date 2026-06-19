@@ -260,6 +260,47 @@ test "project config parses startup and lifecycle commands" {
 }
 
 ///|
+test "project config parses localhost source" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.gateway",
+    #|  "productName": "Gateway",
+    #|  "version": "0.1.0",
+    #|  "window": {
+    #|    "label": "main",
+    #|    "title": "Gateway",
+    #|    "source": {
+    #|      "localhost": {
+    #|        "port": 4317,
+    #|        "path": "/app",
+    #|        "readinessPath": "/health",
+    #|        "command": ["moon", "run", "cmd/server"]
+    #|      }
+    #|    }
+    #|  }
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.runtime_plan(project.root) {
+        Ok(plan) => {
+          assert_eq(plan.windows()[0].url(), "http://127.0.0.1:4317/app")
+          match plan.launch_manifest() {
+            Ok(manifest) => {
+              assert_eq(manifest.local_services().length(), 1)
+              assert_true(manifest.to_json().contains("\"localServices\""))
+              assert_true(manifest.to_json().contains("\"readinessUrl\""))
+            }
+            Err(_) => abort("unexpected invalid launch manifest")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config validates required shape" {
   match parse_project_config("{}") {
     Ok(_) => abort("expected invalid project config")

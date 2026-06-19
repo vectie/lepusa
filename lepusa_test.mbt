@@ -55,6 +55,37 @@ test "sources resolve into backend load targets" {
     }
     Err(problem) => abort(problem)
   }
+  match
+    @lepusa.Source::localhost(
+      port=4317,
+      path="/app",
+      readiness_path="/health",
+      command=["moon", "run", "cmd/server"],
+    ).resolve(window_label="gateway") {
+    Ok(resolved) => {
+      assert_true(resolved.kind() is ResolvedLocalhost)
+      assert_eq(resolved.url(), "http://127.0.0.1:4317/app")
+      assert_eq(resolved.protocol_mappings().length(), 0)
+      assert_eq(resolved.virtual_files().length(), 0)
+      let services = resolved.local_services()
+      assert_eq(services.length(), 1)
+      assert_eq(services[0].name(), "gateway")
+      assert_eq(services[0].command()[0], "moon")
+      assert_eq(services[0].readiness_url(), "http://127.0.0.1:4317/health")
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "localhost source validates service gateway settings" {
+  let source = @lepusa.LocalhostSource::new(port=0, host="", command=[
+    "server", "",
+  ])
+  let problems = source.validate()
+  assert_true(problems.contains("localhost host is required"))
+  assert_true(problems.contains("localhost port must be between 1 and 65535"))
+  assert_true(problems.contains("localhost command entries must not be empty"))
 }
 
 ///|

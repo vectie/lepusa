@@ -92,6 +92,7 @@ pub struct RuntimeSession {
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
+  local_services : Array[@lepusa.LocalService]
   startup_actions : Array[@lepusa.RuntimeAction]
   lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -106,6 +107,7 @@ pub fn RuntimeSession::bridge_url(Self) -> String
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
 pub fn RuntimeSession::lifecycle_hooks(Self) -> Array[@lepusa.RuntimeLifecycleHook]
+pub fn RuntimeSession::local_services(Self) -> Array[@lepusa.LocalService]
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
 pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]

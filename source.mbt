@@ -3,6 +3,7 @@ pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
   RemoteUrl(String)
+  Localhost(LocalhostSource)
   RabbitaCell(Cell)
 } derive(Debug, Eq)
 
@@ -56,6 +57,7 @@ pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
   ResolvedRemoteUrl
+  ResolvedLocalhost
   ResolvedRabbitaMount
 } derive(Debug, Eq)
 
@@ -65,6 +67,7 @@ pub struct ResolvedSource {
   url : String
   protocol_mappings : Array[ProtocolMapping]
   virtual_files : Array[VirtualFile]
+  local_services : Array[LocalService]
 } derive(Debug, Eq)
 
 ///|
@@ -92,6 +95,13 @@ pub fn ResolvedSource::virtual_files(
 }
 
 ///|
+pub fn ResolvedSource::local_services(
+  self : ResolvedSource,
+) -> Array[LocalService] {
+  self.local_services.copy()
+}
+
+///|
 pub fn Source::html(content : String) -> Source {
   InlineHtml(content)
 }
@@ -107,6 +117,24 @@ pub fn Source::url(url : String) -> Source {
 }
 
 ///|
+pub fn Source::localhost(
+  port~ : Int,
+  host? : String = "127.0.0.1",
+  path? : String = "/",
+  readiness_path? : String,
+  command? : Array[String] = [],
+) -> Source {
+  Localhost(
+    LocalhostSource::new(port~, host~, path~, readiness_path?, command~),
+  )
+}
+
+///|
+pub fn Source::localhost_source(source : LocalhostSource) -> Source {
+  Localhost(source)
+}
+
+///|
 pub fn Source::rabbita(cell : Cell) -> Source {
   RabbitaCell(cell)
 }
@@ -117,6 +145,7 @@ pub fn Source::is_empty(self : Source) -> Bool {
     InlineHtml(content) => content == ""
     LocalPath(path) => path == ""
     RemoteUrl(url) => url == ""
+    Localhost(_) => false
     RabbitaCell(cell) => cell.id() == ""
   }
 }
@@ -146,6 +175,7 @@ pub fn Source::resolve(
           ),
         ],
         virtual_files: [VirtualFile::new(path="index.html", content~)],
+        local_services: [],
       })
     LocalPath(path) =>
       Ok({
@@ -155,6 +185,7 @@ pub fn Source::resolve(
           ProtocolMapping::new(scheme=asset_protocol, root=path),
         ],
         virtual_files: [],
+        local_services: [],
       })
     RemoteUrl(url) =>
       Ok({
@@ -162,7 +193,23 @@ pub fn Source::resolve(
         url,
         protocol_mappings: [],
         virtual_files: [],
+        local_services: [],
       })
+    Localhost(source) =>
+      match source.validate() {
+        [] =>
+          Ok({
+            kind: ResolvedLocalhost,
+            url: source.url(),
+            protocol_mappings: [],
+            virtual_files: [],
+            local_services: match source.local_service(window_label) {
+              Some(service) => [service]
+              None => []
+            },
+          })
+        problems => Err(problems[0])
+      }
     RabbitaCell(cell) =>
       Ok({
         kind: ResolvedRabbitaMount,
@@ -176,6 +223,7 @@ pub fn Source::resolve(
         virtual_files: [
           VirtualFile::new(path="index.html", content=cell.rabbita_document()),
         ],
+        local_services: [],
       })
   }
 }

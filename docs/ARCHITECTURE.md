@@ -117,6 +117,7 @@ pub fn App::runtime_plan(self : App, config? : RuntimeConfig) -> Result[
 pub fn Source::html(html : String) -> Source
 pub fn Source::local_path(path : String) -> Source
 pub fn Source::url(url : String) -> Source
+pub fn Source::localhost(port~ : Int, ...) -> Source
 ```
 
 ## IPC
@@ -186,6 +187,8 @@ Support first-class source modes:
 - `Source::html`: embedded memory source for examples and tests.
 - `Source::local_path`: local static directory or entry HTML.
 - `Source::url`: development server or app-owned local server.
+- `Source::localhost`: local gateway source with optional sidecar command and
+  readiness URL metadata.
 - `Source::rabbita`: MoonBit-authored UI mounted into a generated shell.
 
 Production builds should prefer packaged assets served through a custom
@@ -197,6 +200,7 @@ local service.
 - source-less `App` windows become generated Rabbita HTML backed by the app
   root `Cell`
 - remote URLs stay remote and require no protocol mapping
+- localhost sources stay HTTP URLs and may emit local service metadata
 - local paths become `asset_protocol://local/<window>/index.html`
 - inline HTML becomes `asset_protocol://inline/<window>/index.html`
 - Rabbita mounts become `asset_protocol://rabbita/<window>/index.html`
@@ -316,12 +320,18 @@ App service
 
 Framework support needed for this mode:
 
-- localhost source with readiness probe and retry screen
-- optional sidecar process lifecycle
+- localhost source with readiness probe metadata
+- optional sidecar process lifecycle from `localServices`
 - tray and restart actions
 - deep-link registration and dispatch
 - external open, clipboard, file dialogs, auto-launch, and updater plugins
 - service discovery/status files
+
+`Source::localhost(...)` lowers to a normal HTTP WebView URL and, when given a
+command, emits a `LocalService` entry into `RuntimeSession` and
+`RuntimeLaunchManifest.localServices`. Platform backends own process spawning,
+readiness polling, retry UI, and shutdown policy; Lepusa core only carries the
+portable service contract.
 
 ## Bundling
 

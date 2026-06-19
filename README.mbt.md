@@ -222,6 +222,11 @@ launch manifest, resolved WebViews, stepped runtime session, and startup
 operations in one object. Platform packages map this plan to WKWebView,
 WebView2, or WebKitGTK without rebuilding app state.
 
+`Source::localhost(...)` supports gateway-style apps that load a local HTTP
+service and optionally declare the sidecar command plus readiness URL metadata.
+This data appears in `RuntimeSession::local_services()` and launch-manifest
+`localServices` for native runners to supervise.
+
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
 `BundlePlan::files()`: platform metadata plus `lepusa/runtime.json`, with
 per-window bridge initialization scripts embedded in the runtime manifest.

@@ -298,8 +298,28 @@ fn source_from_object(
     Some(url) => return @lepusa.Source::url(url)
     None => ()
   }
-  problems.push("project source must include html, localPath, or url")
+  match optional_config_object(object, "localhost") {
+    Some(localhost) => return localhost_source_from_object(localhost, problems)
+    None => ()
+  }
+  problems.push(
+    "project source must include html, localPath, url, or localhost",
+  )
   @lepusa.Source::html("<main></main>")
+}
+
+///|
+fn localhost_source_from_object(
+  object : Map[String, Json],
+  problems : Array[String],
+) -> @lepusa.Source {
+  let port = required_config_int(object, "port", problems)
+  let host = optional_config_string(object, "host").unwrap_or("127.0.0.1")
+  let path = optional_config_string(object, "path").unwrap_or("/")
+  let readiness_path = optional_config_string(object, "readinessPath")
+  let command = optional_config_string_array(object, "command", problems).unwrap_or([],
+  )
+  @lepusa.Source::localhost(port~, host~, path~, readiness_path?, command~)
 }
 
 ///|
@@ -313,6 +333,21 @@ fn required_config_string(
     None => {
       problems.push("project \{key} is required")
       ""
+    }
+  }
+}
+
+///|
+fn required_config_int(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> Int {
+  match optional_config_int(object, key) {
+    Some(value) => value
+    None => {
+      problems.push("project \{key} is required")
+      0
     }
   }
 }
@@ -335,6 +370,27 @@ fn optional_config_array(
 ) -> Array[Json]? {
   match object.get(key) {
     Some(Array(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn optional_config_string_array(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> Array[String]? {
+  match object.get(key) {
+    Some(Array(items)) => {
+      let values : Array[String] = []
+      for item in items {
+        match item {
+          String(value) => values.push(value)
+          _ => problems.push("project \{key} entries must be strings")
+        }
+      }
+      Some(values)
+    }
     _ => None
   }
 }

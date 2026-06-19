@@ -7,6 +7,7 @@ pub struct RuntimeLaunchManifest {
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
+  local_services : Array[LocalService]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -74,6 +75,7 @@ pub fn RuntimePlan::launch_manifest(
   let webviews : Array[RuntimeWebViewBoot] = []
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
   let virtual_files : Array[RuntimeVirtualAsset] = []
+  let local_services : Array[LocalService] = []
   let startup_actions : Array[RuntimeAction] = []
   let lifecycle_hooks : Array[RuntimeLifecycleHook] = []
   let problems : Array[String] = []
@@ -94,6 +96,9 @@ pub fn RuntimePlan::launch_manifest(
     }
     for file in window.source().virtual_files() {
       virtual_files.push(RuntimeVirtualAsset::from_file(window.label(), file))
+    }
+    for service in window.source().local_services() {
+      local_services.push(service)
     }
   }
   match self.startup_actions() {
@@ -125,6 +130,7 @@ pub fn RuntimePlan::launch_manifest(
       webviews,
       protocol_mappings,
       virtual_files,
+      local_services,
       startup_actions,
       lifecycle_hooks,
       command_routes: self.command_routes(),
@@ -226,6 +232,13 @@ pub fn RuntimeLaunchManifest::virtual_files(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::local_services(
+  self : RuntimeLaunchManifest,
+) -> Array[LocalService] {
+  self.local_services.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::startup_actions(
   self : RuntimeLaunchManifest,
 ) -> Array[RuntimeAction] {
@@ -264,6 +277,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"webviews\":[\{self.webviews.map(runtime_webview_boot_json).join(",")}],",
     "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_binding_json).join(",")}],",
     "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
+    "\"localServices\":[\{self.local_services.map(fn(service) { service.to_json() }).join(",")}],",
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",

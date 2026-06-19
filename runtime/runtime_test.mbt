@@ -54,6 +54,44 @@ test "runtime host snapshots windows protocols and bridge" {
 }
 
 ///|
+test "runtime host carries localhost service metadata" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    label="gateway",
+    source=@lepusa.Source::localhost(
+      port=4317,
+      path="/",
+      readiness_path="/ready",
+      command=["moon", "run", "cmd/server"],
+    ),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => {
+      let host = RuntimeHost::new(plan)
+      match host.snapshot() {
+        Ok(session) => {
+          assert_eq(session.windows()[0].url(), "http://127.0.0.1:4317/")
+          let services = session.local_services()
+          assert_eq(services.length(), 1)
+          assert_eq(services[0].name(), "gateway")
+          assert_eq(services[0].readiness_url(), "http://127.0.0.1:4317/ready")
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+      match host.launch_manifest() {
+        Ok(manifest) => {
+          assert_eq(manifest.local_services().length(), 1)
+          assert_true(manifest.to_json().contains("\"localServices\""))
+          assert_true(manifest.to_json().contains("\"cmd/server\""))
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host produces per-window webview boot specs" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

@@ -268,6 +268,36 @@ pub fn LifecycleHook::command(Self) -> Cmd
 pub fn LifecycleHook::event(Self) -> LifecycleEvent
 pub fn LifecycleHook::new(LifecycleEvent, Cmd) -> Self
 
+pub struct LocalService {
+  name : String
+  command : Array[String]
+  readiness_url : String
+} derive(Eq, @debug.Debug)
+pub fn LocalService::command(Self) -> Array[String]
+pub fn LocalService::name(Self) -> String
+pub fn LocalService::new(name~ : String, command~ : Array[String], readiness_url~ : String) -> Self
+pub fn LocalService::readiness_url(Self) -> String
+pub fn LocalService::to_json(Self) -> String
+pub fn LocalService::validate(Self) -> Array[String]
+
+pub struct LocalhostSource {
+  host : String
+  port : Int
+  path : String
+  readiness_path : String?
+  command : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn LocalhostSource::command(Self) -> Array[String]
+pub fn LocalhostSource::host(Self) -> String
+pub fn LocalhostSource::local_service(Self, String) -> LocalService?
+pub fn LocalhostSource::new(port~ : Int, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
+pub fn LocalhostSource::path(Self) -> String
+pub fn LocalhostSource::port(Self) -> Int
+pub fn LocalhostSource::readiness_path(Self) -> String?
+pub fn LocalhostSource::readiness_url(Self) -> String
+pub fn LocalhostSource::url(Self) -> String
+pub fn LocalhostSource::validate(Self) -> Array[String]
+
 type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
 
 pub(all) enum Permission {
@@ -348,8 +378,10 @@ pub struct ResolvedSource {
   url : String
   protocol_mappings : Array[ProtocolMapping]
   virtual_files : Array[VirtualFile]
+  local_services : Array[LocalService]
 } derive(Eq, @debug.Debug)
 pub fn ResolvedSource::kind(Self) -> ResolvedSourceKind
+pub fn ResolvedSource::local_services(Self) -> Array[LocalService]
 pub fn ResolvedSource::protocol_mappings(Self) -> Array[ProtocolMapping]
 pub fn ResolvedSource::url(Self) -> String
 pub fn ResolvedSource::virtual_files(Self) -> Array[VirtualFile]
@@ -358,6 +390,7 @@ pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
   ResolvedRemoteUrl
+  ResolvedLocalhost
   ResolvedRabbitaMount
 } derive(Eq, @debug.Debug)
 
@@ -423,6 +456,7 @@ pub struct RuntimeLaunchManifest {
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
+  local_services : Array[LocalService]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -434,6 +468,7 @@ pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
 pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::lifecycle_hooks(Self) -> Array[RuntimeLifecycleHook]
+pub fn RuntimeLaunchManifest::local_services(Self) -> Array[LocalService]
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
@@ -531,11 +566,14 @@ pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
   RemoteUrl(String)
+  Localhost(LocalhostSource)
   RabbitaCell(Cell)
 } derive(Eq, @debug.Debug)
 pub fn Source::html(String) -> Self
 pub fn Source::is_empty(Self) -> Bool
 pub fn Source::local_path(String) -> Self
+pub fn Source::localhost(port~ : Int, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
+pub fn Source::localhost_source(LocalhostSource) -> Self
 pub fn Source::rabbita(Cell) -> Self
 pub fn Source::resolve(Self, window_label~ : String, asset_protocol? : String) -> Result[ResolvedSource, String]
 pub fn Source::url(String) -> Self

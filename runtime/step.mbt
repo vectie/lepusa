@@ -123,8 +123,12 @@ fn RuntimeSession::navigate_window(
   for file in source.virtual_files() {
     virtual_files.push(RuntimeVirtualFile::from_file(window_label, file))
   }
+  let local_services = self.local_services_without(window_label)
+  for service in source.local_services() {
+    local_services.push(service)
+  }
   operations.push(RuntimeNavigateWindow(window_label, source.url()))
-  Ok({ ..self, windows, protocol_mappings, virtual_files })
+  Ok({ ..self, windows, protocol_mappings, virtual_files, local_services })
 }
 
 ///|
@@ -153,4 +157,18 @@ fn RuntimeSession::virtual_files_without(
     }
   }
   files
+}
+
+///|
+fn RuntimeSession::local_services_without(
+  self : RuntimeSession,
+  window_label : String,
+) -> Array[@lepusa.LocalService] {
+  let services : Array[@lepusa.LocalService] = []
+  for service in self.local_services {
+    if service.name() != window_label {
+      services.push(service)
+    }
+  }
+  services
 }

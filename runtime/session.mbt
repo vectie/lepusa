@@ -6,6 +6,7 @@ pub struct RuntimeSession {
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
+  local_services : Array[@lepusa.LocalService]
   startup_actions : Array[@lepusa.RuntimeAction]
   lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -49,6 +50,7 @@ fn RuntimeSession::from_plan(
   let windows : Array[RuntimeWindow] = []
   let protocol_mappings : Array[RuntimeProtocolMapping] = []
   let virtual_files : Array[RuntimeVirtualFile] = []
+  let local_services : Array[@lepusa.LocalService] = []
   for window in plan.windows() {
     windows.push(RuntimeWindow::from_resolved(window))
     for mapping in window.source().protocol_mappings() {
@@ -59,6 +61,9 @@ fn RuntimeSession::from_plan(
     for file in window.source().virtual_files() {
       virtual_files.push(RuntimeVirtualFile::from_file(window.label(), file))
     }
+    for service in window.source().local_services() {
+      local_services.push(service)
+    }
   }
   {
     backend: plan.backend(),
@@ -67,6 +72,7 @@ fn RuntimeSession::from_plan(
     windows,
     protocol_mappings,
     virtual_files,
+    local_services,
     startup_actions,
     lifecycle_hooks,
     command_routes: plan.command_routes(),
@@ -138,6 +144,13 @@ pub fn RuntimeSession::virtual_files(
   self : RuntimeSession,
 ) -> Array[RuntimeVirtualFile] {
   self.virtual_files.copy()
+}
+
+///|
+pub fn RuntimeSession::local_services(
+  self : RuntimeSession,
+) -> Array[@lepusa.LocalService] {
+  self.local_services.copy()
 }
 
 ///|
