@@ -36,6 +36,7 @@ pub struct BundledRuntimeManifest {
   bundle : Map[String, Json]
   runtime : Map[String, Json]
 } derive(@debug.Debug)
+pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String

@@ -116,7 +116,9 @@ test "runtime cli dry-runs bundled macos launch" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
-  assert_true(result.output.contains("load-url: data:text/html;base64,"))
+  assert_true(
+    result.output.contains("load-url: lepusa://rabbita/main/index.html"),
+  )
 }
 
 ///|

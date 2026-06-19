@@ -147,8 +147,8 @@ test "macos backend prepares first webview load url" {
         Ok(plan) => {
           assert_eq(plan.title(), "macOS")
           assert_eq(plan.url(), "lepusa://inline/main/index.html")
-          assert_true(plan.load_url().has_prefix("data:text/html;base64,"))
-          assert_false(plan.load_url().contains("lepusa://"))
+          assert_eq(plan.load_url(), "lepusa://inline/main/index.html")
+          assert_eq(plan.asset_protocol(), "lepusa")
           assert_true(
             plan.initialization_script().contains("webkit.messageHandlers"),
           )
@@ -173,9 +173,7 @@ test "macos backend dry run does not enter native loop" {
       match run(runtime) {
         Ok(result) => {
           assert_true(result.status() is MacOSPrepared)
-          assert_true(
-            result.plan().load_url().has_prefix("data:text/html;base64,"),
-          )
+          assert_eq(result.plan().load_url(), "lepusa://inline/main/index.html")
           assert_true(
             result.plan().initialization_script().contains("__lepusaInvoke"),
           )
@@ -198,7 +196,8 @@ test "macos backend prepares bundled runtime manifest" {
         Ok(plan) => {
           assert_eq(plan.title(), "Bundled App")
           assert_eq(plan.url(), "lepusa://rabbita/main/index.html")
-          assert_true(plan.load_url().has_prefix("data:text/html;base64,"))
+          assert_eq(plan.load_url(), "lepusa://rabbita/main/index.html")
+          assert_eq(plan.asset_protocol(), "lepusa")
           assert_true(
             plan.initialization_script().contains("webkit.messageHandlers"),
           )

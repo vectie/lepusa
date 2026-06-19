@@ -18,6 +18,7 @@ pub struct MacOSRunPlan {
   load_url : String
   initialization_script : String
   native_hook : String
+  asset_protocol : String
   width : Int
   height : Int
   resizable : Bool
@@ -31,17 +32,20 @@ pub struct MacOSRunResult {
 } derive(Debug, Eq)
 
 ///|
-#borrow(title, url, initialization_script, native_hook, dispatch)
+#borrow(title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
 extern "c" fn run_webview_with_bridge(
   title : Bytes,
   url : Bytes,
   initialization_script : Bytes,
   native_hook : Bytes,
+  asset_protocol : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
   call_dispatch : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
   dispatch : (Bytes) -> Bytes,
+  call_resolve_asset : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
+  resolve_asset : (Bytes) -> Bytes,
 ) -> Int = "lepusa_macos_run_webview_with_bridge"
 
 ///|
@@ -63,6 +67,7 @@ pub fn prepare_run(
               spec.initialization_scripts(),
             ),
             native_hook: spec.native_hook(),
+            asset_protocol: spec.asset_protocol(),
             width: spec.width(),
             height: spec.height(),
             resizable: spec.resizable(),
@@ -92,6 +97,7 @@ pub fn prepare_bundled_run(
               webview.initialization_scripts(),
             ),
             native_hook: webview.native_hook(),
+            asset_protocol: manifest.asset_protocol(),
             width: webview.width(),
             height: webview.height(),
             resizable: webview.resizable(),
@@ -108,7 +114,13 @@ pub fn run(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
-    Ok(plan) => run_plan(plan, mode~, dispatch=runtime_dispatch(runtime, plan))
+    Ok(plan) =>
+      run_plan(
+        plan,
+        mode~,
+        dispatch=runtime_dispatch(runtime, plan),
+        resolve_asset=runtime_asset_resolver(runtime),
+      )
   }
 }
 
@@ -119,7 +131,13 @@ pub fn run_bundled(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_bundled_run(manifest) {
     Err(problems) => Err(problems)
-    Ok(plan) => run_plan(plan, mode~, dispatch=bundled_dispatch(manifest, plan))
+    Ok(plan) =>
+      run_plan(
+        plan,
+        mode~,
+        dispatch=bundled_dispatch(manifest, plan),
+        resolve_asset=bundled_asset_resolver(manifest),
+      )
   }
 }
 
@@ -163,6 +181,11 @@ pub fn MacOSRunPlan::native_hook(self : MacOSRunPlan) -> String {
 }
 
 ///|
+pub fn MacOSRunPlan::asset_protocol(self : MacOSRunPlan) -> String {
+  self.asset_protocol
+}
+
+///|
 pub fn MacOSRunPlan::width(self : MacOSRunPlan) -> Int {
   self.width
 }
@@ -197,7 +220,8 @@ fn initial_load_url(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[String, String] {
-  if is_direct_load_url(spec.url()) {
+  if is_protocol_load_url(spec.url(), spec.asset_protocol()) ||
+    is_direct_load_url(spec.url()) {
     Ok(spec.url())
   } else {
     match runtime.host().snapshot() {
@@ -241,6 +265,7 @@ fn run_plan(
   plan : MacOSRunPlan,
   mode~ : MacOSRunMode,
   dispatch~ : (Bytes) -> Bytes,
+  resolve_asset~ : (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
     MacOSDryRun => Ok({ plan, status: MacOSPrepared })
@@ -250,6 +275,7 @@ fn run_plan(
         @utf8.encode(plan.load_url),
         @utf8.encode(plan.initialization_script),
         @utf8.encode(plan.native_hook),
+        @utf8.encode(plan.asset_protocol),
         plan.width,
         plan.height,
         if plan.resizable {
@@ -259,6 +285,8 @@ fn run_plan(
         },
         fn(dispatch, message) { dispatch(message) },
         dispatch,
+        fn(resolve_asset, url) { resolve_asset(url) },
+        resolve_asset,
       )
       if exit_code == 0 {
         Ok({ plan, status: MacOSLaunched })
@@ -280,6 +308,14 @@ fn runtime_dispatch(
     @utf8.encode(
       bridge_response_script("\{plan.native_hook()}Response", response_json),
     )
+  }
+}
+
+///|
+fn runtime_asset_resolver(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
+  fn(url : Bytes) -> Bytes {
+    let input = @utf8.decode(url) catch { _ => "" }
+    macos_protocol_packet_from_asset_json(runtime.resolve_asset_json(input))
   }
 }
 
@@ -310,11 +346,22 @@ fn bundled_dispatch(
 }
 
 ///|
+fn bundled_asset_resolver(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> (Bytes) -> Bytes {
+  fn(url : Bytes) -> Bytes {
+    let input = @utf8.decode(url) catch { _ => "" }
+    macos_protocol_packet_from_asset_json(manifest.resolve_asset_json(input))
+  }
+}
+
+///|
 fn bundled_initial_load_url(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
 ) -> Result[String, String] {
-  if is_direct_load_url(webview.url()) {
+  if is_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
+    is_direct_load_url(webview.url()) {
     Ok(webview.url())
   } else {
     bundled_load_url_from_asset_json(manifest.resolve_asset_json(webview.url()))
@@ -357,11 +404,72 @@ fn bundled_load_url_from_asset_json(json : String) -> Result[String, String] {
 }
 
 ///|
+fn macos_protocol_packet_from_asset_json(json : String) -> Bytes {
+  try @json.parse(json) catch {
+    error => macos_protocol_error_packet("invalid asset response: \{error}")
+  } noraise {
+    Object(response) =>
+      if optional_response_bool(response, "ok").unwrap_or(false) {
+        match optional_response_object(response, "body") {
+          Some(body) => {
+            let mime_type = optional_response_string(response, "mimeType").unwrap_or(
+              "application/octet-stream",
+            )
+            match optional_response_string(body, "kind").unwrap_or("") {
+              "virtual" =>
+                macos_protocol_ok_packet(
+                  "virtual",
+                  mime_type,
+                  optional_response_string(body, "content").unwrap_or(""),
+                )
+              "local-file" | "packaged-file" =>
+                macos_protocol_ok_packet(
+                  "file",
+                  mime_type,
+                  optional_response_string(body, "path").unwrap_or(""),
+                )
+              kind =>
+                macos_protocol_error_packet("unsupported asset kind: \{kind}")
+            }
+          }
+          None => macos_protocol_error_packet("asset response body is required")
+        }
+      } else {
+        macos_protocol_error_packet(
+          optional_response_string(response, "error").unwrap_or(
+            "asset resolution failed",
+          ),
+        )
+      }
+    _ => macos_protocol_error_packet("asset response must be a json object")
+  }
+}
+
+///|
+fn macos_protocol_ok_packet(
+  kind : String,
+  mime_type : String,
+  body : String,
+) -> Bytes {
+  @utf8.encode("ok\n\{kind}\n\{mime_type}\n\{body}")
+}
+
+///|
+fn macos_protocol_error_packet(message : String) -> Bytes {
+  @utf8.encode("error\n\{message}")
+}
+
+///|
 fn is_direct_load_url(url : String) -> Bool {
   url.has_prefix("http://") ||
   url.has_prefix("https://") ||
   url.has_prefix("file://") ||
   url.has_prefix("data:")
+}
+
+///|
+fn is_protocol_load_url(url : String, protocol : String) -> Bool {
+  protocol != "" && url.has_prefix("\{protocol}://")
 }
 
 ///|

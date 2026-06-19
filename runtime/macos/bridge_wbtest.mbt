@@ -68,6 +68,47 @@ test "macos bridge callback dispatches bundled sync messages" {
 }
 
 ///|
+test "macos protocol packet encodes virtual assets" {
+  let json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://runtime/bridge.js",
+    #|  "mimeType": "application/javascript",
+    #|  "body": { "kind": "virtual", "content": "console.log(\"ready\")" }
+    #|}
+  let packet = @utf8.decode(macos_protocol_packet_from_asset_json(json)) catch {
+    _ => abort("unexpected invalid virtual packet")
+  }
+  assert_true(packet.has_prefix("ok\nvirtual\napplication/javascript\n"))
+  assert_true(packet.contains("console.log"))
+}
+
+///|
+test "macos protocol packet encodes file assets and errors" {
+  let file_json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://packaged/main/app.css",
+    #|  "mimeType": "text/css",
+    #|  "body": { "kind": "packaged-file", "path": "/tmp/app.css" }
+    #|}
+  let file_packet = @utf8.decode(
+    macos_protocol_packet_from_asset_json(file_json),
+  ) catch {
+    _ => abort("unexpected invalid file packet")
+  }
+  assert_eq(file_packet, "ok\nfile\ntext/css\n/tmp/app.css")
+  let error_packet = @utf8.decode(
+    macos_protocol_packet_from_asset_json(
+      "{\"ok\":false,\"error\":\"missing\"}",
+    ),
+  ) catch {
+    _ => abort("unexpected invalid error packet")
+  }
+  assert_eq(error_packet, "error\nmissing")
+}
+
+///|
 fn wb_bundled_macos_manifest() -> String {
   (
     #|{

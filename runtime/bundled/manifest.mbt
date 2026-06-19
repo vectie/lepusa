@@ -70,6 +70,13 @@ pub fn BundledRuntimeManifest::bundle_root(
 }
 
 ///|
+pub fn BundledRuntimeManifest::asset_protocol(
+  self : BundledRuntimeManifest,
+) -> String {
+  optional_string(self.runtime, "assetProtocol").unwrap_or("lepusa")
+}
+
+///|
 fn first_webview_url(webviews : Array[Json]) -> String {
   match webviews.get(0) {
     Some(Object(webview)) => optional_string(webview, "url").unwrap_or("")
