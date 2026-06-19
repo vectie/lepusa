@@ -1012,6 +1012,8 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
+  assert_true(result.output.contains("verification-checks: 4"))
+  assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 3"))
   let bundle_root = root + "/lepusa-example"
@@ -1073,6 +1075,8 @@ async test "bundle write materializes planned resources" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
+  assert_true(result.output.contains("verification-checks: 5"))
+  assert_true(result.output.contains("verified: true"))
   let icon_path = bundle_root + "/resource-app/resource-app.png"
   assert_true(@fs.exists(icon_path))
   assert_eq(@fs.read_file(icon_path).text(), "icon-bytes")

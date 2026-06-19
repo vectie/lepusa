@@ -903,6 +903,8 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 "filesystem-scopes: \{filesystem_scope_count}\n" +
                 "resources: \{plan.resources().length()}\n" +
                 "resources-written: \{result.resources().length()}\n" +
+                "verification-checks: \{result.checks().length()}\n" +
+                "verified: \{result.verified().to_string()}\n" +
                 "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
                 "files: \{result.files().length()}\n",
               )

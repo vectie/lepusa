@@ -3,6 +3,22 @@ pub struct BundleWriteResult {
   root : String
   files : Array[String]
   resources : Array[String]
+  checks : Array[BundleWriteCheck]
+} derive(Debug, Eq)
+
+///|
+pub(all) enum BundleWriteCheckKind {
+  PlannedFileCheck
+  PlannedResourceCheck
+  RuntimeManifestCheck
+} derive(Debug, Eq)
+
+///|
+pub struct BundleWriteCheck {
+  kind : BundleWriteCheckKind
+  path : String
+  ok : Bool
+  message : String
 } derive(Debug, Eq)
 
 ///|
@@ -18,6 +34,62 @@ pub fn BundleWriteResult::files(self : BundleWriteResult) -> Array[String] {
 ///|
 pub fn BundleWriteResult::resources(self : BundleWriteResult) -> Array[String] {
   self.resources
+}
+
+///|
+pub fn BundleWriteResult::checks(
+  self : BundleWriteResult,
+) -> Array[BundleWriteCheck] {
+  self.checks.copy()
+}
+
+///|
+pub fn BundleWriteResult::verified(self : BundleWriteResult) -> Bool {
+  for check in self.checks {
+    if !check.ok() {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn BundleWriteCheck::new(
+  kind~ : BundleWriteCheckKind,
+  path~ : String,
+  ok~ : Bool,
+  message~ : String,
+) -> BundleWriteCheck {
+  { kind, path, ok, message }
+}
+
+///|
+pub fn BundleWriteCheck::kind(self : BundleWriteCheck) -> BundleWriteCheckKind {
+  self.kind
+}
+
+///|
+pub fn BundleWriteCheck::path(self : BundleWriteCheck) -> String {
+  self.path
+}
+
+///|
+pub fn BundleWriteCheck::ok(self : BundleWriteCheck) -> Bool {
+  self.ok
+}
+
+///|
+pub fn BundleWriteCheck::message(self : BundleWriteCheck) -> String {
+  self.message
+}
+
+///|
+pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
+  match self {
+    PlannedFileCheck => "planned-file"
+    PlannedResourceCheck => "planned-resource"
+    RuntimeManifestCheck => "runtime-manifest"
+  }
 }
 
 ///|
@@ -68,13 +140,80 @@ pub async fn write_plan(
         }
       }
       if problems.is_empty() {
-        Ok({ root, files: written, resources: copied_resources })
+        Ok({
+          root,
+          files: written,
+          resources: copied_resources,
+          checks: verify_written_plan(root, files, plan.resources()),
+        })
       } else {
         Err(problems)
       }
     }
     Err(problems) => Err(problems)
   }
+}
+
+///|
+async fn verify_written_plan(
+  root : String,
+  files : Array[@lepusa.BundleFile],
+  resources : Array[@lepusa.BundleResource],
+) -> Array[BundleWriteCheck] {
+  let checks : Array[BundleWriteCheck] = []
+  for file in files {
+    let path = join_path(root, file.path())
+    let exists = @fs.exists(path) catch { _ => false }
+    checks.push(
+      BundleWriteCheck::new(
+        kind=PlannedFileCheck,
+        path~,
+        ok=exists,
+        message=if exists { "file exists" } else { "file is missing" },
+      ),
+    )
+    if file.path().has_suffix("lepusa/runtime.json") {
+      checks.push(verify_runtime_manifest(path))
+    }
+  }
+  for resource in resources {
+    let path = join_path(root, resource.path())
+    let exists = @fs.exists(path) catch { _ => false }
+    checks.push(
+      BundleWriteCheck::new(
+        kind=PlannedResourceCheck,
+        path~,
+        ok=exists,
+        message=if exists { "resource exists" } else { "resource is missing" },
+      ),
+    )
+  }
+  checks
+}
+
+///|
+async fn verify_runtime_manifest(path : String) -> BundleWriteCheck {
+  let content = @fs.read_file(path) catch {
+    error =>
+      return BundleWriteCheck::new(
+        kind=RuntimeManifestCheck,
+        path~,
+        ok=false,
+        message="could not read runtime manifest: \{error}",
+      )
+  }
+  let text = content.text()
+  let ok = text.contains("\"runtime\"") && text.contains("\"webviews\"")
+  BundleWriteCheck::new(
+    kind=RuntimeManifestCheck,
+    path~,
+    ok~,
+    message=if ok {
+      "runtime manifest contains runtime and webview data"
+    } else {
+      "runtime manifest is missing runtime or webview data"
+    },
+  )
 }
 
 ///|
