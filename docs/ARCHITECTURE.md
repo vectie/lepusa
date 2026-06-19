@@ -355,10 +355,10 @@ without changing the app-facing service model.
 platform backend supplies start, readiness, and stop handlers, then executes
 startup or shutdown action sets and receives a `NativeServiceSupervisorReport`.
 This keeps process spawning and HTTP probing owned by platform code while
-preserving one framework-level service contract. The macOS package now maps
-those hooks to native process launch, HTTP readiness polling, and tracked
-shutdown. Windows and Linux expose the same helper surface and currently return
-explicit skipped statuses until their native supervisors replace the stubs.
+preserving one framework-level service contract. The macOS and Linux packages
+now map those hooks to native process launch, HTTP readiness polling, and
+tracked shutdown. Windows exposes the same helper surface and currently returns
+explicit skipped statuses until its native supervisor replaces the stub.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

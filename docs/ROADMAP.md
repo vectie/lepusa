@@ -44,8 +44,8 @@
 - Add `RuntimeServicePlan` as the service-specific runtime handoff for
   localhost sidecars, start order, validation, supervisor requirements, and a
   shared start/readiness/shutdown supervisor handoff with native execution
-  reports, backend executor hooks, macOS native process/readiness execution,
-  and Linux/Windows platform executor stubs.
+  reports, backend executor hooks, macOS/Linux native process/readiness
+  execution, and Windows platform executor stubs.
 - Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
   protocol asset resolution, bridge dispatch, service supervisor
   plans/reports/executors, and lifecycle steps.
