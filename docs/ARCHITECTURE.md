@@ -267,6 +267,9 @@ package with a small C stub that validates the system WebKit framework is
 available and a MoonBit launch-plan layer that wraps the portable runtime
 launch manifest in a macOS envelope. Objective-C window creation should live
 under this package, not in the portable facade or CLI.
+`MacOSBackend::runner_plan(host)` prepares the next runner boundary: WebView
+boot data, a stepped runtime session, and startup operations translated from
+portable `RuntimeOperation` values into macOS runner operations.
 
 ## Bundling
 

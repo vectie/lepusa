@@ -12,10 +12,17 @@ test "macos backend links Cocoa and WebKit" {
 ///|
 test "macos backend lowers runtime host to launch plan" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
-  let app = @lepusa.new(root).window(
-    title="macOS",
-    source=@lepusa.Source::html("<main>macOS</main>"),
-  )
+  let app = @lepusa.new(root)
+    .window(title="macOS", source=@lepusa.Source::html("<main>macOS</main>"))
+    .with_startup(
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::effect("boot"),
+        @lepusa.Cmd::navigate(
+          "main",
+          @lepusa.Source::html("<main>ready</main>"),
+        ),
+      ]),
+    )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(runtime_plan) =>
       match MacOSBackend::new() {
@@ -45,6 +52,72 @@ test "macos backend lowers runtime host to launch plan" {
             }
             Err(_) => abort("unexpected invalid macOS launch plan")
           }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "macos backend prepares startup operations for native runner" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(title="macOS", source=@lepusa.Source::html("<main>macOS</main>"))
+    .with_startup(
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::emit(
+          @lepusa.Event::new("ready"),
+          target=WindowTarget("main"),
+        ),
+        @lepusa.Cmd::effect("boot"),
+        @lepusa.Cmd::navigate(
+          "main",
+          @lepusa.Source::html("<main>ready</main>"),
+        ),
+      ]),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(runtime_plan) =>
+      match MacOSBackend::new() {
+        Ok(backend) => {
+          let host = @runtime.RuntimeHost::new(runtime_plan)
+          match backend.runner_plan(host) {
+            Ok(plan) => {
+              assert_eq(plan.backend_name(), "macos")
+              assert_eq(plan.webview_engine(), "WKWebView")
+              assert_eq(plan.webviews().length(), 1)
+              let operations = plan.startup_operations()
+              assert_eq(operations.length(), 3)
+              assert_true(
+                operations[0] is MacOSSendEvent(WindowTarget("main"), _),
+              )
+              assert_true(operations[1] is MacOSRunEffect("boot"))
+              assert_true(
+                operations[2]
+                is MacOSNavigateWindow(
+                  "main",
+                  "lepusa://inline/main/index.html"
+                ),
+              )
+              assert_eq(
+                plan.session().windows()[0].url(),
+                "lepusa://inline/main/index.html",
+              )
+              match
+                plan.session().resolve_asset("lepusa://inline/main/index.html") {
+                Ok(asset) =>
+                  assert_true(
+                    asset.body() is VirtualContent("<main>ready</main>"),
+                  )
+                Err(_) => abort("unexpected missing navigated macOS asset")
+              }
+              let json = plan.bootstrap_json()
+              assert_true(json.contains("\"startupOperations\""))
+              assert_true(json.contains("\"kind\":\"navigate-window\""))
+            }
+            Err(_) => abort("unexpected invalid macOS runner plan")
+          }
+        }
         Err(problem) => abort(problem)
       }
     Err(_) => abort("unexpected invalid runtime plan")

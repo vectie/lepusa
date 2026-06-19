@@ -38,6 +38,7 @@
 - Add runtime lifecycle hooks for startup, shutdown, and window close events.
 - Add `@lepusa/runtime/macos` native backend package with WebKit availability
   validation and macOS launch-plan lowering.
+- Add macOS runner-plan lowering from portable runtime operations.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
 - Support `Source::html`, `Source::local_path`, `Source::url`, and packaged
   assets.
