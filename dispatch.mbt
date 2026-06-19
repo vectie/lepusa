@@ -56,11 +56,12 @@ pub fn RegisteredCommand::mode(self : RegisteredCommand) -> CommandMode {
 ///|
 pub struct CommandRegistry {
   commands : Map[String, RegisteredCommand]
+  duplicate_routes : Array[String]
 }
 
 ///|
 pub fn CommandRegistry::new() -> CommandRegistry {
-  { commands: {} }
+  { commands: {}, duplicate_routes: [] }
 }
 
 ///|
@@ -69,8 +70,16 @@ pub fn CommandRegistry::register(
   command : RegisteredCommand,
 ) -> CommandRegistry {
   let commands = self.commands.copy()
-  commands[command.route()] = command
-  { commands, }
+  let duplicate_routes = self.duplicate_routes.copy()
+  let route = command.route()
+  if route != "" && commands.contains(route) {
+    if !duplicate_routes.contains(route) {
+      duplicate_routes.push(route)
+    }
+  } else {
+    commands[route] = command
+  }
+  { commands, duplicate_routes }
 }
 
 ///|
@@ -145,6 +154,9 @@ pub fn CommandRegistry::validate(self : CommandRegistry) -> Array[String] {
       problems.push("registered command route mismatch: \{route}")
     }
   })
+  for route in self.duplicate_routes {
+    problems.push("registered command route must be unique: \{route}")
+  }
   problems
 }
 

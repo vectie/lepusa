@@ -205,6 +205,20 @@ test "plugin validation rejects empty and duplicate commands" {
 }
 
 ///|
+test "app validation rejects plugin namespace collisions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let problems = @lepusa.new(root)
+    .window(label="main")
+    .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+    .with_plugin(@lepusa.Plugin::new("core").command_async("invoke"))
+    .validate()
+  assert_true(problems.contains("plugin name must be unique: core"))
+  assert_true(
+    problems.contains("plugin command route must be unique: core.invoke"),
+  )
+}
+
+///|
 test "capabilities scope permissions by window" {
   let capability = @lepusa.Capability::new("main-files")
     .window("main")
@@ -395,6 +409,28 @@ test "command registry denies missing capability" {
     ),
   )
   assert_true(response is InvokeError("7", "permission denied: shell.open"))
+}
+
+///|
+test "command registry validates duplicate registrations" {
+  let registry = @lepusa.CommandRegistry::new()
+    .register_fn("core.invoke", handler=fn(_) { Ok("first") })
+    .register_fn("core.invoke", handler=fn(_) { Ok("second") })
+  assert_eq(registry.routes().length(), 1)
+  assert_eq(
+    registry.validate()[0],
+    "registered command route must be unique: core.invoke",
+  )
+  let response = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="1",
+      window_label="main",
+      plugin="core",
+      command="invoke",
+    ),
+    capabilities=[@lepusa.Capability::new("core").command("core.invoke")],
+  )
+  assert_true(response is InvokeOk("1", "first"))
 }
 
 ///|

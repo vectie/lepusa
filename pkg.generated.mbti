@@ -183,6 +183,7 @@ pub(all) enum CommandMode {
 
 pub struct CommandRegistry {
   commands : Map[String, RegisteredCommand]
+  duplicate_routes : Array[String]
 }
 pub fn CommandRegistry::async_routes(Self) -> Array[String]
 pub fn CommandRegistry::contains(Self, String) -> Bool

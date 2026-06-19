@@ -82,8 +82,8 @@
   runtime manifests now carry capability grants, and dispatch already enforces
   those permissions.
 - Generate a small JavaScript bridge under `window.lepusa`.
-- Add tests for denied commands, malformed payloads, and plugin namespace
-  collisions.
+- Keep denied-command, malformed-payload, and plugin namespace collision tests
+  in the IPC boundary suite as the bridge grows.
 
 ## Milestone 4: CLI
 

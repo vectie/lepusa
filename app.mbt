@@ -185,6 +185,7 @@ pub fn App::validate(self : App) -> Array[String] {
       problems.push(problem)
     }
   }
+  self.validate_plugin_routes(problems)
   for capability in self.capabilities {
     for problem in capability.validate() {
       problems.push(problem)
@@ -196,6 +197,27 @@ pub fn App::validate(self : App) -> Array[String] {
     }
   }
   problems
+}
+
+///|
+fn App::validate_plugin_routes(self : App, problems : Array[String]) -> Unit {
+  let plugin_names : Array[String] = []
+  let command_routes : Array[String] = []
+  for plugin in self.plugins {
+    let name = plugin.name()
+    if name != "" && plugin_names.contains(name) {
+      problems.push("plugin name must be unique: \{name}")
+    } else {
+      plugin_names.push(name)
+    }
+    for route in plugin.command_routes() {
+      if route != "." && command_routes.contains(route) {
+        problems.push("plugin command route must be unique: \{route}")
+      } else {
+        command_routes.push(route)
+      }
+    }
+  }
 }
 
 ///|
