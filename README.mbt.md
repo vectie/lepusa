@@ -407,8 +407,8 @@ shape that `lepusa lifecycle` prints.
 `@lepusa/runtime` also exposes `NativeBackend` and `NativeRuntime`, the shared
 lowering boundary for platform packages. `NativeRuntime` binds a backend and
 host once, then gives platform loops bootstrap JSON, asset JSON, dispatch JSON,
-service supervisor plans, and lifecycle step JSON without making each backend
-rebuild those paths.
+service supervisor plans/reports, and lifecycle step JSON without making each
+backend rebuild those paths.
 `@lepusa.RunReport` is the shared launch summary returned by source and
 packaged runtime adapters, so CLI output and future native loops use one status
 vocabulary for prepared, launched, failed, and unsupported runs.

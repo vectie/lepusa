@@ -834,6 +834,17 @@ test "native runtime exposes decorated service supervisor plan" {
           assert_true(
             supervisor.to_json().contains("\"nativeBackend\":\"test\""),
           )
+          let report = runtime.service_supervisor_report()
+          assert_eq(report.backend_name(), "test")
+          assert_true(report.ok())
+          assert_eq(report.action_count(), 3)
+          assert_eq(report.failed_count(), 0)
+          assert_true(
+            report.action_reports()[1].status() is NativeServiceActionPrepared,
+          )
+          assert_true(
+            report.to_json().contains("\"status\":{\"name\":\"prepared\""),
+          )
         }
         Err(_) => abort("unexpected invalid native runtime")
       }
@@ -852,6 +863,33 @@ test "native service supervisor plan validates native metadata" {
   assert_eq(problems.length(), 2)
   assert_eq(problems[0], "native service supervisor backend is required")
   assert_eq(problems[1], "native service supervisor webview engine is required")
+}
+
+///|
+test "native service supervisor report captures action failures" {
+  let service = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/server"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let failed = NativeServiceActionReport::new(
+    action=StartLocalService(service),
+    status=NativeServiceActionFailed("spawn failed"),
+  )
+  let report = NativeServiceSupervisorReport::new(
+    backend_name="test",
+    webview_engine="SystemWebView",
+    action_reports=[failed],
+  )
+  assert_false(report.ok())
+  assert_eq(report.action_count(), 1)
+  assert_eq(report.failed_count(), 1)
+  assert_eq(report.action_reports()[0].service_name(), "api")
+  assert_eq(report.action_reports()[0].action_kind(), "start-service")
+  assert_true(report.action_reports()[0].failed())
+  assert_eq(report.action_reports()[0].status().name(), "failed")
+  assert_eq(report.action_reports()[0].status().message(), "spawn failed")
+  assert_true(report.to_json().contains("\"failedCount\":1"))
 }
 
 ///|

@@ -291,7 +291,7 @@ and `lepusa lifecycle <event> [window]` prints it for no-window smoke tests.
 `@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`,
 `NativeRunnerPlan`, and `NativeRuntime`. `NativeRuntime` is the platform-loop
 facade: it binds a backend and `RuntimeHost` once, then exposes bootstrap JSON,
-asset resolution JSON, IPC dispatch JSON, service supervisor plans, and
+asset resolution JSON, IPC dispatch JSON, service supervisor plans/reports, and
 lifecycle step JSON from one object. Platform packages should consume that
 facade instead of reassembling host, runner, protocol, command dispatch, and
 sidecar supervision paths themselves. Source and packaged runtime paths both
@@ -347,6 +347,10 @@ and shutdown handoff consumed by native platform loops.
 engine metadata, and every platform source/bundled run plan exposes it so
 WKWebView, WebView2, and WebKitGTK loops can share the same sidecar supervisor
 contract before wiring platform-specific process spawning and readiness probes.
+`NativeServiceSupervisorReport` is the execution result envelope for that same
+contract. It records per-action prepared, started, ready, stopped, skipped, or
+failed states so platform loops can report real process/readiness outcomes
+without changing the app-facing service model.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

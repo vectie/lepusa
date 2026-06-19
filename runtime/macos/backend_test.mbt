@@ -233,6 +233,9 @@ test "macos backend prepares first webview load url" {
           assert_eq(supervisor.backend_name(), "macos")
           assert_eq(supervisor.webview_engine(), "WKWebView")
           assert_false(supervisor.requires_supervisor())
+          let report = plan.service_supervisor_report()
+          assert_true(report.ok())
+          assert_eq(report.action_count(), 0)
           let bridge = plan.bridge()
           assert_eq(bridge.sync_command_routes().length(), 0)
           assert_eq(bridge.async_command_routes().length(), 0)
@@ -399,6 +402,10 @@ test "macos backend prepares bundled runtime manifest" {
             supervisor.startup_actions()[1] is WaitLocalServiceReady(_),
           )
           assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
+          let report = plan.service_supervisor_report()
+          assert_eq(report.backend_name(), "macos")
+          assert_true(report.ok())
+          assert_eq(report.action_count(), 3)
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }

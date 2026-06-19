@@ -439,6 +439,13 @@ pub fn MacOSRunPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn MacOSRunPlan::service_supervisor_report(
+  self : MacOSRunPlan,
+) -> @runtime.NativeServiceSupervisorReport {
+  self.service_supervisor.prepared_report()
+}
+
+///|
 pub fn MacOSBridgePlan::sync_command_routes(
   self : MacOSBridgePlan,
 ) -> Array[String] {

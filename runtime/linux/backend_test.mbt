@@ -73,6 +73,8 @@ test "linux backend prepares run plan and reports unsupported launch" {
           assert_false(
             result.plan().service_supervisor_plan().requires_supervisor(),
           )
+          assert_true(result.plan().service_supervisor_report().ok())
+          assert_eq(result.plan().service_supervisor_report().action_count(), 0)
         }
         Err(_) => abort("unexpected invalid Linux dry run")
       }
@@ -124,6 +126,10 @@ test "linux backend prepares bundled runtime contract" {
             supervisor.startup_actions()[1] is WaitLocalServiceReady(_),
           )
           assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
+          let report = plan.service_supervisor_report()
+          assert_eq(report.backend_name(), "linux")
+          assert_true(report.ok())
+          assert_eq(report.action_count(), 3)
         }
         Err(_) => abort("unexpected invalid Linux bundled run plan")
       }

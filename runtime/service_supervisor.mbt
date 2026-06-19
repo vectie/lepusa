@@ -6,6 +6,29 @@ pub struct NativeServiceSupervisorPlan {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum NativeServiceActionStatus {
+  NativeServiceActionPrepared
+  NativeServiceActionStarted
+  NativeServiceActionReady
+  NativeServiceActionStopped
+  NativeServiceActionSkipped(String)
+  NativeServiceActionFailed(String)
+} derive(Debug, Eq)
+
+///|
+pub struct NativeServiceActionReport {
+  action : @lepusa.LocalServiceSupervisorAction
+  status : NativeServiceActionStatus
+} derive(Debug, Eq)
+
+///|
+pub struct NativeServiceSupervisorReport {
+  backend_name : String
+  webview_engine : String
+  action_reports : Array[NativeServiceActionReport]
+} derive(Debug, Eq)
+
+///|
 pub fn NativeServiceSupervisorPlan::new(
   backend_name~ : String,
   webview_engine~ : String,
@@ -86,6 +109,24 @@ pub fn NativeServiceSupervisorPlan::validate(
 }
 
 ///|
+pub fn NativeServiceSupervisorPlan::prepared_report(
+  self : NativeServiceSupervisorPlan,
+) -> NativeServiceSupervisorReport {
+  let reports : Array[NativeServiceActionReport] = []
+  for action in self.startup_actions() {
+    reports.push(NativeServiceActionReport::new(action~))
+  }
+  for action in self.shutdown_actions() {
+    reports.push(NativeServiceActionReport::new(action~))
+  }
+  NativeServiceSupervisorReport::new(
+    backend_name=self.backend_name,
+    webview_engine=self.webview_engine,
+    action_reports=reports,
+  )
+}
+
+///|
 pub fn NativeServiceSupervisorPlan::to_json(
   self : NativeServiceSupervisorPlan,
 ) -> String {
@@ -98,6 +139,173 @@ pub fn NativeServiceSupervisorPlan::to_json(
     "\"startupActions\":[\{self.startup_actions().map(fn(action) { action.to_json() }).join(",")}],",
     "\"shutdownActions\":[\{self.shutdown_actions().map(fn(action) { action.to_json() }).join(",")}],",
     "\"requiresSupervisor\":\{self.requires_supervisor().json_bool()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeServiceActionReport::new(
+  action~ : @lepusa.LocalServiceSupervisorAction,
+  status? : NativeServiceActionStatus = NativeServiceActionPrepared,
+) -> NativeServiceActionReport {
+  { action, status }
+}
+
+///|
+pub fn NativeServiceActionReport::action(
+  self : NativeServiceActionReport,
+) -> @lepusa.LocalServiceSupervisorAction {
+  self.action
+}
+
+///|
+pub fn NativeServiceActionReport::status(
+  self : NativeServiceActionReport,
+) -> NativeServiceActionStatus {
+  self.status
+}
+
+///|
+pub fn NativeServiceActionReport::service_name(
+  self : NativeServiceActionReport,
+) -> String {
+  self.action.service().name()
+}
+
+///|
+pub fn NativeServiceActionReport::action_kind(
+  self : NativeServiceActionReport,
+) -> String {
+  self.action.kind()
+}
+
+///|
+pub fn NativeServiceActionReport::failed(
+  self : NativeServiceActionReport,
+) -> Bool {
+  self.status is NativeServiceActionFailed(_)
+}
+
+///|
+pub fn NativeServiceActionReport::to_json(
+  self : NativeServiceActionReport,
+) -> String {
+  [
+    "{",
+    "\"action\":\{self.action.to_json()},",
+    "\"service\":\{self.service_name().json_string()},",
+    "\"actionKind\":\{self.action_kind().json_string()},",
+    "\"status\":\{self.status.to_json()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeServiceActionStatus::name(
+  self : NativeServiceActionStatus,
+) -> String {
+  match self {
+    NativeServiceActionPrepared => "prepared"
+    NativeServiceActionStarted => "started"
+    NativeServiceActionReady => "ready"
+    NativeServiceActionStopped => "stopped"
+    NativeServiceActionSkipped(_) => "skipped"
+    NativeServiceActionFailed(_) => "failed"
+  }
+}
+
+///|
+pub fn NativeServiceActionStatus::message(
+  self : NativeServiceActionStatus,
+) -> String {
+  match self {
+    NativeServiceActionSkipped(message) | NativeServiceActionFailed(message) =>
+      message
+    _ => ""
+  }
+}
+
+///|
+pub fn NativeServiceActionStatus::to_json(
+  self : NativeServiceActionStatus,
+) -> String {
+  [
+    "{",
+    "\"name\":\{self.name().json_string()},",
+    "\"message\":\{self.message().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeServiceSupervisorReport::new(
+  backend_name~ : String,
+  webview_engine~ : String,
+  action_reports? : Array[NativeServiceActionReport] = [],
+) -> NativeServiceSupervisorReport {
+  { backend_name, webview_engine, action_reports: action_reports.copy() }
+}
+
+///|
+pub fn NativeServiceSupervisorReport::backend_name(
+  self : NativeServiceSupervisorReport,
+) -> String {
+  self.backend_name
+}
+
+///|
+pub fn NativeServiceSupervisorReport::webview_engine(
+  self : NativeServiceSupervisorReport,
+) -> String {
+  self.webview_engine
+}
+
+///|
+pub fn NativeServiceSupervisorReport::action_reports(
+  self : NativeServiceSupervisorReport,
+) -> Array[NativeServiceActionReport] {
+  self.action_reports.copy()
+}
+
+///|
+pub fn NativeServiceSupervisorReport::action_count(
+  self : NativeServiceSupervisorReport,
+) -> Int {
+  self.action_reports.length()
+}
+
+///|
+pub fn NativeServiceSupervisorReport::failed_count(
+  self : NativeServiceSupervisorReport,
+) -> Int {
+  let mut count = 0
+  for report in self.action_reports {
+    if report.failed() {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+pub fn NativeServiceSupervisorReport::ok(
+  self : NativeServiceSupervisorReport,
+) -> Bool {
+  self.failed_count() == 0
+}
+
+///|
+pub fn NativeServiceSupervisorReport::to_json(
+  self : NativeServiceSupervisorReport,
+) -> String {
+  [
+    "{",
+    "\"nativeBackend\":\{self.backend_name.json_string()},",
+    "\"webviewEngine\":\{self.webview_engine.json_string()},",
+    "\"ok\":\{self.ok().json_bool()},",
+    "\"actionCount\":\{self.action_count()},",
+    "\"failedCount\":\{self.failed_count()},",
+    "\"actions\":[\{self.action_reports.map(fn(report) { report.to_json() }).join(",")}]",
     "}",
   ].join("")
 }

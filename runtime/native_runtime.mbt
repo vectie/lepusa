@@ -39,6 +39,13 @@ pub fn NativeRuntime::service_supervisor_plan(
 }
 
 ///|
+pub fn NativeRuntime::service_supervisor_report(
+  self : NativeRuntime,
+) -> NativeServiceSupervisorReport {
+  self.runner.service_supervisor_report()
+}
+
+///|
 pub fn NativeRuntime::bootstrap_json(self : NativeRuntime) -> String {
   self.runner.bootstrap_json()
 }

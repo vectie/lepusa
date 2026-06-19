@@ -143,6 +143,13 @@ pub fn NativeRunnerPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn NativeRunnerPlan::service_supervisor_report(
+  self : NativeRunnerPlan,
+) -> NativeServiceSupervisorReport {
+  self.service_supervisor_plan().prepared_report()
+}
+
+///|
 fn runtime_startup_services(
   operations : Array[RuntimeOperation],
 ) -> Array[@lepusa.LocalService] {

@@ -129,6 +129,13 @@ pub fn LinuxRunPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn LinuxRunPlan::service_supervisor_report(
+  self : LinuxRunPlan,
+) -> @runtime.NativeServiceSupervisorReport {
+  self.service_supervisor_plan().prepared_report()
+}
+
+///|
 pub fn LinuxRunPlan::lifecycle_step_count(self : LinuxRunPlan) -> Int {
   self.runner.lifecycle_steps().length()
 }
@@ -189,6 +196,13 @@ pub fn LinuxBundledRunPlan::service_supervisor_plan(
     webview_engine=plan.webview_engine(),
     plan=plan.service_supervisor_plan(),
   )
+}
+
+///|
+pub fn LinuxBundledRunPlan::service_supervisor_report(
+  self : LinuxBundledRunPlan,
+) -> @runtime.NativeServiceSupervisorReport {
+  self.service_supervisor_plan().prepared_report()
 }
 
 ///|

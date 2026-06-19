@@ -133,6 +133,13 @@ pub fn WindowsRunPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn WindowsRunPlan::service_supervisor_report(
+  self : WindowsRunPlan,
+) -> @runtime.NativeServiceSupervisorReport {
+  self.service_supervisor_plan().prepared_report()
+}
+
+///|
 pub fn WindowsRunPlan::lifecycle_step_count(self : WindowsRunPlan) -> Int {
   self.runner.lifecycle_steps().length()
 }
@@ -195,6 +202,13 @@ pub fn WindowsBundledRunPlan::service_supervisor_plan(
     webview_engine=plan.webview_engine(),
     plan=plan.service_supervisor_plan(),
   )
+}
+
+///|
+pub fn WindowsBundledRunPlan::service_supervisor_report(
+  self : WindowsBundledRunPlan,
+) -> @runtime.NativeServiceSupervisorReport {
+  self.service_supervisor_plan().prepared_report()
 }
 
 ///|
