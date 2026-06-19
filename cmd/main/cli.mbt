@@ -81,6 +81,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("doctor") => render_doctor()
     Some("plan") => render_plan()
     Some("manifest") => render_manifest()
+    Some("native-plan") => render_native_plan(args)
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
     Some("dev") => fail("dev requires the native async runner\n")
@@ -99,6 +100,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("doctor") => render_doctor_async(args)
     Some("plan") => render_plan_async(args)
     Some("manifest") => render_manifest_async(args)
+    Some("native-plan") => render_native_plan_async(args)
     Some("bridge") => render_bridge_async(args)
     Some("dev") => render_dev_async(args)
     Some("init") => render_init(args)
@@ -131,6 +133,7 @@ fn help_text() -> String {
     #|  lepusa doctor
     #|  lepusa plan
     #|  lepusa manifest
+    #|  lepusa native-plan [macos|windows|linux]
     #|  lepusa bridge
     #|  lepusa dev
     #|  lepusa invoke <window> <plugin.command> [payload]
@@ -274,6 +277,20 @@ async fn render_manifest_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_native_plan_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          render_native_runner_plan(native_backend_for_target(target), host)
+        Err(problems) => fail(render_problems("Lepusa native plan", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 async fn render_plan_async(args : Array[String]) -> CliResult {
   match project_runtime_plan(args) {
     Ok(plan) => render_runtime_plan(plan)
@@ -410,6 +427,44 @@ fn render_manifest() -> CliResult {
         Err(problems) => fail(render_problems("Lepusa manifest", problems))
       }
     Err(problems) => fail(render_problems("Lepusa manifest", problems))
+  }
+}
+
+///|
+fn render_native_plan(args : Array[String]) -> CliResult {
+  match parse_bundle_target(args.get(1)) {
+    Ok(target) =>
+      match sample_runtime_plan() {
+        Ok(plan) =>
+          render_native_runner_plan(
+            native_backend_for_target(target),
+            @runtime.RuntimeHost::new(plan),
+          )
+        Err(problems) => fail(render_problems("Lepusa native plan", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn native_backend_for_target(
+  target : @lepusa.BundleTarget,
+) -> @runtime.NativeBackend {
+  match target {
+    MacOS => @macos_backend.backend()
+    Windows => @windows_backend.backend()
+    Linux => @linux_backend.backend()
+  }
+}
+
+///|
+fn render_native_runner_plan(
+  backend : @runtime.NativeBackend,
+  host : @runtime.RuntimeHost,
+) -> CliResult {
+  match backend.runner_plan(host) {
+    Ok(plan) => ok(plan.bootstrap_json() + "\n")
+    Err(problems) => fail(render_problems("Lepusa native plan", problems))
   }
 }
 

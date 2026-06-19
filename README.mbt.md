@@ -100,11 +100,13 @@ The native CLI is intentionally small while the runtime backend is being built:
 moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
+moon run cmd/main --target native -- native-plan macos
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
 moon run cmd/main --target native -- init _build/lepusa-app
 moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- native-plan linux --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
@@ -234,6 +236,10 @@ declarations and bind pure MoonBit handlers where they exist.
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME
 types, declared command routes, and registered native routes.
+
+`lepusa native-plan [macos|windows|linux]` emits the selected backend's
+`NativeRunnerPlan::bootstrap_json()`, including the portable runtime manifest,
+per-window WebView specs, and startup operations that a platform runner needs.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and

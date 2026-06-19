@@ -7,6 +7,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa manifest"))
+  assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
@@ -63,6 +64,17 @@ test "manifest prints native runner json" {
   )
   assert_true(result.output.contains("\"initializationScripts\""))
   assert_true(result.output.contains("__lepusaInvoke"))
+}
+
+///|
+test "native plan prints backend bootstrap json" {
+  let result = render_cli(["native-plan", "macos"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"nativeBackend\":\"macos\""))
+  assert_true(result.output.contains("\"webviewEngine\":\"WKWebView\""))
+  assert_true(result.output.contains("\"webviewSpecs\""))
+  assert_true(result.output.contains("\"startupOperations\""))
+  assert_true(result.output.contains("\"nativeHook\":\"__lepusaInvoke\""))
 }
 
 ///|
@@ -189,6 +201,27 @@ async test "generated project config drives manifest and bundle write" {
   assert_true(runtime_json.contains("\"log.write\""))
   assert_true(runtime_json.contains("\"store.set\""))
   assert_true(runtime_json.contains("\"signingPrerequisites\""))
+}
+
+///|
+async test "generated project config drives native runner bootstrap" {
+  let root = "/tmp/lepusa-project-native-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "native-plan",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"nativeBackend\":\"linux\""))
+  assert_true(result.output.contains("\"webviewEngine\":\"WebKitGTK\""))
+  assert_true(result.output.contains("\"registeredRoutes\""))
+  assert_true(result.output.contains("\"log.write\""))
+  assert_true(result.output.contains("\"store.set\""))
+  assert_true(result.output.contains("\"webviewSpecs\""))
+  assert_true(result.output.contains("\"startupOperations\""))
 }
 
 ///|
