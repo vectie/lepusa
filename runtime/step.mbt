@@ -1,5 +1,6 @@
 ///|
 pub(all) enum RuntimeOperation {
+  RuntimeStartService(@lepusa.LocalService)
   RuntimeSendEvent(@lepusa.EventTarget, @lepusa.Event)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)

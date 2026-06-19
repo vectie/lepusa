@@ -84,6 +84,7 @@ pub struct MacOSLaunchPlan {
 
 ///|
 pub(all) enum MacOSOperation {
+  MacOSStartService(@lepusa.LocalService)
   MacOSSendEvent(@lepusa.EventTarget, @lepusa.Event)
   MacOSRunEffect(String)
   MacOSNavigateWindow(String, String)
@@ -138,6 +139,7 @@ pub fn MacOSOperation::from_runtime(
   operation : @runtime.RuntimeOperation,
 ) -> MacOSOperation {
   match operation {
+    RuntimeStartService(service) => MacOSStartService(service)
     RuntimeSendEvent(target, event) => MacOSSendEvent(target, event)
     RuntimeRunEffect(name) => MacOSRunEffect(name)
     RuntimeNavigateWindow(label, url) => MacOSNavigateWindow(label, url)
@@ -147,6 +149,13 @@ pub fn MacOSOperation::from_runtime(
 ///|
 pub fn MacOSOperation::to_json(self : MacOSOperation) -> String {
   match self {
+    MacOSStartService(service) =>
+      [
+        "{",
+        "\"kind\":\"start-service\",",
+        "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
     MacOSSendEvent(target, event) =>
       [
         "{",

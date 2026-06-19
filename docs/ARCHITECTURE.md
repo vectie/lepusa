@@ -246,8 +246,9 @@ view of the same model for native runners that dispatch lifecycle events.
 `RuntimeSession::apply_actions(actions)` is the portable execution step: it
 returns backend operations to perform and an updated session with navigation
 asset mappings already applied. Native backends should translate
-`RuntimeSendEvent`, `RuntimeRunEffect`, and `RuntimeNavigateWindow` to platform
-calls instead of mutating session internals.
+`RuntimeStartService`, `RuntimeSendEvent`, `RuntimeRunEffect`, and
+`RuntimeNavigateWindow` to platform calls instead of mutating session
+internals.
 
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
@@ -260,7 +261,9 @@ operations in one object so CLI and platform backends do not reconstruct boot
 state separately.
 `RuntimeHost::runner_plan()` is the native-loop form of the same handoff: it
 adds the launch manifest to the resolved WebViews, stepped session, and startup
-operations so platform packages can translate a single runtime object.
+operations so platform packages can translate a single runtime object. Local
+services are emitted as `RuntimeStartService` operations before app startup
+commands.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol

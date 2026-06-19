@@ -35,6 +35,9 @@ pub fn RuntimeHost::runner_plan(
   match self.startup_step() {
     Ok(step) => {
       session = Some(step.session())
+      for service in step.session().local_services() {
+        startup_operations.push(RuntimeStartService(service))
+      }
       for operation in step.operations() {
         startup_operations.push(operation)
       }

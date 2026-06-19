@@ -86,6 +86,14 @@ test "runtime host carries localhost service metadata" {
         }
         Err(_) => abort("unexpected invalid launch manifest")
       }
+      match host.runner_plan() {
+        Ok(runner) => {
+          let operations = runner.startup_operations()
+          assert_eq(operations.length(), 1)
+          assert_true(operations[0] is RuntimeStartService(_))
+        }
+        Err(_) => abort("unexpected invalid runner plan")
+      }
     }
     Err(_) => abort("unexpected invalid runtime plan")
   }
@@ -360,6 +368,32 @@ test "runtime host builds generic runner plan" {
       assert_true(plan.startup_operations()[0] is RuntimeRunEffect("boot"))
     }
     Err(_) => abort("unexpected invalid runner plan")
+  }
+}
+
+///|
+test "runtime runner starts services before app startup actions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="gateway",
+      source=@lepusa.Source::localhost(port=4317, command=[
+        "moon", "run", "cmd/server",
+      ]),
+    )
+    .with_startup(@lepusa.Cmd::effect("boot"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).runner_plan() {
+        Ok(runner) => {
+          let operations = runner.startup_operations()
+          assert_eq(operations.length(), 2)
+          assert_true(operations[0] is RuntimeStartService(_))
+          assert_true(operations[1] is RuntimeRunEffect("boot"))
+        }
+        Err(_) => abort("unexpected invalid runner plan")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
   }
 }
 

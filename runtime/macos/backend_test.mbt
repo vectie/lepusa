@@ -10,6 +10,39 @@ test "macos backend links Cocoa and WebKit" {
 }
 
 ///|
+test "macos backend maps service startup operations" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="gateway",
+      source=@lepusa.Source::localhost(port=4317, readiness_path="/ready", command=[
+        "moon", "run", "cmd/server",
+      ]),
+    )
+    .with_startup(@lepusa.Cmd::effect("boot"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(runtime_plan) =>
+      match MacOSBackend::new() {
+        Ok(backend) =>
+          match backend.runner_plan(@runtime.RuntimeHost::new(runtime_plan)) {
+            Ok(plan) => {
+              let operations = plan.startup_operations()
+              assert_eq(operations.length(), 2)
+              assert_true(operations[0] is MacOSStartService(_))
+              assert_true(operations[1] is MacOSRunEffect("boot"))
+              let json = plan.bootstrap_json()
+              assert_true(json.contains("\"kind\":\"start-service\""))
+              assert_true(json.contains("\"readinessUrl\""))
+            }
+            Err(_) => abort("unexpected invalid macOS runner plan")
+          }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "macos backend lowers runtime host to launch plan" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
