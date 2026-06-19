@@ -225,10 +225,11 @@ re-reading `App`, `WindowConfig`, or manifest state.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol
-mappings, command routes, registered native routes, and document-start scripts
-into stable JSON. `RuntimeHost::launch_manifest()` adds the concrete registered
-native routes from a command registry, while bundle and platform packages
-consume the same manifest instead of inventing their own runtime files.
+mappings, inline virtual files with MIME types, command routes, registered
+native routes, and document-start scripts into stable JSON.
+`RuntimeHost::launch_manifest()` adds the concrete registered native routes
+from a command registry, while bundle and platform packages consume the same
+manifest instead of inventing their own runtime files.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is

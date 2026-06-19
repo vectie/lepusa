@@ -6,6 +6,7 @@ pub struct RuntimeLaunchManifest {
   bridge_url : String
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
+  virtual_files : Array[RuntimeVirtualAsset]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -34,12 +35,21 @@ pub struct RuntimeProtocolBinding {
 } derive(Debug, Eq)
 
 ///|
+pub struct RuntimeVirtualAsset {
+  window_label : String
+  path : String
+  mime_type : String
+  content : String
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimePlan::launch_manifest(
   self : RuntimePlan,
   registered_routes? : Array[String] = [],
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
   let webviews : Array[RuntimeWebViewBoot] = []
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
+  let virtual_files : Array[RuntimeVirtualAsset] = []
   let problems : Array[String] = []
   for window in self.windows() {
     match
@@ -56,6 +66,9 @@ pub fn RuntimePlan::launch_manifest(
         RuntimeProtocolBinding::from_mapping(window.label(), mapping),
       )
     }
+    for file in window.source().virtual_files() {
+      virtual_files.push(RuntimeVirtualAsset::from_file(window.label(), file))
+    }
   }
   if problems.is_empty() {
     Ok({
@@ -65,6 +78,7 @@ pub fn RuntimePlan::launch_manifest(
       bridge_url: "\{self.asset_protocol()}://runtime/bridge.js",
       webviews,
       protocol_mappings,
+      virtual_files,
       command_routes: self.command_routes(),
       registered_routes: registered_routes.copy(),
     })
@@ -101,6 +115,19 @@ fn RuntimeProtocolBinding::from_mapping(
   mapping : ProtocolMapping,
 ) -> RuntimeProtocolBinding {
   { window_label, scheme: mapping.scheme(), root: mapping.root() }
+}
+
+///|
+fn RuntimeVirtualAsset::from_file(
+  window_label : String,
+  file : VirtualFile,
+) -> RuntimeVirtualAsset {
+  {
+    window_label,
+    path: file.path(),
+    mime_type: mime_type_for_path(file.path()),
+    content: file.content(),
+  }
 }
 
 ///|
@@ -142,6 +169,13 @@ pub fn RuntimeLaunchManifest::protocol_mappings(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::virtual_files(
+  self : RuntimeLaunchManifest,
+) -> Array[RuntimeVirtualAsset] {
+  self.virtual_files.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::command_routes(
   self : RuntimeLaunchManifest,
 ) -> Array[String] {
@@ -165,6 +199,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"bridgeUrl\":\{self.bridge_url.json_string()},",
     "\"webviews\":[\{self.webviews.map(runtime_webview_boot_json).join(",")}],",
     "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_binding_json).join(",")}],",
+    "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",
@@ -255,6 +290,26 @@ pub fn RuntimeProtocolBinding::root(self : RuntimeProtocolBinding) -> String {
 }
 
 ///|
+pub fn RuntimeVirtualAsset::window_label(self : RuntimeVirtualAsset) -> String {
+  self.window_label
+}
+
+///|
+pub fn RuntimeVirtualAsset::path(self : RuntimeVirtualAsset) -> String {
+  self.path
+}
+
+///|
+pub fn RuntimeVirtualAsset::mime_type(self : RuntimeVirtualAsset) -> String {
+  self.mime_type
+}
+
+///|
+pub fn RuntimeVirtualAsset::content(self : RuntimeVirtualAsset) -> String {
+  self.content
+}
+
+///|
 fn runtime_webview_boot_json(webview : RuntimeWebViewBoot) -> String {
   [
     "{",
@@ -283,4 +338,39 @@ fn runtime_protocol_binding_json(binding : RuntimeProtocolBinding) -> String {
     "\"root\":\{binding.root().json_string()}",
     "}",
   ].join("")
+}
+
+///|
+fn runtime_virtual_asset_json(asset : RuntimeVirtualAsset) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{asset.window_label().json_string()},",
+    "\"path\":\{asset.path().json_string()},",
+    "\"mimeType\":\{asset.mime_type().json_string()},",
+    "\"content\":\{asset.content().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn mime_type_for_path(path : String) -> String {
+  if path.has_suffix(".html") || path.has_suffix(".htm") {
+    "text/html"
+  } else if path.has_suffix(".js") || path.has_suffix(".mjs") {
+    "application/javascript"
+  } else if path.has_suffix(".css") {
+    "text/css"
+  } else if path.has_suffix(".json") {
+    "application/json"
+  } else if path.has_suffix(".svg") {
+    "image/svg+xml"
+  } else if path.has_suffix(".png") {
+    "image/png"
+  } else if path.has_suffix(".jpg") || path.has_suffix(".jpeg") {
+    "image/jpeg"
+  } else if path.has_suffix(".wasm") {
+    "application/wasm"
+  } else {
+    "application/octet-stream"
+  }
 }

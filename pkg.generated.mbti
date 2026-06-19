@@ -357,6 +357,7 @@ pub struct RuntimeLaunchManifest {
   bridge_url : String
   webviews : Array[RuntimeWebViewBoot]
   protocol_mappings : Array[RuntimeProtocolBinding]
+  virtual_files : Array[RuntimeVirtualAsset]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -368,6 +369,7 @@ pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::to_json(Self) -> String
+pub fn RuntimeLaunchManifest::virtual_files(Self) -> Array[RuntimeVirtualAsset]
 pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]
 
 pub struct RuntimePlan {
@@ -398,6 +400,17 @@ pub struct RuntimeProtocolBinding {
 pub fn RuntimeProtocolBinding::root(Self) -> String
 pub fn RuntimeProtocolBinding::scheme(Self) -> String
 pub fn RuntimeProtocolBinding::window_label(Self) -> String
+
+pub struct RuntimeVirtualAsset {
+  window_label : String
+  path : String
+  mime_type : String
+  content : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeVirtualAsset::content(Self) -> String
+pub fn RuntimeVirtualAsset::mime_type(Self) -> String
+pub fn RuntimeVirtualAsset::path(Self) -> String
+pub fn RuntimeVirtualAsset::window_label(Self) -> String
 
 pub struct RuntimeWebViewBoot {
   label : String

@@ -115,7 +115,8 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
-document-start scripts, protocol mappings, and command routes.
+document-start scripts, protocol mappings, inline virtual files with MIME
+types, and command routes.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
