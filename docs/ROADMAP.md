@@ -52,8 +52,8 @@
   first macOS WKWebView launch path and document-start bridge injection exist;
   packaged macOS `lepusa-runtime launch` consumes `lepusa/runtime.json`;
   MoonBit-side macOS bridge message dispatch exists; Objective-C
-  WKScriptMessageHandler wiring, custom protocol callbacks, and Linux/Windows
-  launch loops remain.
+  WKScriptMessageHandler wiring for sync command responses exists; async bridge
+  scheduling, custom protocol callbacks, and Linux/Windows launch loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

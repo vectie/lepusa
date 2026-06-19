@@ -279,7 +279,7 @@ fn bundled_macos_manifest() -> String {
     #|        "content": "<main>bundled</main>"
     #|      }
     #|    ],
-    #|    "registeredRoutes": []
+    #|    "registeredRoutes": ["log.write"]
     #|  }
     #|}
   )

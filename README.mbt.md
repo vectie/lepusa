@@ -455,8 +455,9 @@ loops can consume bundled runtime data without depending on CLI internals.
 for repeated bridge calls, while the manifest helper remains useful for
 one-shot probes.
 The macOS runner prepares and injects the generated bridge as a document-start
-WKUserScript, together with a native hook bootstrap for the future
-`window.webkit.messageHandlers.__lepusaInvoke` dispatch path.
+WKUserScript, together with a native hook bootstrap and
+`window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
+responses. Async bridge scheduling is still a separate runtime-loop step.
 `dispatch_bridge_message(runtime, message)` already owns the MoonBit side of
 that path by turning a posted bridge request into a response-callback script.
 `Source::packaged("dist")` also emits an asset resource mapping and

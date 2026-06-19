@@ -34,17 +34,33 @@ typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
 typedef void *(*LepusaMsgSendIdRectId)(void *, void *, LepusaRect, void *);
 typedef void *(*LepusaMsgSendIdRectStyle)(void *, void *, LepusaRect, unsigned long, unsigned long, int);
 typedef void *(*LepusaMsgSendIdScript)(void *, void *, void *, long, int);
+typedef const char *(*LepusaMsgSendCString)(void *, void *);
 typedef void (*LepusaMsgSendVoid)(void *, void *);
 typedef void (*LepusaMsgSendVoidId)(void *, void *, void *);
+typedef void (*LepusaMsgSendVoidIdId)(void *, void *, void *, void *);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
 typedef int (*LepusaMsgSendIntInt)(void *, void *, int);
 typedef void *(*LepusaObjcGetClass)(const char *);
 typedef void *(*LepusaSelRegisterName)(const char *);
+typedef void *(*LepusaObjcAllocateClassPair)(void *, const char *, size_t);
+typedef void (*LepusaObjcRegisterClassPair)(void *);
+typedef int (*LepusaClassAddMethod)(void *, void *, void *, const char *);
 typedef void *LepusaObjcMsgSend;
+typedef moonbit_bytes_t (*LepusaBridgeDispatch)(void *, moonbit_bytes_t);
+
+typedef struct {
+  void *webview;
+  LepusaBridgeDispatch call_dispatch;
+  void *dispatch;
+} LepusaBridgeContext;
 
 static LepusaObjcGetClass lepusa_objc_get_class = NULL;
 static LepusaSelRegisterName lepusa_sel_register_name = NULL;
 static LepusaObjcMsgSend lepusa_objc_msg_send = NULL;
+static LepusaObjcAllocateClassPair lepusa_objc_allocate_class_pair = NULL;
+static LepusaObjcRegisterClassPair lepusa_objc_register_class_pair = NULL;
+static LepusaClassAddMethod lepusa_class_add_method = NULL;
+static LepusaBridgeContext *lepusa_current_bridge_context = NULL;
 
 static void *lepusa_cls(const char *name) {
   return lepusa_objc_get_class == NULL ? NULL : lepusa_objc_get_class(name);
@@ -62,8 +78,30 @@ static void lepusa_msg_void_id(void *target, const char *selector, void *arg) {
   ((LepusaMsgSendVoidId)lepusa_objc_msg_send)(target, lepusa_sel(selector), arg);
 }
 
+static void lepusa_msg_void_id_id(
+  void *target,
+  const char *selector,
+  void *arg1,
+  void *arg2
+) {
+  ((LepusaMsgSendVoidIdId)lepusa_objc_msg_send)(
+    target,
+    lepusa_sel(selector),
+    arg1,
+    arg2
+  );
+}
+
 static void lepusa_msg_void_int(void *target, const char *selector, int arg) {
   ((LepusaMsgSendVoidInt)lepusa_objc_msg_send)(target, lepusa_sel(selector), arg);
+}
+
+static moonbit_bytes_t lepusa_bytes_from_cstr(const char *text) {
+  const char *safe = text == NULL ? "" : text;
+  int32_t len = (int32_t)strlen(safe);
+  moonbit_bytes_t bytes = moonbit_make_bytes(len, 0);
+  memcpy(bytes, safe, len);
+  return bytes;
 }
 
 static void *lepusa_ns_string(moonbit_bytes_t bytes) {
@@ -83,6 +121,78 @@ static void *lepusa_ns_url(moonbit_bytes_t bytes) {
   );
 }
 
+static void lepusa_script_message_handler(
+  void *self,
+  void *selector,
+  void *user_content_controller,
+  void *message
+) {
+  (void)self;
+  (void)selector;
+  (void)user_content_controller;
+  LepusaBridgeContext *context = lepusa_current_bridge_context;
+  if (context == NULL ||
+      context->webview == NULL ||
+      context->call_dispatch == NULL ||
+      context->dispatch == NULL) {
+    return;
+  }
+
+  void *body = lepusa_msg_id(message, "body");
+  void *body_description = body == NULL ? NULL : lepusa_msg_id(body, "description");
+  const char *body_text = body_description == NULL
+    ? ""
+    : ((LepusaMsgSendCString)lepusa_objc_msg_send)(
+        body_description,
+        lepusa_sel("UTF8String")
+      );
+  moonbit_bytes_t request = lepusa_bytes_from_cstr(body_text);
+  moonbit_bytes_t script = context->call_dispatch(context->dispatch, request);
+  if (script == NULL) {
+    return;
+  }
+  lepusa_msg_void_id_id(
+    context->webview,
+    "evaluateJavaScript:completionHandler:",
+    lepusa_ns_string(script),
+    NULL
+  );
+}
+
+static void *lepusa_bridge_handler_class(void) {
+  static void *handler_class = NULL;
+  if (handler_class != NULL) {
+    return handler_class;
+  }
+  handler_class = lepusa_objc_get_class("LepusaWKScriptMessageHandler");
+  if (handler_class != NULL) {
+    return handler_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  handler_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaWKScriptMessageHandler",
+    0
+  );
+  if (handler_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    handler_class,
+    lepusa_sel("userContentController:didReceiveScriptMessage:"),
+    (void *)lepusa_script_message_handler,
+    "v@:@@"
+  );
+  lepusa_objc_register_class_pair(handler_class);
+  return handler_class;
+}
+
 static int lepusa_load_frameworks(void) {
   void *objc = dlopen("/usr/lib/libobjc.A.dylib", RTLD_LAZY | RTLD_LOCAL);
   void *cocoa = dlopen(
@@ -99,9 +209,15 @@ static int lepusa_load_frameworks(void) {
   lepusa_objc_get_class = (LepusaObjcGetClass)dlsym(objc, "objc_getClass");
   lepusa_sel_register_name = (LepusaSelRegisterName)dlsym(objc, "sel_registerName");
   lepusa_objc_msg_send = (LepusaObjcMsgSend)dlsym(objc, "objc_msgSend");
+  lepusa_objc_allocate_class_pair = (LepusaObjcAllocateClassPair)dlsym(objc, "objc_allocateClassPair");
+  lepusa_objc_register_class_pair = (LepusaObjcRegisterClassPair)dlsym(objc, "objc_registerClassPair");
+  lepusa_class_add_method = (LepusaClassAddMethod)dlsym(objc, "class_addMethod");
   return lepusa_objc_get_class != NULL &&
     lepusa_sel_register_name != NULL &&
-    lepusa_objc_msg_send != NULL;
+    lepusa_objc_msg_send != NULL &&
+    lepusa_objc_allocate_class_pair != NULL &&
+    lepusa_objc_register_class_pair != NULL &&
+    lepusa_class_add_method != NULL;
 }
 
 MOONBIT_FFI_EXPORT
@@ -118,14 +234,16 @@ moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
   return bytes;
 }
 
-MOONBIT_FFI_EXPORT
-int32_t lepusa_macos_run_webview(
+static int32_t lepusa_macos_run_webview_impl(
   moonbit_bytes_t title,
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
+  moonbit_bytes_t native_hook,
   int32_t width,
   int32_t height,
-  int32_t resizable
+  int32_t resizable,
+  LepusaBridgeDispatch call_dispatch,
+  void *dispatch
 ) {
   if (!lepusa_load_frameworks()) {
     return 2;
@@ -195,6 +313,26 @@ int32_t lepusa_macos_run_webview(
     return 5;
   }
   lepusa_msg_void_id(controller, "addUserScript:", user_script);
+
+  LepusaBridgeContext bridge_context = {
+    NULL,
+    call_dispatch,
+    dispatch
+  };
+  if (native_hook != NULL && call_dispatch != NULL && dispatch != NULL) {
+    void *handler_class = lepusa_bridge_handler_class();
+    void *handler = handler_class == NULL ? NULL : lepusa_msg_id(handler_class, "new");
+    if (handler == NULL) {
+      return 5;
+    }
+    lepusa_current_bridge_context = &bridge_context;
+    lepusa_msg_void_id_id(
+      controller,
+      "addScriptMessageHandler:name:",
+      handler,
+      lepusa_ns_string(native_hook)
+    );
+  }
   lepusa_msg_void_id(configuration, "setUserContentController:", controller);
 
   void *webview_alloc = lepusa_msg_id(lepusa_cls("WKWebView"), "alloc");
@@ -207,6 +345,7 @@ int32_t lepusa_macos_run_webview(
   if (webview == NULL) {
     return 6;
   }
+  bridge_context.webview = webview;
 
   void *ns_url = lepusa_ns_url(url);
   if (ns_url == NULL) {
@@ -228,7 +367,57 @@ int32_t lepusa_macos_run_webview(
   lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
   lepusa_msg_void_int(app, "activateIgnoringOtherApps:", 1);
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(app, lepusa_sel("run"));
+  if (lepusa_current_bridge_context == &bridge_context) {
+    lepusa_current_bridge_context = NULL;
+  }
   return 0;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t lepusa_macos_run_webview(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  int32_t width,
+  int32_t height,
+  int32_t resizable
+) {
+  return lepusa_macos_run_webview_impl(
+    title,
+    url,
+    initialization_script,
+    NULL,
+    width,
+    height,
+    resizable,
+    NULL,
+    NULL
+  );
+}
+
+MOONBIT_FFI_EXPORT
+int32_t lepusa_macos_run_webview_with_bridge(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  moonbit_bytes_t native_hook,
+  int32_t width,
+  int32_t height,
+  int32_t resizable,
+  LepusaBridgeDispatch call_dispatch,
+  void *dispatch
+) {
+  return lepusa_macos_run_webview_impl(
+    title,
+    url,
+    initialization_script,
+    native_hook,
+    width,
+    height,
+    resizable,
+    call_dispatch,
+    dispatch
+  );
 }
 
 #else
@@ -258,6 +447,29 @@ int32_t lepusa_macos_run_webview(
   (void)width;
   (void)height;
   (void)resizable;
+  return 1;
+}
+
+int32_t lepusa_macos_run_webview_with_bridge(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  moonbit_bytes_t native_hook,
+  int32_t width,
+  int32_t height,
+  int32_t resizable,
+  void *call_dispatch,
+  void *dispatch
+) {
+  (void)title;
+  (void)url;
+  (void)initialization_script;
+  (void)native_hook;
+  (void)width;
+  (void)height;
+  (void)resizable;
+  (void)call_dispatch;
+  (void)dispatch;
   return 1;
 }
 

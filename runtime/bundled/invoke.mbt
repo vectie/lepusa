@@ -11,6 +11,17 @@ pub fn BundledRuntime::new(manifest : BundledRuntimeManifest) -> BundledRuntime 
 }
 
 ///|
+pub fn BundledRuntimeManifest::dispatch_json(
+  self : BundledRuntimeManifest,
+  id~ : String,
+  window_label~ : String,
+  route~ : String,
+  payload? : String = "",
+) -> String {
+  BundledRuntime::new(self).dispatch_json(id~, window_label~, route~, payload~)
+}
+
+///|
 pub async fn BundledRuntimeManifest::dispatch_json_async(
   self : BundledRuntimeManifest,
   id~ : String,
@@ -27,6 +38,20 @@ pub async fn BundledRuntimeManifest::dispatch_json_async(
 }
 
 ///|
+pub fn BundledRuntime::dispatch_json(
+  self : BundledRuntime,
+  id~ : String,
+  window_label~ : String,
+  route~ : String,
+  payload? : String = "",
+) -> String {
+  match self.dispatch(id~, window_label~, route~, payload~) {
+    Ok(response) => encode_invoke_response_json(response)
+    Err(response) => encode_invoke_response_json(response)
+  }
+}
+
+///|
 pub async fn BundledRuntime::dispatch_json_async(
   self : BundledRuntime,
   id~ : String,
@@ -37,6 +62,48 @@ pub async fn BundledRuntime::dispatch_json_async(
   match self.dispatch_async(id~, window_label~, route~, payload~) {
     Ok(response) => encode_invoke_response_json(response)
     Err(response) => encode_invoke_response_json(response)
+  }
+}
+
+///|
+fn BundledRuntime::dispatch(
+  self : BundledRuntime,
+  id~ : String,
+  window_label~ : String,
+  route~ : String,
+  payload~ : String,
+) -> Result[@lepusa.InvokeResponse, @lepusa.InvokeResponse] {
+  match parse_invoke_route(route) {
+    Ok((plugin, command)) => {
+      if !self.registered_routes().contains(route) {
+        return Err(
+          @lepusa.InvokeResponse::error(id, "unknown command: \{route}"),
+        )
+      }
+      if !self.window_allows_route(window_label~, route~) {
+        return Err(
+          @lepusa.InvokeResponse::error(id, "permission denied: \{route}"),
+        )
+      }
+      let request = @lepusa.InvokeRequest::new(
+        id~,
+        window_label~,
+        plugin~,
+        command~,
+        payload~,
+      )
+      let capability = @lepusa.Capability::new("bundled")
+        .window(window_label)
+        .command(route)
+      Ok(
+        self.registry.dispatch_with_permission(
+          request,
+          permission=@lepusa.Permission::command(route),
+          capabilities=[capability],
+        ),
+      )
+    }
+    Err(problem) => Err(@lepusa.InvokeResponse::error(id, problem))
   }
 }
 

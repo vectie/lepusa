@@ -26,6 +26,7 @@ pub struct BundledRuntime {
   manifest : BundledRuntimeManifest
   registry : @lepusa.CommandRegistry
 }
+pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
 
@@ -37,6 +38,7 @@ pub struct BundledRuntimeManifest {
 } derive(@debug.Debug)
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
+pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String

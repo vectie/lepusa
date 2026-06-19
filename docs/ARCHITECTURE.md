@@ -377,10 +377,15 @@ bootstrap script. The C stub installs that combined source as a `WKUserScript`
 at document start, so launched pages receive `window.lepusa`, `__lepusaInvoke`,
 and the future `__lepusaInvokeResponse` callback surface before application
 code runs.
-`dispatch_bridge_message(runtime, message)` is the MoonBit-owned bridge
-message boundary for macOS: it accepts the JSON posted by the WebView,
-dispatches through `NativeRuntime.dispatch_json_async`, and returns the
-JavaScript source that calls the matching response hook in the page.
+The macOS C stub registers a `WKScriptMessageHandler` under the generated
+native hook name. The handler passes the posted JSON string into MoonBit,
+receives a response script, and evaluates it back in the WebView so
+`window.lepusa.invoke(...)` can resolve sync commands in a real window.
+`dispatch_bridge_message(runtime, message)` remains the MoonBit-owned async
+test boundary for macOS: it accepts the JSON posted by the WebView, dispatches
+through `NativeRuntime.dispatch_json_async`, and returns the JavaScript source
+that calls the matching response hook in the page. Async command scheduling
+from the C handler is a separate runtime event-loop step.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows still expose runner contracts and host availability checks, but their
 native launch loops intentionally fail until those platform packages implement

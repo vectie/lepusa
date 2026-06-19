@@ -182,6 +182,42 @@ async test "bundled runtime preserves official plugin state" {
 }
 
 ///|
+test "bundled runtime dispatches sync official plugins" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      { "label": "main", "allowedRoutes": ["log.write", "fs.writeText"] }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["log.write", "fs.writeText"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let log = manifest.dispatch_json(
+        id="log",
+        window_label="main",
+        route="log.write",
+        payload="{\"message\":\"ready\"}",
+      )
+      assert_true(log.contains("\"id\":\"log\""))
+      assert_true(log.contains("\\\"message\\\":\\\"ready\\\""))
+      let async_only = manifest.dispatch_json(
+        id="write",
+        window_label="main",
+        route="fs.writeText",
+        payload="{\"scope\":\"data\",\"path\":\"note.txt\",\"content\":\"hello\"}",
+      )
+      assert_true(
+        async_only.contains("command requires async dispatch: fs.writeText"),
+      )
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 fn sample_bundled_manifest() -> String {
   (
     #|{

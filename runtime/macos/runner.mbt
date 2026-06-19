@@ -17,6 +17,7 @@ pub struct MacOSRunPlan {
   url : String
   load_url : String
   initialization_script : String
+  native_hook : String
   width : Int
   height : Int
   resizable : Bool
@@ -30,15 +31,18 @@ pub struct MacOSRunResult {
 } derive(Debug, Eq)
 
 ///|
-#borrow(title, url, initialization_script)
-extern "c" fn run_webview(
+#borrow(title, url, initialization_script, native_hook, dispatch)
+extern "c" fn run_webview_with_bridge(
   title : Bytes,
   url : Bytes,
   initialization_script : Bytes,
+  native_hook : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
-) -> Int = "lepusa_macos_run_webview"
+  call_dispatch : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
+  dispatch : (Bytes) -> Bytes,
+) -> Int = "lepusa_macos_run_webview_with_bridge"
 
 ///|
 pub fn prepare_run(
@@ -58,6 +62,7 @@ pub fn prepare_run(
               spec.native_hook(),
               spec.initialization_scripts(),
             ),
+            native_hook: spec.native_hook(),
             width: spec.width(),
             height: spec.height(),
             resizable: spec.resizable(),
@@ -86,6 +91,7 @@ pub fn prepare_bundled_run(
               webview.native_hook(),
               webview.initialization_scripts(),
             ),
+            native_hook: webview.native_hook(),
             width: webview.width(),
             height: webview.height(),
             resizable: webview.resizable(),
@@ -102,7 +108,7 @@ pub fn run(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
-    Ok(plan) => run_plan(plan, mode~)
+    Ok(plan) => run_plan(plan, mode~, dispatch=runtime_dispatch(runtime, plan))
   }
 }
 
@@ -113,7 +119,7 @@ pub fn run_bundled(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_bundled_run(manifest) {
     Err(problems) => Err(problems)
-    Ok(plan) => run_plan(plan, mode~)
+    Ok(plan) => run_plan(plan, mode~, dispatch=bundled_dispatch(manifest, plan))
   }
 }
 
@@ -149,6 +155,11 @@ pub fn MacOSRunPlan::load_url(self : MacOSRunPlan) -> String {
 ///|
 pub fn MacOSRunPlan::initialization_script(self : MacOSRunPlan) -> String {
   self.initialization_script
+}
+
+///|
+pub fn MacOSRunPlan::native_hook(self : MacOSRunPlan) -> String {
+  self.native_hook
 }
 
 ///|
@@ -229,14 +240,16 @@ fn file_url(path : String) -> String {
 fn run_plan(
   plan : MacOSRunPlan,
   mode~ : MacOSRunMode,
+  dispatch~ : (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
     MacOSDryRun => Ok({ plan, status: MacOSPrepared })
     MacOSOpenWindow => {
-      let exit_code = run_webview(
+      let exit_code = run_webview_with_bridge(
         @utf8.encode(plan.title),
         @utf8.encode(plan.load_url),
         @utf8.encode(plan.initialization_script),
+        @utf8.encode(plan.native_hook),
         plan.width,
         plan.height,
         if plan.resizable {
@@ -244,6 +257,8 @@ fn run_plan(
         } else {
           0
         },
+        fn(dispatch, message) { dispatch(message) },
+        dispatch,
       )
       if exit_code == 0 {
         Ok({ plan, status: MacOSLaunched })
@@ -251,6 +266,46 @@ fn run_plan(
         Ok({ plan, status: MacOSLaunchFailed("macOS WebView launch failed") })
       }
     }
+  }
+}
+
+///|
+fn runtime_dispatch(
+  runtime : @runtime.NativeRuntime,
+  plan : MacOSRunPlan,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) -> Bytes {
+    let input = @utf8.decode(message) catch { _ => "" }
+    let response_json = runtime.dispatch_json(input)
+    @utf8.encode(
+      bridge_response_script("\{plan.native_hook()}Response", response_json),
+    )
+  }
+}
+
+///|
+fn bundled_dispatch(
+  manifest : @bundled.BundledRuntimeManifest,
+  plan : MacOSRunPlan,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) -> Bytes {
+    let input = @utf8.decode(message) catch { _ => "" }
+    let response_json = match @runtime.decode_invoke_request_json(input) {
+      Ok(request) =>
+        manifest.dispatch_json(
+          id=request.id(),
+          window_label=request.window_label(),
+          route=request.route(),
+          payload=request.payload(),
+        )
+      Err(problem) =>
+        @runtime.encode_invoke_response_json(
+          @lepusa.InvokeResponse::error("", problem),
+        )
+    }
+    @utf8.encode(
+      bridge_response_script("\{plan.native_hook()}Response", response_json),
+    )
   }
 }
 
