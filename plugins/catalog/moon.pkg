@@ -11,5 +11,6 @@ import {
   "vectie/lepusa/plugins/opener",
   "vectie/lepusa/plugins/process",
   "vectie/lepusa/plugins/shell",
+  "vectie/lepusa/plugins/single_instance",
   "vectie/lepusa/plugins/store",
 }

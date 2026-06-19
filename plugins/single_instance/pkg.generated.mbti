@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/single_instance"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+// Errors
+
+// Types and methods
+pub struct SingleInstancePolicy {
+  key : String
+  primary_window : String?
+  forward_args : Bool
+  forward_urls : Bool
+} derive(Eq, @debug.Debug)
+pub fn SingleInstancePolicy::forward_args(Self) -> Bool
+pub fn SingleInstancePolicy::forward_urls(Self) -> Bool
+pub fn SingleInstancePolicy::key(Self) -> String
+pub fn SingleInstancePolicy::new(key~ : String, primary_window? : String, forward_args? : Bool, forward_urls? : Bool) -> Self
+pub fn SingleInstancePolicy::primary_window(Self) -> String?
+pub fn SingleInstancePolicy::validate(Self) -> Array[String]
+
+// Type aliases
+
+// Traits

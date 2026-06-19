@@ -149,7 +149,8 @@ Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
 `{ "name": "deepLink" }`, `{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
 `{ "name": "localhost" }`, `{ "name": "notification" }`,
 `{ "name": "log" }`, `{ "name": "opener" }`, `{ "name": "process" }`,
-`{ "name": "shell" }`, `{ "name": "store" }`, or `{ "name": "fs" }`;
+`{ "name": "shell" }`, `{ "name": "singleInstance" }`,
+`{ "name": "store" }`, or `{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
@@ -217,6 +218,11 @@ process supervision and readiness probing.
 `@lepusa/plugins/deep_link` defines app URL scheme routes such as
 `deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus
 scheme/host policy metadata. Native backends own OS registration and dispatch.
+
+`@lepusa/plugins/single_instance` defines app lock and launch handoff routes
+such as `singleInstance.acquire`, `singleInstance.focus`, and
+`singleInstance.onSecondLaunch`, plus instance-key policy metadata. Native
+backends own cross-process locking and platform window activation.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

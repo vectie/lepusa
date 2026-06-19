@@ -176,6 +176,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid deep link permission")
   }
+  match @lepusa.Permission::named("single-instance") {
+    Ok(permission) => {
+      assert_true(permission is SingleInstance)
+      assert_eq(permission.name(), "single-instance")
+    }
+    Err(_) => abort("unexpected invalid single instance permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")
