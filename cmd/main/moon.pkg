@@ -1,9 +1,9 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
-  "moonbitlang/x/fs" @xfs,
   "moonbitlang/x/sys",
   "vectie/lepusa",
+  "vectie/lepusa/bundle",
   "vectie/lepusa/project",
   "vectie/lepusa/runtime",
   "vectie/lepusa/runtime/linux" @linux_backend,

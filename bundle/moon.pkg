@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/async/fs",
+  "moonbitlang/x/fs" @xfs,
+  "vectie/lepusa",
+}
+
+supported_targets = "+native"

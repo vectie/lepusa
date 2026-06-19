@@ -765,7 +765,7 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
       let out_dir = values.get(1).unwrap_or("_build/lepusa-bundle")
       match project_bundle_plan(args, target) {
         Ok(plan) =>
-          match write_bundle_plan(plan, out_dir) {
+          match @bundle.write_plan(plan, out_dir) {
             Ok(result) => {
               let local_service_count = match plan.runtime_manifest() {
                 Ok(manifest) => manifest.local_services().length()
@@ -778,13 +778,13 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
               ok(
                 "Lepusa bundle write\n" +
                 "target: \{plan.target().name()}\n" +
-                "root: \{result.root}\n" +
+                "root: \{result.root()}\n" +
                 "local-services: \{local_service_count}\n" +
                 "filesystem-scopes: \{filesystem_scope_count}\n" +
                 "resources: \{plan.resources().length()}\n" +
-                "resources-written: \{result.resources.length()}\n" +
+                "resources-written: \{result.resources().length()}\n" +
                 "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
-                "files: \{result.files.length()}\n",
+                "files: \{result.files().length()}\n",
               )
             }
             Err(problems) =>
