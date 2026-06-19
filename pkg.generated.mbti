@@ -80,6 +80,7 @@ pub struct Capability {
   permissions : Array[Permission]
 } derive(Eq, @debug.Debug)
 pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission) -> Bool
+pub fn Capability::command(Self, String) -> Self
 pub fn Capability::name(Self) -> String
 pub fn Capability::new(String) -> Self
 pub fn Capability::permission(Self, Permission) -> Self
@@ -113,6 +114,17 @@ pub(all) enum CommandMode {
   Stream
   Event
 } derive(Eq, @debug.Debug)
+
+pub struct CommandRegistry {
+  commands : Map[String, RegisteredCommand]
+}
+pub fn CommandRegistry::contains(Self, String) -> Bool
+pub fn CommandRegistry::dispatch(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
+pub fn CommandRegistry::new() -> Self
+pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
+pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
+pub fn CommandRegistry::routes(Self) -> Array[String]
+pub fn CommandRegistry::validate(Self) -> Array[String]
 
 pub struct CommandSpec {
   name : String
@@ -151,16 +163,24 @@ pub struct InvokeRequest {
   command : String
   payload : String
 } derive(Eq, @debug.Debug)
+pub fn InvokeRequest::command(Self) -> String
+pub fn InvokeRequest::id(Self) -> String
 pub fn InvokeRequest::new(id~ : String, window_label~ : String, plugin~ : String, command~ : String, payload? : String) -> Self
+pub fn InvokeRequest::payload(Self) -> String
+pub fn InvokeRequest::plugin(Self) -> String
 pub fn InvokeRequest::route(Self) -> String
 pub fn InvokeRequest::validate(Self) -> Array[String]
+pub fn InvokeRequest::window_label(Self) -> String
 
 pub(all) enum InvokeResponse {
   InvokeOk(String, String)
   InvokeError(String, String)
 } derive(Eq, @debug.Debug)
 pub fn InvokeResponse::error(String, String) -> Self
+pub fn InvokeResponse::error_message(Self) -> String?
+pub fn InvokeResponse::id(Self) -> String
 pub fn InvokeResponse::ok(String, String) -> Self
+pub fn InvokeResponse::payload(Self) -> String?
 
 pub struct LaunchPlan {
   root : Cell
@@ -187,6 +207,7 @@ pub(all) enum Permission {
   Notification
   Custom(String)
 } derive(Eq, @debug.Debug)
+pub fn Permission::command(String) -> Self
 
 pub struct Plugin {
   name : String
@@ -228,6 +249,15 @@ pub fn ProjectManifest::with_plugin(Self, Plugin) -> Self
 pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self
 pub fn ProjectManifest::with_startup(Self, Cmd) -> Self
 pub fn ProjectManifest::with_window(Self, WindowConfig) -> Self
+
+pub struct RegisteredCommand {
+  route : String
+  permission : Permission
+  handler : (String) -> Result[String, String]
+}
+pub fn RegisteredCommand::new(String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
+pub fn RegisteredCommand::permission(Self) -> Permission
+pub fn RegisteredCommand::route(Self) -> String
 
 pub(all) enum RuntimeBackend {
   SystemWebView
@@ -291,6 +321,8 @@ pub fn WindowConfig::validate(Self) -> Array[String]
 pub fn WindowConfig::with_source(Self, Source) -> Self
 
 // Type aliases
+pub type CommandHandler = (String) -> Result[String, String]
+
 pub type Dispatch[Msg] = (Msg) -> Cmd
 
 // Traits

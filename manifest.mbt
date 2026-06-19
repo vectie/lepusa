@@ -14,7 +14,7 @@ pub fn ProjectManifest::new(
   windows? : Array[WindowConfig] = [],
   plugins? : Array[Plugin] = [],
   capabilities? : Array[Capability] = [],
-  startup? : Cmd = Cmd::None,
+  startup? : Cmd = None,
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
 ) -> ProjectManifest {
   { metadata, windows, plugins, capabilities, startup, runtime }

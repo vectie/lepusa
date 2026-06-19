@@ -84,9 +84,9 @@ fn render_plan() -> CliResult {
 fn render_bundle_plan(args : Array[String]) -> CliResult {
   let target = match args.get(1) {
     None => @lepusa.MacOS
-    Some("macos") => @lepusa.MacOS
-    Some("windows") => @lepusa.Windows
-    Some("linux") => @lepusa.Linux
+    Some("macos") => MacOS
+    Some("windows") => Windows
+    Some("linux") => Linux
     Some(value) => return fail("unknown bundle target: \{value}\n")
   }
   match sample_runtime_plan() {
@@ -128,9 +128,7 @@ fn sample_manifest() -> @lepusa.ProjectManifest {
   .with_plugin(
     @lepusa.Plugin::new("core").command_sync("invoke").command_stream("events"),
   )
-  .with_capability(
-    @lepusa.Capability::new("core").permission(@lepusa.Notification),
-  )
+  .with_capability(@lepusa.Capability::new("core").permission(Notification))
 }
 
 ///|

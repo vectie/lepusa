@@ -11,6 +11,11 @@ pub(all) enum Permission {
 } derive(Debug, Eq)
 
 ///|
+pub fn Permission::command(route : String) -> Permission {
+  Custom(route)
+}
+
+///|
 pub struct Capability {
   name : String
   windows : Array[String]
@@ -37,6 +42,11 @@ pub fn Capability::permission(
   let permissions = self.permissions.copy()
   permissions.push(permission)
   { ..self, permissions, }
+}
+
+///|
+pub fn Capability::command(self : Capability, route : String) -> Capability {
+  self.permission(Permission::command(route))
 }
 
 ///|

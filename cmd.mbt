@@ -16,10 +16,7 @@ pub fn Cmd::effect(name : String) -> Cmd {
 }
 
 ///|
-pub fn Cmd::emit(
-  event : Event,
-  target? : EventTarget = EventTarget::AppTarget,
-) -> Cmd {
+pub fn Cmd::emit(event : Event, target? : EventTarget = AppTarget) -> Cmd {
   Emit(target, event)
 }
 

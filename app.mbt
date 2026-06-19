@@ -59,7 +59,7 @@ pub struct App {
 
 ///|
 pub fn new(root : Cell) -> App {
-  { root, windows: [], plugins: [], capabilities: [], startup: Cmd::None }
+  { root, windows: [], plugins: [], capabilities: [], startup: None }
 }
 
 ///|

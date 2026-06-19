@@ -83,9 +83,7 @@ let manifest = @lepusa.ProjectManifest::new(metadata)
     @lepusa.WindowConfig::new(source=@lepusa.Source::local_path("dist")),
   )
   .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
-  .with_capability(
-    @lepusa.Capability::new("main").permission(@lepusa.Notification),
-  )
+  .with_capability(@lepusa.Capability::new("main").command("core.invoke"))
 
 ///|
 let runtime = manifest.runtime_plan(root)

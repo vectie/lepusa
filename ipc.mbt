@@ -24,6 +24,31 @@ pub fn InvokeRequest::route(self : InvokeRequest) -> String {
 }
 
 ///|
+pub fn InvokeRequest::id(self : InvokeRequest) -> String {
+  self.id
+}
+
+///|
+pub fn InvokeRequest::window_label(self : InvokeRequest) -> String {
+  self.window_label
+}
+
+///|
+pub fn InvokeRequest::plugin(self : InvokeRequest) -> String {
+  self.plugin
+}
+
+///|
+pub fn InvokeRequest::command(self : InvokeRequest) -> String {
+  self.command
+}
+
+///|
+pub fn InvokeRequest::payload(self : InvokeRequest) -> String {
+  self.payload
+}
+
+///|
 pub fn InvokeRequest::validate(self : InvokeRequest) -> Array[String] {
   let problems : Array[String] = []
   if self.id == "" {
@@ -55,4 +80,27 @@ pub fn InvokeResponse::ok(id : String, payload : String) -> InvokeResponse {
 ///|
 pub fn InvokeResponse::error(id : String, message : String) -> InvokeResponse {
   InvokeError(id, message)
+}
+
+///|
+pub fn InvokeResponse::id(self : InvokeResponse) -> String {
+  match self {
+    InvokeOk(id, _) | InvokeError(id, _) => id
+  }
+}
+
+///|
+pub fn InvokeResponse::payload(self : InvokeResponse) -> String? {
+  match self {
+    InvokeOk(_, payload) => Some(payload)
+    InvokeError(_) => None
+  }
+}
+
+///|
+pub fn InvokeResponse::error_message(self : InvokeResponse) -> String? {
+  match self {
+    InvokeOk(_) => None
+    InvokeError(_, message) => Some(message)
+  }
 }

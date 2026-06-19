@@ -121,16 +121,17 @@ pub fn Source::url(url : String) -> Source
 
 ## IPC
 
-Command handlers should be typed MoonBit functions:
+The first executable IPC boundary is `CommandRegistry`: native runtime code
+receives `InvokeRequest`, finds the registered route, checks capabilities, then
+returns `InvokeResponse`.
 
 ```moonbit nocheck
-pub fn plugin() -> @lepusa.Plugin {
-  @lepusa.Plugin::new("dialog", plugin => {
-    plugin.command_sync("show", (payload : DialogRequest) => {
-      show_dialog(payload)
-    })
-  })
-}
+let registry = @lepusa.CommandRegistry::new().register_fn(
+  "dialog.show",
+  permission=@lepusa.Dialog,
+  handler=fn(payload) { Ok(show_dialog(payload)) },
+)
+let response = registry.dispatch(request, capabilities~)
 ```
 
 Frontend bindings should be generated or exposed consistently:
@@ -146,6 +147,8 @@ Command rules:
 - Every command belongs to a plugin namespace.
 - Every command declares whether it is sync, async, streaming, or event-only.
 - Every command is denied by default unless a capability grants it.
+- `Permission::command(route)` is the default permission for custom command
+  routes.
 
 ## Capabilities
 

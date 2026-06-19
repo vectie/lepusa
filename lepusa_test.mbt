@@ -9,7 +9,7 @@ test "cell_with_dispatch keeps rabbita style authoring surface" {
   )
   assert_eq(cell.id(), "lepusa-root")
   assert_eq(cell.html().content(), "model 1")
-  assert_true(dispatch("load") is @lepusa.Effect("load"))
+  assert_true(dispatch("load") is Effect("load"))
 }
 
 ///|
@@ -38,7 +38,7 @@ test "plugins expose command metadata without owning app domain behavior" {
   assert_eq(command_names.length(), 2)
   assert_eq(command_names[0], "read_config")
   assert_eq(command_names[1], "events")
-  assert_true(plugin.commands()[1].mode() is @lepusa.Stream)
+  assert_true(plugin.commands()[1].mode() is Stream)
 }
 
 ///|
@@ -55,16 +55,13 @@ test "plugin validation rejects empty and duplicate commands" {
 test "capabilities scope permissions by window" {
   let capability = @lepusa.Capability::new("main-files")
     .window("main")
-    .permission(@lepusa.FileSystemRead)
+    .permission(FileSystemRead)
   assert_eq(
-    capability.allows(window_label="main", permission=@lepusa.FileSystemRead),
+    capability.allows(window_label="main", permission=FileSystemRead),
     true,
   )
   assert_eq(
-    capability.allows(
-      window_label="settings",
-      permission=@lepusa.FileSystemRead,
-    ),
+    capability.allows(window_label="settings", permission=FileSystemRead),
     false,
   )
 }
@@ -79,9 +76,77 @@ test "ipc requests expose stable command routes" {
   )
   assert_eq(request.route(), "workspace.read")
   assert_eq(request.validate().is_empty(), true)
-  assert_true(
-    @lepusa.InvokeResponse::ok("1", "{}") is @lepusa.InvokeOk("1", "{}"),
+  assert_true(@lepusa.InvokeResponse::ok("1", "{}") is InvokeOk("1", "{}"))
+}
+
+///|
+test "command registry dispatches allowed invokes" {
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "dialog.show",
+    permission=Dialog,
+    handler=fn(payload) { Ok("shown:\{payload}") },
   )
+  let request = @lepusa.InvokeRequest::new(
+    id="42",
+    window_label="main",
+    plugin="dialog",
+    command="show",
+    payload="hello",
+  )
+  let response = registry.dispatch(request, capabilities=[
+    @lepusa.Capability::new("main-dialog").window("main").permission(Dialog),
+  ])
+  assert_true(response is InvokeOk("42", "shown:hello"))
+}
+
+///|
+test "command registry denies missing capability" {
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "shell.open",
+    permission=Shell,
+    handler=fn(payload) { Ok(payload) },
+  )
+  let response = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="7",
+      window_label="main",
+      plugin="shell",
+      command="open",
+      payload="x",
+    ),
+  )
+  assert_true(response is InvokeError("7", "permission denied: shell.open"))
+}
+
+///|
+test "command registry reports unknown routes and handler errors" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.fail", handler=fn(
+    _payload,
+  ) {
+    Err("failed")
+  })
+  let missing = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="missing",
+      window_label="main",
+      plugin="core",
+      command="missing",
+    ),
+    capabilities=[@lepusa.Capability::new("core").command("core.missing")],
+  )
+  assert_true(
+    missing is InvokeError("missing", "unknown command: core.missing"),
+  )
+  let failed = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="fail",
+      window_label="main",
+      plugin="core",
+      command="fail",
+    ),
+    capabilities=[@lepusa.Capability::new("core").command("core.fail")],
+  )
+  assert_true(failed is InvokeError("fail", "failed"))
 }
 
 ///|
@@ -90,8 +155,8 @@ test "events can become runtime commands" {
   assert_eq(event.name(), "ready")
   assert_eq(event.validate().is_empty(), true)
   assert_true(
-    @lepusa.Cmd::emit(event, target=@lepusa.WindowTarget("main"))
-    is @lepusa.Emit(@lepusa.WindowTarget("main"), _),
+    @lepusa.Cmd::emit(event, target=WindowTarget("main"))
+    is Emit(WindowTarget("main"), _),
   )
 }
 
@@ -106,9 +171,7 @@ test "app builds a launch plan as the native runtime boundary" {
       source=@lepusa.Source::html("<main></main>"),
     )
     .with_plugin(@lepusa.Plugin::new("core").command_async("invoke"))
-    .with_capability(
-      @lepusa.Capability::new("core").permission(@lepusa.Notification),
-    )
+    .with_capability(@lepusa.Capability::new("core").permission(Notification))
     .with_startup(@lepusa.Cmd::effect("boot"))
   match app.launch_plan() {
     Ok(plan) => {
@@ -132,7 +195,7 @@ test "runtime plans collect plugin command routes" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => {
-      assert_true(plan.backend() is @lepusa.Headless)
+      assert_true(plan.backend() is Headless)
       let routes = plan.command_routes()
       assert_eq(routes.length(), 2)
       assert_eq(routes[0], "dialog.show")
@@ -156,7 +219,7 @@ test "bundle plans derive executable and package names from metadata" {
           product_name="Lepusa Example",
           version="0.1.0",
         ),
-        target=@lepusa.MacOS,
+        target=MacOS,
       )
       match bundle.plan(runtime) {
         Ok(plan) => {
@@ -200,9 +263,7 @@ test "project manifests build runtime and bundle plans" {
       @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
     )
     .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
-    .with_capability(
-      @lepusa.Capability::new("core").permission(@lepusa.Notification),
-    )
+    .with_capability(@lepusa.Capability::new("core").permission(Notification))
   match manifest.runtime_plan(root) {
     Ok(runtime) => {
       assert_eq(runtime.window_count(), 1)
@@ -210,7 +271,7 @@ test "project manifests build runtime and bundle plans" {
     }
     Err(_) => abort("unexpected invalid manifest runtime plan")
   }
-  match manifest.bundle_plan(root, target=@lepusa.Linux) {
+  match manifest.bundle_plan(root, target=Linux) {
     Ok(bundle) => {
       assert_eq(bundle.identifier(), "dev.vectie.manifest")
       assert_eq(bundle.bundle_name(), "manifest-app")
