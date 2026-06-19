@@ -65,8 +65,8 @@
   - `lepusa init`: writes a standalone MoonBit project skeleton.
   - `lepusa build`: alias for materializing the current bundle plan.
   - `lepusa bundle`: alias for materializing the current bundle plan.
+  - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`
-  - `lepusa plugin new`
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing prerequisites.
 

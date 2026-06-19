@@ -8,6 +8,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
+  assert_true(result.output.contains("lepusa plugin new"))
   assert_true(result.output.contains("lepusa bundle-plan"))
   assert_true(result.output.contains("lepusa bundle-write"))
 }
@@ -83,6 +84,34 @@ async test "init writes standalone project skeleton" {
   let main_file = @fs.read_file(root + "/main.mbt").text()
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
+}
+
+///|
+async test "plugin new writes standalone plugin skeleton" {
+  let root = "/tmp/lepusa-plugin-\{@async.now().to_int()}"
+  let result = render_cli_async(["plugin", "new", "File Dialog", root])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa plugin new"))
+  assert_true(result.output.contains("plugin: file-dialog"))
+  assert_true(result.output.contains("files: 4"))
+  assert_true(@fs.exists(root + "/moon.mod"))
+  assert_true(@fs.exists(root + "/moon.pkg"))
+  assert_true(@fs.exists(root + "/plugin.mbt"))
+  assert_true(@fs.exists(root + "/README.mbt.md"))
+  let module_file = @fs.read_file(root + "/moon.mod").text()
+  assert_true(module_file.contains("local/lepusa_plugin_file_dialog"))
+  assert_true(module_file.contains("vectie/lepusa"))
+  let plugin_file = @fs.read_file(root + "/plugin.mbt").text()
+  assert_true(plugin_file.contains("@lepusa.Plugin::new(\"file-dialog\")"))
+  assert_true(plugin_file.contains("\"file-dialog.invoke\""))
+  assert_true(plugin_file.contains("CommandRegistry"))
+}
+
+///|
+async test "plugin new validates plugin name" {
+  let result = render_cli_async(["plugin", "new", "!!!"])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("plugin name is required"))
 }
 
 ///|
