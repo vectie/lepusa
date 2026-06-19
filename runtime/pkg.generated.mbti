@@ -36,32 +36,12 @@ pub struct RuntimeHost {
 }
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
-pub fn RuntimeHost::launch_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
+pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
-
-pub struct RuntimeLaunchManifest {
-  backend : String
-  asset_protocol : String
-  devtools : Bool
-  bridge_url : String
-  webviews : Array[RuntimeWebViewSpec]
-  protocol_mappings : Array[RuntimeProtocolMapping]
-  command_routes : Array[String]
-  registered_routes : Array[String]
-} derive(Eq, @debug.Debug)
-pub fn RuntimeLaunchManifest::asset_protocol(Self) -> String
-pub fn RuntimeLaunchManifest::backend(Self) -> String
-pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
-pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
-pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
-pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
-pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
-pub fn RuntimeLaunchManifest::to_json(Self) -> String
-pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewSpec]
 
 pub struct RuntimeProtocolMapping {
   window_label : String

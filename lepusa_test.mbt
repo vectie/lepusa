@@ -259,6 +259,28 @@ test "runtime plans collect plugin command routes" {
 }
 
 ///|
+test "runtime plans expose portable launch manifest" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(title="Launch", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match plan.launch_manifest(registered_routes=["core.invoke"]) {
+        Ok(manifest) => {
+          assert_eq(manifest.backend(), "headless")
+          assert_eq(manifest.webviews()[0].title(), "Launch")
+          assert_eq(manifest.protocol_mappings()[0].root(), "memory:main")
+          assert_eq(manifest.registered_routes()[0], "core.invoke")
+          assert_true(manifest.to_json().contains("\"initializationScripts\""))
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime plans generate frontend bridge script" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

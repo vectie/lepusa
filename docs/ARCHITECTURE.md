@@ -223,12 +223,12 @@ name, and document-start initialization scripts. The platform layer should
 translate these specs to WKWebView, WebView2, or WebKitGTK calls without
 re-reading `App`, `WindowConfig`, or manifest state.
 
-`RuntimeHost::launch_manifest()` is the portable native-runner contract. It
-combines the `RuntimeSession` snapshot with per-window WebView boot specs and
-serializes backend, asset protocol, bridge URL, protocol mappings, command
-routes, registered native routes, and document-start scripts into stable JSON.
-Platform packages should consume this manifest instead of inventing their own
-runtime files.
+`RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
+the public facade. It serializes backend, asset protocol, bridge URL, protocol
+mappings, command routes, registered native routes, and document-start scripts
+into stable JSON. `RuntimeHost::launch_manifest()` adds the concrete registered
+native routes from a command registry, while bundle and platform packages
+consume the same manifest instead of inventing their own runtime files.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is

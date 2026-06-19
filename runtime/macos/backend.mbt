@@ -52,7 +52,7 @@ pub fn MacOSBackend::plan(
 pub struct MacOSLaunchPlan {
   backend_name : String
   webview_engine : String
-  manifest : @runtime.RuntimeLaunchManifest
+  manifest : @lepusa.RuntimeLaunchManifest
 } derive(Debug, Eq)
 
 ///|
@@ -68,14 +68,14 @@ pub fn MacOSLaunchPlan::webview_engine(self : MacOSLaunchPlan) -> String {
 ///|
 pub fn MacOSLaunchPlan::webviews(
   self : MacOSLaunchPlan,
-) -> Array[@runtime.RuntimeWebViewSpec] {
+) -> Array[@lepusa.RuntimeWebViewBoot] {
   self.manifest.webviews()
 }
 
 ///|
 pub fn MacOSLaunchPlan::runtime_manifest(
   self : MacOSLaunchPlan,
-) -> @runtime.RuntimeLaunchManifest {
+) -> @lepusa.RuntimeLaunchManifest {
   self.manifest
 }
 

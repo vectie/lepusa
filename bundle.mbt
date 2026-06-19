@@ -214,90 +214,21 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
 fn BundlePlan::runtime_manifest_json(
   self : BundlePlan,
 ) -> Result[String, Array[String]] {
-  let webviews : Array[String] = []
-  let protocol_mappings : Array[String] = []
-  let problems : Array[String] = []
-  for window in self.runtime.windows() {
-    match
-      self.runtime.bridge_script(
-        config=BridgeConfig::new(window_label=window.label()),
-      ) {
-      Ok(bridge) =>
-        webviews.push(window.bundle_webview_json(self.runtime, bridge))
-      Err(bridge_problems) =>
-        for problem in bridge_problems {
-          problems.push(problem)
-        }
-    }
-    for mapping in window.source().protocol_mappings() {
-      protocol_mappings.push(
-        protocol_mapping_json(window_label=window.label(), mapping~),
+  match self.runtime.launch_manifest() {
+    Ok(runtime_manifest) =>
+      Ok(
+        [
+          "{",
+          "\"identifier\":\{self.identifier().json_string()},",
+          "\"productName\":\{self.metadata.product_name().json_string()},",
+          "\"version\":\{self.metadata.version().json_string()},",
+          "\"target\":\{self.target.name().json_string()},",
+          "\"runtime\":\{runtime_manifest.to_json()}",
+          "}",
+        ].join(""),
       )
-    }
+    Err(problems) => Err(problems)
   }
-  if !problems.is_empty() {
-    return Err(problems)
-  }
-  let routes = self.runtime
-    .command_routes()
-    .map(fn(route) { route.json_string() })
-    .join(",")
-  Ok(
-    [
-      "{",
-      "\"identifier\":\{self.identifier().json_string()},",
-      "\"productName\":\{self.metadata.product_name().json_string()},",
-      "\"version\":\{self.metadata.version().json_string()},",
-      "\"target\":\{self.target.name().json_string()},",
-      "\"backend\":\{self.runtime.backend().name().json_string()},",
-      "\"devtools\":\{self.runtime.devtools().json_bool()},",
-      "\"assetProtocol\":\{self.runtime.asset_protocol().json_string()},",
-      "\"bridgeUrl\":\{("\{self.runtime.asset_protocol()}://runtime/bridge.js").json_string()},",
-      "\"webviews\":[\{webviews.join(",")}],",
-      "\"protocolMappings\":[\{protocol_mappings.join(",")}],",
-      "\"commandRoutes\":[\{routes}],",
-      "\"registeredRoutes\":[]",
-      "}",
-    ].join(""),
-  )
-}
-
-///|
-fn ResolvedWindow::bundle_webview_json(
-  self : ResolvedWindow,
-  runtime : RuntimePlan,
-  bridge : BridgeScript,
-) -> String {
-  [
-    "{",
-    "\"label\":\{self.label().json_string()},",
-    "\"title\":\{self.title().json_string()},",
-    "\"url\":\{self.url().json_string()},",
-    "\"width\":\{self.width()},",
-    "\"height\":\{self.height()},",
-    "\"resizable\":\{self.resizable().json_bool()},",
-    "\"titleBar\":\{self.title_bar().manifest_name().json_string()},",
-    "\"devtools\":\{runtime.devtools().json_bool()},",
-    "\"assetProtocol\":\{runtime.asset_protocol().json_string()},",
-    "\"bridgeGlobalName\":\{bridge.global_name().json_string()},",
-    "\"nativeHook\":\{bridge.native_hook().json_string()},",
-    "\"initializationScripts\":[\{bridge.source().json_string()}]",
-    "}",
-  ].join("")
-}
-
-///|
-fn protocol_mapping_json(
-  window_label~ : String,
-  mapping~ : ProtocolMapping,
-) -> String {
-  [
-    "{",
-    "\"windowLabel\":\{window_label.json_string()},",
-    "\"scheme\":\{mapping.scheme().json_string()},",
-    "\"root\":\{mapping.root().json_string()}",
-    "}",
-  ].join("")
 }
 
 ///|
@@ -371,36 +302,6 @@ pub fn BundleConfig::plan(
     })
   } else {
     Err(problems)
-  }
-}
-
-///|
-fn String::json_string(self : String) -> String {
-  "\"" +
-  self
-  .replace_all(old="\\", new="\\\\")
-  .replace_all(old="\"", new="\\\"")
-  .replace_all(old="\n", new="\\n")
-  .replace_all(old="\r", new="\\r")
-  .replace_all(old="\t", new="\\t") +
-  "\""
-}
-
-///|
-fn Bool::json_bool(self : Bool) -> String {
-  if self {
-    "true"
-  } else {
-    "false"
-  }
-}
-
-///|
-fn TitleBarStyle::manifest_name(self : TitleBarStyle) -> String {
-  match self {
-    Native => "native"
-    Transparent => "transparent"
-    Hidden => "hidden"
   }
 }
 

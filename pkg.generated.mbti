@@ -350,6 +350,26 @@ pub fn RuntimeConfig::headless() -> Self
 pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String) -> Self
 pub fn RuntimeConfig::validate(Self) -> Array[String]
 
+pub struct RuntimeLaunchManifest {
+  backend : String
+  asset_protocol : String
+  devtools : Bool
+  bridge_url : String
+  webviews : Array[RuntimeWebViewBoot]
+  protocol_mappings : Array[RuntimeProtocolBinding]
+  command_routes : Array[String]
+  registered_routes : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeLaunchManifest::asset_protocol(Self) -> String
+pub fn RuntimeLaunchManifest::backend(Self) -> String
+pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
+pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
+pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
+pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
+pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
+pub fn RuntimeLaunchManifest::to_json(Self) -> String
+pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]
+
 pub struct RuntimePlan {
   launch : LaunchPlan
   backend : RuntimeBackend
@@ -365,9 +385,46 @@ pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
+pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::window_count(Self) -> Int
 pub fn RuntimePlan::windows(Self) -> Array[ResolvedWindow]
+
+pub struct RuntimeProtocolBinding {
+  window_label : String
+  scheme : String
+  root : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeProtocolBinding::root(Self) -> String
+pub fn RuntimeProtocolBinding::scheme(Self) -> String
+pub fn RuntimeProtocolBinding::window_label(Self) -> String
+
+pub struct RuntimeWebViewBoot {
+  label : String
+  title : String
+  url : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : TitleBarStyle
+  devtools : Bool
+  asset_protocol : String
+  bridge_global_name : String
+  native_hook : String
+  initialization_scripts : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeWebViewBoot::asset_protocol(Self) -> String
+pub fn RuntimeWebViewBoot::bridge_global_name(Self) -> String
+pub fn RuntimeWebViewBoot::devtools(Self) -> Bool
+pub fn RuntimeWebViewBoot::height(Self) -> Int
+pub fn RuntimeWebViewBoot::initialization_scripts(Self) -> Array[String]
+pub fn RuntimeWebViewBoot::label(Self) -> String
+pub fn RuntimeWebViewBoot::native_hook(Self) -> String
+pub fn RuntimeWebViewBoot::resizable(Self) -> Bool
+pub fn RuntimeWebViewBoot::title(Self) -> String
+pub fn RuntimeWebViewBoot::title_bar(Self) -> TitleBarStyle
+pub fn RuntimeWebViewBoot::url(Self) -> String
+pub fn RuntimeWebViewBoot::width(Self) -> Int
 
 pub(all) enum Source {
   InlineHtml(String)
