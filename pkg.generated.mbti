@@ -1,0 +1,195 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn[Model, Msg] cell_with_dispatch(model~ : Model, update~ : (Msg, Model) -> (Model, Cmd), view~ : ((Msg) -> Cmd, Model) -> Html) -> ((Msg) -> Cmd, Cell)
+
+pub fn new(Cell) -> App
+
+pub let none : Cmd
+
+pub fn simple_cell(Html) -> Cell
+
+// Errors
+
+// Types and methods
+pub struct App {
+  root : Cell
+  windows : Array[WindowConfig]
+  plugins : Array[Plugin]
+  capabilities : Array[Capability]
+  startup : Cmd
+} derive(Eq, @debug.Debug)
+pub fn App::launch_plan(Self) -> Result[LaunchPlan, Array[String]]
+pub fn App::validate(Self) -> Array[String]
+pub fn App::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn App::with_capability(Self, Capability) -> Self
+pub fn App::with_plugin(Self, Plugin) -> Self
+pub fn App::with_startup(Self, Cmd) -> Self
+pub fn App::with_window(Self, WindowConfig) -> Self
+
+pub struct Capability {
+  name : String
+  windows : Array[String]
+  permissions : Array[Permission]
+} derive(Eq, @debug.Debug)
+pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission) -> Bool
+pub fn Capability::name(Self) -> String
+pub fn Capability::new(String) -> Self
+pub fn Capability::permission(Self, Permission) -> Self
+pub fn Capability::validate(Self) -> Array[String]
+pub fn Capability::window(Self, String) -> Self
+
+pub struct Cell {
+  id : String
+  html : Html
+} derive(Eq, @debug.Debug)
+pub fn Cell::html(Self) -> Html
+pub fn Cell::id(Self) -> String
+pub fn Cell::new(id? : String, html? : Html) -> Self
+
+pub(all) enum Cmd {
+  None
+  Batch(Array[Cmd])
+  Effect(String)
+  Emit(EventTarget, Event)
+  Navigate(String, Source)
+} derive(Eq, @debug.Debug)
+pub fn Cmd::batch(Array[Self]) -> Self
+pub fn Cmd::effect(String) -> Self
+pub fn Cmd::emit(Event, target? : EventTarget) -> Self
+pub fn Cmd::is_empty(Self) -> Bool
+pub fn Cmd::navigate(String, Source) -> Self
+
+pub(all) enum CommandMode {
+  Sync
+  Async
+  Stream
+  Event
+} derive(Eq, @debug.Debug)
+
+pub struct CommandSpec {
+  name : String
+  mode : CommandMode
+} derive(Eq, @debug.Debug)
+pub fn CommandSpec::mode(Self) -> CommandMode
+pub fn CommandSpec::name(Self) -> String
+pub fn CommandSpec::new(String, mode? : CommandMode) -> Self
+
+pub struct Event {
+  name : String
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn Event::name(Self) -> String
+pub fn Event::new(String, payload? : String) -> Self
+pub fn Event::payload(Self) -> String
+pub fn Event::validate(Self) -> Array[String]
+
+pub(all) enum EventTarget {
+  AppTarget
+  WindowTarget(String)
+  WebviewTarget(String)
+} derive(Eq, @debug.Debug)
+
+pub struct Html {
+  content : String
+} derive(Eq, @debug.Debug)
+pub fn Html::content(Self) -> String
+pub fn Html::empty() -> Self
+pub fn Html::text(String) -> Self
+
+pub struct InvokeRequest {
+  id : String
+  window_label : String
+  plugin : String
+  command : String
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn InvokeRequest::new(id~ : String, window_label~ : String, plugin~ : String, command~ : String, payload? : String) -> Self
+pub fn InvokeRequest::route(Self) -> String
+pub fn InvokeRequest::validate(Self) -> Array[String]
+
+pub(all) enum InvokeResponse {
+  InvokeOk(String, String)
+  InvokeError(String, String)
+} derive(Eq, @debug.Debug)
+pub fn InvokeResponse::error(String, String) -> Self
+pub fn InvokeResponse::ok(String, String) -> Self
+
+pub struct LaunchPlan {
+  root : Cell
+  windows : Array[WindowConfig]
+  plugins : Array[Plugin]
+  capabilities : Array[Capability]
+  startup : Cmd
+} derive(Eq, @debug.Debug)
+pub fn LaunchPlan::capability_count(Self) -> Int
+pub fn LaunchPlan::plugin_count(Self) -> Int
+pub fn LaunchPlan::window_count(Self) -> Int
+
+pub(all) enum Permission {
+  FileSystemRead
+  FileSystemWrite
+  Network
+  Shell
+  Dialog
+  Clipboard
+  Notification
+  Custom(String)
+} derive(Eq, @debug.Debug)
+
+pub struct Plugin {
+  name : String
+  commands : Array[CommandSpec]
+} derive(Eq, @debug.Debug)
+pub fn Plugin::command(Self, String, mode? : CommandMode) -> Self
+pub fn Plugin::command_async(Self, String) -> Self
+pub fn Plugin::command_event(Self, String) -> Self
+pub fn Plugin::command_names(Self) -> Array[String]
+pub fn Plugin::command_stream(Self, String) -> Self
+pub fn Plugin::command_sync(Self, String) -> Self
+pub fn Plugin::commands(Self) -> Array[CommandSpec]
+pub fn Plugin::name(Self) -> String
+pub fn Plugin::new(String) -> Self
+pub fn Plugin::validate(Self) -> Array[String]
+
+pub(all) enum Source {
+  InlineHtml(String)
+  LocalPath(String)
+  RemoteUrl(String)
+  RabbitaMount(String)
+} derive(Eq, @debug.Debug)
+pub fn Source::html(String) -> Self
+pub fn Source::is_empty(Self) -> Bool
+pub fn Source::local_path(String) -> Self
+pub fn Source::rabbita(String) -> Self
+pub fn Source::url(String) -> Self
+
+pub(all) enum TitleBarStyle {
+  Native
+  Transparent
+  Hidden
+} derive(Eq, @debug.Debug)
+
+pub struct WindowConfig {
+  label : String
+  title : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : TitleBarStyle
+  source : Source?
+} derive(Eq, @debug.Debug)
+pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn WindowConfig::validate(Self) -> Array[String]
+pub fn WindowConfig::with_source(Self, Source) -> Self
+
+// Type aliases
+pub type Dispatch[Msg] = (Msg) -> Cmd
+
+// Traits
+

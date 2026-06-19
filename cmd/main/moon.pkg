@@ -1,0 +1,7 @@
+// import {
+//   "vectie/lepusa" @lib,
+// }
+
+options(
+  "is-main": true,
+)
