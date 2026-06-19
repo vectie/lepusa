@@ -645,6 +645,15 @@ fn render_native_launch(
 fn render_macos_launch_result(
   result : @macos_backend.MacOSRunResult,
 ) -> CliResult {
+  let plan = result.plan()
+  let first_window = match plan.first_webview() {
+    Ok(webview) => webview.url()
+    Err(_) => ""
+  }
+  let load_url = match plan.first_webview() {
+    Ok(webview) => webview.load_url()
+    Err(_) => ""
+  }
   let status = match result.status() {
     MacOSPrepared => "prepared"
     MacOSLaunched => "launched"
@@ -656,9 +665,9 @@ fn render_macos_launch_result(
     "backend: macos\n" +
     "engine: WKWebView\n" +
     "status: \{status}\n" +
-    "webviews: \{result.plan().webviews()}\n" +
-    "first-window-url: \{result.plan().url()}\n" +
-    "load-url: \{result.plan().load_url()}\n",
+    "webviews: \{plan.webviews().length()}\n" +
+    "first-window-url: \{first_window}\n" +
+    "load-url: \{load_url}\n",
   )
 }
 

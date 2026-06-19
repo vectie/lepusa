@@ -23,6 +23,31 @@ fn test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn multi_window_test_host() -> @runtime.RuntimeHost {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Main",
+      width=900,
+      height=640,
+      source=@lepusa.Source::html("<main>Main</main>"),
+    )
+    .window(
+      label="settings",
+      title="Settings",
+      width=700,
+      height=520,
+      resizable=false,
+      source=@lepusa.Source::html("<main>Settings</main>"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => @runtime.RuntimeHost::new(plan)
+    Err(_) => abort("unexpected invalid multi-window runtime plan")
+  }
+}
+
+///|
 fn bridge_test_host() -> @runtime.RuntimeHost {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
@@ -145,24 +170,59 @@ test "macos backend prepares first webview load url" {
     Ok(runtime) =>
       match prepare_run(runtime) {
         Ok(plan) => {
-          assert_eq(plan.title(), "macOS")
-          assert_eq(plan.url(), "lepusa://inline/main/index.html")
-          assert_eq(plan.load_url(), "lepusa://inline/main/index.html")
-          assert_eq(plan.asset_protocol(), "lepusa")
+          let webviews = plan.webviews()
+          assert_eq(webviews.length(), 1)
+          let webview = webviews[0]
+          assert_eq(webview.label(), "main")
+          assert_eq(webview.title(), "macOS")
+          assert_eq(webview.url(), "lepusa://inline/main/index.html")
+          assert_eq(webview.load_url(), "lepusa://inline/main/index.html")
+          assert_eq(webview.asset_protocol(), "lepusa")
           assert_true(
-            plan.initialization_script().contains("webkit.messageHandlers"),
+            webview.initialization_script().contains("webkit.messageHandlers"),
           )
           assert_true(
-            plan.initialization_script().contains("__lepusaInvokeResponse"),
+            webview.initialization_script().contains("__lepusaInvokeResponse"),
           )
-          assert_true(plan.initialization_script().contains("windowLabel"))
-          assert_eq(plan.width(), 1000)
-          assert_eq(plan.height(), 720)
-          assert_eq(plan.webviews(), 1)
+          assert_true(webview.initialization_script().contains("windowLabel"))
+          assert_eq(webview.width(), 1000)
+          assert_eq(webview.height(), 720)
         }
         Err(_) => abort("unexpected invalid macOS run plan")
       }
     Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
+
+///|
+test "macos backend preserves all webviews in run plan" {
+  match runtime(multi_window_test_host()) {
+    Ok(runtime) =>
+      match prepare_run(runtime) {
+        Ok(plan) => {
+          let webviews = plan.webviews()
+          assert_eq(webviews.length(), 2)
+          assert_eq(webviews[0].label(), "main")
+          assert_eq(webviews[0].title(), "Main")
+          assert_eq(webviews[0].width(), 900)
+          assert_eq(webviews[0].load_url(), "lepusa://inline/main/index.html")
+          assert_eq(webviews[1].label(), "settings")
+          assert_eq(webviews[1].title(), "Settings")
+          assert_eq(webviews[1].width(), 700)
+          assert_eq(webviews[1].height(), 520)
+          assert_eq(webviews[1].resizable(), false)
+          assert_eq(
+            webviews[1].load_url(),
+            "lepusa://inline/settings/index.html",
+          )
+          match plan.first_webview() {
+            Ok(first) => assert_eq(first.label(), "main")
+            Err(problem) => abort(problem)
+          }
+        }
+        Err(_) => abort("unexpected invalid multi-window macOS run plan")
+      }
+    Err(_) => abort("unexpected invalid multi-window macOS runtime")
   }
 }
 
@@ -173,9 +233,15 @@ test "macos backend dry run does not enter native loop" {
       match run(runtime) {
         Ok(result) => {
           assert_true(result.status() is MacOSPrepared)
-          assert_eq(result.plan().load_url(), "lepusa://inline/main/index.html")
+          match result.plan().first_webview() {
+            Ok(webview) =>
+              assert_eq(webview.load_url(), "lepusa://inline/main/index.html")
+            Err(problem) => abort(problem)
+          }
           assert_true(
-            result.plan().initialization_script().contains("__lepusaInvoke"),
+            result.plan().webviews()[0]
+            .initialization_script()
+            .contains("__lepusaInvoke"),
           )
         }
         Err(_) => abort("unexpected invalid macOS dry run")
@@ -194,21 +260,23 @@ test "macos backend prepares bundled runtime manifest" {
     Ok(manifest) =>
       match prepare_bundled_run(manifest) {
         Ok(plan) => {
-          assert_eq(plan.title(), "Bundled App")
-          assert_eq(plan.url(), "lepusa://rabbita/main/index.html")
-          assert_eq(plan.load_url(), "lepusa://rabbita/main/index.html")
-          assert_eq(plan.asset_protocol(), "lepusa")
+          let webviews = plan.webviews()
+          assert_eq(webviews.length(), 1)
+          let webview = webviews[0]
+          assert_eq(webview.title(), "Bundled App")
+          assert_eq(webview.url(), "lepusa://rabbita/main/index.html")
+          assert_eq(webview.load_url(), "lepusa://rabbita/main/index.html")
+          assert_eq(webview.asset_protocol(), "lepusa")
           assert_true(
-            plan.initialization_script().contains("webkit.messageHandlers"),
+            webview.initialization_script().contains("webkit.messageHandlers"),
           )
           assert_true(
-            plan.initialization_script().contains("__lepusaInvokeResponse"),
+            webview.initialization_script().contains("__lepusaInvokeResponse"),
           )
-          assert_true(plan.initialization_script().contains("bridge ready"))
-          assert_eq(plan.width(), 900)
-          assert_eq(plan.height(), 640)
-          assert_eq(plan.resizable(), false)
-          assert_eq(plan.webviews(), 1)
+          assert_true(webview.initialization_script().contains("bridge ready"))
+          assert_eq(webview.width(), 900)
+          assert_eq(webview.height(), 640)
+          assert_eq(webview.resizable(), false)
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }

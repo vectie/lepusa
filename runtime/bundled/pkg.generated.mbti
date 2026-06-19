@@ -48,6 +48,7 @@ pub fn BundledRuntimeManifest::path(Self) -> String
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::webview_count(Self) -> Int
+pub fn BundledRuntimeManifest::webviews(Self) -> Result[Array[BundledWebView], String]
 
 pub struct BundledWebView {
   label : String

@@ -126,16 +126,29 @@ fn render_runtime_run_result(
   launch~ : Bool,
 ) -> String {
   let plan = result.plan()
+  let first_webview = plan.first_webview()
+  let title = match first_webview {
+    Ok(webview) => webview.title()
+    Err(_) => ""
+  }
+  let first_window_url = match first_webview {
+    Ok(webview) => webview.url()
+    Err(_) => ""
+  }
+  let load_url = match first_webview {
+    Ok(webview) => webview.load_url()
+    Err(_) => ""
+  }
   [
     "Lepusa runtime run",
     "mode: \{if launch { "launch" } else { "dry-run" }}",
     "backend: macos",
     "engine: WKWebView",
     "status: \{macos_status_name(result.status())}",
-    "webviews: \{plan.webviews()}",
-    "title: \{plan.title()}",
-    "first-window-url: \{plan.url()}",
-    "load-url: \{plan.load_url()}",
+    "webviews: \{plan.webviews().length()}",
+    "title: \{title}",
+    "first-window-url: \{first_window_url}",
+    "load-url: \{load_url}",
     "",
   ].join("\n")
 }

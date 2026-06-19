@@ -14,30 +14,62 @@ pub struct BundledWebView {
 pub fn BundledRuntimeManifest::first_webview(
   self : BundledRuntimeManifest,
 ) -> Result[BundledWebView, String] {
-  match optional_array(self.runtime, "webviews").unwrap_or([]).get(0) {
-    None => Err("runtime webviews must include at least one window")
-    Some(Object(webview)) =>
-      match optional_string(webview, "url") {
-        Some(url) if url != "" =>
-          Ok({
-            label: optional_string(webview, "label").unwrap_or("main"),
-            title: optional_string(webview, "title").unwrap_or(
-              optional_string(self.bundle, "productName").unwrap_or("Lepusa"),
-            ),
-            url,
-            width: optional_int(webview, "width").unwrap_or(1000),
-            height: optional_int(webview, "height").unwrap_or(720),
-            resizable: optional_bool(webview, "resizable").unwrap_or(true),
-            native_hook: optional_string(webview, "nativeHook").unwrap_or(
-              "__lepusaInvoke",
-            ),
-            initialization_scripts: optional_string_array(
-              webview, "initializationScripts",
-            ),
-          })
-        _ => Err("runtime webview url is required")
+  match self.webviews() {
+    Ok(webviews) =>
+      match webviews.get(0) {
+        Some(webview) => Ok(webview)
+        None => Err("runtime webviews must include at least one window")
       }
-    _ => Err("runtime webview must be a json object")
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+pub fn BundledRuntimeManifest::webviews(
+  self : BundledRuntimeManifest,
+) -> Result[Array[BundledWebView], String] {
+  let parsed : Array[BundledWebView] = []
+  let values = optional_array(self.runtime, "webviews").unwrap_or([])
+  if values.is_empty() {
+    return Err("runtime webviews must include at least one window")
+  }
+  for value in values {
+    match value {
+      Object(webview) =>
+        match self.parse_webview(webview) {
+          Ok(parsed_webview) => parsed.push(parsed_webview)
+          Err(problem) => return Err(problem)
+        }
+      _ => return Err("runtime webview must be a json object")
+    }
+  }
+  Ok(parsed)
+}
+
+///|
+fn BundledRuntimeManifest::parse_webview(
+  self : BundledRuntimeManifest,
+  webview : Map[String, Json],
+) -> Result[BundledWebView, String] {
+  match optional_string(webview, "url") {
+    Some(url) if url != "" =>
+      Ok({
+        label: optional_string(webview, "label").unwrap_or("main"),
+        title: optional_string(webview, "title").unwrap_or(
+          optional_string(self.bundle, "productName").unwrap_or("Lepusa"),
+        ),
+        url,
+        width: optional_int(webview, "width").unwrap_or(1000),
+        height: optional_int(webview, "height").unwrap_or(720),
+        resizable: optional_bool(webview, "resizable").unwrap_or(true),
+        native_hook: optional_string(webview, "nativeHook").unwrap_or(
+          "__lepusaInvoke",
+        ),
+        initialization_scripts: optional_string_array(
+          webview, "initializationScripts",
+        ),
+      })
+    _ => Err("runtime webview url is required")
   }
 }
 

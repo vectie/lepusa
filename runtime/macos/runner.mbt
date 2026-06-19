@@ -12,7 +12,8 @@ pub(all) enum MacOSRunStatus {
 } derive(Debug, Eq)
 
 ///|
-pub struct MacOSRunPlan {
+pub struct MacOSWebViewPlan {
+  label : String
   title : String
   url : String
   load_url : String
@@ -22,7 +23,11 @@ pub struct MacOSRunPlan {
   width : Int
   height : Int
   resizable : Bool
-  webviews : Int
+} derive(Debug, Eq)
+
+///|
+pub struct MacOSRunPlan {
+  webviews : Array[MacOSWebViewPlan]
 } derive(Debug, Eq)
 
 ///|
@@ -53,28 +58,47 @@ pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[MacOSRunPlan, Array[String]] {
   let runner = runtime.runner_plan()
-  match runner.webview_specs().get(0) {
-    None => Err(["macOS run requires at least one webview"])
-    Some(spec) =>
-      match initial_load_url(runtime, spec) {
-        Ok(load_url) =>
-          Ok({
-            title: spec.title(),
-            url: spec.url(),
-            load_url,
-            initialization_script: macos_initialization_script(
-              spec.native_hook(),
-              spec.initialization_scripts(),
-            ),
-            native_hook: spec.native_hook(),
-            asset_protocol: spec.asset_protocol(),
-            width: spec.width(),
-            height: spec.height(),
-            resizable: spec.resizable(),
-            webviews: runner.webview_specs().length(),
-          })
-        Err(problem) => Err([problem])
-      }
+  let webviews : Array[MacOSWebViewPlan] = []
+  let problems : Array[String] = []
+  for spec in runner.webview_specs() {
+    match macos_webview_plan_from_spec(runtime, spec) {
+      Ok(webview) => webviews.push(webview)
+      Err(problem) => problems.push(problem)
+    }
+  }
+  if webviews.is_empty() {
+    problems.push("macOS run requires at least one webview")
+  }
+  if problems.is_empty() {
+    Ok({ webviews, })
+  } else {
+    Err(problems)
+  }
+}
+
+///|
+fn macos_webview_plan_from_spec(
+  runtime : @runtime.NativeRuntime,
+  spec : @runtime.RuntimeWebViewSpec,
+) -> Result[MacOSWebViewPlan, String] {
+  match initial_load_url(runtime, spec) {
+    Ok(load_url) =>
+      Ok({
+        label: spec.label(),
+        title: spec.title(),
+        url: spec.url(),
+        load_url,
+        initialization_script: macos_initialization_script(
+          spec.native_hook(),
+          spec.initialization_scripts(),
+        ),
+        native_hook: spec.native_hook(),
+        asset_protocol: spec.asset_protocol(),
+        width: spec.width(),
+        height: spec.height(),
+        resizable: spec.resizable(),
+      })
+    Err(problem) => Err(problem)
   }
 }
 
@@ -82,28 +106,49 @@ pub fn prepare_run(
 pub fn prepare_bundled_run(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> Result[MacOSRunPlan, Array[String]] {
-  match manifest.first_webview() {
+  match manifest.webviews() {
     Err(problem) => Err([problem])
-    Ok(webview) =>
-      match bundled_initial_load_url(manifest, webview) {
-        Err(problem) => Err([problem])
-        Ok(load_url) =>
-          Ok({
-            title: webview.title(),
-            url: webview.url(),
-            load_url,
-            initialization_script: macos_initialization_script(
-              webview.native_hook(),
-              webview.initialization_scripts(),
-            ),
-            native_hook: webview.native_hook(),
-            asset_protocol: manifest.asset_protocol(),
-            width: webview.width(),
-            height: webview.height(),
-            resizable: webview.resizable(),
-            webviews: manifest.webview_count(),
-          })
+    Ok(bundled_webviews) => {
+      let webviews : Array[MacOSWebViewPlan] = []
+      let problems : Array[String] = []
+      for webview in bundled_webviews {
+        match macos_webview_plan_from_bundled(manifest, webview) {
+          Ok(plan) => webviews.push(plan)
+          Err(problem) => problems.push(problem)
+        }
       }
+      if problems.is_empty() {
+        Ok({ webviews, })
+      } else {
+        Err(problems)
+      }
+    }
+  }
+}
+
+///|
+fn macos_webview_plan_from_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+  webview : @bundled.BundledWebView,
+) -> Result[MacOSWebViewPlan, String] {
+  match bundled_initial_load_url(manifest, webview) {
+    Err(problem) => Err(problem)
+    Ok(load_url) =>
+      Ok({
+        label: webview.label(),
+        title: webview.title(),
+        url: webview.url(),
+        load_url,
+        initialization_script: macos_initialization_script(
+          webview.native_hook(),
+          webview.initialization_scripts(),
+        ),
+        native_hook: webview.native_hook(),
+        asset_protocol: manifest.asset_protocol(),
+        width: webview.width(),
+        height: webview.height(),
+        resizable: webview.resizable(),
+      })
   }
 }
 
@@ -156,53 +201,70 @@ pub fn launch_bundled(
 }
 
 ///|
-pub fn MacOSRunPlan::title(self : MacOSRunPlan) -> String {
+pub fn MacOSRunPlan::webviews(self : MacOSRunPlan) -> Array[MacOSWebViewPlan] {
+  self.webviews.copy()
+}
+
+///|
+pub fn MacOSRunPlan::first_webview(
+  self : MacOSRunPlan,
+) -> Result[MacOSWebViewPlan, String] {
+  match self.webviews.get(0) {
+    Some(webview) => Ok(webview)
+    None => Err("macOS run plan requires at least one webview")
+  }
+}
+
+///|
+pub fn MacOSWebViewPlan::label(self : MacOSWebViewPlan) -> String {
+  self.label
+}
+
+///|
+pub fn MacOSWebViewPlan::title(self : MacOSWebViewPlan) -> String {
   self.title
 }
 
 ///|
-pub fn MacOSRunPlan::url(self : MacOSRunPlan) -> String {
+pub fn MacOSWebViewPlan::url(self : MacOSWebViewPlan) -> String {
   self.url
 }
 
 ///|
-pub fn MacOSRunPlan::load_url(self : MacOSRunPlan) -> String {
+pub fn MacOSWebViewPlan::load_url(self : MacOSWebViewPlan) -> String {
   self.load_url
 }
 
 ///|
-pub fn MacOSRunPlan::initialization_script(self : MacOSRunPlan) -> String {
+pub fn MacOSWebViewPlan::initialization_script(
+  self : MacOSWebViewPlan,
+) -> String {
   self.initialization_script
 }
 
 ///|
-pub fn MacOSRunPlan::native_hook(self : MacOSRunPlan) -> String {
+pub fn MacOSWebViewPlan::native_hook(self : MacOSWebViewPlan) -> String {
   self.native_hook
 }
 
 ///|
-pub fn MacOSRunPlan::asset_protocol(self : MacOSRunPlan) -> String {
+pub fn MacOSWebViewPlan::asset_protocol(self : MacOSWebViewPlan) -> String {
   self.asset_protocol
 }
 
 ///|
-pub fn MacOSRunPlan::width(self : MacOSRunPlan) -> Int {
+pub fn MacOSWebViewPlan::width(self : MacOSWebViewPlan) -> Int {
   self.width
 }
 
 ///|
-pub fn MacOSRunPlan::height(self : MacOSRunPlan) -> Int {
+pub fn MacOSWebViewPlan::height(self : MacOSWebViewPlan) -> Int {
   self.height
 }
 
 ///|
-pub fn MacOSRunPlan::resizable(self : MacOSRunPlan) -> Bool {
+pub fn MacOSWebViewPlan::resizable(self : MacOSWebViewPlan) -> Bool {
   self.resizable
-}
-
-///|
-pub fn MacOSRunPlan::webviews(self : MacOSRunPlan) -> Int {
-  self.webviews
 }
 
 ///|
@@ -270,15 +332,19 @@ fn run_plan(
   match mode {
     MacOSDryRun => Ok({ plan, status: MacOSPrepared })
     MacOSOpenWindow => {
+      let webview = match plan.first_webview() {
+        Ok(webview) => webview
+        Err(problem) => return Err([problem])
+      }
       let exit_code = run_webview_with_bridge(
-        @utf8.encode(plan.title),
-        @utf8.encode(plan.load_url),
-        @utf8.encode(plan.initialization_script),
-        @utf8.encode(plan.native_hook),
-        @utf8.encode(plan.asset_protocol),
-        plan.width,
-        plan.height,
-        if plan.resizable {
+        @utf8.encode(webview.title),
+        @utf8.encode(webview.load_url),
+        @utf8.encode(webview.initialization_script),
+        @utf8.encode(webview.native_hook),
+        @utf8.encode(webview.asset_protocol),
+        webview.width,
+        webview.height,
+        if webview.resizable {
           1
         } else {
           0
@@ -302,12 +368,14 @@ fn runtime_dispatch(
   runtime : @runtime.NativeRuntime,
   plan : MacOSRunPlan,
 ) -> (Bytes) -> Bytes {
+  let response_hook = match plan.first_webview() {
+    Ok(webview) => "\{webview.native_hook()}Response"
+    Err(_) => "__lepusaInvokeResponse"
+  }
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
     let response_json = runtime.dispatch_json(input)
-    @utf8.encode(
-      bridge_response_script("\{plan.native_hook()}Response", response_json),
-    )
+    @utf8.encode(bridge_response_script(response_hook, response_json))
   }
 }
 
@@ -324,6 +392,10 @@ fn bundled_dispatch(
   manifest : @bundled.BundledRuntimeManifest,
   plan : MacOSRunPlan,
 ) -> (Bytes) -> Bytes {
+  let response_hook = match plan.first_webview() {
+    Ok(webview) => "\{webview.native_hook()}Response"
+    Err(_) => "__lepusaInvokeResponse"
+  }
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
     let response_json = match @runtime.decode_invoke_request_json(input) {
@@ -339,9 +411,7 @@ fn bundled_dispatch(
           @lepusa.InvokeResponse::error("", problem),
         )
     }
-    @utf8.encode(
-      bridge_response_script("\{plan.native_hook()}Response", response_json),
-    )
+    @utf8.encode(bridge_response_script(response_hook, response_json))
   }
 }
 
