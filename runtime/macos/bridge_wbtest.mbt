@@ -55,8 +55,8 @@ test "macos bridge callback dispatches bundled sync messages" {
     ) {
     Ok(manifest) =>
       match prepare_bundled_run(manifest) {
-        Ok(plan) => {
-          let dispatch = bundled_dispatch(manifest, plan)
+        Ok(_) => {
+          let dispatch = bundled_dispatch(manifest)
           let message = "{\"id\":\"43\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
           let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
             _ => abort("unexpected invalid utf8 response script")

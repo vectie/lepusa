@@ -1,6 +1,7 @@
 import {
   "moonbitlang/core/json",
   "vectie/lepusa",
+  "vectie/lepusa/runtime",
   "vectie/lepusa/plugins/catalog",
 }
 

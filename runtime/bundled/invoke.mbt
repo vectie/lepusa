@@ -46,8 +46,8 @@ pub fn BundledRuntime::dispatch_json(
   payload? : String = "",
 ) -> String {
   match self.dispatch(id~, window_label~, route~, payload~) {
-    Ok(response) => encode_invoke_response_json(response)
-    Err(response) => encode_invoke_response_json(response)
+    Ok(response) => @runtime.encode_invoke_response_json(response)
+    Err(response) => @runtime.encode_invoke_response_json(response)
   }
 }
 
@@ -60,8 +60,8 @@ pub async fn BundledRuntime::dispatch_json_async(
   payload? : String = "",
 ) -> String {
   match self.dispatch_async(id~, window_label~, route~, payload~) {
-    Ok(response) => encode_invoke_response_json(response)
-    Err(response) => encode_invoke_response_json(response)
+    Ok(response) => @runtime.encode_invoke_response_json(response)
+    Err(response) => @runtime.encode_invoke_response_json(response)
   }
 }
 
@@ -289,20 +289,4 @@ fn strings_from_json_array(items : Array[Json]) -> Array[String] {
     }
   }
   strings
-}
-
-///|
-fn encode_invoke_response_json(response : @lepusa.InvokeResponse) -> String {
-  match response.error_message() {
-    Some(message) =>
-      Json::object({
-        "id": Json::string(response.id()),
-        "error": Json::string(message),
-      }).stringify()
-    None =>
-      Json::object({
-        "id": Json::string(response.id()),
-        "payload": Json::string(response.payload().unwrap_or("")),
-      }).stringify()
-  }
 }

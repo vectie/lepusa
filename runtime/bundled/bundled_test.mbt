@@ -389,6 +389,102 @@ test "bundled runtime dispatches sync official plugins" {
 }
 
 ///|
+async test "bundled runtime owns bridge message transport" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      {
+    #|        "label": "main",
+    #|        "url": "lepusa://rabbita/main/index.html",
+    #|        "nativeHook": "__lepusaInvoke",
+    #|        "allowedRoutes": ["store.set", "store.get", "log.write"]
+    #|      }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["store.set", "store.get", "log.write"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      match manifest.bridge_response_hook(window_label="main") {
+        Ok((window_label, hook)) => {
+          assert_eq(window_label, "main")
+          assert_eq(hook, "__lepusaInvokeResponse")
+        }
+        Err(problem) => abort(problem)
+      }
+      let runtime = BundledRuntime::new(manifest)
+      let sync_message = "{\"id\":\"log\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
+      match runtime.dispatch_bridge_message_sync(sync_message) {
+        Ok(dispatch) => {
+          assert_eq(dispatch.window_label(), "main")
+          assert_eq(dispatch.response_hook(), "__lepusaInvokeResponse")
+          assert_true(dispatch.response_json().contains("\"id\":\"log\""))
+          assert_true(
+            dispatch
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+        }
+        Err(_) => abort("unexpected bundled sync bridge failure")
+      }
+      let set_message = "{\"id\":\"set\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"set\",\"payload\":\"{\\\"key\\\":\\\"theme\\\",\\\"value\\\":\\\"dark\\\"}\"}"
+      let get_message = "{\"id\":\"get\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"get\",\"payload\":\"{\\\"key\\\":\\\"theme\\\"}\"}"
+      match runtime.dispatch_bridge_message(set_message) {
+        Ok(dispatch) =>
+          assert_true(dispatch.response_json().contains("\"id\":\"set\""))
+        Err(_) => abort("unexpected bundled async set failure")
+      }
+      match runtime.dispatch_bridge_message(get_message) {
+        Ok(dispatch) => {
+          assert_true(dispatch.response_json().contains("\"id\":\"get\""))
+          assert_true(dispatch.response_json().contains("\\\"found\\\":true"))
+          assert_true(
+            dispatch.response_json().contains("\\\"value\\\":\\\"dark\\\""),
+          )
+        }
+        Err(_) => abort("unexpected bundled async get failure")
+      }
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "bundled bridge transport validates target window" {
+  match
+    BundledRuntimeManifest::parse(
+      "runtime.json",
+      (
+        #|{
+        #|  "runtime": {
+        #|    "webviews": [
+        #|      {
+        #|        "label": "main",
+        #|        "url": "lepusa://rabbita/main/index.html",
+        #|        "allowedRoutes": ["log.write"]
+        #|      }
+        #|    ],
+        #|    "registeredRoutes": ["log.write"]
+        #|  }
+        #|}
+      ),
+    ) {
+    Ok(manifest) =>
+      match
+        manifest.prepare_bridge_message(
+          "{\"id\":\"missing\",\"window_label\":\"other\",\"plugin\":\"log\",\"command\":\"write\"}",
+        ) {
+        Ok(_) => abort("unexpected bundled bridge prepare success")
+        Err(problems) =>
+          assert_eq(problems[0], "bundled bridge window not found: other")
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 fn sample_bundled_manifest() -> String {
   (
     #|{

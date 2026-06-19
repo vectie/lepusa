@@ -62,15 +62,16 @@
   WKURLSchemeHandler wiring for Lepusa assets exists; macOS run plans now
   expose sync versus async bridge route metadata; runtime-owned bridge message
   preparation separates native capture from async dispatch and shares callback
-  script generation across macOS, Linux, and Windows; open-window macOS launches
-  now report unsupported when async routes require native scheduling; Linux now
-  has a first WebKitGTK source-window loop for resolved HTML/file/remote URLs
-  plus sync WebKitGTK script-message bridge dispatch and package-owned URI
-  scheme asset resolution for packaged manifests; Windows now prepares typed
-  WebView2 boot plans, bridge bootstrap scripts, and the final native launch ABI
-  for source and packaged manifests, with that ABI reporting unsupported until
-  the COM creation loop lands; native async bridge scheduling and the Windows
-  WebView creation loop remain.
+  script generation across macOS, Linux, and Windows; bundled runtime bridge
+  transport now preserves packaged plugin registry state across repeated bridge
+  calls; open-window macOS launches now report unsupported when async routes
+  require native scheduling; Linux now has a first WebKitGTK source-window loop
+  for resolved HTML/file/remote URLs plus sync WebKitGTK script-message bridge
+  dispatch and package-owned URI scheme asset resolution for packaged manifests;
+  Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
+  the final native launch ABI for source and packaged manifests, with that ABI
+  reporting unsupported until the COM creation loop lands; native async bridge
+  scheduling and the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

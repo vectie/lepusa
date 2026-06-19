@@ -471,8 +471,9 @@ dispatching and returns the same JSON response shape as project-hosted
 asset, lifecycle, and invoke JSON behind those commands, so native platform
 loops can consume bundled runtime data without depending on CLI internals.
 `BundledRuntime::new(manifest)` keeps the native command registry state alive
-for repeated bridge calls, while the manifest helper remains useful for
-one-shot probes.
+for repeated bridge calls. It also owns bundled bridge message preparation,
+sync/async dispatch, target-window response-hook lookup, and response-callback
+scripts, while the manifest helper remains useful for one-shot probes.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command

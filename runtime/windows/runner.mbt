@@ -590,7 +590,7 @@ fn windows_open_bundled_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    windows_bundled_dispatch(manifest, plan),
+    windows_bundled_dispatch(manifest),
     fn(resolve_asset, url) { resolve_asset(url) },
     windows_bundled_asset_resolver(manifest),
   )
@@ -627,30 +627,14 @@ fn windows_dispatch(
 ///|
 fn windows_bundled_dispatch(
   manifest : @bundled.BundledRuntimeManifest,
-  plan : WindowsBundledRunPlan,
 ) -> (Bytes) -> Bytes {
-  let response_hook = match plan.first_webview() {
-    Ok(webview) => "\{webview.native_hook()}Response"
-    Err(_) => "__lepusaInvokeResponse"
-  }
+  let runtime = @bundled.BundledRuntime::new(manifest)
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
-    let response_json = match @runtime.decode_invoke_request_json(input) {
-      Ok(request) =>
-        manifest.dispatch_json(
-          id=request.id(),
-          window_label=request.window_label(),
-          route=request.route(),
-          payload=request.payload(),
-        )
-      Err(problem) =>
-        @runtime.encode_invoke_response_json(
-          @lepusa.InvokeResponse::error("", problem),
-        )
+    match runtime.dispatch_bridge_message_sync(input) {
+      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+      Err(_) => @utf8.encode("")
     }
-    @utf8.encode(
-      @runtime.native_bridge_response_script(response_hook, response_json),
-    )
   }
 }
 

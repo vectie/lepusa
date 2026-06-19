@@ -22,6 +22,30 @@ pub fn BundledBootstrapPlan::run_plan(Self) -> BundledRunPlan
 pub fn BundledBootstrapPlan::startup_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::to_json(Self) -> String
 
+pub struct BundledBridgeDispatch {
+  window_label : String
+  response_hook : String
+  message : String
+  response_json : String
+  evaluation_script : String
+} derive(Eq, @debug.Debug)
+pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
+pub fn BundledBridgeDispatch::message(Self) -> String
+pub fn BundledBridgeDispatch::response_hook(Self) -> String
+pub fn BundledBridgeDispatch::response_json(Self) -> String
+pub fn BundledBridgeDispatch::window_label(Self) -> String
+
+pub struct BundledBridgeMessage {
+  window_label : String
+  response_hook : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub async fn BundledBridgeMessage::dispatch(Self, BundledRuntime) -> BundledBridgeDispatch
+pub fn BundledBridgeMessage::dispatch_sync(Self, BundledRuntime) -> BundledBridgeDispatch
+pub fn BundledBridgeMessage::message(Self) -> String
+pub fn BundledBridgeMessage::response_hook(Self) -> String
+pub fn BundledBridgeMessage::window_label(Self) -> String
+
 pub struct BundledLifecycleEvent {
   kind : String
   label : String
@@ -83,9 +107,12 @@ pub struct BundledRuntime {
   manifest : BundledRuntimeManifest
   registry : @lepusa.CommandRegistry
 }
+pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
+pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
+pub fn BundledRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
 
 pub struct BundledRuntimeManifest {
   path : String
@@ -97,8 +124,11 @@ pub fn BundledRuntimeManifest::artifact_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
+pub fn BundledRuntimeManifest::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
+pub async fn BundledRuntimeManifest::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
+pub fn BundledRuntimeManifest::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
@@ -107,6 +137,7 @@ pub fn BundledRuntimeManifest::lifecycle_plans(Self) -> Result[Array[BundledLife
 pub fn BundledRuntimeManifest::local_service_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
 pub fn BundledRuntimeManifest::path(Self) -> String
+pub fn BundledRuntimeManifest::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
 pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
