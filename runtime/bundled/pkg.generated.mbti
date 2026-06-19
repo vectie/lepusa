@@ -22,6 +22,13 @@ pub fn BundledLifecycleEvent::label(Self) -> String
 pub fn BundledLifecycleEvent::window_close_requested(String) -> Result[Self, String]
 pub fn BundledLifecycleEvent::window_closed(String) -> Result[Self, String]
 
+pub struct BundledLifecyclePlan {
+  event : BundledLifecycleEvent
+  action_jsons : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn BundledLifecyclePlan::action_jsons(Self) -> Array[String]
+pub fn BundledLifecyclePlan::event(Self) -> BundledLifecycleEvent
+
 pub struct BundledRuntime {
   manifest : BundledRuntimeManifest
   registry : @lepusa.CommandRegistry
@@ -43,9 +50,12 @@ pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ :
 pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String
+pub fn BundledRuntimeManifest::lifecycle_plans(Self) -> Result[Array[BundledLifecyclePlan], String]
+pub fn BundledRuntimeManifest::local_service_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
 pub fn BundledRuntimeManifest::path(Self) -> String
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
+pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::webview_count(Self) -> Int
 pub fn BundledRuntimeManifest::webviews(Self) -> Result[Array[BundledWebView], String]

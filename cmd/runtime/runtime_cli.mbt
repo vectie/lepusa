@@ -149,6 +149,8 @@ fn render_runtime_run_result(
     "title: \{title}",
     "first-window-url: \{first_window_url}",
     "load-url: \{load_url}",
+    "startup-operations: \{plan.execution().startup_operations().length()}",
+    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}",
     "",
   ].join("\n")
 }

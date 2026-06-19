@@ -16,6 +16,10 @@ fn test_host() -> @runtime.RuntimeHost {
         ),
       ]),
     )
+    .with_lifecycle(
+      @lepusa.LifecycleEvent::app_will_exit(),
+      @lepusa.Cmd::effect("flush"),
+    )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) => @runtime.RuntimeHost::new(plan)
     Err(_) => abort("unexpected invalid runtime plan")
@@ -141,6 +145,8 @@ test "macos backend prepares startup operations for native runner" {
       let json = plan.bootstrap_json()
       assert_true(json.contains("\"startupOperations\""))
       assert_true(json.contains("\"kind\":\"navigate-window\""))
+      assert_true(json.contains("\"lifecycleOperations\""))
+      assert_true(json.contains("\"name\":\"flush\""))
     }
     Err(_) => abort("unexpected invalid macOS runner plan")
   }
@@ -187,6 +193,21 @@ test "macos backend prepares first webview load url" {
           assert_true(webview.initialization_script().contains("windowLabel"))
           assert_eq(webview.width(), 1000)
           assert_eq(webview.height(), 720)
+          let execution = plan.execution()
+          assert_eq(execution.startup_operations().length(), 3)
+          assert_true(
+            execution.startup_operations()[1].contains(
+              "\"kind\":\"run-effect\"",
+            ),
+          )
+          let lifecycle_steps = execution.lifecycle_steps()
+          assert_eq(lifecycle_steps.length(), 1)
+          assert_true(
+            lifecycle_steps[0]
+            .event_json()
+            .contains("\"kind\":\"app-will-exit\""),
+          )
+          assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
         }
         Err(_) => abort("unexpected invalid macOS run plan")
       }
@@ -277,6 +298,24 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(webview.width(), 900)
           assert_eq(webview.height(), 640)
           assert_eq(webview.resizable(), false)
+          let execution = plan.execution()
+          assert_eq(execution.startup_operations().length(), 2)
+          assert_true(
+            execution.startup_operations()[0].contains(
+              "\"kind\":\"start-service\"",
+            ),
+          )
+          assert_true(
+            execution.startup_operations()[1].contains("\"name\":\"boot\""),
+          )
+          let lifecycle_steps = execution.lifecycle_steps()
+          assert_eq(lifecycle_steps.length(), 1)
+          assert_true(
+            lifecycle_steps[0]
+            .event_json()
+            .contains("\"kind\":\"app-will-exit\""),
+          )
+          assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }
@@ -344,6 +383,21 @@ fn bundled_macos_manifest() -> String {
     #|        "path": "index.html",
     #|        "mimeType": "text/html",
     #|        "content": "<main>bundled</main>"
+    #|      }
+    #|    ],
+    #|    "localServices": [
+    #|      {
+    #|        "name": "api",
+    #|        "url": "http://127.0.0.1:4317/",
+    #|        "readinessUrl": "http://127.0.0.1:4317/ready",
+    #|        "command": ["moon", "run", "cmd/server"]
+    #|      }
+    #|    ],
+    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "lifecycleHooks": [
+    #|      {
+    #|        "event": { "kind": "app-will-exit" },
+    #|        "actions": [{ "kind": "effect", "name": "flush" }]
     #|      }
     #|    ],
     #|    "registeredRoutes": ["log.write"]

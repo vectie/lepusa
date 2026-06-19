@@ -5,6 +5,12 @@ pub struct BundledLifecycleEvent {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledLifecyclePlan {
+  event : BundledLifecycleEvent
+  action_jsons : Array[String]
+} derive(Debug, Eq)
+
+///|
 pub fn BundledLifecycleEvent::app_started() -> BundledLifecycleEvent {
   { kind: "app-started", label: "" }
 }
@@ -47,6 +53,56 @@ pub fn BundledLifecycleEvent::label(self : BundledLifecycleEvent) -> String {
 }
 
 ///|
+pub fn BundledRuntimeManifest::local_service_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.runtime, "localServices")
+  .unwrap_or([])
+  .map(json_value_string)
+}
+
+///|
+pub fn BundledRuntimeManifest::startup_action_jsons(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  optional_array(self.runtime, "startupActions")
+  .unwrap_or([])
+  .map(json_value_string)
+}
+
+///|
+pub fn BundledRuntimeManifest::lifecycle_plans(
+  self : BundledRuntimeManifest,
+) -> Result[Array[BundledLifecyclePlan], String] {
+  let plans : Array[BundledLifecyclePlan] = []
+  for item in optional_array(self.runtime, "lifecycleHooks").unwrap_or([]) {
+    match item {
+      Object(hook) =>
+        match bundled_lifecycle_plan_from_json(hook) {
+          Ok(plan) => plans.push(plan)
+          Err(problem) => return Err(problem)
+        }
+      _ => return Err("runtime lifecycle hook must be a json object")
+    }
+  }
+  Ok(plans)
+}
+
+///|
+pub fn BundledLifecyclePlan::event(
+  self : BundledLifecyclePlan,
+) -> BundledLifecycleEvent {
+  self.event
+}
+
+///|
+pub fn BundledLifecyclePlan::action_jsons(
+  self : BundledLifecyclePlan,
+) -> Array[String] {
+  self.action_jsons.copy()
+}
+
+///|
 pub fn BundledRuntimeManifest::lifecycle_json(
   self : BundledRuntimeManifest,
   event : BundledLifecycleEvent,
@@ -68,6 +124,46 @@ pub fn BundledRuntimeManifest::lifecycle_json(
     "\"actions\":\{json_array_string(actions)}",
     "}",
   ].join("")
+}
+
+///|
+fn bundled_lifecycle_plan_from_json(
+  hook : Map[String, Json],
+) -> Result[BundledLifecyclePlan, String] {
+  match optional_object(hook, "event") {
+    Some(event_json) =>
+      match bundled_lifecycle_event_from_json(event_json) {
+        Ok(event) =>
+          Ok({
+            event,
+            action_jsons: optional_array(hook, "actions")
+            .unwrap_or([])
+            .map(json_value_string),
+          })
+        Err(problem) => Err(problem)
+      }
+    None => Err("runtime lifecycle hook event is required")
+  }
+}
+
+///|
+fn bundled_lifecycle_event_from_json(
+  object : Map[String, Json],
+) -> Result[BundledLifecycleEvent, String] {
+  match optional_string(object, "kind") {
+    Some("app-started") => Ok(BundledLifecycleEvent::app_started())
+    Some("app-will-exit") => Ok(BundledLifecycleEvent::app_will_exit())
+    Some("window-close-requested") =>
+      BundledLifecycleEvent::window_close_requested(
+        optional_string(object, "label").unwrap_or(""),
+      )
+    Some("window-closed") =>
+      BundledLifecycleEvent::window_closed(
+        optional_string(object, "label").unwrap_or(""),
+      )
+    Some(kind) => Err("unsupported runtime lifecycle event: \{kind}")
+    None => Err("runtime lifecycle event kind is required")
+  }
 }
 
 ///|

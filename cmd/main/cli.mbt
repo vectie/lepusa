@@ -667,7 +667,9 @@ fn render_macos_launch_result(
     "status: \{status}\n" +
     "webviews: \{plan.webviews().length()}\n" +
     "first-window-url: \{first_window}\n" +
-    "load-url: \{load_url}\n",
+    "load-url: \{load_url}\n" +
+    "startup-operations: \{plan.execution().startup_operations().length()}\n" +
+    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}\n",
   )
 }
 

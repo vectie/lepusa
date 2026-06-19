@@ -26,8 +26,21 @@ pub struct MacOSWebViewPlan {
 } derive(Debug, Eq)
 
 ///|
+pub struct MacOSExecutionPlan {
+  startup_operations : Array[String]
+  lifecycle_steps : Array[MacOSLifecycleStepPlan]
+} derive(Debug, Eq)
+
+///|
+pub struct MacOSLifecycleStepPlan {
+  event_json : String
+  operations : Array[String]
+} derive(Debug, Eq)
+
+///|
 pub struct MacOSRunPlan {
   webviews : Array[MacOSWebViewPlan]
+  execution : MacOSExecutionPlan
 } derive(Debug, Eq)
 
 ///|
@@ -70,7 +83,7 @@ pub fn prepare_run(
     problems.push("macOS run requires at least one webview")
   }
   if problems.is_empty() {
-    Ok({ webviews, })
+    Ok({ webviews, execution: macos_execution_plan_from_runner(runner) })
   } else {
     Err(problems)
   }
@@ -117,10 +130,18 @@ pub fn prepare_bundled_run(
           Err(problem) => problems.push(problem)
         }
       }
-      if problems.is_empty() {
-        Ok({ webviews, })
-      } else {
-        Err(problems)
+      let execution = match macos_execution_plan_from_bundled(manifest) {
+        Ok(execution) => Some(execution)
+        Err(execution_problems) => {
+          for problem in execution_problems {
+            problems.push(problem)
+          }
+          None
+        }
+      }
+      match execution {
+        Some(execution) if problems.is_empty() => Ok({ webviews, execution })
+        _ => Err(problems)
       }
     }
   }
@@ -149,6 +170,134 @@ fn macos_webview_plan_from_bundled(
         height: webview.height(),
         resizable: webview.resizable(),
       })
+  }
+}
+
+///|
+fn macos_execution_plan_from_runner(
+  runner : @runtime.NativeRunnerPlan,
+) -> MacOSExecutionPlan {
+  {
+    startup_operations: runner
+    .startup_operations()
+    .map(fn(operation) { operation.to_json() }),
+    lifecycle_steps: runner
+    .lifecycle_steps()
+    .map(fn(step) {
+      {
+        event_json: step.event().to_json(),
+        operations: step.operations().map(fn(operation) { operation.to_json() }),
+      }
+    }),
+  }
+}
+
+///|
+fn macos_execution_plan_from_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[MacOSExecutionPlan, Array[String]] {
+  let startup_operations : Array[String] = []
+  let problems : Array[String] = []
+  for service in manifest.local_service_jsons() {
+    startup_operations.push(macos_start_service_operation_json(service))
+  }
+  for action in manifest.startup_action_jsons() {
+    match macos_operation_json_from_runtime_action_json(action) {
+      Ok(operation) => startup_operations.push(operation)
+      Err(problem) => problems.push(problem)
+    }
+  }
+  let lifecycle_steps : Array[MacOSLifecycleStepPlan] = []
+  match manifest.lifecycle_plans() {
+    Ok(plans) =>
+      for plan in plans {
+        let operations : Array[String] = []
+        for action in plan.action_jsons() {
+          match macos_operation_json_from_runtime_action_json(action) {
+            Ok(operation) => operations.push(operation)
+            Err(problem) => problems.push(problem)
+          }
+        }
+        lifecycle_steps.push({
+          event_json: macos_bundled_lifecycle_event_json(plan.event()),
+          operations,
+        })
+      }
+    Err(problem) => problems.push(problem)
+  }
+  if problems.is_empty() {
+    Ok({ startup_operations, lifecycle_steps })
+  } else {
+    Err(problems)
+  }
+}
+
+///|
+fn macos_start_service_operation_json(service_json : String) -> String {
+  "{\"kind\":\"start-service\",\"service\":\{service_json}}"
+}
+
+///|
+fn macos_bundled_lifecycle_event_json(
+  event : @bundled.BundledLifecycleEvent,
+) -> String {
+  if event.label() == "" {
+    "{\"kind\":\{event.kind().json_string()}}"
+  } else {
+    [
+      "{",
+      "\"kind\":\{event.kind().json_string()},",
+      "\"label\":\{event.label().json_string()}",
+      "}",
+    ].join("")
+  }
+}
+
+///|
+fn macos_operation_json_from_runtime_action_json(
+  action_json : String,
+) -> Result[String, String] {
+  try @json.parse(action_json) catch {
+    error => Err("invalid runtime action json: \{error}")
+  } noraise {
+    Object(action) =>
+      match optional_response_string(action, "kind").unwrap_or("") {
+        "effect" =>
+          Ok(
+            [
+              "{",
+              "\"kind\":\"run-effect\",",
+              "\"name\":\{optional_response_string(action, "name").unwrap_or("").json_string()}",
+              "}",
+            ].join(""),
+          )
+        "emit" =>
+          match (action.get("target"), action.get("event")) {
+            (Some(target), Some(event)) =>
+              Ok(
+                [
+                  "{",
+                  "\"kind\":\"send-event\",",
+                  "\"target\":\{json_value_string(target)},",
+                  "\"event\":\{json_value_string(event)}",
+                  "}",
+                ].join(""),
+              )
+            _ => Err("runtime emit action requires target and event")
+          }
+        "navigate" =>
+          Ok(
+            [
+              "{",
+              "\"kind\":\"navigate-window\",",
+              "\"label\":\{optional_response_string(action, "windowLabel").unwrap_or("").json_string()},",
+              "\"url\":\{optional_response_string(action, "url").unwrap_or("").json_string()}",
+              "}",
+            ].join(""),
+          )
+        kind => Err("unsupported runtime action kind for macOS: \{kind}")
+      }
+    _ => Err("runtime action must be a json object")
   }
 }
 
@@ -213,6 +362,39 @@ pub fn MacOSRunPlan::first_webview(
     Some(webview) => Ok(webview)
     None => Err("macOS run plan requires at least one webview")
   }
+}
+
+///|
+pub fn MacOSRunPlan::execution(self : MacOSRunPlan) -> MacOSExecutionPlan {
+  self.execution
+}
+
+///|
+pub fn MacOSExecutionPlan::startup_operations(
+  self : MacOSExecutionPlan,
+) -> Array[String] {
+  self.startup_operations.copy()
+}
+
+///|
+pub fn MacOSExecutionPlan::lifecycle_steps(
+  self : MacOSExecutionPlan,
+) -> Array[MacOSLifecycleStepPlan] {
+  self.lifecycle_steps.copy()
+}
+
+///|
+pub fn MacOSLifecycleStepPlan::event_json(
+  self : MacOSLifecycleStepPlan,
+) -> String {
+  self.event_json
+}
+
+///|
+pub fn MacOSLifecycleStepPlan::operations(
+  self : MacOSLifecycleStepPlan,
+) -> Array[String] {
+  self.operations.copy()
 }
 
 ///|
@@ -574,6 +756,37 @@ fn optional_response_bool(object : Map[String, Json], key : String) -> Bool? {
 }
 
 ///|
+fn json_value_string(value : Json) -> String {
+  match value {
+    Null => "null"
+    True => "true"
+    False => "false"
+    Number(value, ..) => value.to_string()
+    String(value) => value.json_string()
+    Array(items) => "[\{items.map(json_value_string).join(",")}]"
+    Object(object) => json_object_string(object)
+  }
+}
+
+///|
+fn json_object_string(object : Map[String, Json]) -> String {
+  let keys : Array[String] = []
+  for key in object.keys() {
+    keys.push(key)
+  }
+  keys.sort()
+  let fields : Array[String] = []
+  for key in keys {
+    match object.get(key) {
+      Some(value) =>
+        fields.push("\{key.json_string()}:\{json_value_string(value)}")
+      None => ()
+    }
+  }
+  "{\{fields.join(",")}}"
+}
+
+///|
 fn macos_initialization_script(
   native_hook : String,
   initialization_scripts : Array[String],
@@ -620,6 +833,18 @@ fn macos_native_hook_script(hook : String) -> String {
     "  });",
     "})();",
   ].join("\n")
+}
+
+///|
+fn String::json_string(self : String) -> String {
+  "\"" +
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="\n", new="\\n")
+  .replace_all(old="\r", new="\\r")
+  .replace_all(old="\t", new="\\t") +
+  "\""
 }
 
 ///|
