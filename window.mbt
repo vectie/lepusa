@@ -54,6 +54,31 @@ pub fn ResolvedWindow::label(self : ResolvedWindow) -> String {
 }
 
 ///|
+pub fn ResolvedWindow::title(self : ResolvedWindow) -> String {
+  self.title
+}
+
+///|
+pub fn ResolvedWindow::width(self : ResolvedWindow) -> Int {
+  self.width
+}
+
+///|
+pub fn ResolvedWindow::height(self : ResolvedWindow) -> Int {
+  self.height
+}
+
+///|
+pub fn ResolvedWindow::resizable(self : ResolvedWindow) -> Bool {
+  self.resizable
+}
+
+///|
+pub fn ResolvedWindow::title_bar(self : ResolvedWindow) -> TitleBarStyle {
+  self.title_bar
+}
+
+///|
 pub fn ResolvedWindow::url(self : ResolvedWindow) -> String {
   self.source.url()
 }

@@ -92,6 +92,11 @@ pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
 }
 
 ///|
+pub fn RuntimePlan::capabilities(self : RuntimePlan) -> Array[Capability] {
+  self.launch.capabilities()
+}
+
+///|
 pub fn App::runtime_plan(
   self : App,
   config? : RuntimeConfig = RuntimeConfig::system_webview(),

@@ -31,6 +31,8 @@ The first implementation slice already owns the public MoonBit foundation:
 - `ProjectManifest` validation plus `LaunchPlan`, `RuntimePlan`, and
   `BundlePlan` generation as the boundaries native runtime and platform
   bundler code will consume next
+- `@lepusa/runtime` host/session snapshots that native WebView backends can
+  consume without reinterpreting app configuration
 
 The common authoring path is intentionally small:
 
@@ -109,6 +111,10 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+`@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
+window frames, protocol mappings, virtual files, generated bridge source, and
+command dispatch through the declared capabilities.
 
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as

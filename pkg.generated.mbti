@@ -326,9 +326,14 @@ pub struct ResolvedWindow {
   title_bar : TitleBarStyle
   source : ResolvedSource
 } derive(Eq, @debug.Debug)
+pub fn ResolvedWindow::height(Self) -> Int
 pub fn ResolvedWindow::label(Self) -> String
+pub fn ResolvedWindow::resizable(Self) -> Bool
 pub fn ResolvedWindow::source(Self) -> ResolvedSource
+pub fn ResolvedWindow::title(Self) -> String
+pub fn ResolvedWindow::title_bar(Self) -> TitleBarStyle
 pub fn ResolvedWindow::url(Self) -> String
+pub fn ResolvedWindow::width(Self) -> Int
 
 pub(all) enum RuntimeBackend {
   SystemWebView
@@ -356,6 +361,7 @@ pub struct RuntimePlan {
 pub fn RuntimePlan::asset_protocol(Self) -> String
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
+pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool

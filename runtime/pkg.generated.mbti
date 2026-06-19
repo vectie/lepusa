@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/runtime"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct RuntimeHost {
+  plan : @lepusa.RuntimePlan
+  registry : @lepusa.CommandRegistry
+}
+pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
+pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
+pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
+pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
+pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
+
+pub struct RuntimeProtocolMapping {
+  window_label : String
+  scheme : String
+  root : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeProtocolMapping::root(Self) -> String
+pub fn RuntimeProtocolMapping::scheme(Self) -> String
+pub fn RuntimeProtocolMapping::window_label(Self) -> String
+
+pub struct RuntimeSession {
+  backend : @lepusa.RuntimeBackend
+  devtools : Bool
+  asset_protocol : String
+  windows : Array[RuntimeWindow]
+  protocol_mappings : Array[RuntimeProtocolMapping]
+  virtual_files : Array[RuntimeVirtualFile]
+  command_routes : Array[String]
+  registered_routes : Array[String]
+  bridge_source : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeSession::asset_protocol(Self) -> String
+pub fn RuntimeSession::backend(Self) -> @lepusa.RuntimeBackend
+pub fn RuntimeSession::bridge_source(Self) -> String
+pub fn RuntimeSession::command_routes(Self) -> Array[String]
+pub fn RuntimeSession::devtools(Self) -> Bool
+pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
+pub fn RuntimeSession::registered_routes(Self) -> Array[String]
+pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
+pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
+
+pub struct RuntimeVirtualFile {
+  window_label : String
+  path : String
+  content : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeVirtualFile::content(Self) -> String
+pub fn RuntimeVirtualFile::path(Self) -> String
+pub fn RuntimeVirtualFile::window_label(Self) -> String
+
+pub struct RuntimeWindow {
+  label : String
+  title : String
+  url : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : @lepusa.TitleBarStyle
+} derive(Eq, @debug.Debug)
+pub fn RuntimeWindow::height(Self) -> Int
+pub fn RuntimeWindow::label(Self) -> String
+pub fn RuntimeWindow::resizable(Self) -> Bool
+pub fn RuntimeWindow::title(Self) -> String
+pub fn RuntimeWindow::title_bar(Self) -> @lepusa.TitleBarStyle
+pub fn RuntimeWindow::url(Self) -> String
+pub fn RuntimeWindow::width(Self) -> Int
+
+// Type aliases
+
+// Traits
+

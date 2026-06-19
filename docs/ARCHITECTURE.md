@@ -199,6 +199,13 @@ local service.
 Native WebView backends should consume `ResolvedWindow::url()` and install the
 listed `ProtocolMapping` values instead of re-resolving app configuration.
 
+`@lepusa/runtime` is the first package on the runtime side of that boundary. It
+accepts a `RuntimePlan`, produces a `RuntimeSession` snapshot with window frame
+data, protocol mappings, virtual files, bridge source, and routes, and exposes
+command dispatch through the plan's capability set. Platform backends should add
+event loop and WebView ownership underneath this package instead of reaching
+back into app construction APIs.
+
 ## Bundling
 
 `BundlePlan` is a pure framework contract: it computes platform metadata,

@@ -24,6 +24,7 @@
 
 ## Milestone 2: Native Runtime
 
+- Add `@lepusa/runtime` host/session boundary over `RuntimePlan`.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
 - Support `Source::html`, `Source::local_path`, `Source::url`, and packaged
   assets.
