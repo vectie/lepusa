@@ -46,6 +46,14 @@ pub fn RegisteredCommand::permission(self : RegisteredCommand) -> Permission {
 }
 
 ///|
+pub fn RegisteredCommand::mode(self : RegisteredCommand) -> CommandMode {
+  match self.handler {
+    SyncCommandHandler(_) => Sync
+    AsyncCommandHandler(_) => Async
+  }
+}
+
+///|
 pub struct CommandRegistry {
   commands : Map[String, RegisteredCommand]
 }
@@ -97,6 +105,31 @@ pub fn CommandRegistry::contains(
 pub fn CommandRegistry::routes(self : CommandRegistry) -> Array[String] {
   let routes : Array[String] = []
   self.commands.each(fn(route, _) { routes.push(route) })
+  routes.sort()
+  routes
+}
+
+///|
+pub fn CommandRegistry::async_routes(self : CommandRegistry) -> Array[String] {
+  self.routes_by_mode(Async)
+}
+
+///|
+pub fn CommandRegistry::sync_routes(self : CommandRegistry) -> Array[String] {
+  self.routes_by_mode(Sync)
+}
+
+///|
+fn CommandRegistry::routes_by_mode(
+  self : CommandRegistry,
+  mode : CommandMode,
+) -> Array[String] {
+  let routes : Array[String] = []
+  self.commands.each(fn(route, command) {
+    if command.mode() == mode {
+      routes.push(route)
+    }
+  })
   routes.sort()
   routes
 }

@@ -38,9 +38,16 @@ pub struct MacOSLifecycleStepPlan {
 } derive(Debug, Eq)
 
 ///|
+pub struct MacOSBridgePlan {
+  sync_command_routes : Array[String]
+  async_command_routes : Array[String]
+} derive(Debug, Eq)
+
+///|
 pub struct MacOSRunPlan {
   webviews : Array[MacOSWebViewPlan]
   execution : MacOSExecutionPlan
+  bridge : MacOSBridgePlan
 } derive(Debug, Eq)
 
 ///|
@@ -83,7 +90,11 @@ pub fn prepare_run(
     problems.push("macOS run requires at least one webview")
   }
   if problems.is_empty() {
-    Ok({ webviews, execution: macos_execution_plan_from_runner(runner) })
+    Ok({
+      webviews,
+      execution: macos_execution_plan_from_runner(runner),
+      bridge: macos_bridge_plan_from_runtime(runtime),
+    })
   } else {
     Err(problems)
   }
@@ -140,7 +151,12 @@ pub fn prepare_bundled_run(
         }
       }
       match execution {
-        Some(execution) if problems.is_empty() => Ok({ webviews, execution })
+        Some(execution) if problems.is_empty() =>
+          Ok({
+            webviews,
+            execution,
+            bridge: macos_bridge_plan_from_bundled(manifest),
+          })
         _ => Err(problems)
       }
     }
@@ -229,6 +245,26 @@ fn macos_execution_plan_from_bundled(
     Ok({ startup_operations, lifecycle_steps })
   } else {
     Err(problems)
+  }
+}
+
+///|
+fn macos_bridge_plan_from_runtime(
+  runtime : @runtime.NativeRuntime,
+) -> MacOSBridgePlan {
+  {
+    sync_command_routes: runtime.host().sync_command_routes(),
+    async_command_routes: runtime.host().async_command_routes(),
+  }
+}
+
+///|
+fn macos_bridge_plan_from_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> MacOSBridgePlan {
+  {
+    sync_command_routes: manifest.registered_sync_routes(),
+    async_command_routes: manifest.registered_async_routes(),
   }
 }
 
@@ -367,6 +403,30 @@ pub fn MacOSRunPlan::first_webview(
 ///|
 pub fn MacOSRunPlan::execution(self : MacOSRunPlan) -> MacOSExecutionPlan {
   self.execution
+}
+
+///|
+pub fn MacOSRunPlan::bridge(self : MacOSRunPlan) -> MacOSBridgePlan {
+  self.bridge
+}
+
+///|
+pub fn MacOSBridgePlan::sync_command_routes(
+  self : MacOSBridgePlan,
+) -> Array[String] {
+  self.sync_command_routes.copy()
+}
+
+///|
+pub fn MacOSBridgePlan::async_command_routes(
+  self : MacOSBridgePlan,
+) -> Array[String] {
+  self.async_command_routes.copy()
+}
+
+///|
+pub fn MacOSBridgePlan::requires_async_dispatch(self : MacOSBridgePlan) -> Bool {
+  !self.async_command_routes.is_empty()
 }
 
 ///|

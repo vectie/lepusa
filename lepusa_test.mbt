@@ -288,6 +288,10 @@ test "command registry dispatches allowed invokes" {
     @lepusa.Capability::new("main-dialog").window("main").permission(Dialog),
   ])
   assert_true(response is InvokeOk("42", "shown:hello"))
+  let sync_routes = registry.sync_routes()
+  assert_eq(sync_routes.length(), 1)
+  assert_eq(sync_routes[0], "dialog.show")
+  assert_eq(registry.async_routes().length(), 0)
 }
 
 ///|
@@ -314,6 +318,10 @@ async test "command registry dispatches async handlers" {
     sync_response
     is InvokeError("async", "command requires async dispatch: core.invoke"),
   )
+  let async_routes = registry.async_routes()
+  assert_eq(async_routes.length(), 1)
+  assert_eq(async_routes[0], "core.invoke")
+  assert_eq(registry.sync_routes().length(), 0)
 }
 
 ///|

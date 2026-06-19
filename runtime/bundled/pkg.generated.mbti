@@ -54,6 +54,9 @@ pub fn BundledRuntimeManifest::lifecycle_plans(Self) -> Result[Array[BundledLife
 pub fn BundledRuntimeManifest::local_service_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
 pub fn BundledRuntimeManifest::path(Self) -> String
+pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
+pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
+pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
 pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String

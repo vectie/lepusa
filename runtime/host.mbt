@@ -23,6 +23,16 @@ pub fn RuntimeHost::registry(self : RuntimeHost) -> @lepusa.CommandRegistry {
 }
 
 ///|
+pub fn RuntimeHost::sync_command_routes(self : RuntimeHost) -> Array[String] {
+  self.registry.sync_routes()
+}
+
+///|
+pub fn RuntimeHost::async_command_routes(self : RuntimeHost) -> Array[String] {
+  self.registry.async_routes()
+}
+
+///|
 pub fn RuntimeHost::snapshot(
   self : RuntimeHost,
 ) -> Result[RuntimeSession, Array[String]] {

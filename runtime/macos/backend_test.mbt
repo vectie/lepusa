@@ -74,6 +74,27 @@ fn bridge_test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn async_bridge_test_host() -> @runtime.RuntimeHost {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(title="macOS", source=@lepusa.Source::html("<main>macOS</main>"))
+    .with_plugin(@lepusa.Plugin::new("fs").command_async("readText"))
+    .with_capability(
+      @lepusa.Capability::new("fs").window("main").command("fs.readText"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => {
+      let registry = @lepusa.CommandRegistry::new().register_async_fn(
+        "fs.readText",
+        handler=fn(payload) { Ok("{\"read\":\{payload}}") },
+      )
+      @runtime.RuntimeHost::new(plan, registry~)
+    }
+    Err(_) => abort("unexpected invalid async runtime plan")
+  }
+}
+
+///|
 test "macos backend exposes wkwebview descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "macos")
@@ -208,10 +229,33 @@ test "macos backend prepares first webview load url" {
             .contains("\"kind\":\"app-will-exit\""),
           )
           assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
+          let bridge = plan.bridge()
+          assert_eq(bridge.sync_command_routes().length(), 0)
+          assert_eq(bridge.async_command_routes().length(), 0)
+          assert_false(bridge.requires_async_dispatch())
         }
         Err(_) => abort("unexpected invalid macOS run plan")
       }
     Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
+
+///|
+test "macos backend marks async bridge routes" {
+  match runtime(async_bridge_test_host()) {
+    Ok(runtime) =>
+      match prepare_run(runtime) {
+        Ok(plan) => {
+          let bridge = plan.bridge()
+          assert_eq(bridge.sync_command_routes().length(), 0)
+          let async_routes = bridge.async_command_routes()
+          assert_eq(async_routes.length(), 1)
+          assert_eq(async_routes[0], "fs.readText")
+          assert_true(bridge.requires_async_dispatch())
+        }
+        Err(_) => abort("unexpected invalid async macOS run plan")
+      }
+    Err(_) => abort("unexpected invalid async macOS runtime")
   }
 }
 
@@ -316,6 +360,14 @@ test "macos backend prepares bundled runtime manifest" {
             .contains("\"kind\":\"app-will-exit\""),
           )
           assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
+          let bridge = plan.bridge()
+          let sync_routes = bridge.sync_command_routes()
+          assert_eq(sync_routes.length(), 1)
+          assert_eq(sync_routes[0], "log.write")
+          let async_routes = bridge.async_command_routes()
+          assert_eq(async_routes.length(), 1)
+          assert_eq(async_routes[0], "fs.writeText")
+          assert_true(bridge.requires_async_dispatch())
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }
@@ -400,7 +452,7 @@ fn bundled_macos_manifest() -> String {
     #|        "actions": [{ "kind": "effect", "name": "flush" }]
     #|      }
     #|    ],
-    #|    "registeredRoutes": ["log.write"]
+    #|    "registeredRoutes": ["log.write", "fs.writeText"]
     #|  }
     #|}
   )

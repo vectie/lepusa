@@ -121,6 +121,7 @@ pub struct RuntimeHost {
   plan : @lepusa.RuntimePlan
   registry : @lepusa.CommandRegistry
 }
+pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub async fn RuntimeHost::dispatch_async(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
@@ -138,6 +139,7 @@ pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::startup_step(Self) -> Result[RuntimeStep, Array[String]]
+pub fn RuntimeHost::sync_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
 
 pub(all) enum RuntimeOperation {

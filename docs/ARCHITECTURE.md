@@ -371,11 +371,12 @@ explicit `launch(runtime)` or `launch_bundled(manifest)` call.
 Objective-C window creation lives under this package, not in the portable
 facade or CLI. `prepare_run(runtime)` and `prepare_bundled_run(manifest)` are
 the testable boundaries: they preserve custom-scheme Lepusa URLs, attach the
-asset protocol to the run plan, and merge the generated Lepusa bridge with a
-macOS-native hook bootstrap script. The C stub installs that combined source
-as a `WKUserScript` at document start, so launched pages receive
-`window.lepusa`, `__lepusaInvoke`, and the future `__lepusaInvokeResponse`
-callback surface before application code runs.
+asset protocol to the run plan, carry startup/lifecycle execution entries, and
+split registered bridge routes into sync versus async command sets. They also
+merge the generated Lepusa bridge with a macOS-native hook bootstrap script.
+The C stub installs that combined source as a `WKUserScript` at document
+start, so launched pages receive `window.lepusa`, `__lepusaInvoke`, and the
+future `__lepusaInvokeResponse` callback surface before application code runs.
 The macOS C stub registers a `WKScriptMessageHandler` under the generated
 native hook name. The handler passes the posted JSON string into MoonBit,
 receives a response script, and evaluates it back in the WebView so

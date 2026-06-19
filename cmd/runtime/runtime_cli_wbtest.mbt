@@ -121,6 +121,8 @@ test "runtime cli dry-runs bundled macos launch" {
   )
   assert_true(result.output.contains("startup-operations: 0"))
   assert_true(result.output.contains("lifecycle-steps: 0"))
+  assert_true(result.output.contains("bridge-sync-routes: 0"))
+  assert_true(result.output.contains("bridge-async-routes: 0"))
 }
 
 ///|

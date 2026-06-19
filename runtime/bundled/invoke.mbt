@@ -180,12 +180,41 @@ fn BundledRuntimeManifest::command_registry(
 }
 
 ///|
-fn BundledRuntimeManifest::registered_routes(
+pub fn BundledRuntimeManifest::registered_routes(
   self : BundledRuntimeManifest,
 ) -> Array[String] {
   strings_from_json_array(
     optional_array(self.runtime, "registeredRoutes").unwrap_or([]),
   )
+}
+
+///|
+pub fn BundledRuntimeManifest::registered_sync_routes(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  self.registered_routes_by_mode(self.command_registry().sync_routes())
+}
+
+///|
+pub fn BundledRuntimeManifest::registered_async_routes(
+  self : BundledRuntimeManifest,
+) -> Array[String] {
+  self.registered_routes_by_mode(self.command_registry().async_routes())
+}
+
+///|
+fn BundledRuntimeManifest::registered_routes_by_mode(
+  self : BundledRuntimeManifest,
+  mode_routes : Array[String],
+) -> Array[String] {
+  let routes : Array[String] = []
+  for route in self.registered_routes() {
+    if mode_routes.contains(route) {
+      routes.push(route)
+    }
+  }
+  routes.sort()
+  routes
 }
 
 ///|

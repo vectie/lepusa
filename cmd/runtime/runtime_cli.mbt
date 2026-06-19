@@ -151,6 +151,8 @@ fn render_runtime_run_result(
     "load-url: \{load_url}",
     "startup-operations: \{plan.execution().startup_operations().length()}",
     "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}",
+    "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}",
+    "bridge-async-routes: \{plan.bridge().async_command_routes().length()}",
     "",
   ].join("\n")
 }

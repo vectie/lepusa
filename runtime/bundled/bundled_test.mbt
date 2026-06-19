@@ -195,6 +195,12 @@ test "bundled runtime dispatches sync official plugins" {
     #|}
   match BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
+      let sync_routes = manifest.registered_sync_routes()
+      assert_eq(sync_routes.length(), 1)
+      assert_eq(sync_routes[0], "log.write")
+      let async_routes = manifest.registered_async_routes()
+      assert_eq(async_routes.length(), 1)
+      assert_eq(async_routes[0], "fs.writeText")
       let log = manifest.dispatch_json(
         id="log",
         window_label="main",

@@ -669,7 +669,9 @@ fn render_macos_launch_result(
     "first-window-url: \{first_window}\n" +
     "load-url: \{load_url}\n" +
     "startup-operations: \{plan.execution().startup_operations().length()}\n" +
-    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}\n",
+    "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}\n" +
+    "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}\n" +
+    "bridge-async-routes: \{plan.bridge().async_command_routes().length()}\n",
   )
 }
 

@@ -183,6 +183,7 @@ pub(all) enum CommandMode {
 pub struct CommandRegistry {
   commands : Map[String, RegisteredCommand]
 }
+pub fn CommandRegistry::async_routes(Self) -> Array[String]
 pub fn CommandRegistry::contains(Self, String) -> Bool
 pub fn CommandRegistry::dispatch(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
 pub async fn CommandRegistry::dispatch_async(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
@@ -193,6 +194,7 @@ pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
 pub fn CommandRegistry::register_async_fn(Self, String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::routes(Self) -> Array[String]
+pub fn CommandRegistry::sync_routes(Self) -> Array[String]
 pub fn CommandRegistry::validate(Self) -> Array[String]
 
 pub struct CommandSpec {
@@ -427,6 +429,7 @@ pub struct RegisteredCommand {
   permission : Permission
   handler : RegisteredCommandHandler
 }
+pub fn RegisteredCommand::mode(Self) -> CommandMode
 pub fn RegisteredCommand::new(String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::new_async(String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::permission(Self) -> Permission
