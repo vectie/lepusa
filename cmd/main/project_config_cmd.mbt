@@ -1,10 +1,11 @@
 ///|
 fn project_startup_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Cmd {
   match object.get("startup") {
-    Some(json) => command_from_json(json, "startup", problems)
+    Some(json) => command_from_json(json, "startup", base_dir~, problems)
     None => @lepusa.Cmd::batch([])
   }
 }
@@ -12,13 +13,14 @@ fn project_startup_from_object(
 ///|
 fn project_lifecycle_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> Array[@lepusa.LifecycleHook] {
   let hooks : Array[@lepusa.LifecycleHook] = []
   match optional_config_array(object, "lifecycle") {
     Some(items) =>
       for item in items {
-        match lifecycle_hook_from_json(item, problems) {
+        match lifecycle_hook_from_json(item, base_dir~, problems) {
           Some(hook) => hooks.push(hook)
           None => ()
         }
@@ -31,6 +33,7 @@ fn project_lifecycle_from_object(
 ///|
 fn lifecycle_hook_from_json(
   json : Json,
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.LifecycleHook? {
   match json {
@@ -38,7 +41,12 @@ fn lifecycle_hook_from_json(
       let event = lifecycle_event_from_object(object, problems)
       let command = match object.get("command") {
         Some(command_json) =>
-          command_from_json(command_json, "lifecycle command", problems)
+          command_from_json(
+            command_json,
+            "lifecycle command",
+            base_dir~,
+            problems,
+          )
         None => {
           problems.push("project lifecycle command is required")
           @lepusa.Cmd::batch([])
@@ -88,13 +96,14 @@ fn lifecycle_event_from_object(
 fn command_from_json(
   json : Json,
   context : String,
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Cmd {
   match json {
     Null => @lepusa.Cmd::batch([])
     String(name) => @lepusa.Cmd::effect(name)
-    Array(items) => command_batch_from_json(items, context, problems)
-    Object(object) => command_from_object(object, context, problems)
+    Array(items) => command_batch_from_json(items, context, base_dir~, problems)
+    Object(object) => command_from_object(object, context, base_dir~, problems)
     _ => {
       problems.push(
         "project \{context} command must be an object, array, string, or null",
@@ -108,11 +117,12 @@ fn command_from_json(
 fn command_batch_from_json(
   items : Array[Json],
   context : String,
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Cmd {
   let commands : Array[@lepusa.Cmd] = []
   for item in items {
-    commands.push(command_from_json(item, context, problems))
+    commands.push(command_from_json(item, context, base_dir~, problems))
   }
   @lepusa.Cmd::batch(commands)
 }
@@ -121,6 +131,7 @@ fn command_batch_from_json(
 fn command_from_object(
   object : Map[String, Json],
   context : String,
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Cmd {
   match optional_config_string(object, "effect") {
@@ -132,11 +143,13 @@ fn command_from_object(
     None => ()
   }
   match optional_config_object(object, "navigate") {
-    Some(navigate) => return navigate_command_from_object(navigate, problems)
+    Some(navigate) =>
+      return navigate_command_from_object(navigate, base_dir~, problems)
     None => ()
   }
   match optional_config_array(object, "batch") {
-    Some(items) => return command_batch_from_json(items, context, problems)
+    Some(items) =>
+      return command_batch_from_json(items, context, base_dir~, problems)
     None => ()
   }
   problems.push(
@@ -168,11 +181,13 @@ fn emit_command_from_json(json : Json, problems : Array[String]) -> @lepusa.Cmd 
 ///|
 fn navigate_command_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Cmd {
   let window = required_config_string(object, "window", problems)
   let source = match optional_config_object(object, "source") {
-    Some(source_object) => source_from_object(source_object, problems)
+    Some(source_object) =>
+      source_from_object(source_object, base_dir~, problems)
     None => {
       problems.push("project navigate source is required")
       @lepusa.Source::html("<main></main>")

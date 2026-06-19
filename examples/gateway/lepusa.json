@@ -1,0 +1,38 @@
+{
+  "identifier": "dev.vectie.lepusa.examples.gateway",
+  "productName": "Lepusa Gateway Example",
+  "version": "0.1.0",
+  "runtime": {
+    "backend": "system-webview",
+    "assetProtocol": "lepusa",
+    "devtools": false
+  },
+  "window": {
+    "label": "gateway",
+    "title": "Gateway Example",
+    "width": 1100,
+    "height": 760,
+    "resizable": true,
+    "source": {
+      "localhost": {
+        "port": 4317,
+        "path": "/",
+        "readinessPath": "/health",
+        "command": ["moon", "run", "cmd/server"]
+      }
+    }
+  },
+  "plugins": [
+    { "name": "localhost" },
+    { "name": "serviceDiscovery" }
+  ],
+  "capabilities": [
+    {
+      "name": "gateway",
+      "windows": ["gateway"],
+      "permissions": ["localhost", "service-discovery"]
+    }
+  ],
+  "startup": { "effect": "connect-gateway" }
+}
+

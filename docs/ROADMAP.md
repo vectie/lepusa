@@ -125,9 +125,12 @@ desktop core is reliable.
 ## Milestone 7: Foundation Proof
 
 - Build at least three example apps:
-  - MoonBit-authored Rabbita-style UI app.
-  - Static asset app from a local `dist/` directory.
-  - Localhost gateway app with sidecar/service readiness.
-- Verify each example can run in dev mode and bundle mode.
+  - MoonBit-authored Rabbita-style UI app exists under `examples/rabbita`.
+  - Static asset app from a local `dist/` directory exists under
+    `examples/static`.
+  - Localhost gateway app with sidecar/service readiness exists under
+    `examples/gateway`.
+- Verify each example can run in dev mode and bundle mode: CLI smoke tests
+  cover dev mode for all three examples and bundle mode for the static example.
 - Document how third-party MoonBit projects create, bundle, sign, and publish
   desktop apps.

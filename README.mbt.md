@@ -148,6 +148,8 @@ runtime backend, windows, plugin command routes, command permission
 requirements, capability grants, bundle icon resources, and bundle signing
 prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
 current directory, or a file passed with `--project`.
+File paths in `lepusa.json`, including icons, packaged asset roots, local asset
+roots, and filesystem scopes, are resolved relative to the config file.
 Official plugins can be declared by name, for example
 `{ "name": "autoLaunch" }`, `{ "name": "clipboard" }`,
 `{ "name": "deepLink" }`, `{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
@@ -168,6 +170,10 @@ It also describes runtime behavior through `startup` and `lifecycle` commands:
 When a project declares official `log` or `store` plugins, the CLI binds their
 MoonBit-native handlers into the project `RuntimeHost` without adding
 moon-suite-specific behavior.
+
+The `examples/` directory contains checked project manifests for the three
+foundation app shapes: Rabbita-style MoonBit UI, packaged static assets, and a
+localhost gateway with sidecar/readiness metadata.
 
 `lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
 native command registration, and a scoped capability helper.

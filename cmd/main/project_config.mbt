@@ -12,16 +12,19 @@ async fn load_project_config(
   let text = @fs.read_file(path).text() catch {
     error => return Err(["could not read project config \{path}: \{error}"])
   }
-  parse_project_config(text)
+  parse_project_config(text, base_dir=parent_directory(path))
 }
 
 ///|
-fn parse_project_config(text : String) -> Result[LoadedProject, Array[String]] {
+fn parse_project_config(
+  text : String,
+  base_dir? : String = ".",
+) -> Result[LoadedProject, Array[String]] {
   let json = @json.parse(text) catch {
     error => return Err(["invalid project config json: \{error}"])
   }
   match json {
-    Object(object) => loaded_project_from_object(object)
+    Object(object) => loaded_project_from_object(object, base_dir~)
     _ => Err(["project config must be a json object"])
   }
 }
@@ -29,6 +32,7 @@ fn parse_project_config(text : String) -> Result[LoadedProject, Array[String]] {
 ///|
 fn loaded_project_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
 ) -> Result[LoadedProject, Array[String]] {
   let problems : Array[String] = []
   let identifier = required_config_string(object, "identifier", problems)
@@ -37,21 +41,29 @@ fn loaded_project_from_object(
   let root_html = optional_config_string(object, "rootHtml").unwrap_or(
     "<main>Hello Lepusa</main>",
   )
-  let icon_path = optional_config_string(object, "icon")
+  let icon_path = optional_config_string(object, "icon").map(fn(path) {
+    config_path(base_dir, path)
+  })
   let root = @lepusa.simple_cell(@lepusa.Html::text(root_html))
   let runtime = match optional_config_object(object, "runtime") {
     Some(runtime_object) => runtime_config_from_object(runtime_object, problems)
     None => @lepusa.RuntimeConfig::system_webview()
   }
-  let windows = project_windows_from_object(object, problems)
+  let windows = project_windows_from_object(object, base_dir~, problems)
   let plugins = project_plugins_from_object(object, problems)
   let registry = project_registry_from_plugins(plugins)
   let capabilities = project_capabilities_from_object(object, problems)
   let filesystem_scopes = project_filesystem_scopes_from_object(
-    object, problems,
+    object,
+    base_dir~,
+    problems,
   )
-  let startup = project_startup_from_object(object, problems)
-  let lifecycle_hooks = project_lifecycle_from_object(object, problems)
+  let startup = project_startup_from_object(object, base_dir~, problems)
+  let lifecycle_hooks = project_lifecycle_from_object(
+    object,
+    base_dir~,
+    problems,
+  )
   if problems.is_empty() {
     let mut manifest = @lepusa.ProjectManifest::new(
       @lepusa.AppMetadata::new(identifier~, product_name~, version~),
@@ -97,6 +109,7 @@ fn project_registry_from_plugins(
 ///|
 fn project_windows_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> Array[@lepusa.WindowConfig] {
   match optional_config_array(object, "windows") {
@@ -105,7 +118,9 @@ fn project_windows_from_object(
       for item in items {
         match item {
           Object(window_object) =>
-            windows.push(window_config_from_object(window_object, problems))
+            windows.push(
+              window_config_from_object(window_object, base_dir~, problems),
+            )
           _ => problems.push("project windows entries must be objects")
         }
       }
@@ -114,7 +129,7 @@ fn project_windows_from_object(
     None =>
       match optional_config_object(object, "window") {
         Some(window_object) =>
-          [window_config_from_object(window_object, problems)]
+          [window_config_from_object(window_object, base_dir~, problems)]
         None => {
           problems.push("project window is required")
           []
@@ -288,6 +303,7 @@ fn capability_from_object(
 ///|
 fn project_filesystem_scopes_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> Array[@lepusa.FileSystemScope] {
   let scopes : Array[@lepusa.FileSystemScope] = []
@@ -296,7 +312,9 @@ fn project_filesystem_scopes_from_object(
       for item in items {
         match item {
           Object(scope_object) =>
-            scopes.push(filesystem_scope_from_object(scope_object, problems))
+            scopes.push(
+              filesystem_scope_from_object(scope_object, base_dir~, problems),
+            )
           _ => problems.push("project filesystemScopes entries must be objects")
         }
       }
@@ -308,10 +326,14 @@ fn project_filesystem_scopes_from_object(
 ///|
 fn filesystem_scope_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.FileSystemScope {
   let name = required_config_string(object, "name", problems)
-  let root = required_config_string(object, "root", problems)
+  let root = config_path(
+    base_dir,
+    required_config_string(object, "root", problems),
+  )
   let writable = optional_config_bool(object, "writable").unwrap_or(false)
   @lepusa.FileSystemScope::new(name~, root~, writable~)
 }
@@ -356,6 +378,7 @@ fn runtime_config_from_object(
 ///|
 fn window_config_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.WindowConfig {
   let label = optional_config_string(object, "label").unwrap_or("main")
@@ -372,7 +395,7 @@ fn window_config_from_object(
   )
   match optional_config_object(object, "source") {
     Some(source_object) =>
-      window.with_source(source_from_object(source_object, problems))
+      window.with_source(source_from_object(source_object, base_dir~, problems))
     None => window
   }
 }
@@ -380,6 +403,7 @@ fn window_config_from_object(
 ///|
 fn source_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Source {
   match optional_config_string(object, "html") {
@@ -387,11 +411,11 @@ fn source_from_object(
     None => ()
   }
   match optional_config_string(object, "localPath") {
-    Some(path) => return @lepusa.Source::local_path(path)
+    Some(path) => return @lepusa.Source::local_path(config_path(base_dir, path))
     None => ()
   }
   match optional_config_string(object, "packaged") {
-    Some(path) => return @lepusa.Source::packaged(path)
+    Some(path) => return @lepusa.Source::packaged(config_path(base_dir, path))
     None => ()
   }
   match optional_config_string(object, "url") {
@@ -523,4 +547,27 @@ fn optional_config_int(object : Map[String, Json], key : String) -> Int? {
       }
     None => None
   }
+}
+
+///|
+fn config_path(base_dir : String, path : String) -> String {
+  if path == "" ||
+    base_dir == "" ||
+    base_dir == "." ||
+    is_absolute_config_path(path) ||
+    path.contains("://") {
+    path
+  } else {
+    join_path(base_dir, path)
+  }
+}
+
+///|
+fn is_absolute_config_path(path : String) -> Bool {
+  if path.has_prefix("/") || path.has_prefix("\\") {
+    return true
+  }
+  path.length() >= 3 &&
+  path[1:2] == ":" &&
+  (path[2:3] == "\\" || path[2:3] == "/")
 }

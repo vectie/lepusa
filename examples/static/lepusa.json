@@ -1,0 +1,29 @@
+{
+  "identifier": "dev.vectie.lepusa.examples.static",
+  "productName": "Lepusa Static Example",
+  "version": "0.1.0",
+  "runtime": {
+    "backend": "system-webview",
+    "assetProtocol": "lepusa",
+    "devtools": false
+  },
+  "window": {
+    "label": "main",
+    "title": "Static Example",
+    "width": 1040,
+    "height": 720,
+    "resizable": true,
+    "source": { "packaged": "dist" }
+  },
+  "plugins": [
+    { "name": "opener" }
+  ],
+  "capabilities": [
+    {
+      "name": "main",
+      "windows": ["main"],
+      "permissions": ["opener"]
+    }
+  ]
+}
+

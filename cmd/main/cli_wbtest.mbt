@@ -335,6 +335,54 @@ async test "generated project config drives native runner bootstrap" {
 }
 
 ///|
+async test "checked examples cover rabbita static and gateway modes" {
+  let rabbita = render_cli_async([
+    "dev", "--project", "examples/rabbita/lepusa.json",
+  ])
+  assert_eq(rabbita.exit_code, 0)
+  assert_true(
+    rabbita.output.contains(
+      "first-window-url: lepusa://rabbita/main/index.html",
+    ),
+  )
+  assert_true(rabbita.output.contains("counter.increment"))
+  let static_asset = render_cli_async([
+    "asset", "lepusa://packaged/main/app.css", "--project", "examples/static/lepusa.json",
+  ])
+  assert_eq(static_asset.exit_code, 0)
+  assert_true(static_asset.output.contains("\"kind\":\"packaged-file\""))
+  assert_true(
+    static_asset.output.contains("\"path\":\"examples/static/dist/app.css\""),
+  )
+  let gateway = render_cli_async([
+    "dev", "--project", "examples/gateway/lepusa.json",
+  ])
+  assert_eq(gateway.exit_code, 0)
+  assert_true(
+    gateway.output.contains("first-window-url: http://127.0.0.1:4317/"),
+  )
+  assert_true(gateway.output.contains("local-services: 1"))
+  assert_true(gateway.output.contains("startup-operations: 2"))
+}
+
+///|
+async test "static example bundles with config-relative packaged assets" {
+  let out = "/tmp/lepusa-example-static-bundle-\{@async.now().to_int()}"
+  let result = render_cli_async([
+    "bundle-write", "linux", out, "--project", "examples/static/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("resources: 1"))
+  assert_true(result.output.contains("resources-written: 1"))
+  let bundle_root = out + "/lepusa-static-example"
+  assert_true(@fs.exists(bundle_root + "/lepusa/assets/main/index.html"))
+  assert_true(@fs.exists(bundle_root + "/lepusa/assets/main/app.css"))
+  let runtime_json = @fs.read_file(bundle_root + "/lepusa/runtime.json").text()
+  assert_true(runtime_json.contains("\"package:lepusa/assets/main\""))
+  assert_false(runtime_json.contains("\"root\":\"package:examples/static/dist\""))
+}
+
+///|
 async test "generated project config invokes official plugin commands" {
   let root = "/tmp/lepusa-project-invoke-\{@async.now().to_int()}"
   let init = render_cli_async(["init", root])

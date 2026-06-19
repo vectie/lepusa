@@ -1,0 +1,36 @@
+{
+  "identifier": "dev.vectie.lepusa.examples.rabbita",
+  "productName": "Lepusa Rabbita Example",
+  "version": "0.1.0",
+  "rootHtml": "<main><h1>Lepusa Rabbita Example</h1><button data-route=\"counter.increment\">Increment</button></main>",
+  "runtime": {
+    "backend": "system-webview",
+    "assetProtocol": "lepusa",
+    "devtools": false
+  },
+  "window": {
+    "label": "main",
+    "title": "Rabbita Example",
+    "width": 960,
+    "height": 640,
+    "resizable": true
+  },
+  "plugins": [
+    {
+      "name": "counter",
+      "commands": [
+        { "name": "increment", "mode": "sync" }
+      ]
+    },
+    { "name": "log" }
+  ],
+  "capabilities": [
+    {
+      "name": "main",
+      "windows": ["main"],
+      "commands": ["counter.increment", "log.write"]
+    }
+  ],
+  "startup": { "effect": "boot" }
+}
+
