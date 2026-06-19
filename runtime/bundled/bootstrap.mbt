@@ -58,6 +58,7 @@ pub fn BundledBootstrapPlan::to_json(self : BundledBootstrapPlan) -> String {
     "\"bridgeUrl\":\{run_plan.bridge_url().json_string()},",
     "\"runtime\":\{json_object_string(manifest.runtime)},",
     "\"webviewSpecs\":[\{run_plan.webviews().map(fn(webview) { webview.bootstrap_json() }).join(",")}],",
+    "\"serviceSupervisor\":\{run_plan.service_supervisor_plan().to_json()},",
     "\"startupOperations\":[\{self.startup_operations.join(",")}],",
     "\"lifecycleOperations\":[\{self.lifecycle_operations.join(",")}],",
     "\"bridgeRoutes\":{",

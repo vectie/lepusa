@@ -291,12 +291,12 @@ and `lepusa lifecycle <event> [window]` prints it for no-window smoke tests.
 `@lepusa/runtime` owns `NativeBackend`, `NativeLaunchPlan`,
 `NativeRunnerPlan`, and `NativeRuntime`. `NativeRuntime` is the platform-loop
 facade: it binds a backend and `RuntimeHost` once, then exposes bootstrap JSON,
-asset resolution JSON, IPC dispatch JSON, and lifecycle step JSON from one
-object. Platform packages should consume that facade instead of reassembling
-host, runner, protocol, and command dispatch paths themselves. Source and
-packaged runtime paths both lower launch summaries into root `@lepusa.RunReport`
-values so backends, CLI probes, and future supervisors share one status and
-counter contract.
+asset resolution JSON, IPC dispatch JSON, service supervisor plans, and
+lifecycle step JSON from one object. Platform packages should consume that
+facade instead of reassembling host, runner, protocol, command dispatch, and
+sidecar supervision paths themselves. Source and packaged runtime paths both
+lower launch summaries into root `@lepusa.RunReport` values so backends, CLI
+probes, and future supervisors share one status and counter contract.
 
 Platform packages only need to describe their native engine and host
 availability:
@@ -343,6 +343,10 @@ declared services, startup services, start order, validation, and a
 localhost sidecars without parsing project manifests or generic operation JSON.
 It also lowers to `LocalServiceSupervisorPlan`, the shared start, readiness,
 and shutdown handoff consumed by native platform loops.
+`NativeServiceSupervisorPlan` decorates that handoff with backend and WebView
+engine metadata, and every platform source/bundled run plan exposes it so
+WKWebView, WebView2, and WebKitGTK loops can share the same sidecar supervisor
+contract before wiring platform-specific process spawning and readiness probes.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

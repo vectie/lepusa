@@ -41,6 +41,7 @@ pub struct MacOSRunPlan {
   webviews : Array[MacOSWebViewPlan]
   execution : MacOSExecutionPlan
   bridge : MacOSBridgePlan
+  service_supervisor : @runtime.NativeServiceSupervisorPlan
 } derive(Debug, Eq)
 
 ///|
@@ -87,6 +88,7 @@ pub fn prepare_run(
       webviews,
       execution: macos_execution_plan_from_runner(runner),
       bridge: macos_bridge_plan_from_runtime(runtime),
+      service_supervisor: runner.service_supervisor_plan(),
     })
   } else {
     Err(problems)
@@ -143,12 +145,21 @@ pub fn prepare_bundled_run(
           None
         }
       }
-      match execution {
-        Some(execution) if problems.is_empty() =>
+      let service_supervisor = match
+        macos_service_supervisor_from_bundled(manifest) {
+        Ok(plan) => Some(plan)
+        Err(problem) => {
+          problems.push(problem)
+          None
+        }
+      }
+      match (execution, service_supervisor) {
+        (Some(execution), Some(service_supervisor)) if problems.is_empty() =>
           Ok({
             webviews,
             execution,
             bridge: macos_bridge_plan_from_bundled(manifest),
+            service_supervisor,
           })
         _ => Err(problems)
       }
@@ -258,6 +269,23 @@ fn macos_bridge_plan_from_bundled(
   {
     sync_command_routes: manifest.registered_sync_routes(),
     async_command_routes: manifest.registered_async_routes(),
+  }
+}
+
+///|
+fn macos_service_supervisor_from_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[@runtime.NativeServiceSupervisorPlan, String] {
+  match manifest.run_plan() {
+    Ok(plan) =>
+      Ok(
+        @runtime.NativeServiceSupervisorPlan::new(
+          backend_name=plan.backend(),
+          webview_engine=plan.webview_engine(),
+          plan=plan.service_supervisor_plan(),
+        ),
+      )
+    Err(problem) => Err(problem)
   }
 }
 
@@ -401,6 +429,13 @@ pub fn MacOSRunPlan::execution(self : MacOSRunPlan) -> MacOSExecutionPlan {
 ///|
 pub fn MacOSRunPlan::bridge(self : MacOSRunPlan) -> MacOSBridgePlan {
   self.bridge
+}
+
+///|
+pub fn MacOSRunPlan::service_supervisor_plan(
+  self : MacOSRunPlan,
+) -> @runtime.NativeServiceSupervisorPlan {
+  self.service_supervisor
 }
 
 ///|

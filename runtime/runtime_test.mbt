@@ -797,6 +797,64 @@ test "runtime service plan exposes supervisor handoff" {
 }
 
 ///|
+test "native runtime exposes decorated service supervisor plan" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    label="api",
+    source=@lepusa.Source::localhost(
+      port=4317,
+      path="/",
+      readiness_path="/ready",
+      command=["moon", "run", "cmd/server"],
+    ),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) =>
+      match
+        NativeRuntime::new(
+          NativeBackend::new(name="test", webview_engine="SystemWebView"),
+          RuntimeHost::new(plan),
+        ) {
+        Ok(runtime) => {
+          let supervisor = runtime.service_supervisor_plan()
+          assert_eq(supervisor.backend_name(), "test")
+          assert_eq(supervisor.webview_engine(), "SystemWebView")
+          assert_true(supervisor.requires_supervisor())
+          assert_eq(supervisor.validate().length(), 0)
+          assert_eq(supervisor.services().length(), 1)
+          assert_eq(supervisor.start_order()[0], "api")
+          assert_true(supervisor.startup_actions()[0] is StartLocalService(_))
+          assert_true(
+            supervisor.startup_actions()[1] is WaitLocalServiceReady(_),
+          )
+          assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
+          assert_true(
+            runtime.bootstrap_json().contains("\"serviceSupervisor\""),
+          )
+          assert_true(
+            supervisor.to_json().contains("\"nativeBackend\":\"test\""),
+          )
+        }
+        Err(_) => abort("unexpected invalid native runtime")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "native service supervisor plan validates native metadata" {
+  let plan = NativeServiceSupervisorPlan::new(
+    backend_name="",
+    webview_engine="",
+    plan=@lepusa.LocalServiceSupervisorPlan::new(),
+  )
+  let problems = plan.validate()
+  assert_eq(problems.length(), 2)
+  assert_eq(problems[0], "native service supervisor backend is required")
+  assert_eq(problems[1], "native service supervisor webview engine is required")
+}
+
+///|
 test "runtime host applies lifecycle actions to an existing session" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

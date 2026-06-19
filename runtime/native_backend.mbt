@@ -288,6 +288,7 @@ pub fn NativeRunnerPlan::bootstrap_json(self : NativeRunnerPlan) -> String {
     "\"webviewEngine\":\{self.webview_engine.json_string()},",
     "\"runtime\":\{self.launch_plan.runtime_manifest().to_json()},",
     "\"webviewSpecs\":[\{self.webview_specs.map(fn(spec) { spec.to_json() }).join(",")}],",
+    "\"serviceSupervisor\":\{self.service_supervisor_plan().to_json()},",
     "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"lifecycleOperations\":[\{self.lifecycle_steps.map(fn(step) { step.to_json() }).join(",")}]",
     "}",

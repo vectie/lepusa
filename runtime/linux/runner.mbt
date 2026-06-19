@@ -122,6 +122,13 @@ pub fn LinuxRunPlan::startup_operation_count(self : LinuxRunPlan) -> Int {
 }
 
 ///|
+pub fn LinuxRunPlan::service_supervisor_plan(
+  self : LinuxRunPlan,
+) -> @runtime.NativeServiceSupervisorPlan {
+  self.runner.service_supervisor_plan()
+}
+
+///|
 pub fn LinuxRunPlan::lifecycle_step_count(self : LinuxRunPlan) -> Int {
   self.runner.lifecycle_steps().length()
 }
@@ -170,6 +177,18 @@ pub fn LinuxBundledRunPlan::startup_operation_count(
   self : LinuxBundledRunPlan,
 ) -> Int {
   self.bootstrap.startup_operations().length()
+}
+
+///|
+pub fn LinuxBundledRunPlan::service_supervisor_plan(
+  self : LinuxBundledRunPlan,
+) -> @runtime.NativeServiceSupervisorPlan {
+  let plan = self.bootstrap.run_plan()
+  @runtime.NativeServiceSupervisorPlan::new(
+    backend_name=plan.backend(),
+    webview_engine=plan.webview_engine(),
+    plan=plan.service_supervisor_plan(),
+  )
 }
 
 ///|

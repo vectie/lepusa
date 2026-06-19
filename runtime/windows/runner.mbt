@@ -126,6 +126,13 @@ pub fn WindowsRunPlan::startup_operation_count(self : WindowsRunPlan) -> Int {
 }
 
 ///|
+pub fn WindowsRunPlan::service_supervisor_plan(
+  self : WindowsRunPlan,
+) -> @runtime.NativeServiceSupervisorPlan {
+  self.runner.service_supervisor_plan()
+}
+
+///|
 pub fn WindowsRunPlan::lifecycle_step_count(self : WindowsRunPlan) -> Int {
   self.runner.lifecycle_steps().length()
 }
@@ -176,6 +183,18 @@ pub fn WindowsBundledRunPlan::startup_operation_count(
   self : WindowsBundledRunPlan,
 ) -> Int {
   self.bootstrap.startup_operations().length()
+}
+
+///|
+pub fn WindowsBundledRunPlan::service_supervisor_plan(
+  self : WindowsBundledRunPlan,
+) -> @runtime.NativeServiceSupervisorPlan {
+  let plan = self.bootstrap.run_plan()
+  @runtime.NativeServiceSupervisorPlan::new(
+    backend_name=plan.backend(),
+    webview_engine=plan.webview_engine(),
+    plan=plan.service_supervisor_plan(),
+  )
 }
 
 ///|

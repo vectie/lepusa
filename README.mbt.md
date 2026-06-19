@@ -407,7 +407,8 @@ shape that `lepusa lifecycle` prints.
 `@lepusa/runtime` also exposes `NativeBackend` and `NativeRuntime`, the shared
 lowering boundary for platform packages. `NativeRuntime` binds a backend and
 host once, then gives platform loops bootstrap JSON, asset JSON, dispatch JSON,
-and lifecycle step JSON without making each backend rebuild those paths.
+service supervisor plans, and lifecycle step JSON without making each backend
+rebuild those paths.
 `@lepusa.RunReport` is the shared launch summary returned by source and
 packaged runtime adapters, so CLI output and future native loops use one status
 vocabulary for prepared, launched, failed, and unsupported runs.
@@ -442,8 +443,9 @@ without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap
 --manifest <runtime.json>` emits the target-aware packaged runtime bootstrap
 for platform loops: manifest path, bundle root, app metadata, native backend,
-WebView engine, WebView specs, startup operations, lifecycle operations, bridge
-routes, and the canonical runtime object that a backend consumes.
+WebView engine, WebView specs, service supervisor plan, startup operations,
+lifecycle operations, bridge routes, and the canonical runtime object that a
+backend consumes.
 `lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe and
 reports the bundled service supervisor requirement plus sidecar start order.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled

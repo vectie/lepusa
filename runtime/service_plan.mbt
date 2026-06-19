@@ -132,6 +132,17 @@ pub fn NativeRunnerPlan::service_plan(
 }
 
 ///|
+pub fn NativeRunnerPlan::service_supervisor_plan(
+  self : NativeRunnerPlan,
+) -> NativeServiceSupervisorPlan {
+  NativeServiceSupervisorPlan::new(
+    backend_name=self.backend_name(),
+    webview_engine=self.webview_engine(),
+    plan=self.service_plan().supervisor_plan(),
+  )
+}
+
+///|
 fn runtime_startup_services(
   operations : Array[RuntimeOperation],
 ) -> Array[@lepusa.LocalService] {

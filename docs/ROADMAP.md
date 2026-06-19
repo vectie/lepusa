@@ -45,7 +45,8 @@
   localhost sidecars, start order, validation, supervisor requirements, and a
   shared start/readiness/shutdown supervisor handoff.
 - Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
-  protocol asset resolution, bridge dispatch, and lifecycle steps.
+  protocol asset resolution, bridge dispatch, service supervisor plans, and
+  lifecycle steps.
 - Add `@lepusa/runtime/bundled` for packaged `lepusa/runtime.json` parsing,
   asset lookup, lifecycle action selection, and bundled service plans.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and

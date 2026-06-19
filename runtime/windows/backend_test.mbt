@@ -71,6 +71,13 @@ test "windows backend prepares run plan and reports unsupported launch" {
             "lepusa://inline/main/index.html",
           )
           assert_eq(result.plan().startup_operation_count(), 1)
+          assert_eq(
+            result.plan().service_supervisor_plan().backend_name(),
+            "windows",
+          )
+          assert_false(
+            result.plan().service_supervisor_plan().requires_supervisor(),
+          )
         }
         Err(_) => abort("unexpected invalid Windows dry run")
       }
@@ -111,6 +118,17 @@ test "windows backend prepares bundled runtime contract" {
           assert_true(
             plan.bootstrap_json().contains("\"webviewEngine\":\"WebView2\""),
           )
+          assert_true(plan.bootstrap_json().contains("\"serviceSupervisor\""))
+          let supervisor = plan.service_supervisor_plan()
+          assert_eq(supervisor.backend_name(), "windows")
+          assert_eq(supervisor.webview_engine(), "WebView2")
+          assert_true(supervisor.requires_supervisor())
+          assert_eq(supervisor.start_order()[0], "api")
+          assert_true(supervisor.startup_actions()[0] is StartLocalService(_))
+          assert_true(
+            supervisor.startup_actions()[1] is WaitLocalServiceReady(_),
+          )
+          assert_true(supervisor.shutdown_actions()[0] is StopLocalService(_))
         }
         Err(_) => abort("unexpected invalid Windows bundled run plan")
       }

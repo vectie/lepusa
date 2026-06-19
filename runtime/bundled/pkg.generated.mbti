@@ -64,6 +64,7 @@ pub fn BundledRunPlan::first_webview(Self) -> BundledWebView?
 pub fn BundledRunPlan::lifecycle_step_count(Self) -> Int
 pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String) -> @lepusa.RunReport
 pub fn BundledRunPlan::service_plan(Self) -> BundledServicePlan
+pub fn BundledRunPlan::service_supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
 pub fn BundledRunPlan::startup_operation_count(Self) -> Int
 pub fn BundledRunPlan::sync_route_count(Self) -> Int
 pub fn BundledRunPlan::target(Self) -> String

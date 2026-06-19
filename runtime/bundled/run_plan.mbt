@@ -129,6 +129,13 @@ pub fn BundledRunPlan::service_plan(
 }
 
 ///|
+pub fn BundledRunPlan::service_supervisor_plan(
+  self : BundledRunPlan,
+) -> @lepusa.LocalServiceSupervisorPlan {
+  self.service_plan.supervisor_plan()
+}
+
+///|
 pub fn BundledRunPlan::startup_operation_count(self : BundledRunPlan) -> Int {
   self.startup_operation_count
 }
