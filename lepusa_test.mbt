@@ -314,6 +314,45 @@ test "runtime plans expose portable launch manifest" {
 }
 
 ///|
+test "launch manifest resolves virtual and local assets" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="ui", source=@lepusa.Source::html("<main>ui</main>"))
+    .window(label="static", source=@lepusa.Source::local_path("dist"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match plan.launch_manifest() {
+        Ok(manifest) => {
+          match
+            manifest.resolve_asset("lepusa://inline/ui/index.html?v=1#top") {
+            Ok(asset) => {
+              assert_eq(asset.mime_type(), "text/html")
+              assert_true(
+                asset.body() is LaunchVirtualContent("<main>ui</main>"),
+              )
+            }
+            Err(_) => abort("unexpected missing virtual asset")
+          }
+          match manifest.resolve_asset("lepusa://local/static/app.css") {
+            Ok(asset) => {
+              assert_eq(asset.mime_type(), "text/css")
+              assert_true(asset.body() is LaunchLocalFile("dist/app.css"))
+            }
+            Err(_) => abort("unexpected missing local asset")
+          }
+          match manifest.resolve_asset("lepusa://local/static/../secret.txt") {
+            Ok(_) => abort("unexpected unsafe local asset")
+            Err(problem) =>
+              assert_eq(problem, "unsafe asset path: ../secret.txt")
+          }
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime plans generate frontend bridge script" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

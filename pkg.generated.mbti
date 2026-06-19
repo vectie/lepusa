@@ -229,6 +229,8 @@ pub fn LaunchPlan::plugins(Self) -> Array[Plugin]
 pub fn LaunchPlan::window_count(Self) -> Int
 pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
 
+type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
+
 pub(all) enum Permission {
   FileSystemRead
   FileSystemWrite
@@ -350,6 +352,20 @@ pub fn RuntimeConfig::headless() -> Self
 pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String) -> Self
 pub fn RuntimeConfig::validate(Self) -> Array[String]
 
+pub struct RuntimeLaunchAsset {
+  url : String
+  mime_type : String
+  body : RuntimeLaunchAssetBody
+} derive(Eq, @debug.Debug)
+pub fn RuntimeLaunchAsset::body(Self) -> RuntimeLaunchAssetBody
+pub fn RuntimeLaunchAsset::mime_type(Self) -> String
+pub fn RuntimeLaunchAsset::url(Self) -> String
+
+pub(all) enum RuntimeLaunchAssetBody {
+  LaunchVirtualContent(String)
+  LaunchLocalFile(String)
+} derive(Eq, @debug.Debug)
+
 pub struct RuntimeLaunchManifest {
   backend : String
   asset_protocol : String
@@ -368,6 +384,7 @@ pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
+pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
 pub fn RuntimeLaunchManifest::to_json(Self) -> String
 pub fn RuntimeLaunchManifest::virtual_files(Self) -> Array[RuntimeVirtualAsset]
 pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]

@@ -43,6 +43,26 @@ pub struct RuntimeVirtualAsset {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum RuntimeLaunchAssetBody {
+  LaunchVirtualContent(String)
+  LaunchLocalFile(String)
+} derive(Debug, Eq)
+
+///|
+pub struct RuntimeLaunchAsset {
+  url : String
+  mime_type : String
+  body : RuntimeLaunchAssetBody
+} derive(Debug, Eq)
+
+///|
+struct ParsedLaunchAssetUrl {
+  scheme : String
+  authority : String
+  path : String
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimePlan::launch_manifest(
   self : RuntimePlan,
   registered_routes? : Array[String] = [],
@@ -207,6 +227,30 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
 }
 
 ///|
+pub fn RuntimeLaunchManifest::resolve_asset(
+  self : RuntimeLaunchManifest,
+  url : String,
+) -> Result[RuntimeLaunchAsset, String] {
+  match parse_launch_asset_url(url) {
+    Err(problem) => Err(problem)
+    Ok(parsed) =>
+      if parsed.scheme != self.asset_protocol {
+        Err("asset scheme mismatch: \{parsed.scheme}")
+      } else if parsed.authority == "inline" || parsed.authority == "rabbita" {
+        self.resolve_virtual_asset(url, parsed)
+      } else if parsed.authority == "local" {
+        self.resolve_local_asset(url, parsed)
+      } else if parsed.authority == "runtime" {
+        Err(
+          "runtime assets are injected through WebView initialization scripts",
+        )
+      } else {
+        Err("unknown asset authority: \{parsed.authority}")
+      }
+  }
+}
+
+///|
 pub fn RuntimeWebViewBoot::label(self : RuntimeWebViewBoot) -> String {
   self.label
 }
@@ -307,6 +351,156 @@ pub fn RuntimeVirtualAsset::mime_type(self : RuntimeVirtualAsset) -> String {
 ///|
 pub fn RuntimeVirtualAsset::content(self : RuntimeVirtualAsset) -> String {
   self.content
+}
+
+///|
+pub fn RuntimeLaunchAsset::url(self : RuntimeLaunchAsset) -> String {
+  self.url
+}
+
+///|
+pub fn RuntimeLaunchAsset::mime_type(self : RuntimeLaunchAsset) -> String {
+  self.mime_type
+}
+
+///|
+pub fn RuntimeLaunchAsset::body(
+  self : RuntimeLaunchAsset,
+) -> RuntimeLaunchAssetBody {
+  self.body
+}
+
+///|
+fn RuntimeLaunchManifest::resolve_virtual_asset(
+  self : RuntimeLaunchManifest,
+  url : String,
+  parsed : ParsedLaunchAssetUrl,
+) -> Result[RuntimeLaunchAsset, String] {
+  match parse_manifest_asset_path(parsed.path) {
+    Err(problem) => Err(problem)
+    Ok((window_label, path)) => {
+      for file in self.virtual_files {
+        if file.window_label() == window_label && file.path() == path {
+          return Ok({
+            url,
+            mime_type: file.mime_type(),
+            body: LaunchVirtualContent(file.content()),
+          })
+        }
+      }
+      Err("virtual asset not found: \{window_label}/\{path}")
+    }
+  }
+}
+
+///|
+fn RuntimeLaunchManifest::resolve_local_asset(
+  self : RuntimeLaunchManifest,
+  url : String,
+  parsed : ParsedLaunchAssetUrl,
+) -> Result[RuntimeLaunchAsset, String] {
+  match parse_manifest_asset_path(parsed.path) {
+    Err(problem) => Err(problem)
+    Ok((window_label, path)) =>
+      match self.local_root_for(window_label) {
+        None => Err("local asset root not found: \{window_label}")
+        Some(root) =>
+          Ok({
+            url,
+            mime_type: mime_type_for_path(path),
+            body: LaunchLocalFile(join_asset_path(root, path)),
+          })
+      }
+  }
+}
+
+///|
+fn RuntimeLaunchManifest::local_root_for(
+  self : RuntimeLaunchManifest,
+  label : String,
+) -> String? {
+  for mapping in self.protocol_mappings {
+    if mapping.window_label() == label && !mapping.root().has_prefix("memory:") {
+      return Some(mapping.root())
+    }
+  }
+  None
+}
+
+///|
+fn parse_launch_asset_url(url : String) -> Result[ParsedLaunchAssetUrl, String] {
+  match url.find("://") {
+    None => Err("asset url must include scheme")
+    Some(index) => {
+      let scheme = url[:index].to_owned()
+      let rest = url[index + 3:].to_owned()
+      match rest.find("/") {
+        None => Ok({ scheme, authority: rest, path: "" })
+        Some(path_index) =>
+          Ok({
+            scheme,
+            authority: rest[:path_index].to_owned(),
+            path: strip_asset_suffix(rest[path_index + 1:].to_owned()),
+          })
+      }
+    }
+  }
+}
+
+///|
+fn strip_asset_suffix(path : String) -> String {
+  let without_query = match path.find("?") {
+    None => path
+    Some(index) => path[:index].to_owned()
+  }
+  match without_query.find("#") {
+    None => without_query
+    Some(index) => without_query[:index].to_owned()
+  }
+}
+
+///|
+fn parse_manifest_asset_path(path : String) -> Result[(String, String), String] {
+  match path.find("/") {
+    None => Err("asset path must include window label")
+    Some(index) => {
+      let window_label = path[:index].to_owned()
+      let asset_path = path[index + 1:].to_owned()
+      if window_label == "" {
+        Err("asset window label is required")
+      } else if !is_safe_asset_path(asset_path) {
+        Err("unsafe asset path: \{asset_path}")
+      } else {
+        Ok((window_label, asset_path))
+      }
+    }
+  }
+}
+
+///|
+fn is_safe_asset_path(path : String) -> Bool {
+  if path == "" || path.has_prefix("/") || path.has_prefix("\\") {
+    return false
+  }
+  for segment in path.split("/") {
+    if segment == "" || segment == "." || segment == ".." {
+      return false
+    }
+    if segment.contains("\\") {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn join_asset_path(root : String, path : String) -> String {
+  let root = root.trim_end(chars="/\\").to_owned()
+  if root == "" {
+    path
+  } else {
+    "\{root}/\{path}"
+  }
 }
 
 ///|

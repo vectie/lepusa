@@ -231,6 +231,8 @@ native routes, and document-start scripts into stable JSON.
 `RuntimeHost::launch_manifest()` adds the concrete registered native routes
 from a command registry, while bundle and platform packages consume the same
 manifest instead of inventing their own runtime files.
+`RuntimeLaunchManifest::resolve_asset(url)` is the facade-level custom protocol
+resolver for native runners that consume only the launch manifest.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
