@@ -10,6 +10,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa lifecycle"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa native-plan"))
+  assert_true(result.output.contains("lepusa run"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
@@ -94,6 +95,23 @@ test "native plan prints backend bootstrap json" {
   assert_true(result.output.contains("\"startupOperations\""))
   assert_true(result.output.contains("\"lifecycleOperations\""))
   assert_true(result.output.contains("\"nativeHook\":\"__lepusaInvoke\""))
+}
+
+///|
+test "run prints native runner smoke summary" {
+  let result = render_cli(["run", "linux"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa run"))
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("backend: linux"))
+  assert_true(result.output.contains("engine: WebKitGTK"))
+  assert_true(result.output.contains("webviews: 1"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
+  )
+  assert_true(result.output.contains("bridge: lepusa://runtime/bridge.js"))
+  assert_true(result.output.contains("startup-operations: 0"))
+  assert_true(result.output.contains("lifecycle-steps: 0"))
 }
 
 ///|
@@ -335,6 +353,25 @@ async test "generated project config drives native runner bootstrap" {
 }
 
 ///|
+async test "generated project config drives native runner smoke command" {
+  let root = "/tmp/lepusa-project-run-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "run",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("backend: linux"))
+  assert_true(result.output.contains("engine: WebKitGTK"))
+  assert_true(result.output.contains("startup-operations: 1"))
+  assert_true(result.output.contains("lifecycle-steps: 1"))
+}
+
+///|
 async test "checked examples cover rabbita static and gateway modes" {
   let rabbita = render_cli_async([
     "dev", "--project", "examples/rabbita/lepusa.json",
@@ -363,6 +400,15 @@ async test "checked examples cover rabbita static and gateway modes" {
   )
   assert_true(gateway.output.contains("local-services: 1"))
   assert_true(gateway.output.contains("startup-operations: 2"))
+  let gateway_run = render_cli_async([
+    "run", "linux", "--project", "examples/gateway/lepusa.json",
+  ])
+  assert_eq(gateway_run.exit_code, 0)
+  assert_true(
+    gateway_run.output.contains("first-window-url: http://127.0.0.1:4317/"),
+  )
+  assert_true(gateway_run.output.contains("local-services: 1"))
+  assert_true(gateway_run.output.contains("startup-operations: 2"))
 }
 
 ///|
@@ -379,7 +425,9 @@ async test "static example bundles with config-relative packaged assets" {
   assert_true(@fs.exists(bundle_root + "/lepusa/assets/main/app.css"))
   let runtime_json = @fs.read_file(bundle_root + "/lepusa/runtime.json").text()
   assert_true(runtime_json.contains("\"package:lepusa/assets/main\""))
-  assert_false(runtime_json.contains("\"root\":\"package:examples/static/dist\""))
+  assert_false(
+    runtime_json.contains("\"root\":\"package:examples/static/dist\""),
+  )
 }
 
 ///|

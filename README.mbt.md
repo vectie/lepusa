@@ -101,6 +101,7 @@ moon run cmd/main --target native -- doctor linux
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- native-plan macos
+moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
 moon run cmd/main --target native -- init _build/lepusa-app
@@ -294,6 +295,12 @@ types, declared command routes, and registered native routes.
 `NativeRunnerPlan::bootstrap_json()`, including the portable runtime manifest,
 per-window WebView specs, startup operations, and prelowered lifecycle
 operations that a platform runner needs.
+
+`lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
+`NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,
+WebView engine, first URL, bridge URL, local services, startup operations, and
+lifecycle steps. It is intentionally a no-window command until the platform
+event loops are wired.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and

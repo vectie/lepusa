@@ -483,6 +483,9 @@ lepusa manifest
 lepusa dev
   -> prints the runtime development plan consumed by platform runners
 
+lepusa run <target>
+  -> prints a no-window native runner smoke summary from NativeRunnerPlan
+
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count
 ```

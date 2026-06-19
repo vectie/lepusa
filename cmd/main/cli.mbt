@@ -82,6 +82,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("plan") => render_plan()
     Some("manifest") => render_manifest()
     Some("native-plan") => render_native_plan(args)
+    Some("run") => render_run(args)
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
     Some("dev") => fail("dev requires the native async runner\n")
@@ -103,6 +104,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("plan") => render_plan_async(args)
     Some("manifest") => render_manifest_async(args)
     Some("native-plan") => render_native_plan_async(args)
+    Some("run") => render_run_async(args)
     Some("bridge") => render_bridge_async(args)
     Some("dev") => render_dev_async(args)
     Some("init") => render_init(args)
@@ -138,6 +140,7 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa native-plan [macos|windows|linux]
+    #|  lepusa run [macos|windows|linux]
     #|  lepusa bridge
     #|  lepusa dev
     #|  lepusa invoke <window> <plugin.command> [payload]
@@ -300,6 +303,24 @@ async fn render_native_plan_async(args : Array[String]) -> CliResult {
         Ok(host) =>
           render_native_runner_plan(native_backend_for_target(target), host)
         Err(problems) => fail(render_problems("Lepusa native plan", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+async fn render_run_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          render_native_run_summary(
+            target,
+            native_backend_for_target(target),
+            host,
+          )
+        Err(problems) => fail(render_problems("Lepusa run", problems))
       }
     Err(problem) => fail(problem + "\n")
   }
@@ -545,6 +566,24 @@ fn render_native_plan(args : Array[String]) -> CliResult {
 }
 
 ///|
+fn render_run(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match sample_runtime_plan() {
+        Ok(plan) =>
+          render_native_run_summary(
+            target,
+            native_backend_for_target(target),
+            @runtime.RuntimeHost::new(plan),
+          )
+        Err(problems) => fail(render_problems("Lepusa run", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 fn native_backend_for_target(
   target : @lepusa.BundleTarget,
 ) -> @runtime.NativeBackend {
@@ -552,6 +591,35 @@ fn native_backend_for_target(
     MacOS => @macos_backend.backend()
     Windows => @windows_backend.backend()
     Linux => @linux_backend.backend()
+  }
+}
+
+///|
+fn render_native_run_summary(
+  target : @lepusa.BundleTarget,
+  backend : @runtime.NativeBackend,
+  host : @runtime.RuntimeHost,
+) -> CliResult {
+  match backend.runner_plan(host) {
+    Ok(plan) => {
+      let first_window = match plan.webview_specs().get(0) {
+        Some(window) => window.url()
+        None => ""
+      }
+      ok(
+        "Lepusa run\n" +
+        "target: \{target.name()}\n" +
+        "backend: \{plan.backend_name()}\n" +
+        "engine: \{plan.webview_engine()}\n" +
+        "webviews: \{plan.webview_specs().length()}\n" +
+        "first-window-url: \{first_window}\n" +
+        "bridge: \{plan.session().bridge_url()}\n" +
+        "local-services: \{plan.session().local_services().length()}\n" +
+        "startup-operations: \{plan.startup_operations().length()}\n" +
+        "lifecycle-steps: \{plan.lifecycle_steps().length()}\n",
+      )
+    }
+    Err(problems) => fail(render_problems("Lepusa run", problems))
   }
 }
 
