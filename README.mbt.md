@@ -105,6 +105,9 @@ moon run cmd/main --target native -- bundle-plan macos
 These commands exercise the public planning contracts and give the native
 runtime and bundler work concrete outputs to consume.
 
+`lepusa plan` includes resolved WebView load URLs, so backend work can consume
+`RuntimePlan::windows()` directly.
+
 ## Boundary
 
 Lepusa owns the reusable desktop framework:

@@ -183,6 +183,16 @@ Production builds should prefer packaged assets served through a custom
 protocol. Loopback localhost should be available for apps that truly own a
 local service.
 
+`RuntimePlan` resolves each `WindowConfig` into a `ResolvedWindow`:
+
+- remote URLs stay remote and require no protocol mapping
+- local paths become `asset_protocol://local/<window>/index.html`
+- inline HTML becomes `asset_protocol://inline/<window>/index.html`
+- Rabbita mounts become `asset_protocol://rabbita/<window>/index.html`
+
+Native WebView backends should consume `ResolvedWindow::url()` and install the
+listed `ProtocolMapping` values instead of re-resolving app configuration.
+
 ## Local Services
 
 Some apps are gateway-first instead of static-asset-first. Lepusa should

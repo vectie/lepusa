@@ -38,6 +38,60 @@ pub fn WindowConfig::with_source(
 }
 
 ///|
+pub struct ResolvedWindow {
+  label : String
+  title : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : TitleBarStyle
+  source : ResolvedSource
+} derive(Debug, Eq)
+
+///|
+pub fn ResolvedWindow::label(self : ResolvedWindow) -> String {
+  self.label
+}
+
+///|
+pub fn ResolvedWindow::url(self : ResolvedWindow) -> String {
+  self.source.url()
+}
+
+///|
+pub fn ResolvedWindow::source(self : ResolvedWindow) -> ResolvedSource {
+  self.source
+}
+
+///|
+pub fn WindowConfig::resolve(
+  self : WindowConfig,
+  asset_protocol? : String = "lepusa",
+) -> Result[ResolvedWindow, Array[String]] {
+  let problems = self.validate()
+  if !problems.is_empty() {
+    return Err(problems)
+  }
+  match self.source {
+    Some(source) =>
+      match source.resolve(window_label=self.label, asset_protocol~) {
+        Ok(resolved_source) =>
+          Ok({
+            label: self.label,
+            title: self.title,
+            width: self.width,
+            height: self.height,
+            resizable: self.resizable,
+            title_bar: self.title_bar,
+            source: resolved_source,
+          })
+        Err(problem) => Err([problem])
+      }
+    None => Err(["window source is required"])
+  }
+}
+
+///|
 pub fn WindowConfig::validate(self : WindowConfig) -> Array[String] {
   let problems : Array[String] = []
   if self.label == "" {

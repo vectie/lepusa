@@ -40,6 +40,7 @@ pub struct RuntimePlan {
   devtools : Bool
   asset_protocol : String
   command_routes : Array[String]
+  windows : Array[ResolvedWindow]
 } derive(Debug, Eq)
 
 ///|
@@ -67,7 +68,12 @@ pub fn RuntimePlan::devtools(self : RuntimePlan) -> Bool {
 
 ///|
 pub fn RuntimePlan::window_count(self : RuntimePlan) -> Int {
-  self.launch.window_count()
+  self.windows.length()
+}
+
+///|
+pub fn RuntimePlan::windows(self : RuntimePlan) -> Array[ResolvedWindow] {
+  self.windows.copy()
 }
 
 ///|
@@ -92,7 +98,17 @@ pub fn App::runtime_plan(
 ) -> Result[RuntimePlan, Array[String]] {
   let problems = config.validate()
   match self.launch_plan() {
-    Ok(launch) =>
+    Ok(launch) => {
+      let windows : Array[ResolvedWindow] = []
+      for window in launch.windows() {
+        match window.resolve(asset_protocol=config.asset_protocol) {
+          Ok(resolved) => windows.push(resolved)
+          Err(window_problems) =>
+            for problem in window_problems {
+              problems.push(problem)
+            }
+        }
+      }
       if problems.is_empty() {
         Ok({
           launch,
@@ -100,10 +116,12 @@ pub fn App::runtime_plan(
           devtools: config.devtools,
           asset_protocol: config.asset_protocol,
           command_routes: launch.command_routes(),
+          windows,
         })
       } else {
         Err(problems)
       }
+    }
     Err(app_problems) => {
       for problem in app_problems {
         problems.push(problem)

@@ -19,6 +19,9 @@ test "runtime plan prints command routes" {
   let result = render_cli(["plan"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("windows: 1"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://inline/main/index.html"),
+  )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
 }
 

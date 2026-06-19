@@ -250,6 +250,14 @@ pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self
 pub fn ProjectManifest::with_startup(Self, Cmd) -> Self
 pub fn ProjectManifest::with_window(Self, WindowConfig) -> Self
 
+pub struct ProtocolMapping {
+  scheme : String
+  root : String
+} derive(Eq, @debug.Debug)
+pub fn ProtocolMapping::new(scheme~ : String, root~ : String) -> Self
+pub fn ProtocolMapping::root(Self) -> String
+pub fn ProtocolMapping::scheme(Self) -> String
+
 pub struct RegisteredCommand {
   route : String
   permission : Permission
@@ -258,6 +266,37 @@ pub struct RegisteredCommand {
 pub fn RegisteredCommand::new(String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::permission(Self) -> Permission
 pub fn RegisteredCommand::route(Self) -> String
+
+pub struct ResolvedSource {
+  kind : ResolvedSourceKind
+  url : String
+  protocol_mappings : Array[ProtocolMapping]
+  virtual_files : Array[VirtualFile]
+} derive(Eq, @debug.Debug)
+pub fn ResolvedSource::kind(Self) -> ResolvedSourceKind
+pub fn ResolvedSource::protocol_mappings(Self) -> Array[ProtocolMapping]
+pub fn ResolvedSource::url(Self) -> String
+pub fn ResolvedSource::virtual_files(Self) -> Array[VirtualFile]
+
+pub(all) enum ResolvedSourceKind {
+  ResolvedInlineHtml
+  ResolvedLocalPath
+  ResolvedRemoteUrl
+  ResolvedRabbitaMount
+} derive(Eq, @debug.Debug)
+
+pub struct ResolvedWindow {
+  label : String
+  title : String
+  width : Int
+  height : Int
+  resizable : Bool
+  title_bar : TitleBarStyle
+  source : ResolvedSource
+} derive(Eq, @debug.Debug)
+pub fn ResolvedWindow::label(Self) -> String
+pub fn ResolvedWindow::source(Self) -> ResolvedSource
+pub fn ResolvedWindow::url(Self) -> String
 
 pub(all) enum RuntimeBackend {
   SystemWebView
@@ -280,6 +319,7 @@ pub struct RuntimePlan {
   devtools : Bool
   asset_protocol : String
   command_routes : Array[String]
+  windows : Array[ResolvedWindow]
 } derive(Eq, @debug.Debug)
 pub fn RuntimePlan::asset_protocol(Self) -> String
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
@@ -288,6 +328,7 @@ pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::window_count(Self) -> Int
+pub fn RuntimePlan::windows(Self) -> Array[ResolvedWindow]
 
 pub(all) enum Source {
   InlineHtml(String)
@@ -299,6 +340,7 @@ pub fn Source::html(String) -> Self
 pub fn Source::is_empty(Self) -> Bool
 pub fn Source::local_path(String) -> Self
 pub fn Source::rabbita(String) -> Self
+pub fn Source::resolve(Self, window_label~ : String, asset_protocol? : String) -> Result[ResolvedSource, String]
 pub fn Source::url(String) -> Self
 
 pub(all) enum TitleBarStyle {
@@ -306,6 +348,14 @@ pub(all) enum TitleBarStyle {
   Transparent
   Hidden
 } derive(Eq, @debug.Debug)
+
+pub struct VirtualFile {
+  path : String
+  content : String
+} derive(Eq, @debug.Debug)
+pub fn VirtualFile::content(Self) -> String
+pub fn VirtualFile::new(path~ : String, content~ : String) -> Self
+pub fn VirtualFile::path(Self) -> String
 
 pub struct WindowConfig {
   label : String
@@ -317,6 +367,7 @@ pub struct WindowConfig {
   source : Source?
 } derive(Eq, @debug.Debug)
 pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn WindowConfig::resolve(Self, asset_protocol? : String) -> Result[ResolvedWindow, Array[String]]
 pub fn WindowConfig::validate(Self) -> Array[String]
 pub fn WindowConfig::with_source(Self, Source) -> Self
 

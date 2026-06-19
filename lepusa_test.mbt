@@ -29,6 +29,58 @@ test "window config validates source and dimensions" {
 }
 
 ///|
+test "sources resolve into backend load targets" {
+  match
+    @lepusa.Source::local_path("dist").resolve(
+      window_label="Main Window",
+      asset_protocol="lepusa",
+    ) {
+    Ok(resolved) => {
+      assert_true(resolved.kind() is ResolvedLocalPath)
+      assert_eq(resolved.url(), "lepusa://local/main-window/index.html")
+      let mappings = resolved.protocol_mappings()
+      assert_eq(mappings.length(), 1)
+      assert_eq(mappings[0].root(), "dist")
+      assert_eq(resolved.virtual_files().length(), 0)
+    }
+    Err(problem) => abort(problem)
+  }
+  match
+    @lepusa.Source::url("http://127.0.0.1:3000").resolve(window_label="main") {
+    Ok(resolved) => {
+      assert_true(resolved.kind() is ResolvedRemoteUrl)
+      assert_eq(resolved.url(), "http://127.0.0.1:3000")
+      assert_eq(resolved.protocol_mappings().length(), 0)
+      assert_eq(resolved.virtual_files().length(), 0)
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "windows resolve source and preserve frame config" {
+  let window = @lepusa.WindowConfig::new(
+    label="main",
+    title="Resolved",
+    width=800,
+    height=600,
+    source=@lepusa.Source::html("<main></main>"),
+  )
+  match window.resolve(asset_protocol="lepusa") {
+    Ok(resolved) => {
+      assert_eq(resolved.label(), "main")
+      assert_eq(resolved.url(), "lepusa://inline/main/index.html")
+      assert_true(resolved.source().kind() is ResolvedInlineHtml)
+      let files = resolved.source().virtual_files()
+      assert_eq(files.length(), 1)
+      assert_eq(files[0].path(), "index.html")
+      assert_eq(files[0].content(), "<main></main>")
+    }
+    Err(_) => abort("unexpected invalid window")
+  }
+}
+
+///|
 test "plugins expose command metadata without owning app domain behavior" {
   let plugin = @lepusa.Plugin::new("workspace")
     .command_sync("read_config")
@@ -200,6 +252,7 @@ test "runtime plans collect plugin command routes" {
       assert_eq(routes.length(), 2)
       assert_eq(routes[0], "dialog.show")
       assert_eq(routes[1], "dialog.confirm")
+      assert_eq(plan.windows()[0].url(), "lepusa://inline/main/index.html")
     }
     Err(_) => abort("unexpected invalid runtime plan")
   }

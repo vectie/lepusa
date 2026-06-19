@@ -67,10 +67,15 @@ fn render_plan() -> CliResult {
   match sample_runtime_plan() {
     Ok(plan) => {
       let routes = plan.command_routes().join(",")
+      let first_window = match plan.windows().get(0) {
+        Some(window) => window.url()
+        None => ""
+      }
       ok(
         "Lepusa runtime plan\n" +
         "backend: \{plan.backend().name()}\n" +
         "windows: \{plan.window_count()}\n" +
+        "first-window-url: \{first_window}\n" +
         "plugins: \{plan.plugin_count()}\n" +
         "capabilities: \{plan.capability_count()}\n" +
         "routes: \{routes}\n",
