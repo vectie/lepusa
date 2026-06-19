@@ -53,43 +53,25 @@ pub fn MacOSBackend::runner_plan(
   self : MacOSBackend,
   host : @runtime.RuntimeHost,
 ) -> Result[MacOSRunnerPlan, Array[String]] {
-  let problems : Array[String] = []
-  let mut launch_plan : MacOSLaunchPlan? = None
-  let mut session : @runtime.RuntimeSession? = None
   let startup_operations : Array[MacOSOperation] = []
-  match self.plan(host) {
-    Ok(plan) => launch_plan = Some(plan)
-    Err(plan_problems) =>
-      for problem in plan_problems {
-        problems.push(problem)
-      }
-  }
-  match host.startup_step() {
-    Ok(step) => {
-      session = Some(step.session())
-      for operation in step.operations() {
+  match host.runner_plan() {
+    Ok(plan) => {
+      for operation in plan.startup_operations() {
         startup_operations.push(MacOSOperation::from_runtime(operation))
       }
-    }
-    Err(step_problems) =>
-      for problem in step_problems {
-        problems.push(problem)
-      }
-  }
-  match (launch_plan, session) {
-    (Some(launch_plan), Some(session)) =>
-      if problems.is_empty() {
-        Ok({
+      Ok({
+        backend_name: self.name,
+        webview_engine: self.webview_engine,
+        launch_plan: {
           backend_name: self.name,
           webview_engine: self.webview_engine,
-          launch_plan,
-          session,
-          startup_operations,
-        })
-      } else {
-        Err(problems)
-      }
-    _ => Err(problems)
+          manifest: plan.launch_manifest(),
+        },
+        session: plan.session(),
+        startup_operations,
+      })
+    }
+    Err(problems) => Err(problems)
   }
 }
 

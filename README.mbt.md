@@ -217,6 +217,11 @@ resolved WebViews, asset protocol, capability-filtered routes, runtime session,
 and startup operations. This is the stable boundary the platform-specific
 window loops will execute.
 
+`RuntimeHost::runner_plan()` is the platform-neutral native-loop contract:
+launch manifest, resolved WebViews, stepped runtime session, and startup
+operations in one object. Platform packages map this plan to WKWebView,
+WebView2, or WebKitGTK without rebuilding app state.
+
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
 `BundlePlan::files()`: platform metadata plus `lepusa/runtime.json`, with
 per-window bridge initialization scripts embedded in the runtime manifest.

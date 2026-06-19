@@ -254,6 +254,9 @@ without re-reading `App`, `WindowConfig`, or manifest state.
 same host: it returns WebView specs, the stepped runtime session, and startup
 operations in one object so CLI and platform backends do not reconstruct boot
 state separately.
+`RuntimeHost::runner_plan()` is the native-loop form of the same handoff: it
+adds the launch manifest to the resolved WebViews, stepped session, and startup
+operations so platform packages can translate a single runtime object.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol
@@ -274,9 +277,8 @@ package with a small C stub that validates the system WebKit framework is
 available and a MoonBit launch-plan layer that wraps the portable runtime
 launch manifest in a macOS envelope. Objective-C window creation should live
 under this package, not in the portable facade or CLI.
-`MacOSBackend::runner_plan(host)` prepares the next runner boundary: WebView
-boot data, a stepped runtime session, and startup operations translated from
-portable `RuntimeOperation` values into macOS runner operations.
+`MacOSBackend::runner_plan(host)` consumes `RuntimeHost::runner_plan()` and
+translates portable `RuntimeOperation` values into macOS runner operations.
 
 ## Bundling
 

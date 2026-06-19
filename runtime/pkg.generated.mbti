@@ -53,6 +53,7 @@ pub fn RuntimeHost::lifecycle_step(Self, RuntimeSession, @lepusa.LifecycleEvent)
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
+pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]]
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::startup_step(Self) -> Result[RuntimeStep, Array[String]]
@@ -72,6 +73,17 @@ pub struct RuntimeProtocolMapping {
 pub fn RuntimeProtocolMapping::root(Self) -> String
 pub fn RuntimeProtocolMapping::scheme(Self) -> String
 pub fn RuntimeProtocolMapping::window_label(Self) -> String
+
+pub struct RuntimeRunnerPlan {
+  launch_manifest : @lepusa.RuntimeLaunchManifest
+  session : RuntimeSession
+  webviews : Array[RuntimeWebViewSpec]
+  startup_operations : Array[RuntimeOperation]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeRunnerPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
+pub fn RuntimeRunnerPlan::session(Self) -> RuntimeSession
+pub fn RuntimeRunnerPlan::startup_operations(Self) -> Array[RuntimeOperation]
+pub fn RuntimeRunnerPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
 
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend

@@ -302,6 +302,30 @@ test "runtime session applies startup actions as backend operations" {
 }
 
 ///|
+test "runtime host builds generic runner plan" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok(payload)
+  })
+  let host = RuntimeHost::new(test_plan(), registry~)
+  match host.runner_plan() {
+    Ok(plan) => {
+      assert_eq(plan.launch_manifest().registered_routes()[0], "core.invoke")
+      assert_eq(plan.webviews().length(), 1)
+      assert_eq(plan.webviews()[0].url(), "lepusa://inline/main/index.html")
+      assert_eq(
+        plan.session().windows()[0].url(),
+        "lepusa://inline/main/index.html",
+      )
+      assert_eq(plan.startup_operations().length(), 1)
+      assert_true(plan.startup_operations()[0] is RuntimeRunEffect("boot"))
+    }
+    Err(_) => abort("unexpected invalid runner plan")
+  }
+}
+
+///|
 test "runtime host builds dev plan for backend runners" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
