@@ -65,6 +65,23 @@ test "linux backend prepares run plan and reports unsupported launch" {
             result.plan().first_webview_url(),
             "lepusa://inline/main/index.html",
           )
+          assert_true(
+            result
+            .plan()
+            .first_webview_load_url()
+            .has_prefix("data:text/html;base64,"),
+          )
+          match result.plan().first_webview() {
+            Ok(webview) => {
+              assert_eq(webview.title(), "Linux")
+              assert_eq(webview.width(), 1000)
+              assert_eq(webview.height(), 720)
+              assert_true(
+                webview.initialization_script().contains("__lepusaInvoke"),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
           assert_eq(result.plan().startup_operation_count(), 1)
           assert_eq(
             result.plan().service_supervisor_plan().backend_name(),
@@ -84,6 +101,8 @@ test "linux backend prepares run plan and reports unsupported launch" {
           match result.status() {
             RunUnsupported(message) =>
               assert_true(message.contains("WebKitGTK launch loop"))
+            RunFailed(message) =>
+              assert_true(message.contains("WebKitGTK launch failed"))
             _ => abort("unexpected Linux launch status")
           }
         Err(_) => abort("unexpected invalid Linux launch plan")

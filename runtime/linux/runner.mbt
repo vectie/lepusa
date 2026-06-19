@@ -5,8 +5,21 @@ pub(all) enum LinuxRunMode {
 } derive(Debug, Eq)
 
 ///|
+pub struct LinuxWebViewPlan {
+  label : String
+  title : String
+  url : String
+  load_url : String
+  initialization_script : String
+  width : Int
+  height : Int
+  resizable : Bool
+} derive(Debug, Eq)
+
+///|
 pub struct LinuxRunPlan {
   runner : @runtime.NativeRunnerPlan
+  webviews : Array[LinuxWebViewPlan]
 } derive(Debug, Eq)
 
 ///|
@@ -27,10 +40,37 @@ pub struct LinuxBundledRunResult {
 } derive(Debug)
 
 ///|
+#borrow(title, url, initialization_script)
+extern "c" fn native_run_webview(
+  title : Bytes,
+  url : Bytes,
+  initialization_script : Bytes,
+  width : Int,
+  height : Int,
+  resizable : Int,
+) -> Int = "lepusa_linux_run_webview"
+
+///|
 pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[LinuxRunPlan, Array[String]] {
-  Ok({ runner: runtime.runner_plan() })
+  let runner = runtime.runner_plan()
+  let webviews : Array[LinuxWebViewPlan] = []
+  let problems : Array[String] = []
+  for spec in runner.webview_specs() {
+    match linux_webview_plan_from_spec(runtime, spec) {
+      Ok(webview) => webviews.push(webview)
+      Err(problem) => problems.push(problem)
+    }
+  }
+  if webviews.is_empty() {
+    problems.push("Linux run requires at least one webview")
+  }
+  if problems.is_empty() {
+    Ok({ runner, webviews })
+  } else {
+    Err(problems)
+  }
 }
 
 ///|
@@ -45,8 +85,7 @@ pub fn run(
         plan,
         status: match mode {
           LinuxDryRun => RunPrepared
-          LinuxOpenWindow =>
-            RunUnsupported("Linux WebKitGTK launch loop is not implemented")
+          LinuxOpenWindow => linux_open_window(plan)
         },
       })
   }
@@ -104,14 +143,37 @@ pub fn LinuxRunPlan::runner(self : LinuxRunPlan) -> @runtime.NativeRunnerPlan {
 }
 
 ///|
+pub fn LinuxRunPlan::webviews(self : LinuxRunPlan) -> Array[LinuxWebViewPlan] {
+  self.webviews.copy()
+}
+
+///|
+pub fn LinuxRunPlan::first_webview(
+  self : LinuxRunPlan,
+) -> Result[LinuxWebViewPlan, String] {
+  match self.webviews.get(0) {
+    Some(webview) => Ok(webview)
+    None => Err("Linux run plan requires at least one webview")
+  }
+}
+
+///|
 pub fn LinuxRunPlan::webview_count(self : LinuxRunPlan) -> Int {
-  self.runner.webview_specs().length()
+  self.webviews.length()
 }
 
 ///|
 pub fn LinuxRunPlan::first_webview_url(self : LinuxRunPlan) -> String {
-  match self.runner.webview_specs().get(0) {
+  match self.webviews.get(0) {
     Some(webview) => webview.url()
+    None => ""
+  }
+}
+
+///|
+pub fn LinuxRunPlan::first_webview_load_url(self : LinuxRunPlan) -> String {
+  match self.webviews.get(0) {
+    Some(webview) => webview.load_url()
     None => ""
   }
 }
@@ -148,6 +210,48 @@ pub fn LinuxRunResult::plan(self : LinuxRunResult) -> LinuxRunPlan {
 ///|
 pub fn LinuxRunResult::status(self : LinuxRunResult) -> @lepusa.RunStatus {
   self.status
+}
+
+///|
+pub fn LinuxWebViewPlan::label(self : LinuxWebViewPlan) -> String {
+  self.label
+}
+
+///|
+pub fn LinuxWebViewPlan::title(self : LinuxWebViewPlan) -> String {
+  self.title
+}
+
+///|
+pub fn LinuxWebViewPlan::url(self : LinuxWebViewPlan) -> String {
+  self.url
+}
+
+///|
+pub fn LinuxWebViewPlan::load_url(self : LinuxWebViewPlan) -> String {
+  self.load_url
+}
+
+///|
+pub fn LinuxWebViewPlan::initialization_script(
+  self : LinuxWebViewPlan,
+) -> String {
+  self.initialization_script
+}
+
+///|
+pub fn LinuxWebViewPlan::width(self : LinuxWebViewPlan) -> Int {
+  self.width
+}
+
+///|
+pub fn LinuxWebViewPlan::height(self : LinuxWebViewPlan) -> Int {
+  self.height
+}
+
+///|
+pub fn LinuxWebViewPlan::resizable(self : LinuxWebViewPlan) -> Bool {
+  self.resizable
 }
 
 ///|
@@ -231,4 +335,100 @@ pub fn LinuxBundledRunResult::report(
   self : LinuxBundledRunResult,
 ) -> @lepusa.RunReport {
   self.plan.bootstrap().run_plan().report(status=self.status)
+}
+
+///|
+fn linux_webview_plan_from_spec(
+  runtime : @runtime.NativeRuntime,
+  spec : @runtime.RuntimeWebViewSpec,
+) -> Result[LinuxWebViewPlan, String] {
+  match linux_initial_load_url(runtime, spec) {
+    Ok(load_url) =>
+      Ok({
+        label: spec.label(),
+        title: spec.title(),
+        url: spec.url(),
+        load_url,
+        initialization_script: spec.initialization_scripts().join("\n"),
+        width: spec.width(),
+        height: spec.height(),
+        resizable: spec.resizable(),
+      })
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn linux_initial_load_url(
+  runtime : @runtime.NativeRuntime,
+  spec : @runtime.RuntimeWebViewSpec,
+) -> Result[String, String] {
+  if linux_is_direct_load_url(spec.url()) {
+    Ok(spec.url())
+  } else {
+    match runtime.host().snapshot() {
+      Err(problems) =>
+        Err(problems.get(0).unwrap_or("runtime session is invalid"))
+      Ok(session) =>
+        match session.resolve_asset(spec.url()) {
+          Ok(asset) => linux_load_url_from_asset(asset)
+          Err(problem) => Err(problem)
+        }
+    }
+  }
+}
+
+///|
+fn linux_load_url_from_asset(
+  asset : @runtime.RuntimeAssetResponse,
+) -> Result[String, String] {
+  match asset.body() {
+    VirtualContent(content) =>
+      Ok(
+        "data:\{asset.mime_type()};base64,\{@base64.encode(@utf8.encode(content).view())}",
+      )
+    LocalFile(path) | PackagedFile(path) => Ok(linux_file_url(path))
+  }
+}
+
+///|
+fn linux_file_url(path : String) -> String {
+  if path.has_prefix("file://") {
+    path
+  } else {
+    "file://\{path}"
+  }
+}
+
+///|
+fn linux_is_direct_load_url(url : String) -> Bool {
+  url.has_prefix("http://") ||
+  url.has_prefix("https://") ||
+  url.has_prefix("file://") ||
+  url.has_prefix("data:")
+}
+
+///|
+fn linux_open_window(plan : LinuxRunPlan) -> @lepusa.RunStatus {
+  let webview = match plan.first_webview() {
+    Ok(webview) => webview
+    Err(problem) => return RunFailed(problem)
+  }
+  let exit_code = native_run_webview(
+    @utf8.encode(webview.title()),
+    @utf8.encode(webview.load_url()),
+    @utf8.encode(webview.initialization_script()),
+    webview.width(),
+    webview.height(),
+    if webview.resizable() {
+      1
+    } else {
+      0
+    },
+  )
+  match exit_code {
+    0 => RunLaunched
+    2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
+    code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
+  }
 }

@@ -425,13 +425,14 @@ integration step for async commands. `MacOSOpenWindow` reports the shared
 `RunUnsupported` status when the plan contains async command routes, so the
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
-`lepusa run macos --launch` is the first explicit GUI entry point. Linux and
-Windows expose the same package-owned dry-run and launch-result boundary, but
-their `LinuxOpenWindow` and `WindowsOpenWindow` modes report unsupported until
-those platform packages implement their WebView creation paths. Packaged Linux
-and Windows manifests use the same package-owned boundary through
-`run_bundled(manifest)` and `launch_bundled(manifest)`, with target mismatch
-rejection before a native loop can consume the bootstrap plan.
+`lepusa run macos --launch` is the first protocol-complete GUI entry point. The
+Linux package also owns a first WebKitGTK source-window loop: it resolves the
+first runtime WebView to an HTML/file/remote URL, injects document-start bridge
+scripts, and reports unsupported when GTK3/WebKit2GTK are unavailable. Linux
+packaged manifests still use the package-owned unsupported result until a
+custom URI scheme handler lands. Windows exposes the same dry-run and
+launch-result boundary, but `WindowsOpenWindow` reports unsupported until its
+WebView2 creation path lands.
 
 ## Bundling
 

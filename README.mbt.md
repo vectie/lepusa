@@ -439,9 +439,11 @@ registered official plugin routes into
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
-macOS WKWebView from the packaged `lepusa/runtime.json` today. Linux and
-Windows packaged manifests now route through their platform packages and report
-the shared unsupported status until those WebView loops land.
+macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
+package owns a first WebKitGTK source-window loop for resolved HTML/file/remote
+URLs when GTK3 and WebKit2GTK are available; packaged Linux manifests and
+Windows manifests still report the shared unsupported status until their
+protocol-complete WebView loops land.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap

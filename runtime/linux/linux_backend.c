@@ -26,6 +26,112 @@ typedef struct {
 
 static LepusaLinuxServiceProcess lepusa_linux_service_processes[64];
 
+typedef int (*LepusaGtkInitCheck)(int *, char ***);
+typedef void *(*LepusaGtkWindowNew)(int);
+typedef void (*LepusaGtkWindowSetTitle)(void *, const char *);
+typedef void (*LepusaGtkWindowSetDefaultSize)(void *, int, int);
+typedef void (*LepusaGtkWindowSetResizable)(void *, int);
+typedef void (*LepusaGtkContainerAdd)(void *, void *);
+typedef void (*LepusaGtkWidgetShowAll)(void *);
+typedef void (*LepusaGtkMain)(void);
+typedef void (*LepusaGtkMainQuit)(void);
+typedef unsigned long (*LepusaGSignalConnectData)(
+  void *,
+  const char *,
+  void *,
+  void *,
+  void *,
+  int
+);
+typedef void *(*LepusaWebKitUserContentManagerNew)(void);
+typedef void *(*LepusaWebKitUserScriptNew)(
+  const char *,
+  int,
+  int,
+  const char * const *,
+  const char * const *
+);
+typedef void (*LepusaWebKitUserContentManagerAddScript)(void *, void *);
+typedef void *(*LepusaWebKitWebViewNewWithUserContentManager)(void *);
+typedef void (*LepusaWebKitWebViewLoadUri)(void *, const char *);
+
+typedef struct {
+  void *gtk;
+  void *gobject;
+  void *webkit;
+  LepusaGtkInitCheck gtk_init_check;
+  LepusaGtkWindowNew gtk_window_new;
+  LepusaGtkWindowSetTitle gtk_window_set_title;
+  LepusaGtkWindowSetDefaultSize gtk_window_set_default_size;
+  LepusaGtkWindowSetResizable gtk_window_set_resizable;
+  LepusaGtkContainerAdd gtk_container_add;
+  LepusaGtkWidgetShowAll gtk_widget_show_all;
+  LepusaGtkMain gtk_main;
+  LepusaGtkMainQuit gtk_main_quit;
+  LepusaGSignalConnectData g_signal_connect_data;
+  LepusaWebKitUserContentManagerNew webkit_user_content_manager_new;
+  LepusaWebKitUserScriptNew webkit_user_script_new;
+  LepusaWebKitUserContentManagerAddScript webkit_user_content_manager_add_script;
+  LepusaWebKitWebViewNewWithUserContentManager webkit_web_view_new_with_user_content_manager;
+  LepusaWebKitWebViewLoadUri webkit_web_view_load_uri;
+} LepusaLinuxWebKit;
+
+static int lepusa_linux_load_symbol(
+  void *library,
+  const char *name,
+  void **out
+) {
+  *out = dlsym(library, name);
+  return *out != NULL;
+}
+
+static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
+  memset(api, 0, sizeof(*api));
+  const char *webkit_libraries[] = {
+    "libwebkit2gtk-4.1.so.0",
+    "libwebkit2gtk-4.0.so.37"
+  };
+  api->gtk = dlopen("libgtk-3.so.0", RTLD_LAZY | RTLD_LOCAL);
+  if (api->gtk == NULL) {
+    return 0;
+  }
+  api->gobject = dlopen("libgobject-2.0.so.0", RTLD_LAZY | RTLD_LOCAL);
+  if (api->gobject == NULL) {
+    dlclose(api->gtk);
+    return 0;
+  }
+  for (int i = 0; i < 2 && api->webkit == NULL; i++) {
+    api->webkit = dlopen(webkit_libraries[i], RTLD_LAZY | RTLD_LOCAL);
+  }
+  if (api->webkit == NULL) {
+    dlclose(api->gobject);
+    dlclose(api->gtk);
+    return 0;
+  }
+  int ok = 1;
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_init_check", (void **)&api->gtk_init_check);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_new", (void **)&api->gtk_window_new);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_title", (void **)&api->gtk_window_set_title);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_default_size", (void **)&api->gtk_window_set_default_size);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_resizable", (void **)&api->gtk_window_set_resizable);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_container_add", (void **)&api->gtk_container_add);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_show_all", (void **)&api->gtk_widget_show_all);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
+  ok = ok && lepusa_linux_load_symbol(api->gobject, "g_signal_connect_data", (void **)&api->g_signal_connect_data);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_content_manager_new", (void **)&api->webkit_user_content_manager_new);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_script_new", (void **)&api->webkit_user_script_new);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_content_manager_add_script", (void **)&api->webkit_user_content_manager_add_script);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_new_with_user_content_manager", (void **)&api->webkit_web_view_new_with_user_content_manager);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_load_uri", (void **)&api->webkit_web_view_load_uri);
+  if (!ok) {
+    dlclose(api->webkit);
+    dlclose(api->gobject);
+    dlclose(api->gtk);
+  }
+  return ok;
+}
+
 static char *lepusa_linux_cstr_from_bytes(moonbit_bytes_t bytes) {
   if (bytes == NULL) {
     return NULL;
@@ -273,12 +379,16 @@ static int lepusa_linux_try_http_ready(
 MOONBIT_FFI_EXPORT
 int32_t lepusa_linux_backend_available(void) {
 #if defined(__linux__)
+  void *gtk = dlopen("libgtk-3.so.0", RTLD_LAZY | RTLD_LOCAL);
+  if (gtk == NULL) {
+    return 0;
+  }
+  dlclose(gtk);
   const char *libraries[] = {
     "libwebkit2gtk-4.1.so.0",
-    "libwebkit2gtk-4.0.so.37",
-    "libwebkitgtk-6.0.so.4"
+    "libwebkit2gtk-4.0.so.37"
   };
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 2; i++) {
     void *handle = dlopen(libraries[i], RTLD_LAZY | RTLD_LOCAL);
     if (handle != NULL) {
       dlclose(handle);
@@ -296,6 +406,90 @@ moonbit_bytes_t lepusa_linux_backend_engine_name(void) {
   moonbit_bytes_t bytes = moonbit_make_bytes(len, 0);
   memcpy(bytes, name, len);
   return bytes;
+}
+
+MOONBIT_FFI_EXPORT
+int32_t lepusa_linux_run_webview(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  int32_t width,
+  int32_t height,
+  int32_t resizable
+) {
+#if defined(__linux__)
+  LepusaLinuxWebKit api;
+  if (!lepusa_linux_load_webkit(&api)) {
+    return 2;
+  }
+  char *title_text = lepusa_linux_cstr_from_bytes(title);
+  char *url_text = lepusa_linux_cstr_from_bytes(url);
+  char *script_text = lepusa_linux_cstr_from_bytes(initialization_script);
+  if (title_text == NULL || url_text == NULL || script_text == NULL) {
+    free(title_text);
+    free(url_text);
+    free(script_text);
+    return 3;
+  }
+  int argc = 0;
+  char **argv = NULL;
+  if (!api.gtk_init_check(&argc, &argv)) {
+    free(title_text);
+    free(url_text);
+    free(script_text);
+    return 2;
+  }
+  void *window = api.gtk_window_new(0);
+  void *manager = api.webkit_user_content_manager_new();
+  if (window == NULL || manager == NULL) {
+    free(title_text);
+    free(url_text);
+    free(script_text);
+    return 4;
+  }
+  void *script = api.webkit_user_script_new(script_text, 0, 0, NULL, NULL);
+  if (script != NULL) {
+    api.webkit_user_content_manager_add_script(manager, script);
+  }
+  void *webview = api.webkit_web_view_new_with_user_content_manager(manager);
+  if (webview == NULL) {
+    free(title_text);
+    free(url_text);
+    free(script_text);
+    return 5;
+  }
+  api.gtk_window_set_title(window, title_text);
+  api.g_signal_connect_data(
+    window,
+    "destroy",
+    (void *)api.gtk_main_quit,
+    NULL,
+    NULL,
+    0
+  );
+  api.gtk_window_set_default_size(
+    window,
+    width > 0 ? width : 960,
+    height > 0 ? height : 640
+  );
+  api.gtk_window_set_resizable(window, resizable != 0);
+  api.gtk_container_add(window, webview);
+  api.webkit_web_view_load_uri(webview, url_text);
+  api.gtk_widget_show_all(window);
+  api.gtk_main();
+  free(title_text);
+  free(url_text);
+  free(script_text);
+  return 0;
+#else
+  (void)title;
+  (void)url;
+  (void)initialization_script;
+  (void)width;
+  (void)height;
+  (void)resizable;
+  return 2;
+#endif
 }
 
 MOONBIT_FFI_EXPORT
