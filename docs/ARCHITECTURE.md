@@ -263,6 +263,9 @@ scripts into stable JSON.
 `RuntimeHost::launch_manifest()` adds the concrete registered native routes
 from a command registry, while bundle and platform packages consume the same
 manifest instead of inventing their own runtime files.
+`RuntimeHost::dispatch()` is stricter than a raw registry call: the route must
+be declared by the plan, present in the registry, and granted by the active
+window capabilities before a handler can run.
 `RuntimeLaunchManifest::resolve_asset(url)` is the facade-level custom protocol
 resolver for native runners that consume only the launch manifest.
 

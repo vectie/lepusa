@@ -141,6 +141,9 @@ file passed with `--project`.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
+When a project declares official `log` or `store` plugins, the CLI binds their
+MoonBit-native handlers into the project `RuntimeHost` without adding
+moon-suite-specific behavior.
 
 `lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
 native command registration, and a scoped capability helper.
@@ -167,9 +170,9 @@ declares `store.get`, `store.set`, `store.delete`, `store.clear`, and
 `store.keys`, backed by a MoonBit `Store`.
 
 `lepusa manifest` emits the portable native-runner JSON from
-`RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
+`RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME
-types, and command routes.
+types, declared command routes, and registered native routes.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
@@ -180,8 +183,14 @@ native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
 virtual files, and safe local asset paths without doing platform file IO.
 
 `RuntimeHost::dispatch_json(input)` is the native hook boundary for WebView IPC.
-It decodes the bridge request object, checks capabilities through the command
-registry, and returns the JSON response shape expected by `window.lepusa`.
+It decodes the bridge request object, verifies the route is declared by the
+runtime plan, checks capabilities through the command registry, and returns the
+JSON response shape expected by `window.lepusa`.
+
+`lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
+executes the same host dispatch path from the CLI. It is a native smoke-test
+tool for project configuration, official plugin registration, and capability
+grants.
 
 The generated bridge also exposes `window.lepusa.listen(name, handler)` and
 installs `globalThis.__lepusaDispatchEvent(event)` for native-to-frontend

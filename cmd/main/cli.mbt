@@ -86,6 +86,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("dev") => fail("dev requires the native async runner\n")
     Some("init") => fail("init requires the native async runner\n")
     Some("plugin") => fail("plugin commands require the native async runner\n")
+    Some("invoke") => fail("invoke requires the native async runner\n")
     Some("bundle-write") =>
       fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
@@ -102,6 +103,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("dev") => render_dev_async(args)
     Some("init") => render_init(args)
     Some("plugin") => render_plugin(args)
+    Some("invoke") => render_invoke_async(args)
     Some("bundle-plan") => render_bundle_plan_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
@@ -131,6 +133,7 @@ fn help_text() -> String {
     #|  lepusa manifest
     #|  lepusa bridge
     #|  lepusa dev
+    #|  lepusa invoke <window> <plugin.command> [payload]
     #|  lepusa init [out-dir]
     #|  lepusa plugin new <name> [out-dir]
     #|  lepusa bundle-plan [macos|windows|linux]
@@ -158,6 +161,32 @@ async fn project_runtime_plan(
         Err(problems) => Err(problems)
       }
     None => sample_runtime_plan()
+  }
+}
+
+///|
+async fn project_runtime_host(
+  args : Array[String],
+) -> Result[@runtime.RuntimeHost, Array[String]] {
+  if project_flag_missing_value(args) {
+    return Err(["--project requires a file path"])
+  }
+  match project_config_path(args) {
+    Some(path) =>
+      match load_project_config(path) {
+        Ok(project) =>
+          match project.manifest.runtime_plan(project.root) {
+            Ok(plan) =>
+              Ok(@runtime.RuntimeHost::new(plan, registry=project.registry))
+            Err(problems) => Err(problems)
+          }
+        Err(problems) => Err(problems)
+      }
+    None =>
+      match sample_runtime_plan() {
+        Ok(plan) => Ok(@runtime.RuntimeHost::new(plan))
+        Err(problems) => Err(problems)
+      }
   }
 }
 
@@ -207,9 +236,10 @@ async fn render_plugin_new(args : Array[String]) -> CliResult {
 
 ///|
 async fn render_doctor_async(args : Array[String]) -> CliResult {
-  match project_runtime_plan(args) {
-    Ok(plan) =>
-      match plan.launch_manifest() {
+  match project_runtime_host(args) {
+    Ok(host) => {
+      let plan = host.plan()
+      match host.launch_manifest() {
         Ok(manifest) =>
           ok(
             "Lepusa doctor\n" +
@@ -220,6 +250,7 @@ async fn render_doctor_async(args : Array[String]) -> CliResult {
           )
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
       }
+    }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
   }
 }
@@ -240,9 +271,9 @@ async fn render_init(args : Array[String]) -> CliResult {
 
 ///|
 async fn render_manifest_async(args : Array[String]) -> CliResult {
-  match project_runtime_plan(args) {
-    Ok(plan) =>
-      match plan.launch_manifest() {
+  match project_runtime_host(args) {
+    Ok(host) =>
+      match host.launch_manifest() {
         Ok(manifest) => ok(manifest.to_json() + "\n")
         Err(problems) => fail(render_problems("Lepusa manifest", problems))
       }
@@ -272,14 +303,64 @@ async fn render_bridge_async(args : Array[String]) -> CliResult {
 
 ///|
 async fn render_dev_async(args : Array[String]) -> CliResult {
-  match project_runtime_plan(args) {
-    Ok(plan) =>
-      match @runtime.RuntimeHost::new(plan).dev_plan() {
+  match project_runtime_host(args) {
+    Ok(host) =>
+      match host.dev_plan() {
         Ok(dev) => render_dev_plan(dev)
         Err(problems) => fail(render_problems("Lepusa dev", problems))
       }
     Err(problems) => fail(render_problems("Lepusa dev", problems))
   }
+}
+
+///|
+async fn render_invoke_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let window_label = values.get(0).unwrap_or("")
+  let route = values.get(1).unwrap_or("")
+  let payload = values.get(2).unwrap_or("")
+  if window_label == "" {
+    return fail("invoke window is required\n")
+  }
+  match parse_invoke_route(route) {
+    Ok((plugin, command)) =>
+      match project_runtime_host(args) {
+        Ok(host) => {
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          ok(
+            @runtime.encode_invoke_response_json(host.dispatch(request)) + "\n",
+          )
+        }
+        Err(problems) => fail(render_problems("Lepusa invoke", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn parse_invoke_route(route : String) -> Result[(String, String), String] {
+  let mut plugin = ""
+  let mut command = ""
+  let mut found_separator = false
+  for char in route {
+    if !found_separator && char == '.' {
+      found_separator = true
+    } else if found_separator {
+      command = command + char.to_string()
+    } else {
+      plugin = plugin + char.to_string()
+    }
+  }
+  if plugin == "" || command == "" {
+    return Err("invoke route must be <plugin.command>")
+  }
+  Ok((plugin, command))
 }
 
 ///|
@@ -343,6 +424,7 @@ fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
 fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
   let session = dev.session()
   let routes = session.command_routes().join(",")
+  let registered_routes = session.registered_routes().join(",")
   let first_window = match dev.webviews().get(0) {
     Some(window) => window.url()
     None => ""
@@ -354,6 +436,7 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "first-window-url: \{first_window}\n" +
     "asset-protocol: \{session.asset_protocol()}\n" +
     "routes: \{routes}\n" +
+    "registered-routes: \{registered_routes}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n",
   )
 }

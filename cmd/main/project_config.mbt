@@ -2,7 +2,8 @@
 struct LoadedProject {
   manifest : @lepusa.ProjectManifest
   root : @lepusa.Cell
-} derive(Debug, Eq)
+  registry : @lepusa.CommandRegistry
+}
 
 ///|
 async fn load_project_config(
@@ -43,6 +44,7 @@ fn loaded_project_from_object(
   }
   let windows = project_windows_from_object(object, problems)
   let plugins = project_plugins_from_object(object, problems)
+  let registry = project_registry_from_plugins(plugins)
   let capabilities = project_capabilities_from_object(object, problems)
   let startup = project_startup_from_object(object, problems)
   let lifecycle_hooks = project_lifecycle_from_object(object, problems)
@@ -64,10 +66,25 @@ fn loaded_project_from_object(
     for hook in lifecycle_hooks {
       manifest = manifest.with_lifecycle(hook.event(), hook.command())
     }
-    Ok({ manifest, root })
+    Ok({ manifest, root, registry })
   } else {
     Err(problems)
   }
+}
+
+///|
+fn project_registry_from_plugins(
+  plugins : Array[@lepusa.Plugin],
+) -> @lepusa.CommandRegistry {
+  let mut registry = @lepusa.CommandRegistry::new()
+  for plugin in plugins {
+    match plugin.name() {
+      "log" => registry = @log.register(registry)
+      "store" => registry = @store.register(registry)
+      _ => ()
+    }
+  }
+  registry
 }
 
 ///|

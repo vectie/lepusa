@@ -99,5 +99,16 @@ pub fn RuntimeHost::dispatch(
   self : RuntimeHost,
   request : @lepusa.InvokeRequest,
 ) -> @lepusa.InvokeResponse {
+  let request_problems = request.validate()
+  if !request_problems.is_empty() {
+    return @lepusa.InvokeResponse::error(request.id(), request_problems[0])
+  }
+  let route = request.route()
+  if !self.plan.command_routes().contains(route) {
+    return @lepusa.InvokeResponse::error(
+      request.id(),
+      "unknown command: \{route}",
+    )
+  }
   self.registry.dispatch(request, capabilities=self.plan.capabilities())
 }

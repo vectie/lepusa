@@ -142,13 +142,38 @@ fn project_lepusa_json() -> String {
     #|        { "name": "invoke", "mode": "sync" },
     #|        { "name": "events", "mode": "stream" }
     #|      ]
+    #|    },
+    #|    {
+    #|      "name": "log",
+    #|      "commands": [
+    #|        { "name": "write", "mode": "sync" }
+    #|      ]
+    #|    },
+    #|    {
+    #|      "name": "store",
+    #|      "commands": [
+    #|        { "name": "get", "mode": "sync" },
+    #|        { "name": "set", "mode": "sync" },
+    #|        { "name": "delete", "mode": "sync" },
+    #|        { "name": "clear", "mode": "sync" },
+    #|        { "name": "keys", "mode": "sync" }
+    #|      ]
     #|    }
     #|  ],
     #|  "capabilities": [
     #|    {
     #|      "name": "main",
     #|      "windows": ["main"],
-    #|      "commands": ["core.invoke", "core.events"]
+    #|      "commands": [
+    #|        "core.invoke",
+    #|        "core.events",
+    #|        "log.write",
+    #|        "store.get",
+    #|        "store.set",
+    #|        "store.delete",
+    #|        "store.clear",
+    #|        "store.keys"
+    #|      ]
     #|    }
     #|  ],
     #|  "startup": { "effect": "boot" },

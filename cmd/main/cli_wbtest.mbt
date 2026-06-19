@@ -5,6 +5,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
+  assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
@@ -86,9 +87,10 @@ async test "init writes standalone project skeleton" {
   assert_true(module_file.contains("\"preferred-target\": \"native\""))
   let config_file = @fs.read_file(root + "/lepusa.json").text()
   assert_true(config_file.contains("\"productName\": \"Lepusa App\""))
-  assert_true(
-    config_file.contains("\"commands\": [\"core.invoke\", \"core.events\"]"),
-  )
+  assert_true(config_file.contains("\"name\": \"log\""))
+  assert_true(config_file.contains("\"name\": \"store\""))
+  assert_true(config_file.contains("\"log.write\""))
+  assert_true(config_file.contains("\"store.set\""))
   assert_true(config_file.contains("\"startup\": { \"effect\": \"boot\" }"))
   assert_true(config_file.contains("\"event\": \"app-will-exit\""))
   let main_file = @fs.read_file(root + "/main.mbt").text()
@@ -107,9 +109,11 @@ async test "generated project config drives runtime plan" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
-  assert_true(result.output.contains("plugins: 1"))
+  assert_true(result.output.contains("plugins: 3"))
   assert_true(result.output.contains("capabilities: 1"))
-  assert_true(result.output.contains("routes: core.invoke,core.events"))
+  assert_true(result.output.contains("core.invoke"))
+  assert_true(result.output.contains("log.write"))
+  assert_true(result.output.contains("store.clear"))
 }
 
 ///|
@@ -126,6 +130,9 @@ async test "generated project config drives dev plan" {
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
+  assert_true(result.output.contains("registered-routes:"))
+  assert_true(result.output.contains("log.write"))
+  assert_true(result.output.contains("store.set"))
   assert_true(result.output.contains("startup-operations: 1"))
 }
 
@@ -138,11 +145,10 @@ async test "generated project config drives manifest and bundle write" {
   let manifest = render_cli_async(["manifest", "--project", project])
   assert_eq(manifest.exit_code, 0)
   assert_true(manifest.output.contains("\"backend\":\"system-webview\""))
-  assert_true(
-    manifest.output.contains(
-      "\"commandRoutes\":[\"core.invoke\",\"core.events\"]",
-    ),
-  )
+  assert_true(manifest.output.contains("\"commandRoutes\""))
+  assert_true(manifest.output.contains("\"registeredRoutes\""))
+  assert_true(manifest.output.contains("\"log.write\""))
+  assert_true(manifest.output.contains("\"store.keys\""))
   assert_true(manifest.output.contains("Hello Lepusa"))
   assert_true(manifest.output.contains("\"startupActions\""))
   assert_true(manifest.output.contains("\"name\":\"boot\""))
@@ -155,6 +161,46 @@ async test "generated project config drives manifest and bundle write" {
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
+}
+
+///|
+async test "generated project config invokes official plugin commands" {
+  let root = "/tmp/lepusa-project-invoke-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let project = root + "/lepusa.json"
+  let log = render_cli_async([
+    "invoke", "main", "log.write", "{\"message\":\"hello\"}", "--project", project,
+  ])
+  assert_eq(log.exit_code, 0)
+  assert_true(log.output.contains("\"id\":\"cli\""))
+  assert_true(log.output.contains("\\\"message\\\":\\\"hello\\\""))
+  let store = render_cli_async([
+    "invoke", "main", "store.set", "{\"key\":\"theme\",\"value\":\"dark\"}", "--project",
+    project,
+  ])
+  assert_eq(store.exit_code, 0)
+  assert_true(store.output.contains("\\\"key\\\":\\\"theme\\\""))
+  assert_true(store.output.contains("\\\"value\\\":\\\"dark\\\""))
+}
+
+///|
+async test "invoke enforces project capabilities" {
+  let root = "/tmp/lepusa-project-invoke-denied-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "invoke",
+    "other",
+    "log.write",
+    "{\"message\":\"hello\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(
+    result.output.contains("\"error\":\"permission denied: log.write\""),
+  )
 }
 
 ///|

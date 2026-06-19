@@ -245,6 +245,15 @@ test "runtime host dispatches through plan capabilities" {
     ),
   )
   assert_true(denied is InvokeError("2", "permission denied: core.invoke"))
+  let undeclared = host.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="3",
+      window_label="main",
+      plugin="core",
+      command="missing",
+    ),
+  )
+  assert_true(undeclared is InvokeError("3", "unknown command: core.missing"))
 }
 
 ///|
