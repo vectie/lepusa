@@ -65,11 +65,9 @@ test "linux backend prepares run plan and reports unsupported launch" {
             result.plan().first_webview_url(),
             "lepusa://inline/main/index.html",
           )
-          assert_true(
-            result
-            .plan()
-            .first_webview_load_url()
-            .has_prefix("data:text/html;base64,"),
+          assert_eq(
+            result.plan().first_webview_load_url(),
+            "lepusa://inline/main/index.html",
           )
           match result.plan().first_webview() {
             Ok(webview) => {
@@ -77,6 +75,7 @@ test "linux backend prepares run plan and reports unsupported launch" {
               assert_eq(webview.width(), 1000)
               assert_eq(webview.height(), 720)
               assert_eq(webview.native_hook(), "__lepusaInvoke")
+              assert_eq(webview.asset_protocol(), "lepusa")
               assert_true(
                 webview.initialization_script().contains("__lepusaInvoke"),
               )
@@ -138,6 +137,10 @@ test "linux backend prepares bundled runtime contract" {
             plan.first_webview_url(),
             "lepusa://rabbita/main/index.html",
           )
+          assert_eq(
+            plan.first_webview_load_url(),
+            "lepusa://rabbita/main/index.html",
+          )
           assert_eq(plan.startup_operation_count(), 2)
           assert_eq(plan.lifecycle_step_count(), 1)
           assert_true(
@@ -161,6 +164,18 @@ test "linux backend prepares bundled runtime contract" {
           assert_eq(report.backend_name(), "linux")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
+          match plan.first_webview() {
+            Ok(webview) => {
+              assert_eq(webview.asset_protocol(), "lepusa")
+              assert_eq(webview.native_hook(), "__lepusaInvoke")
+              assert_true(
+                webview
+                .initialization_script()
+                .contains("webkit.messageHandlers"),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
         }
         Err(_) => abort("unexpected invalid Linux bundled run plan")
       }
@@ -171,6 +186,10 @@ test "linux backend prepares bundled runtime contract" {
           assert_eq(result.report().backend(), "linux")
           assert_eq(result.report().engine(), "WebKitGTK")
           assert_eq(result.report().startup_operations(), 2)
+          assert_eq(
+            result.report().load_url(),
+            "lepusa://rabbita/main/index.html",
+          )
         }
         Err(_) => abort("unexpected invalid Linux bundled dry run")
       }

@@ -430,9 +430,11 @@ Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge
 scripts, registers the generated WebKitGTK script-message handler, and evaluates
 MoonBit-produced response scripts so sync `window.lepusa.invoke(...)` calls can
-resolve in the opened window. Linux packaged manifests still use the
-package-owned unsupported result until a custom URI scheme handler lands.
-Windows exposes the same dry-run and
+resolve in the opened window. The same native loop registers the generated
+asset protocol as a WebKitGTK URI scheme and asks MoonBit to resolve runtime,
+virtual, local, and packaged assets, so Linux packaged manifests can open their
+first `lepusa://` WebView through `launch_bundled(manifest)`. Windows exposes
+the same dry-run and
 launch-result boundary, but `WindowsOpenWindow` reports unsupported until its
 WebView2 creation path lands.
 

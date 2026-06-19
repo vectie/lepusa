@@ -64,11 +64,11 @@
   message preparation separates native capture from async dispatch; open-window
   macOS launches now report unsupported when async routes require native
   scheduling; Linux now has a first WebKitGTK source-window loop for resolved
-  HTML/file/remote URLs plus sync WebKitGTK script-message bridge dispatch;
-  Windows exposes dry-run and unsupported-launch runner contracts for source
-  runtimes and packaged bundled manifests; native async bridge scheduling,
-  Linux protocol-complete packaged loading, and the Windows WebView creation
-  loop remain.
+  HTML/file/remote URLs plus sync WebKitGTK script-message bridge dispatch and
+  package-owned URI scheme asset resolution for packaged manifests; Windows
+  exposes dry-run and unsupported-launch runner contracts for source runtimes
+  and packaged bundled manifests; native async bridge scheduling and the
+  Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
@@ -103,7 +103,7 @@
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
   - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
-  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, and routes Linux/Windows bundled manifests through package-owned unsupported-launch contracts until their loops land.
+  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, opens bundled Linux WebKitGTK windows when GTK3/WebKit2GTK are available, and routes Windows bundled manifests through its package-owned unsupported-launch contract until its loop lands.
   - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.

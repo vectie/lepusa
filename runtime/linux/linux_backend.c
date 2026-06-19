@@ -1,4 +1,5 @@
 #include <moonbit.h>
+#include <stdint.h>
 #include <string.h>
 
 typedef moonbit_bytes_t (*LepusaLinuxBytesCallback)(void *, moonbit_bytes_t);
@@ -38,6 +39,12 @@ typedef void (*LepusaGtkWidgetShowAll)(void *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
+typedef void (*LepusaGObjectUnref)(void *);
+typedef void *(*LepusaGMemoryInputStreamNewFromData)(
+  const void *,
+  long,
+  void *
+);
 typedef unsigned long (*LepusaGSignalConnectData)(
   void *,
   const char *,
@@ -61,6 +68,14 @@ typedef void *(*LepusaWebKitUserScriptNew)(
 typedef void (*LepusaWebKitUserContentManagerAddScript)(void *, void *);
 typedef void *(*LepusaWebKitWebViewNewWithUserContentManager)(void *);
 typedef void (*LepusaWebKitWebViewLoadUri)(void *, const char *);
+typedef void *(*LepusaWebKitWebViewGetContext)(void *);
+typedef void (*LepusaWebKitWebContextRegisterUriScheme)(
+  void *,
+  const char *,
+  void *,
+  void *,
+  void *
+);
 typedef void (*LepusaWebKitWebViewRunJavascript)(
   void *,
   const char *,
@@ -69,10 +84,18 @@ typedef void (*LepusaWebKitWebViewRunJavascript)(
   void *
 );
 typedef void *(*LepusaWebKitJavascriptResultGetJsValue)(void *);
+typedef const char *(*LepusaWebKitUriSchemeRequestGetUri)(void *);
+typedef void (*LepusaWebKitUriSchemeRequestFinish)(
+  void *,
+  void *,
+  int64_t,
+  const char *
+);
 typedef char *(*LepusaJscValueToString)(void *);
 
 typedef struct {
   void *glib;
+  void *gio;
   void *gtk;
   void *gobject;
   void *jsc;
@@ -87,6 +110,8 @@ typedef struct {
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
+  LepusaGObjectUnref g_object_unref;
+  LepusaGMemoryInputStreamNewFromData g_memory_input_stream_new_from_data;
   LepusaGSignalConnectData g_signal_connect_data;
   LepusaWebKitUserContentManagerNew webkit_user_content_manager_new;
   LepusaWebKitUserContentManagerRegisterScriptMessageHandler webkit_user_content_manager_register_script_message_handler;
@@ -94,8 +119,12 @@ typedef struct {
   LepusaWebKitUserContentManagerAddScript webkit_user_content_manager_add_script;
   LepusaWebKitWebViewNewWithUserContentManager webkit_web_view_new_with_user_content_manager;
   LepusaWebKitWebViewLoadUri webkit_web_view_load_uri;
+  LepusaWebKitWebViewGetContext webkit_web_view_get_context;
+  LepusaWebKitWebContextRegisterUriScheme webkit_web_context_register_uri_scheme;
   LepusaWebKitWebViewRunJavascript webkit_web_view_run_javascript;
   LepusaWebKitJavascriptResultGetJsValue webkit_javascript_result_get_js_value;
+  LepusaWebKitUriSchemeRequestGetUri webkit_uri_scheme_request_get_uri;
+  LepusaWebKitUriSchemeRequestFinish webkit_uri_scheme_request_finish;
   LepusaJscValueToString jsc_value_to_string;
 } LepusaLinuxWebKit;
 
@@ -104,6 +133,8 @@ typedef struct {
   LepusaLinuxWebKit *api;
   LepusaLinuxBytesCallback call_dispatch;
   void *dispatch;
+  LepusaLinuxBytesCallback call_resolve_asset;
+  void *resolve_asset;
 } LepusaLinuxBridgeContext;
 
 static int lepusa_linux_load_symbol(
@@ -129,14 +160,21 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   if (api->glib == NULL) {
     return 0;
   }
+  api->gio = dlopen("libgio-2.0.so.0", RTLD_LAZY | RTLD_LOCAL);
+  if (api->gio == NULL) {
+    dlclose(api->glib);
+    return 0;
+  }
   api->gtk = dlopen("libgtk-3.so.0", RTLD_LAZY | RTLD_LOCAL);
   if (api->gtk == NULL) {
+    dlclose(api->gio);
     dlclose(api->glib);
     return 0;
   }
   api->gobject = dlopen("libgobject-2.0.so.0", RTLD_LAZY | RTLD_LOCAL);
   if (api->gobject == NULL) {
     dlclose(api->gtk);
+    dlclose(api->gio);
     dlclose(api->glib);
     return 0;
   }
@@ -146,6 +184,7 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   if (api->webkit == NULL) {
     dlclose(api->gobject);
     dlclose(api->gtk);
+    dlclose(api->gio);
     dlclose(api->glib);
     return 0;
   }
@@ -156,6 +195,7 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
     dlclose(api->webkit);
     dlclose(api->gobject);
     dlclose(api->gtk);
+    dlclose(api->gio);
     dlclose(api->glib);
     return 0;
   }
@@ -170,6 +210,8 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
+  ok = ok && lepusa_linux_load_symbol(api->gobject, "g_object_unref", (void **)&api->g_object_unref);
+  ok = ok && lepusa_linux_load_symbol(api->gio, "g_memory_input_stream_new_from_data", (void **)&api->g_memory_input_stream_new_from_data);
   ok = ok && lepusa_linux_load_symbol(api->gobject, "g_signal_connect_data", (void **)&api->g_signal_connect_data);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_content_manager_new", (void **)&api->webkit_user_content_manager_new);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_content_manager_register_script_message_handler", (void **)&api->webkit_user_content_manager_register_script_message_handler);
@@ -177,14 +219,19 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_user_content_manager_add_script", (void **)&api->webkit_user_content_manager_add_script);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_new_with_user_content_manager", (void **)&api->webkit_web_view_new_with_user_content_manager);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_load_uri", (void **)&api->webkit_web_view_load_uri);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_get_context", (void **)&api->webkit_web_view_get_context);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_context_register_uri_scheme", (void **)&api->webkit_web_context_register_uri_scheme);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_web_view_run_javascript", (void **)&api->webkit_web_view_run_javascript);
   ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_javascript_result_get_js_value", (void **)&api->webkit_javascript_result_get_js_value);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_uri_scheme_request_get_uri", (void **)&api->webkit_uri_scheme_request_get_uri);
+  ok = ok && lepusa_linux_load_symbol(api->webkit, "webkit_uri_scheme_request_finish", (void **)&api->webkit_uri_scheme_request_finish);
   ok = ok && lepusa_linux_load_symbol(api->jsc, "jsc_value_to_string", (void **)&api->jsc_value_to_string);
   if (!ok) {
     dlclose(api->jsc);
     dlclose(api->webkit);
     dlclose(api->gobject);
     dlclose(api->gtk);
+    dlclose(api->gio);
     dlclose(api->glib);
   }
   return ok;
@@ -210,6 +257,183 @@ static moonbit_bytes_t lepusa_linux_bytes_from_cstr(const char *text) {
   moonbit_bytes_t bytes = moonbit_make_bytes(len, 0);
   memcpy(bytes, safe, (size_t)len);
   return bytes;
+}
+
+static void lepusa_linux_finish_uri_bytes(
+  LepusaLinuxWebKit *api,
+  void *request,
+  const char *mime_type,
+  char *data,
+  int64_t length
+) {
+  if (api == NULL || request == NULL || data == NULL || length < 0) {
+    free(data);
+    return;
+  }
+  void *stream = api->g_memory_input_stream_new_from_data(
+    data,
+    (long)length,
+    (void *)free
+  );
+  if (stream == NULL) {
+    free(data);
+    return;
+  }
+  api->webkit_uri_scheme_request_finish(
+    request,
+    stream,
+    length,
+    mime_type == NULL || mime_type[0] == '\0' ?
+      "application/octet-stream" :
+      mime_type
+  );
+  api->g_object_unref(stream);
+}
+
+static void lepusa_linux_finish_uri_text(
+  LepusaLinuxWebKit *api,
+  void *request,
+  const char *mime_type,
+  const char *text
+) {
+  const char *safe = text == NULL ? "" : text;
+  size_t length = strlen(safe);
+  char *copy = (char *)malloc(length + 1);
+  if (copy == NULL) {
+    return;
+  }
+  memcpy(copy, safe, length + 1);
+  lepusa_linux_finish_uri_bytes(api, request, mime_type, copy, (int64_t)length);
+}
+
+static int lepusa_linux_read_file(
+  const char *path,
+  char **data_out,
+  int64_t *length_out
+) {
+  FILE *file = fopen(path, "rb");
+  if (file == NULL) {
+    return 0;
+  }
+  if (fseek(file, 0, SEEK_END) != 0) {
+    fclose(file);
+    return 0;
+  }
+  long size = ftell(file);
+  if (size < 0) {
+    fclose(file);
+    return 0;
+  }
+  if (fseek(file, 0, SEEK_SET) != 0) {
+    fclose(file);
+    return 0;
+  }
+  char *data = (char *)malloc((size_t)size + 1);
+  if (data == NULL) {
+    fclose(file);
+    return 0;
+  }
+  size_t read = fread(data, 1, (size_t)size, file);
+  fclose(file);
+  if (read != (size_t)size) {
+    free(data);
+    return 0;
+  }
+  data[size] = '\0';
+  *data_out = data;
+  *length_out = (int64_t)size;
+  return 1;
+}
+
+static char *lepusa_linux_next_packet_line(char **cursor) {
+  if (cursor == NULL || *cursor == NULL) {
+    return NULL;
+  }
+  char *line = *cursor;
+  char *newline = strchr(line, '\n');
+  if (newline == NULL) {
+    *cursor = NULL;
+  } else {
+    *newline = '\0';
+    *cursor = newline + 1;
+  }
+  return line;
+}
+
+static void lepusa_linux_uri_scheme_request(
+  void *request,
+  void *user_data
+) {
+  LepusaLinuxBridgeContext *context = (LepusaLinuxBridgeContext *)user_data;
+  if (context == NULL ||
+      context->api == NULL ||
+      context->call_resolve_asset == NULL ||
+      context->resolve_asset == NULL) {
+    return;
+  }
+  const char *uri = context->api->webkit_uri_scheme_request_get_uri(request);
+  moonbit_bytes_t uri_bytes = lepusa_linux_bytes_from_cstr(uri);
+  moonbit_bytes_t packet = context->call_resolve_asset(
+    context->resolve_asset,
+    uri_bytes
+  );
+  char *packet_text = lepusa_linux_cstr_from_bytes(packet);
+  char *cursor = packet_text;
+  char *status = lepusa_linux_next_packet_line(&cursor);
+  if (packet_text == NULL || status == NULL || strcmp(status, "ok") != 0) {
+    const char *message = cursor == NULL ? "asset resolution failed" : cursor;
+    lepusa_linux_finish_uri_text(
+      context->api,
+      request,
+      "text/plain",
+      message
+    );
+    free(packet_text);
+    return;
+  }
+  char *kind = lepusa_linux_next_packet_line(&cursor);
+  char *mime_type = lepusa_linux_next_packet_line(&cursor);
+  char *body = cursor == NULL ? "" : cursor;
+  if (kind == NULL || mime_type == NULL) {
+    lepusa_linux_finish_uri_text(
+      context->api,
+      request,
+      "text/plain",
+      "malformed asset packet"
+    );
+    free(packet_text);
+    return;
+  }
+  if (strcmp(kind, "virtual") == 0) {
+    lepusa_linux_finish_uri_text(context->api, request, mime_type, body);
+  } else if (strcmp(kind, "file") == 0) {
+    char *data = NULL;
+    int64_t length = 0;
+    if (lepusa_linux_read_file(body, &data, &length)) {
+      lepusa_linux_finish_uri_bytes(
+        context->api,
+        request,
+        mime_type,
+        data,
+        length
+      );
+    } else {
+      lepusa_linux_finish_uri_text(
+        context->api,
+        request,
+        "text/plain",
+        "asset file could not be read"
+      );
+    }
+  } else {
+    lepusa_linux_finish_uri_text(
+      context->api,
+      request,
+      "text/plain",
+      "unsupported asset packet kind"
+    );
+  }
+  free(packet_text);
 }
 
 static void lepusa_linux_script_message_received(
@@ -514,11 +738,14 @@ int32_t lepusa_linux_run_webview(
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
   moonbit_bytes_t native_hook,
+  moonbit_bytes_t asset_protocol,
   int32_t width,
   int32_t height,
   int32_t resizable,
   LepusaLinuxBytesCallback call_dispatch,
-  void *dispatch
+  void *dispatch,
+  LepusaLinuxBytesCallback call_resolve_asset,
+  void *resolve_asset
 ) {
 #if defined(__linux__)
   LepusaLinuxWebKit api;
@@ -529,14 +756,17 @@ int32_t lepusa_linux_run_webview(
   char *url_text = lepusa_linux_cstr_from_bytes(url);
   char *script_text = lepusa_linux_cstr_from_bytes(initialization_script);
   char *native_hook_text = lepusa_linux_cstr_from_bytes(native_hook);
+  char *asset_protocol_text = lepusa_linux_cstr_from_bytes(asset_protocol);
   if (title_text == NULL ||
       url_text == NULL ||
       script_text == NULL ||
-      native_hook_text == NULL) {
+      native_hook_text == NULL ||
+      asset_protocol_text == NULL) {
     free(title_text);
     free(url_text);
     free(script_text);
     free(native_hook_text);
+    free(asset_protocol_text);
     return 3;
   }
   int argc = 0;
@@ -546,6 +776,7 @@ int32_t lepusa_linux_run_webview(
     free(url_text);
     free(script_text);
     free(native_hook_text);
+    free(asset_protocol_text);
     return 2;
   }
   void *window = api.gtk_window_new(0);
@@ -555,6 +786,7 @@ int32_t lepusa_linux_run_webview(
     free(url_text);
     free(script_text);
     free(native_hook_text);
+    free(asset_protocol_text);
     return 4;
   }
   if (native_hook_text[0] != '\0' &&
@@ -575,14 +807,31 @@ int32_t lepusa_linux_run_webview(
     free(url_text);
     free(script_text);
     free(native_hook_text);
+    free(asset_protocol_text);
     return 5;
   }
   LepusaLinuxBridgeContext bridge_context = {
     webview,
     &api,
     call_dispatch,
-    dispatch
+    dispatch,
+    call_resolve_asset,
+    resolve_asset
   };
+  if (asset_protocol_text[0] != '\0' &&
+      call_resolve_asset != NULL &&
+      resolve_asset != NULL) {
+    void *context = api.webkit_web_view_get_context(webview);
+    if (context != NULL) {
+      api.webkit_web_context_register_uri_scheme(
+        context,
+        asset_protocol_text,
+        (void *)lepusa_linux_uri_scheme_request,
+        &bridge_context,
+        NULL
+      );
+    }
+  }
   if (native_hook_text[0] != '\0' &&
       call_dispatch != NULL &&
       dispatch != NULL) {
@@ -625,17 +874,21 @@ int32_t lepusa_linux_run_webview(
   free(url_text);
   free(script_text);
   free(native_hook_text);
+  free(asset_protocol_text);
   return 0;
 #else
   (void)title;
   (void)url;
   (void)initialization_script;
   (void)native_hook;
+  (void)asset_protocol;
   (void)width;
   (void)height;
   (void)resizable;
   (void)call_dispatch;
   (void)dispatch;
+  (void)call_resolve_asset;
+  (void)resolve_asset;
   return 2;
 #endif
 }

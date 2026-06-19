@@ -440,10 +440,11 @@ by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
 macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
-package owns a first WebKitGTK source-window loop for resolved HTML/file/remote
-URLs when GTK3 and WebKit2GTK are available; packaged Linux manifests and
+package owns WebKitGTK source and packaged-window loops when GTK3 and
+WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
+callback for MoonBit-resolved runtime, virtual, local, and packaged assets.
 Windows manifests still report the shared unsupported status until their
-protocol-complete WebView loops land.
+WebView2 creation loop lands.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap
@@ -482,7 +483,9 @@ MoonBit still owns asset resolution; the Objective-C stub only turns the
 runtime asset packet into WebKit response/data/finish calls.
 The Linux source-window loop injects the same `window.lepusa` bridge plus a
 WebKitGTK message-handler bootstrap, so sync native commands can round-trip
-through MoonBit in an opened WebKitGTK window.
+through MoonBit in an opened WebKitGTK window. Its WebKitGTK URI-scheme
+handler also calls back into MoonBit for runtime asset resolution, keeping
+packaged Linux windows on the same `lepusa://` contract as macOS.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that
