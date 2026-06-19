@@ -83,6 +83,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("manifest") => render_manifest()
     Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
+    Some("dev") => fail("dev requires the native async runner\n")
     Some("init") => fail("init requires the native async runner\n")
     Some("plugin") => fail("plugin commands require the native async runner\n")
     Some("bundle-write") =>
@@ -98,6 +99,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("plan") => render_plan_async(args)
     Some("manifest") => render_manifest_async(args)
     Some("bridge") => render_bridge_async(args)
+    Some("dev") => render_dev_async(args)
     Some("init") => render_init(args)
     Some("plugin") => render_plugin(args)
     Some("bundle-plan") => render_bundle_plan_async(args)
@@ -128,6 +130,7 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa bridge
+    #|  lepusa dev
     #|  lepusa init [out-dir]
     #|  lepusa plugin new <name> [out-dir]
     #|  lepusa bundle-plan [macos|windows|linux]
@@ -268,6 +271,18 @@ async fn render_bridge_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_dev_async(args : Array[String]) -> CliResult {
+  match project_runtime_plan(args) {
+    Ok(plan) =>
+      match @runtime.RuntimeHost::new(plan).dev_plan() {
+        Ok(dev) => render_dev_plan(dev)
+        Err(problems) => fail(render_problems("Lepusa dev", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa dev", problems))
+  }
+}
+
+///|
 fn render_doctor() -> CliResult {
   match sample_runtime_plan() {
     Ok(plan) =>
@@ -321,6 +336,25 @@ fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
     "plugins: \{plan.plugin_count()}\n" +
     "capabilities: \{plan.capability_count()}\n" +
     "routes: \{routes}\n",
+  )
+}
+
+///|
+fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
+  let session = dev.session()
+  let routes = session.command_routes().join(",")
+  let first_window = match dev.webviews().get(0) {
+    Some(window) => window.url()
+    None => ""
+  }
+  ok(
+    "Lepusa dev plan\n" +
+    "backend: \{session.backend().name()}\n" +
+    "webviews: \{dev.webviews().length()}\n" +
+    "first-window-url: \{first_window}\n" +
+    "asset-protocol: \{session.asset_protocol()}\n" +
+    "routes: \{routes}\n" +
+    "startup-operations: \{dev.startup_operations().length()}\n",
   )
 }
 

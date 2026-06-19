@@ -4,6 +4,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/sys",
   "vectie/lepusa",
+  "vectie/lepusa/runtime",
 }
 
 supported_targets = "+native"

@@ -293,6 +293,31 @@ test "runtime session applies startup actions as backend operations" {
 }
 
 ///|
+test "runtime host builds dev plan for backend runners" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>dev</main>"))
+    .with_startup(@lepusa.Cmd::effect("boot"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).dev_plan() {
+        Ok(dev) => {
+          assert_eq(dev.webviews().length(), 1)
+          assert_eq(dev.webviews()[0].url(), "lepusa://inline/main/index.html")
+          assert_eq(
+            dev.session().windows()[0].url(),
+            "lepusa://inline/main/index.html",
+          )
+          assert_eq(dev.startup_operations().length(), 1)
+          assert_true(dev.startup_operations()[0] is RuntimeRunEffect("boot"))
+        }
+        Err(_) => abort("unexpected invalid dev plan")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host applies lifecycle actions to an existing session" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

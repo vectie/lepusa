@@ -250,6 +250,10 @@ backends need: resolved load URL, frame options, asset protocol, native hook
 names, allowed routes, and document-start initialization scripts. The platform
 layer should translate these specs to WKWebView, WebView2, or WebKitGTK calls
 without re-reading `App`, `WindowConfig`, or manifest state.
+`RuntimeHost::dev_plan()` is the portable development-run boundary over the
+same host: it returns WebView specs, the stepped runtime session, and startup
+operations in one object so CLI and platform backends do not reconstruct boot
+state separately.
 
 `RuntimePlan::launch_manifest()` is the portable native-runner contract owned by
 the public facade. It serializes backend, asset protocol, bridge URL, protocol
@@ -347,6 +351,9 @@ lepusa plan
 
 lepusa manifest
   -> prints the portable native-runner JSON manifest
+
+lepusa dev
+  -> prints the runtime development plan consumed by platform runners
 
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count

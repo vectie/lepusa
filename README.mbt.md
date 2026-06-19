@@ -101,9 +101,11 @@ moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- bridge
+moon run cmd/main --target native -- dev
 moon run cmd/main --target native -- init _build/lepusa-app
 moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -176,6 +178,11 @@ plan backed by `WKWebView` boot specs.
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.
+
+`lepusa dev` lowers the current project into a runtime development plan:
+resolved WebViews, asset protocol, capability-filtered routes, runtime session,
+and startup operations. This is the stable boundary the platform-specific
+window loops will execute.
 
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
 `BundlePlan::files()`: platform metadata plus `lepusa/runtime.json`, with

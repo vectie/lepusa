@@ -30,10 +30,20 @@ pub fn RuntimeAssetResponse::body(Self) -> RuntimeAssetBody
 pub fn RuntimeAssetResponse::mime_type(Self) -> String
 pub fn RuntimeAssetResponse::url(Self) -> String
 
+pub struct RuntimeDevPlan {
+  session : RuntimeSession
+  webviews : Array[RuntimeWebViewSpec]
+  startup_operations : Array[RuntimeOperation]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevPlan::session(Self) -> RuntimeSession
+pub fn RuntimeDevPlan::startup_operations(Self) -> Array[RuntimeOperation]
+pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
+
 pub struct RuntimeHost {
   plan : @lepusa.RuntimePlan
   registry : @lepusa.CommandRegistry
 }
+pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]

@@ -4,6 +4,7 @@ test "help text names available commands" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
+  assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
@@ -106,6 +107,22 @@ async test "generated project config drives runtime plan" {
   )
   assert_true(result.output.contains("plugins: 1"))
   assert_true(result.output.contains("capabilities: 1"))
+  assert_true(result.output.contains("routes: core.invoke,core.events"))
+}
+
+///|
+async test "generated project config drives dev plan" {
+  let root = "/tmp/lepusa-project-dev-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async(["dev", "--project", root + "/lepusa.json"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa dev plan"))
+  assert_true(result.output.contains("backend: system-webview"))
+  assert_true(result.output.contains("webviews: 1"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
+  )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
 }
 
