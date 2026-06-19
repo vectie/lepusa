@@ -335,6 +335,11 @@ be declared by the plan, present in the registry, and granted by the active
 window capabilities before a handler can run.
 `RuntimeLaunchManifest::resolve_asset(url)` is the facade-level custom protocol
 resolver for native runners that consume only the launch manifest.
+`@lepusa/project` owns the standalone `lepusa.json` boundary: it parses app
+metadata, windows, sources, official plugins, capabilities, filesystem scopes,
+startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
+`ProjectManifest`, root `Cell`, and `CommandRegistry`. The CLI only reads a
+file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, resolves bundled asset URLs, and selects
 local services plus lifecycle actions without re-entering project

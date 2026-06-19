@@ -31,6 +31,8 @@ The first implementation slice already owns the public MoonBit foundation:
 - `ProjectManifest` validation plus `LaunchPlan`, `RuntimePlan`, and
   `BundlePlan` generation as the boundaries native runtime and platform
   bundler code will consume next
+- `@lepusa/project` parsing for standalone `lepusa.json` app manifests,
+  including official plugin expansion and capability-scoped command routing
 - `@lepusa/runtime` host/session snapshots that native WebView backends can
   consume without reinterpreting app configuration
 
@@ -72,7 +74,7 @@ let bundle = @lepusa.BundleConfig::new(
 )
 ```
 
-For reusable project configuration, use `ProjectManifest`:
+For programmatic project configuration, use `ProjectManifest`:
 
 ```moonbit nocheck
 ///|
@@ -90,6 +92,18 @@ let runtime = manifest.runtime_plan(root)
 
 ///|
 let bundle = manifest.bundle_plan(root, target=@lepusa.MacOS)
+```
+
+For file-backed apps, `@lepusa/project` owns the reusable `lepusa.json` parser:
+
+```moonbit nocheck
+///|
+match @project.ProjectConfig::parse(config_text, base_dir=project_dir) {
+  Ok(project) =>
+    project.manifest().runtime_plan(project.root())
+  Err(problems) =>
+    fail_fast(problems)
+}
 ```
 
 ## CLI
@@ -151,7 +165,9 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 runtime backend, windows, plugin command routes, command permission
 requirements, capability grants, bundle icon resources, and bundle signing
 prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
-current directory, or a file passed with `--project`.
+current directory, or a file passed with `--project`. The reusable parser lives
+in `@lepusa/project`, so tools can consume the same project contract without
+depending on the CLI binary.
 File paths in `lepusa.json`, including icons, packaged asset roots, local asset
 roots, and filesystem scopes, are resolved relative to the config file.
 Official plugins can be declared by name, for example

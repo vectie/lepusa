@@ -82,6 +82,9 @@
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
+- Extract `@lepusa/project` as the reusable parser for standalone
+  `lepusa.json` manifests, keeping CLI file loading separate from project
+  semantics.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing

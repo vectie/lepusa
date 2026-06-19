@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/project"
+
+import {
+  "vectie/lepusa",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct ProjectConfig {
+  manifest : @lepusa.ProjectManifest
+  root : @lepusa.Cell
+  registry : @lepusa.CommandRegistry
+}
+pub fn ProjectConfig::manifest(Self) -> @lepusa.ProjectManifest
+pub fn ProjectConfig::parse(String, base_dir? : String) -> Result[Self, Array[String]]
+pub fn ProjectConfig::registry(Self) -> @lepusa.CommandRegistry
+pub fn ProjectConfig::root(Self) -> @lepusa.Cell
+
+// Type aliases
+
+// Traits

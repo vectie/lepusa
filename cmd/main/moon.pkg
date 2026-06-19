@@ -1,11 +1,10 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
-  "moonbitlang/core/json",
   "moonbitlang/x/fs" @xfs,
   "moonbitlang/x/sys",
   "vectie/lepusa",
-  "vectie/lepusa/plugins/catalog",
+  "vectie/lepusa/project",
   "vectie/lepusa/runtime",
   "vectie/lepusa/runtime/linux" @linux_backend,
   "vectie/lepusa/runtime/macos" @macos_backend,

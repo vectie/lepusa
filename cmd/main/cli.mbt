@@ -169,7 +169,7 @@ async fn project_runtime_plan(
   match project_config_path(args) {
     Some(path) =>
       match load_project_config(path) {
-        Ok(project) => project.manifest.runtime_plan(project.root)
+        Ok(project) => project.manifest().runtime_plan(project.root())
         Err(problems) => Err(problems)
       }
     None => sample_runtime_plan()
@@ -187,9 +187,9 @@ async fn project_runtime_host(
     Some(path) =>
       match load_project_config(path) {
         Ok(project) =>
-          match project.manifest.runtime_plan(project.root) {
+          match project.manifest().runtime_plan(project.root()) {
             Ok(plan) =>
-              Ok(@runtime.RuntimeHost::new(plan, registry=project.registry))
+              Ok(@runtime.RuntimeHost::new(plan, registry=project.registry()))
             Err(problems) => Err(problems)
           }
         Err(problems) => Err(problems)
@@ -214,10 +214,12 @@ async fn project_bundle_plan(
     Some(path) =>
       match load_project_config(path) {
         Ok(project) =>
-          project.manifest.bundle_plan(
-            project.root,
+          project
+          .manifest()
+          .bundle_plan(
+            project.root(),
             target~,
-            registered_routes=project.registry.routes(),
+            registered_routes=project.registry().routes(),
           )
         Err(problems) => Err(problems)
       }

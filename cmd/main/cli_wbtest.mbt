@@ -496,9 +496,9 @@ test "project config parses startup and lifecycle commands" {
     #|  ]
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           match plan.startup_actions() {
             Ok(actions) => {
@@ -543,9 +543,9 @@ test "project config parses localhost source" {
     #|  }
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           assert_eq(plan.windows()[0].url(), "http://127.0.0.1:4317/app")
           match plan.launch_manifest() {
@@ -577,9 +577,9 @@ test "project config parses packaged asset source" {
     #|  }
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           assert_eq(
             plan.windows()[0].url(),
@@ -630,9 +630,9 @@ test "project config parses command and capability permissions" {
     #|  ]
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           let routes = plan.window_command_routes("main")
           assert_eq(routes.length(), 1)
@@ -671,9 +671,9 @@ test "project config parses filesystem scopes" {
     #|  ]
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           assert_eq(plan.file_system_scopes().length(), 2)
           assert_eq(plan.file_system_scopes()[0].name(), "assets")
@@ -710,9 +710,9 @@ test "project config parses bundle icon resources" {
     #|  "window": { "label": "main", "title": "Icon App" }
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.bundle_plan(project.root, target=Linux) {
+      match project.manifest().bundle_plan(project.root(), target=Linux) {
         Ok(plan) => {
           assert_eq(plan.resources().length(), 1)
           assert_eq(plan.resources()[0].source_path(), "assets/icon.png")
@@ -762,9 +762,9 @@ test "project config expands official plugin declarations" {
     #|  ]
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
-      match project.manifest.runtime_plan(project.root) {
+      match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
           let routes = plan.command_routes()
           assert_true(routes.contains("autoLaunch.status"))
@@ -825,7 +825,7 @@ test "project config expands official plugin declarations" {
 
 ///|
 test "project config validates required shape" {
-  match parse_project_config("{}") {
+  match @project.ProjectConfig::parse("{}") {
     Ok(_) => abort("expected invalid project config")
     Err(problems) => {
       assert_true(problems.contains("project identifier is required"))
@@ -848,7 +848,7 @@ test "project config rejects unknown permissions" {
     #|  ]
     #|}
     #|
-  match parse_project_config(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(_) => abort("expected invalid project config")
     Err(problems) => assert_true(problems.contains("unknown permission: root"))
   }
