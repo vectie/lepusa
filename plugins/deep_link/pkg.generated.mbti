@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/deep_link"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+// Errors
+
+// Types and methods
+pub struct DeepLinkPolicy {
+  schemes : Array[DeepLinkScheme]
+} derive(Eq, @debug.Debug)
+pub fn DeepLinkPolicy::new(schemes? : Array[DeepLinkScheme]) -> Self
+pub fn DeepLinkPolicy::scheme(Self, DeepLinkScheme) -> Self
+pub fn DeepLinkPolicy::scheme_names(Self) -> Array[String]
+pub fn DeepLinkPolicy::schemes(Self) -> Array[DeepLinkScheme]
+pub fn DeepLinkPolicy::validate(Self) -> Array[String]
+
+pub struct DeepLinkScheme {
+  scheme : String
+  hosts : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn DeepLinkScheme::hosts(Self) -> Array[String]
+pub fn DeepLinkScheme::new(scheme~ : String, hosts? : Array[String]) -> Self
+pub fn DeepLinkScheme::scheme(Self) -> String
+pub fn DeepLinkScheme::validate(Self) -> Array[String]
+
+// Type aliases
+
+// Traits

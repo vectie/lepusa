@@ -146,7 +146,7 @@ requirements, capability grants, bundle icon resources, and bundle signing
 prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
 current directory, or a file passed with `--project`.
 Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
-`{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
+`{ "name": "deepLink" }`, `{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
 `{ "name": "localhost" }`, `{ "name": "notification" }`,
 `{ "name": "log" }`, `{ "name": "opener" }`, `{ "name": "process" }`,
 `{ "name": "shell" }`, `{ "name": "store" }`, or `{ "name": "fs" }`;
@@ -213,6 +213,10 @@ filesystem access.
 `localhost.status`, `localhost.start`, `localhost.stop`, and
 `localhost.waitUntilReady`, plus service metadata policy. Native backends own
 process supervision and readiness probing.
+
+`@lepusa/plugins/deep_link` defines app URL scheme routes such as
+`deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus
+scheme/host policy metadata. Native backends own OS registration and dispatch.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

@@ -5,6 +5,7 @@ pub(all) enum Permission {
   FileDialog
   Network
   Localhost
+  DeepLink
   Shell
   Opener
   Dialog
@@ -29,6 +30,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "file-dialog" => Ok(FileDialog)
     "network" => Ok(Network)
     "localhost" => Ok(Localhost)
+    "deep-link" => Ok(DeepLink)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
     "dialog" => Ok(Dialog)
@@ -59,6 +61,7 @@ pub fn Permission::name(self : Permission) -> String {
     FileDialog => "file-dialog"
     Network => "network"
     Localhost => "localhost"
+    DeepLink => "deep-link"
     Shell => "shell"
     Opener => "opener"
     Dialog => "dialog"

@@ -169,6 +169,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid localhost permission")
   }
+  match @lepusa.Permission::named("deep-link") {
+    Ok(permission) => {
+      assert_true(permission is DeepLink)
+      assert_eq(permission.name(), "deep-link")
+    }
+    Err(_) => abort("unexpected invalid deep link permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")

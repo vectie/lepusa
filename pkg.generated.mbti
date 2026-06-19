@@ -340,6 +340,7 @@ pub(all) enum Permission {
   FileDialog
   Network
   Localhost
+  DeepLink
   Shell
   Opener
   Dialog

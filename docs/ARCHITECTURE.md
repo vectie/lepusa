@@ -25,7 +25,7 @@ lepusa/runtime
 
 lepusa/plugins/*
   dialog, opener, fs, file-dialog, process, shell, clipboard, notification,
-  log, store, localhost, single-instance, deep-link, tray, auto-launch,
+  log, store, localhost, deep-link, single-instance, tray, auto-launch,
   window-state, updater, service-discovery
 
 shared native utility packages
@@ -158,7 +158,7 @@ Command rules:
   routes.
 - Built-in permission names for project manifests are `filesystem.read`,
   `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
-  `clipboard`, `notification`, `localhost`, `process.info`,
+  `clipboard`, `notification`, `localhost`, `deep-link`, `process.info`,
   `process.environment`, and `process.control`; custom names use
   `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
@@ -366,7 +366,7 @@ Framework support needed for this mode:
 - localhost source with readiness probe metadata
 - optional sidecar process lifecycle from `localServices`
 - tray and restart actions
-- deep-link registration and dispatch
+- deep-link registration and dispatch through the official `deepLink` contract
 - external open, clipboard, file dialogs, auto-launch, and updater plugins
 - service discovery/status files
 
@@ -424,7 +424,8 @@ packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, and scoped
 relative path policy. `@lepusa/plugins/file_dialog` declares file picker routes
 and scoped default-directory policy. `@lepusa/plugins/localhost` declares local
-service lifecycle and readiness routes. `@lepusa/plugins/dialog` declares
+service lifecycle and readiness routes. `@lepusa/plugins/deep_link` declares
+app URL scheme registration and dispatch routes. `@lepusa/plugins/dialog` declares
 message, confirm, and prompt routes. `@lepusa/plugins/clipboard` and
 `@lepusa/plugins/notification` declare clipboard and notification routes.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
@@ -462,9 +463,9 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 `BundlePlan` objects rather than maintaining parallel configuration paths.
 
 Project manifests may declare official plugins by name only. The CLI expands
-`log`, `store`, and `fs` to their official command contracts before planning,
-while plugins with explicit `commands` arrays keep their manifest-defined
-surface.
+official package names such as `deepLink`, `log`, `store`, and `fs` to their
+official command contracts before planning, while plugins with explicit
+`commands` arrays keep their manifest-defined surface.
 They may also declare `filesystemScopes`, which lower into runtime sessions and
 native launch manifests as named roots. The scope data is separate from command
 capabilities: capabilities decide which windows may call filesystem commands,

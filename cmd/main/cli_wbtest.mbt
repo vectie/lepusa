@@ -486,6 +486,7 @@ test "project config expands official plugin declarations" {
     #|  "window": { "label": "main", "title": "Official Plugins" },
     #|  "plugins": [
     #|    { "name": "clipboard" },
+    #|    { "name": "deepLink" },
     #|    { "name": "dialog" },
     #|    { "name": "fileDialog" },
     #|    { "name": "localhost" },
@@ -502,7 +503,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["clipboard", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell"]
+    #|      "permissions": ["clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell"]
     #|    }
     #|  ]
     #|}
@@ -513,6 +514,7 @@ test "project config expands official plugin declarations" {
         Ok(plan) => {
           let routes = plan.command_routes()
           assert_true(routes.contains("clipboard.readText"))
+          assert_true(routes.contains("deepLink.getInitialUrls"))
           assert_true(routes.contains("dialog.message"))
           assert_true(routes.contains("fileDialog.openFile"))
           assert_true(routes.contains("localhost.status"))
@@ -532,6 +534,8 @@ test "project config expands official plugin declarations" {
           )
           let window_routes = plan.window_command_routes("main")
           assert_true(window_routes.contains("clipboard.writeText"))
+          assert_true(window_routes.contains("deepLink.onOpenUrl"))
+          assert_true(window_routes.contains("deepLink.openUrl"))
           assert_true(window_routes.contains("dialog.confirm"))
           assert_true(window_routes.contains("fileDialog.saveFile"))
           assert_true(window_routes.contains("localhost.waitUntilReady"))

@@ -92,8 +92,8 @@ Stabilize the cross-platform core set first:
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists
 - localhost: initial local service lifecycle contract exists
+- deepLink: initial app URL scheme contract exists
 - single-instance
-- deep-link
 - tray
 - auto-launch
 - window-state
