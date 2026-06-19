@@ -133,6 +133,7 @@ async test "generated project config drives dev plan" {
   assert_true(result.output.contains("registered-routes:"))
   assert_true(result.output.contains("log.write"))
   assert_true(result.output.contains("store.set"))
+  assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("startup-operations: 1"))
 }
 
@@ -158,6 +159,7 @@ async test "generated project config drives manifest and bundle write" {
   let build = render_cli_async(["build", "linux", out, "--project", project])
   assert_eq(build.exit_code, 0)
   assert_true(build.output.contains("target: linux"))
+  assert_true(build.output.contains("local-services: 0"))
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
@@ -353,6 +355,7 @@ async test "bundle write materializes planned files" {
   let result = render_cli_async(["bundle-write", "linux", root])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("files: 2"))
   let bundle_root = root + "/lepusa-example"
   let desktop_path = bundle_root + "/lepusa-example.desktop"

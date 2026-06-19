@@ -442,6 +442,7 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "asset-protocol: \{session.asset_protocol()}\n" +
     "routes: \{routes}\n" +
     "registered-routes: \{registered_routes}\n" +
+    "local-services: \{session.local_services().length()}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n",
   )
 }
@@ -491,15 +492,21 @@ async fn render_bundle_plan_async(args : Array[String]) -> CliResult {
 ///|
 fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
   match plan.files() {
-    Ok(files) =>
+    Ok(files) => {
+      let local_service_count = match plan.runtime_manifest() {
+        Ok(manifest) => manifest.local_services().length()
+        Err(_) => 0
+      }
       ok(
         "Lepusa bundle plan\n" +
         "target: \{plan.target().name()}\n" +
         "identifier: \{plan.identifier()}\n" +
         "executable: \{plan.executable_name()}\n" +
         "bundle: \{plan.bundle_name()}\n" +
+        "local-services: \{local_service_count}\n" +
         "files: \{files.length()}\n",
       )
+    }
     Err(problems) => fail(render_problems("Lepusa bundle files", problems))
   }
 }
@@ -513,13 +520,19 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
       match project_bundle_plan(args, target) {
         Ok(plan) =>
           match write_bundle_plan(plan, out_dir) {
-            Ok(result) =>
+            Ok(result) => {
+              let local_service_count = match plan.runtime_manifest() {
+                Ok(manifest) => manifest.local_services().length()
+                Err(_) => 0
+              }
               ok(
                 "Lepusa bundle write\n" +
                 "target: \{plan.target().name()}\n" +
                 "root: \{result.root}\n" +
+                "local-services: \{local_service_count}\n" +
                 "files: \{result.files.length()}\n",
               )
+            }
             Err(problems) =>
               fail(render_problems("Lepusa bundle write", problems))
           }
