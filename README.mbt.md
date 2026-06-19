@@ -128,6 +128,10 @@ registry, and returns the JSON response shape expected by `window.lepusa`.
 window frame data, load URL, asset protocol, native hook name, and document
 start scripts.
 
+`@lepusa/runtime/macos` is the first platform backend package. It validates the
+native WebKit runtime is present and lowers a `RuntimeHost` into a macOS launch
+plan backed by `WKWebView` boot specs.
+
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.

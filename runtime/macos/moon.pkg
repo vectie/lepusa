@@ -1,0 +1,14 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "vectie/lepusa/runtime",
+}
+
+import {
+  "vectie/lepusa",
+} for "test"
+
+supported_targets = "native"
+
+options(
+  "native-stub": [ "macos_backend.c" ],
+)

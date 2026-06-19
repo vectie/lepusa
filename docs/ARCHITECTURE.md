@@ -223,6 +223,12 @@ name, and document-start initialization scripts. The platform layer should
 translate these specs to WKWebView, WebView2, or WebKitGTK calls without
 re-reading `App`, `WindowConfig`, or manifest state.
 
+`@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
+package with a small C stub that validates the system WebKit framework is
+available and a MoonBit launch-plan layer that lowers generic runtime state to
+macOS `WKWebView` boot data. Objective-C window creation should live under this
+package, not in the portable facade or CLI.
+
 ## Bundling
 
 `BundlePlan` is a pure framework contract: it computes platform metadata,
