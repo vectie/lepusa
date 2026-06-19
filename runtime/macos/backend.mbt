@@ -25,3 +25,20 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
     Err("macOS Cocoa/WebKit backend is not available")
   }
 }
+
+///|
+pub fn runtime(
+  host : @runtime.RuntimeHost,
+) -> Result[@runtime.NativeRuntime, Array[String]] {
+  @runtime.NativeRuntime::new(backend(), host)
+}
+
+///|
+pub fn detect_runtime(
+  host : @runtime.RuntimeHost,
+) -> Result[@runtime.NativeRuntime, Array[String]] {
+  match detect() {
+    Ok(backend) => @runtime.NativeRuntime::new(backend, host)
+    Err(problem) => Err([problem])
+  }
+}

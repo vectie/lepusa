@@ -39,3 +39,16 @@ test "linux backend lowers runtime host to native runner contract" {
     Err(_) => abort("unexpected invalid Linux runner plan")
   }
 }
+
+///|
+test "linux backend exposes native runtime facade" {
+  match runtime(test_host()) {
+    Ok(runtime) => {
+      assert_eq(runtime.backend().name(), "linux")
+      assert_true(
+        runtime.bootstrap_json().contains("\"nativeBackend\":\"linux\""),
+      )
+    }
+    Err(_) => abort("unexpected invalid Linux native runtime")
+  }
+}

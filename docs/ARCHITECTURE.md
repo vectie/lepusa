@@ -297,8 +297,10 @@ availability:
 - `@lepusa/runtime/windows`: WebView2.
 - `@lepusa/runtime/linux`: WebKitGTK.
 
-Each platform package consumes the same `RuntimeHost` boundary and must not
-re-read app manifests, capabilities, or source configuration.
+Each platform package exposes `runtime(host)` and `detect_runtime(host)` helpers
+that return the shared `NativeRuntime` facade. Platform packages consume the
+same `RuntimeHost` boundary and must not re-read app manifests, capabilities,
+or source configuration.
 
 Lifecycle hooks use the same lowering path. App authors attach commands to
 `AppStarted`, `AppWillExit`, `WindowCloseRequested(label)`, or

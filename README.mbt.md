@@ -400,8 +400,9 @@ host once, then gives platform loops bootstrap JSON, asset JSON, dispatch JSON,
 and lifecycle step JSON without making each backend rebuild those paths.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
-availability checks for WKWebView, WebView2, and WebKitGTK while reusing the
-same portable runner plan.
+availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
+package exposes `runtime(host)` and `detect_runtime(host)` helpers that return
+the same `NativeRuntime` facade.
 
 `Source::localhost(...)` supports gateway-style apps that load a local HTTP
 service and optionally declare the sidecar command plus readiness URL metadata.

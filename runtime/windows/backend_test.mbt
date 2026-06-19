@@ -44,3 +44,16 @@ test "windows backend lowers runtime host to native runner contract" {
     Err(_) => abort("unexpected invalid Windows runner plan")
   }
 }
+
+///|
+test "windows backend exposes native runtime facade" {
+  match runtime(test_host()) {
+    Ok(runtime) => {
+      assert_eq(runtime.backend().name(), "windows")
+      assert_true(
+        runtime.bootstrap_json().contains("\"nativeBackend\":\"windows\""),
+      )
+    }
+    Err(_) => abort("unexpected invalid Windows native runtime")
+  }
+}

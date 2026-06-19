@@ -303,7 +303,11 @@ async fn render_native_plan_async(args : Array[String]) -> CliResult {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
-          render_native_runner_plan(native_backend_for_target(target), host)
+          match native_runtime_for_target(target, host) {
+            Ok(runtime) => render_native_runner_plan(runtime)
+            Err(problems) =>
+              fail(render_problems("Lepusa native plan", problems))
+          }
         Err(problems) => fail(render_problems("Lepusa native plan", problems))
       }
     Err(problem) => fail(problem + "\n")
@@ -317,11 +321,10 @@ async fn render_run_async(args : Array[String]) -> CliResult {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
-          render_native_run_summary(
-            target,
-            native_backend_for_target(target),
-            host,
-          )
+          match native_runtime_for_target(target, host) {
+            Ok(runtime) => render_native_run_summary(target, runtime)
+            Err(problems) => fail(render_problems("Lepusa run", problems))
+          }
         Err(problems) => fail(render_problems("Lepusa run", problems))
       }
     Err(problem) => fail(problem + "\n")
@@ -557,10 +560,12 @@ fn render_native_plan(args : Array[String]) -> CliResult {
     Ok(target) =>
       match sample_runtime_plan() {
         Ok(plan) =>
-          render_native_runner_plan(
-            native_backend_for_target(target),
-            @runtime.RuntimeHost::new(plan),
-          )
+          match
+            native_runtime_for_target(target, @runtime.RuntimeHost::new(plan)) {
+            Ok(runtime) => render_native_runner_plan(runtime)
+            Err(problems) =>
+              fail(render_problems("Lepusa native plan", problems))
+          }
         Err(problems) => fail(render_problems("Lepusa native plan", problems))
       }
     Err(problem) => fail(problem + "\n")
@@ -574,11 +579,11 @@ fn render_run(args : Array[String]) -> CliResult {
     Ok(target) =>
       match sample_runtime_plan() {
         Ok(plan) =>
-          render_native_run_summary(
-            target,
-            native_backend_for_target(target),
-            @runtime.RuntimeHost::new(plan),
-          )
+          match
+            native_runtime_for_target(target, @runtime.RuntimeHost::new(plan)) {
+            Ok(runtime) => render_native_run_summary(target, runtime)
+            Err(problems) => fail(render_problems("Lepusa run", problems))
+          }
         Err(problems) => fail(render_problems("Lepusa run", problems))
       }
     Err(problem) => fail(problem + "\n")
@@ -586,55 +591,44 @@ fn render_run(args : Array[String]) -> CliResult {
 }
 
 ///|
-fn native_backend_for_target(
+fn native_runtime_for_target(
   target : @lepusa.BundleTarget,
-) -> @runtime.NativeBackend {
+  host : @runtime.RuntimeHost,
+) -> Result[@runtime.NativeRuntime, Array[String]] {
   match target {
-    MacOS => @macos_backend.backend()
-    Windows => @windows_backend.backend()
-    Linux => @linux_backend.backend()
+    MacOS => @macos_backend.runtime(host)
+    Windows => @windows_backend.runtime(host)
+    Linux => @linux_backend.runtime(host)
   }
 }
 
 ///|
 fn render_native_run_summary(
   target : @lepusa.BundleTarget,
-  backend : @runtime.NativeBackend,
-  host : @runtime.RuntimeHost,
+  runtime : @runtime.NativeRuntime,
 ) -> CliResult {
-  match @runtime.NativeRuntime::new(backend, host) {
-    Ok(runtime) => {
-      let plan = runtime.runner_plan()
-      let first_window = match plan.webview_specs().get(0) {
-        Some(window) => window.url()
-        None => ""
-      }
-      ok(
-        "Lepusa run\n" +
-        "target: \{target.name()}\n" +
-        "backend: \{plan.backend_name()}\n" +
-        "engine: \{plan.webview_engine()}\n" +
-        "webviews: \{plan.webview_specs().length()}\n" +
-        "first-window-url: \{first_window}\n" +
-        "bridge: \{plan.session().bridge_url()}\n" +
-        "local-services: \{plan.session().local_services().length()}\n" +
-        "startup-operations: \{plan.startup_operations().length()}\n" +
-        "lifecycle-steps: \{plan.lifecycle_steps().length()}\n",
-      )
-    }
-    Err(problems) => fail(render_problems("Lepusa run", problems))
+  let plan = runtime.runner_plan()
+  let first_window = match plan.webview_specs().get(0) {
+    Some(window) => window.url()
+    None => ""
   }
+  ok(
+    "Lepusa run\n" +
+    "target: \{target.name()}\n" +
+    "backend: \{plan.backend_name()}\n" +
+    "engine: \{plan.webview_engine()}\n" +
+    "webviews: \{plan.webview_specs().length()}\n" +
+    "first-window-url: \{first_window}\n" +
+    "bridge: \{plan.session().bridge_url()}\n" +
+    "local-services: \{plan.session().local_services().length()}\n" +
+    "startup-operations: \{plan.startup_operations().length()}\n" +
+    "lifecycle-steps: \{plan.lifecycle_steps().length()}\n",
+  )
 }
 
 ///|
-fn render_native_runner_plan(
-  backend : @runtime.NativeBackend,
-  host : @runtime.RuntimeHost,
-) -> CliResult {
-  match @runtime.NativeRuntime::new(backend, host) {
-    Ok(runtime) => ok(runtime.bootstrap_json() + "\n")
-    Err(problems) => fail(render_problems("Lepusa native plan", problems))
-  }
+fn render_native_runner_plan(runtime : @runtime.NativeRuntime) -> CliResult {
+  ok(runtime.bootstrap_json() + "\n")
 }
 
 ///|

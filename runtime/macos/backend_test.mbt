@@ -98,3 +98,21 @@ test "macos backend prepares startup operations for native runner" {
     Err(_) => abort("unexpected invalid macOS runner plan")
   }
 }
+
+///|
+test "macos backend exposes native runtime facade" {
+  match runtime(test_host()) {
+    Ok(runtime) => {
+      assert_eq(runtime.backend().name(), "macos")
+      assert_true(
+        runtime.bootstrap_json().contains("\"nativeBackend\":\"macos\""),
+      )
+      assert_true(
+        runtime
+        .resolve_asset_json("lepusa://inline/main/index.html")
+        .contains("\"kind\":\"virtual\""),
+      )
+    }
+    Err(_) => abort("unexpected invalid macOS native runtime")
+  }
+}
