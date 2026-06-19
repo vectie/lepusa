@@ -855,7 +855,9 @@ test "bundle plans derive executable and package names from metadata" {
                 "lepusa-example.app/Contents/MacOS/lepusa-example",
               )
               assert_true(files[1].executable())
-              assert_true(files[1].content().contains("lepusa-runtime"))
+              assert_true(
+                files[1].content().contains("lepusa-runtime bootstrap"),
+              )
               assert_true(
                 files[1].content().contains("Resources/lepusa/runtime.json"),
               )
@@ -910,7 +912,9 @@ test "bundle files include platform metadata" {
               assert_true(files[0].content().contains("Name=Files App"))
               assert_eq(files[1].path(), "files-app/files-app")
               assert_true(files[1].executable())
-              assert_true(files[1].content().contains("lepusa-runtime"))
+              assert_true(
+                files[1].content().contains("lepusa-runtime bootstrap"),
+              )
               assert_true(files[1].content().contains("lepusa/runtime.json"))
               assert_true(files[2].content().contains("\"target\":\"linux\""))
               assert_true(

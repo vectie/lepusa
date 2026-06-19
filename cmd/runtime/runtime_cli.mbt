@@ -17,6 +17,7 @@ fn drop_program(argv : Array[String]) -> Array[String] {
 async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
   match args.get(0) {
     Some("help") | Some("--help") | Some("-h") => runtime_ok(runtime_help())
+    Some("bootstrap") => render_runtime_bootstrap(args)
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
     Some("--manifest") | None => render_runtime_manifest(args)
@@ -115,6 +116,7 @@ fn runtime_help() -> String {
     #|
     #|Usage:
     #|  lepusa-runtime --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
     #|

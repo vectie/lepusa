@@ -46,6 +46,34 @@ test "runtime cli validates manifest shape" {
 }
 
 ///|
+test "runtime cli renders bundled bootstrap json" {
+  let manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "linux",
+    #|  "runtime": {
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{ "url": "lepusa://rabbita/main/index.html" }],
+    #|    "localServices": [],
+    #|    "startupActions": [],
+    #|    "lifecycleHooks": [],
+    #|    "commandRoutes": ["log.write"],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  let result = render_runtime_bootstrap_text(
+    "/app/lepusa/runtime.json", manifest,
+  )
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"bundleRoot\":\"/app\""))
+  assert_true(result.output.contains("\"identifier\":\"dev.vectie.runtime\""))
+  assert_true(result.output.contains("\"runtime\":{"))
+  assert_true(result.output.contains("\"registeredRoutes\":[\"log.write\"]"))
+}
+
+///|
 test "runtime cli resolves bundled runtime assets" {
   let manifest =
     #|{

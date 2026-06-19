@@ -27,6 +27,7 @@ pub struct BundledRuntimeManifest {
   bundle : Map[String, Json]
   runtime : Map[String, Json]
 } derive(@debug.Debug)
+pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]

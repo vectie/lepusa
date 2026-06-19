@@ -133,6 +133,7 @@ moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- bootstrap --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
@@ -412,18 +413,20 @@ directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
 registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
-The generated launcher stubs call `lepusa-runtime --manifest <runtime.json>`;
-today that runtime command prints a no-window bundle manifest summary, and it is
-the narrow executable boundary for the future platform WebView loop.
+The generated launcher stubs call
+`lepusa-runtime bootstrap --manifest <runtime.json>`. That command emits the
+packaged runtime bootstrap JSON: manifest path, bundle root, app metadata,
+target, and the canonical runtime object that a platform WebView loop consumes.
+`lepusa-runtime --manifest <runtime.json>` remains a no-window summary probe.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
 manifest's runtime bridge, virtual files, local roots, and packaged roots using
 the same JSON envelope shape expected by native protocol handlers.
 `lepusa-runtime lifecycle <event> [window] --manifest <runtime.json>` reads the
 same bundled manifest and returns the local services and portable actions a
 native loop should process for that lifecycle event.
-`@lepusa/runtime/bundled` owns the reusable manifest parser behind those
-commands, so native platform loops can consume bundled runtime data without
-depending on CLI internals.
+`@lepusa/runtime/bundled` owns the reusable manifest parser and bootstrap,
+asset, and lifecycle JSON behind those commands, so native platform loops can
+consume bundled runtime data without depending on CLI internals.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

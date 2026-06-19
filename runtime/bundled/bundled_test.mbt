@@ -18,6 +18,30 @@ test "bundled runtime manifest summarizes launch data" {
 }
 
 ///|
+test "bundled runtime manifest emits bootstrap json" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) => {
+      let bootstrap = runtime.bootstrap_json()
+      assert_true(
+        bootstrap.contains("\"manifestPath\":\"/app/lepusa/runtime.json\""),
+      )
+      assert_true(bootstrap.contains("\"bundleRoot\":\"/app\""))
+      assert_true(bootstrap.contains("\"identifier\":\"dev.vectie.runtime\""))
+      assert_true(bootstrap.contains("\"productName\":\"Runtime App\""))
+      assert_true(bootstrap.contains("\"target\":\"linux\""))
+      assert_true(bootstrap.contains("\"runtime\":{"))
+      assert_true(bootstrap.contains("\"webviews\""))
+      assert_true(bootstrap.contains("\"startupActions\""))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime manifest resolves protocol assets" {
   match
     BundledRuntimeManifest::parse(
