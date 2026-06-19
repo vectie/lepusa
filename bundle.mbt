@@ -584,7 +584,7 @@ fn macos_launcher() -> String {
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-    #|exec lepusa-runtime bootstrap --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
+    #|exec lepusa-runtime launch --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
     #|
   )
 }

@@ -38,11 +38,32 @@ pub struct BundledRuntimeManifest {
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
+pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
 pub fn BundledRuntimeManifest::path(Self) -> String
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
 pub fn BundledRuntimeManifest::summary(Self) -> String
+pub fn BundledRuntimeManifest::webview_count(Self) -> Int
+
+pub struct BundledWebView {
+  label : String
+  title : String
+  url : String
+  width : Int
+  height : Int
+  resizable : Bool
+  native_hook : String
+  initialization_scripts : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn BundledWebView::height(Self) -> Int
+pub fn BundledWebView::initialization_scripts(Self) -> Array[String]
+pub fn BundledWebView::label(Self) -> String
+pub fn BundledWebView::native_hook(Self) -> String
+pub fn BundledWebView::resizable(Self) -> Bool
+pub fn BundledWebView::title(Self) -> String
+pub fn BundledWebView::url(Self) -> String
+pub fn BundledWebView::width(Self) -> Int
 
 type ParsedRuntimeAssetUrl derive(Eq, @debug.Debug)
 

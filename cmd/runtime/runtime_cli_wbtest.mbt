@@ -74,6 +74,52 @@ test "runtime cli renders bundled bootstrap json" {
 }
 
 ///|
+test "runtime cli dry-runs bundled macos launch" {
+  let manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "macos",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "macos",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html",
+    #|      "initializationScripts": ["console.log(\"bridge\")"]
+    #|    }],
+    #|    "protocolMappings": [
+    #|      { "windowLabel": "main", "scheme": "lepusa", "root": "memory:main" }
+    #|    ],
+    #|    "virtualFiles": [
+    #|      {
+    #|        "windowLabel": "main",
+    #|        "path": "index.html",
+    #|        "mimeType": "text/html",
+    #|        "content": "<main></main>"
+    #|      }
+    #|    ],
+    #|    "registeredRoutes": []
+    #|  }
+    #|}
+  let result = render_runtime_run_text(
+    "/Runtime.app/Contents/Resources/lepusa/runtime.json", manifest,
+  )
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("mode: dry-run"))
+  assert_true(result.output.contains("backend: macos"))
+  assert_true(result.output.contains("engine: WKWebView"))
+  assert_true(result.output.contains("status: prepared"))
+  assert_true(result.output.contains("webviews: 1"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
+  )
+  assert_true(result.output.contains("load-url: data:text/html;base64,"))
+}
+
+///|
 test "runtime cli resolves bundled runtime assets" {
   let manifest =
     #|{

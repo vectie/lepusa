@@ -1,6 +1,9 @@
 #include <moonbit.h>
-#include <dlfcn.h>
 #include <string.h>
+
+#if defined(__APPLE__)
+
+#include <dlfcn.h>
 
 typedef struct {
   double x;
@@ -227,3 +230,35 @@ int32_t lepusa_macos_run_webview(
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(app, lepusa_sel("run"));
   return 0;
 }
+
+#else
+
+int32_t lepusa_macos_backend_available(void) {
+  return 1;
+}
+
+moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
+  static const char unavailable[] = "WKWebView unavailable";
+  moonbit_bytes_t bytes = moonbit_make_bytes(sizeof(unavailable) - 1, 0);
+  memcpy(bytes, unavailable, sizeof(unavailable) - 1);
+  return bytes;
+}
+
+int32_t lepusa_macos_run_webview(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
+  int32_t width,
+  int32_t height,
+  int32_t resizable
+) {
+  (void)title;
+  (void)url;
+  (void)initialization_script;
+  (void)width;
+  (void)height;
+  (void)resizable;
+  return 1;
+}
+
+#endif

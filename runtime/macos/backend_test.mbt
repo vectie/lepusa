@@ -187,6 +187,37 @@ test "macos backend dry run does not enter native loop" {
 }
 
 ///|
+test "macos backend prepares bundled runtime manifest" {
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/Example.app/Contents/Resources/lepusa/runtime.json",
+      bundled_macos_manifest(),
+    ) {
+    Ok(manifest) =>
+      match prepare_bundled_run(manifest) {
+        Ok(plan) => {
+          assert_eq(plan.title(), "Bundled App")
+          assert_eq(plan.url(), "lepusa://rabbita/main/index.html")
+          assert_true(plan.load_url().has_prefix("data:text/html;base64,"))
+          assert_true(
+            plan.initialization_script().contains("webkit.messageHandlers"),
+          )
+          assert_true(
+            plan.initialization_script().contains("__lepusaInvokeResponse"),
+          )
+          assert_true(plan.initialization_script().contains("bridge ready"))
+          assert_eq(plan.width(), 900)
+          assert_eq(plan.height(), 640)
+          assert_eq(plan.resizable(), false)
+          assert_eq(plan.webviews(), 1)
+        }
+        Err(_) => abort("unexpected invalid bundled macOS plan")
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 async test "macos bridge dispatch returns response callback script" {
   match runtime(bridge_test_host()) {
     Ok(runtime) => {
@@ -214,6 +245,44 @@ async test "macos bridge dispatch returns response callback script" {
     }
     Err(_) => abort("unexpected invalid macOS native runtime")
   }
+}
+
+///|
+fn bundled_macos_manifest() -> String {
+  (
+    #|{
+    #|  "identifier": "dev.vectie.bundle",
+    #|  "productName": "Bundled App",
+    #|  "target": "macos",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "macos",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Bundled App",
+    #|      "url": "lepusa://rabbita/main/index.html",
+    #|      "width": 900,
+    #|      "height": 640,
+    #|      "resizable": false,
+    #|      "nativeHook": "__lepusaInvoke",
+    #|      "initializationScripts": ["console.log(\"bridge ready\")"]
+    #|    }],
+    #|    "protocolMappings": [
+    #|      { "windowLabel": "main", "scheme": "lepusa", "root": "memory:main" }
+    #|    ],
+    #|    "virtualFiles": [
+    #|      {
+    #|        "windowLabel": "main",
+    #|        "path": "index.html",
+    #|        "mimeType": "text/html",
+    #|        "content": "<main>bundled</main>"
+    #|      }
+    #|    ],
+    #|    "registeredRoutes": []
+    #|  }
+    #|}
+  )
 }
 
 ///|

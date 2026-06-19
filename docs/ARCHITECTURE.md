@@ -359,22 +359,24 @@ startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
 file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, emits bundled bootstrap JSON for native
-loops, resolves bundled asset URLs, dispatches registered official plugin
-commands, and selects local services plus lifecycle actions without re-entering
-project configuration.
+loops, exposes typed WebView boot data, resolves bundled asset URLs, dispatches
+registered official plugin commands, and selects local services plus lifecycle
+actions without re-entering project configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
-available, prepares the first WebView load URL from typed runtime assets, and
-enters a Cocoa/WKWebView run loop through an explicit `launch(runtime)` call.
+available, prepares the first WebView load URL from typed runtime assets or a
+packaged bundled manifest, and enters a Cocoa/WKWebView run loop through an
+explicit `launch(runtime)` or `launch_bundled(manifest)` call.
 Objective-C window creation lives under this package, not in the portable
-facade or CLI. `prepare_run(runtime)` is the testable boundary: it converts
-virtual Lepusa assets into `data:` URLs and local or packaged assets into
-`file:` URLs before a native window is opened, and it merges the generated
-Lepusa bridge with a macOS-native hook bootstrap script. The C stub installs
-that combined source as a `WKUserScript` at document start, so launched pages
-receive `window.lepusa`, `__lepusaInvoke`, and the future
-`__lepusaInvokeResponse` callback surface before application code runs.
+facade or CLI. `prepare_run(runtime)` and `prepare_bundled_run(manifest)` are
+the testable boundaries: they convert virtual Lepusa assets into `data:` URLs
+and local or packaged assets into `file:` URLs before a native window is
+opened, and they merge the generated Lepusa bridge with a macOS-native hook
+bootstrap script. The C stub installs that combined source as a `WKUserScript`
+at document start, so launched pages receive `window.lepusa`, `__lepusaInvoke`,
+and the future `__lepusaInvokeResponse` callback surface before application
+code runs.
 `dispatch_bridge_message(runtime, message)` is the MoonBit-owned bridge
 message boundary for macOS: it accepts the JSON posted by the WebView,
 dispatches through `NativeRuntime.dispatch_json_async`, and returns the
@@ -534,7 +536,13 @@ lepusa run macos --launch
   -> prepares and opens the first macOS WKWebView window
 
 lepusa-runtime --manifest <lepusa/runtime.json>
-  -> reads a bundled runtime manifest and prints a no-window launch summary
+  -> reads a bundled runtime manifest and prints a summary
+
+lepusa-runtime run --manifest <lepusa/runtime.json>
+  -> prepares a bundled macOS runtime launch plan without opening a window
+
+lepusa-runtime launch --manifest <lepusa/runtime.json>
+  -> prepares and opens the first bundled macOS WKWebView window
 
 lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
   -> emits bundled bootstrap JSON for native platform loops

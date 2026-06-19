@@ -18,6 +18,32 @@ test "bundled runtime manifest summarizes launch data" {
 }
 
 ///|
+test "bundled runtime manifest exposes first webview" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) =>
+      match runtime.first_webview() {
+        Ok(webview) => {
+          assert_eq(webview.label(), "main")
+          assert_eq(webview.title(), "Runtime App")
+          assert_eq(webview.url(), "lepusa://rabbita/main/index.html")
+          assert_eq(webview.width(), 1000)
+          assert_eq(webview.height(), 720)
+          assert_eq(webview.resizable(), true)
+          assert_eq(webview.native_hook(), "__lepusaInvoke")
+          assert_eq(webview.initialization_scripts().length(), 1)
+          assert_eq(runtime.webview_count(), 1)
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime manifest emits bootstrap json" {
   match
     BundledRuntimeManifest::parse(

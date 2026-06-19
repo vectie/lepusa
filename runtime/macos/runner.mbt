@@ -54,7 +54,10 @@ pub fn prepare_run(
             title: spec.title(),
             url: spec.url(),
             load_url,
-            initialization_script: macos_initialization_script(spec),
+            initialization_script: macos_initialization_script(
+              spec.native_hook(),
+              spec.initialization_scripts(),
+            ),
             width: spec.width(),
             height: spec.height(),
             resizable: spec.resizable(),
@@ -66,38 +69,51 @@ pub fn prepare_run(
 }
 
 ///|
+pub fn prepare_bundled_run(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[MacOSRunPlan, Array[String]] {
+  match manifest.first_webview() {
+    Err(problem) => Err([problem])
+    Ok(webview) =>
+      match bundled_initial_load_url(manifest, webview) {
+        Err(problem) => Err([problem])
+        Ok(load_url) =>
+          Ok({
+            title: webview.title(),
+            url: webview.url(),
+            load_url,
+            initialization_script: macos_initialization_script(
+              webview.native_hook(),
+              webview.initialization_scripts(),
+            ),
+            width: webview.width(),
+            height: webview.height(),
+            resizable: webview.resizable(),
+            webviews: manifest.webview_count(),
+          })
+      }
+  }
+}
+
+///|
 pub fn run(
   runtime : @runtime.NativeRuntime,
   mode? : MacOSRunMode = MacOSDryRun,
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
-    Ok(plan) =>
-      match mode {
-        MacOSDryRun => Ok({ plan, status: MacOSPrepared })
-        MacOSOpenWindow => {
-          let exit_code = run_webview(
-            @utf8.encode(plan.title),
-            @utf8.encode(plan.load_url),
-            @utf8.encode(plan.initialization_script),
-            plan.width,
-            plan.height,
-            if plan.resizable {
-              1
-            } else {
-              0
-            },
-          )
-          if exit_code == 0 {
-            Ok({ plan, status: MacOSLaunched })
-          } else {
-            Ok({
-              plan,
-              status: MacOSLaunchFailed("macOS WebView launch failed"),
-            })
-          }
-        }
-      }
+    Ok(plan) => run_plan(plan, mode~)
+  }
+}
+
+///|
+pub fn run_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+  mode? : MacOSRunMode = MacOSDryRun,
+) -> Result[MacOSRunResult, Array[String]] {
+  match prepare_bundled_run(manifest) {
+    Err(problems) => Err(problems)
+    Ok(plan) => run_plan(plan, mode~)
   }
 }
 
@@ -106,6 +122,13 @@ pub fn launch(
   runtime : @runtime.NativeRuntime,
 ) -> Result[MacOSRunResult, Array[String]] {
   run(runtime, mode=MacOSOpenWindow)
+}
+
+///|
+pub fn launch_bundled(
+  manifest : @bundled.BundledRuntimeManifest,
+) -> Result[MacOSRunResult, Array[String]] {
+  run_bundled(manifest, mode=MacOSOpenWindow)
 }
 
 ///|
@@ -163,10 +186,7 @@ fn initial_load_url(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[String, String] {
-  if spec.url().has_prefix("http://") ||
-    spec.url().has_prefix("https://") ||
-    spec.url().has_prefix("file://") ||
-    spec.url().has_prefix("data:") {
+  if is_direct_load_url(spec.url()) {
     Ok(spec.url())
   } else {
     match runtime.host().snapshot() {
@@ -206,18 +226,136 @@ fn file_url(path : String) -> String {
 }
 
 ///|
-fn macos_initialization_script(spec : @runtime.RuntimeWebViewSpec) -> String {
-  let scripts : Array[String] = [macos_native_hook_script(spec)]
-  for script in spec.initialization_scripts() {
+fn run_plan(
+  plan : MacOSRunPlan,
+  mode~ : MacOSRunMode,
+) -> Result[MacOSRunResult, Array[String]] {
+  match mode {
+    MacOSDryRun => Ok({ plan, status: MacOSPrepared })
+    MacOSOpenWindow => {
+      let exit_code = run_webview(
+        @utf8.encode(plan.title),
+        @utf8.encode(plan.load_url),
+        @utf8.encode(plan.initialization_script),
+        plan.width,
+        plan.height,
+        if plan.resizable {
+          1
+        } else {
+          0
+        },
+      )
+      if exit_code == 0 {
+        Ok({ plan, status: MacOSLaunched })
+      } else {
+        Ok({ plan, status: MacOSLaunchFailed("macOS WebView launch failed") })
+      }
+    }
+  }
+}
+
+///|
+fn bundled_initial_load_url(
+  manifest : @bundled.BundledRuntimeManifest,
+  webview : @bundled.BundledWebView,
+) -> Result[String, String] {
+  if is_direct_load_url(webview.url()) {
+    Ok(webview.url())
+  } else {
+    bundled_load_url_from_asset_json(manifest.resolve_asset_json(webview.url()))
+  }
+}
+
+///|
+fn bundled_load_url_from_asset_json(json : String) -> Result[String, String] {
+  try @json.parse(json) catch {
+    error => Err("invalid bundled asset response: \{error}")
+  } noraise {
+    Object(response) =>
+      if optional_response_bool(response, "ok").unwrap_or(false) {
+        match optional_response_object(response, "body") {
+          Some(body) => {
+            let kind = optional_response_string(body, "kind").unwrap_or("")
+            match kind {
+              "virtual" =>
+                Ok(
+                  "data:\{optional_response_string(response, "mimeType").unwrap_or("text/plain")};base64,\{@base64.encode(@utf8.encode(optional_response_string(body, "content").unwrap_or("")).view())}",
+                )
+              "local-file" | "packaged-file" =>
+                Ok(
+                  file_url(optional_response_string(body, "path").unwrap_or("")),
+                )
+              _ => Err("unsupported bundled asset kind: \{kind}")
+            }
+          }
+          None => Err("bundled asset response body is required")
+        }
+      } else {
+        Err(
+          optional_response_string(response, "error").unwrap_or(
+            "bundled asset resolution failed",
+          ),
+        )
+      }
+    _ => Err("bundled asset response must be a json object")
+  }
+}
+
+///|
+fn is_direct_load_url(url : String) -> Bool {
+  url.has_prefix("http://") ||
+  url.has_prefix("https://") ||
+  url.has_prefix("file://") ||
+  url.has_prefix("data:")
+}
+
+///|
+fn optional_response_object(
+  object : Map[String, Json],
+  key : String,
+) -> Map[String, Json]? {
+  match object.get(key) {
+    Some(Object(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn optional_response_string(
+  object : Map[String, Json],
+  key : String,
+) -> String? {
+  match object.get(key) {
+    Some(String(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn optional_response_bool(object : Map[String, Json], key : String) -> Bool? {
+  match object.get(key) {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+}
+
+///|
+fn macos_initialization_script(
+  native_hook : String,
+  initialization_scripts : Array[String],
+) -> String {
+  let scripts : Array[String] = [macos_native_hook_script(native_hook)]
+  for script in initialization_scripts {
     scripts.push(script)
   }
   scripts.join("\n")
 }
 
 ///|
-fn macos_native_hook_script(spec : @runtime.RuntimeWebViewSpec) -> String {
-  let native_hook = spec.native_hook().js_string_literal()
-  let response_hook = "\{spec.native_hook()}Response".js_string_literal()
+fn macos_native_hook_script(hook : String) -> String {
+  let native_hook = hook.js_string_literal()
+  let response_hook = "\{hook}Response".js_string_literal()
   [
     "(() => {",
     "  const nativeHook = \{native_hook};",

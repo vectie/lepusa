@@ -136,6 +136,8 @@ moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bootstrap --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -426,11 +428,15 @@ directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
 registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
-The generated launcher stubs call
-`lepusa-runtime bootstrap --manifest <runtime.json>`. That command emits the
-packaged runtime bootstrap JSON: manifest path, bundle root, app metadata,
-target, and the canonical runtime object that a platform WebView loop consumes.
-`lepusa-runtime --manifest <runtime.json>` remains a no-window summary probe.
+Generated macOS `.app` launcher stubs call
+`lepusa-runtime launch --manifest <runtime.json>`, which opens the first
+WKWebView from the packaged `lepusa/runtime.json`. `lepusa-runtime run
+--manifest <runtime.json>` uses the same planning path without opening a
+window, so bundles have a cheap validation probe. `lepusa-runtime bootstrap
+--manifest <runtime.json>` still emits packaged runtime bootstrap JSON for
+platform loops: manifest path, bundle root, app metadata, target, and the
+canonical runtime object that a backend consumes.
+`lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
 manifest's runtime bridge, virtual files, local roots, and packaged roots using
 the same JSON envelope shape expected by native protocol handlers.

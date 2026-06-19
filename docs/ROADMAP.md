@@ -50,6 +50,7 @@
   checks for WKWebView, WebView2, and WebKitGTK.
 - Implement or port WebView window creation for macOS, Windows, and Linux:
   first macOS WKWebView launch path and document-start bridge injection exist;
+  packaged macOS `lepusa-runtime launch` consumes `lepusa/runtime.json`;
   MoonBit-side macOS bridge message dispatch exists; Objective-C
   WKScriptMessageHandler wiring, custom protocol callbacks, and Linux/Windows
   launch loops remain.
@@ -86,6 +87,8 @@
   - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: reads bundled runtime data for launcher stubs.
+  - `lepusa-runtime run`: prepares bundled macOS runtime launch plans without opening windows.
+  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`.
   - `lepusa-runtime bootstrap`: emits bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.

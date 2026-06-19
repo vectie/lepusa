@@ -17,6 +17,8 @@ fn drop_program(argv : Array[String]) -> Array[String] {
 async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
   match args.get(0) {
     Some("help") | Some("--help") | Some("-h") => runtime_ok(runtime_help())
+    Some("run") => render_runtime_run(args, launch=false)
+    Some("launch") => render_runtime_run(args, launch=true)
     Some("bootstrap") => render_runtime_bootstrap(args)
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
@@ -75,6 +77,92 @@ fn render_runtime_manifest_text(
 }
 
 ///|
+async fn render_runtime_run(
+  args : Array[String],
+  launch~ : Bool,
+) -> RuntimeCliResult {
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime run\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_run_text(path, text, launch~)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+fn render_runtime_run_text(
+  path : String,
+  text : String,
+  launch? : Bool = false,
+) -> RuntimeCliResult {
+  match @bundled.BundledRuntimeManifest::parse(path, text) {
+    Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
+    Ok(manifest) => {
+      let result = if launch {
+        @macos.launch_bundled(manifest)
+      } else {
+        @macos.run_bundled(manifest)
+      }
+      match result {
+        Err(problems) =>
+          runtime_fail(
+            render_runtime_run_problems("Lepusa runtime run", problems),
+          )
+        Ok(result) => runtime_ok(render_runtime_run_result(result, launch~))
+      }
+    }
+  }
+}
+
+///|
+fn render_runtime_run_result(
+  result : @macos.MacOSRunResult,
+  launch~ : Bool,
+) -> String {
+  let plan = result.plan()
+  [
+    "Lepusa runtime run",
+    "mode: \{if launch { "launch" } else { "dry-run" }}",
+    "backend: macos",
+    "engine: WKWebView",
+    "status: \{macos_status_name(result.status())}",
+    "webviews: \{plan.webviews()}",
+    "title: \{plan.title()}",
+    "first-window-url: \{plan.url()}",
+    "load-url: \{plan.load_url()}",
+    "",
+  ].join("\n")
+}
+
+///|
+fn macos_status_name(status : @macos.MacOSRunStatus) -> String {
+  match status {
+    MacOSPrepared => "prepared"
+    MacOSLaunched => "launched"
+    MacOSLaunchFailed(_) => "launch-failed"
+  }
+}
+
+///|
+fn render_runtime_run_problems(
+  title : String,
+  problems : Array[String],
+) -> String {
+  let lines : Array[String] = [title]
+  for problem in problems {
+    lines.push("[fail] \{problem}")
+  }
+  lines.push("")
+  lines.join("\n")
+}
+
+///|
 fn runtime_manifest_arg(args : Array[String]) -> Result[String, String] {
   match args.get(0) {
     None => Ok("lepusa/runtime.json")
@@ -117,6 +205,8 @@ fn runtime_help() -> String {
     #|
     #|Usage:
     #|  lepusa-runtime --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime run --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime launch --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
