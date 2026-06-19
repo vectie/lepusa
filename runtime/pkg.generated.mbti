@@ -96,11 +96,13 @@ pub struct RuntimeWebViewSpec {
   asset_protocol : String
   bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
   initialization_scripts : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn RuntimeWebViewSpec::asset_protocol(Self) -> String
 pub fn RuntimeWebViewSpec::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewSpec::devtools(Self) -> Bool
+pub fn RuntimeWebViewSpec::event_dispatch_hook(Self) -> String
 pub fn RuntimeWebViewSpec::height(Self) -> Int
 pub fn RuntimeWebViewSpec::initialization_scripts(Self) -> Array[String]
 pub fn RuntimeWebViewSpec::label(Self) -> String

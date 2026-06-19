@@ -82,6 +82,7 @@ test "runtime host produces per-window webview boot specs" {
           assert_true(specs[0].devtools())
           assert_eq(specs[0].asset_protocol(), "lepusa")
           assert_eq(specs[0].native_hook(), "__lepusaInvoke")
+          assert_eq(specs[0].event_dispatch_hook(), "__lepusaDispatchEvent")
           assert_eq(specs[0].initialization_scripts().length(), 1)
           assert_true(
             specs[0].initialization_scripts()[0].contains(
@@ -129,6 +130,9 @@ test "runtime host serializes native launch manifest" {
       assert_true(json.contains("\"virtualFiles\""))
       assert_true(json.contains("\"titleBar\":\"native\""))
       assert_true(json.contains("\"nativeHook\":\"__lepusaInvoke\""))
+      assert_true(
+        json.contains("\"eventDispatchHook\":\"__lepusaDispatchEvent\""),
+      )
       assert_true(json.contains("\"registeredRoutes\":[\"core.invoke\"]"))
     }
     Err(_) => abort("unexpected invalid runtime launch manifest")

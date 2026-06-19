@@ -24,6 +24,7 @@ pub struct RuntimeWebViewBoot {
   asset_protocol : String
   bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
   initialization_scripts : Array[String]
 } derive(Debug, Eq)
 
@@ -125,6 +126,7 @@ fn RuntimeWebViewBoot::from_window(
     asset_protocol: runtime.asset_protocol(),
     bridge_global_name: bridge.global_name(),
     native_hook: bridge.native_hook(),
+    event_dispatch_hook: bridge.event_dispatch_hook(),
     initialization_scripts: [bridge.source()],
   }
 }
@@ -307,6 +309,13 @@ pub fn RuntimeWebViewBoot::bridge_global_name(
 ///|
 pub fn RuntimeWebViewBoot::native_hook(self : RuntimeWebViewBoot) -> String {
   self.native_hook
+}
+
+///|
+pub fn RuntimeWebViewBoot::event_dispatch_hook(
+  self : RuntimeWebViewBoot,
+) -> String {
+  self.event_dispatch_hook
 }
 
 ///|
@@ -518,6 +527,7 @@ fn runtime_webview_boot_json(webview : RuntimeWebViewBoot) -> String {
     "\"assetProtocol\":\{webview.asset_protocol().json_string()},",
     "\"bridgeGlobalName\":\{webview.bridge_global_name().json_string()},",
     "\"nativeHook\":\{webview.native_hook().json_string()},",
+    "\"eventDispatchHook\":\{webview.event_dispatch_hook().json_string()},",
     "\"initializationScripts\":[\{webview.initialization_scripts().map(fn(script) { script.json_string() }).join(",")}]",
     "}",
   ].join("")

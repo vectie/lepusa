@@ -42,6 +42,9 @@ test "manifest prints native runner json" {
   assert_true(result.output.contains("\"virtualFiles\""))
   assert_true(result.output.contains("\"mimeType\":\"text/html\""))
   assert_true(
+    result.output.contains("\"eventDispatchHook\":\"__lepusaDispatchEvent\""),
+  )
+  assert_true(
     result.output.contains(
       "\"commandRoutes\":[\"core.invoke\",\"core.events\"]",
     ),

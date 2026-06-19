@@ -2,6 +2,7 @@
 pub struct BridgeConfig {
   global_name : String
   native_hook : String
+  event_dispatch_hook : String
   window_label : String
 } derive(Debug, Eq)
 
@@ -9,9 +10,10 @@ pub struct BridgeConfig {
 pub fn BridgeConfig::new(
   global_name? : String = "lepusa",
   native_hook? : String = "__lepusaInvoke",
+  event_dispatch_hook? : String = "__lepusaDispatchEvent",
   window_label? : String = "main",
 ) -> BridgeConfig {
-  { global_name, native_hook, window_label }
+  { global_name, native_hook, event_dispatch_hook, window_label }
 }
 
 ///|
@@ -23,6 +25,9 @@ pub fn BridgeConfig::validate(self : BridgeConfig) -> Array[String] {
   if self.native_hook == "" {
     problems.push("bridge native hook is required")
   }
+  if self.event_dispatch_hook == "" {
+    problems.push("bridge event dispatch hook is required")
+  }
   if self.window_label == "" {
     problems.push("bridge window label is required")
   }
@@ -33,6 +38,7 @@ pub fn BridgeConfig::validate(self : BridgeConfig) -> Array[String] {
 pub struct BridgeScript {
   global_name : String
   native_hook : String
+  event_dispatch_hook : String
   window_label : String
   routes : Array[String]
   source : String
@@ -46,6 +52,11 @@ pub fn BridgeScript::global_name(self : BridgeScript) -> String {
 ///|
 pub fn BridgeScript::native_hook(self : BridgeScript) -> String {
   self.native_hook
+}
+
+///|
+pub fn BridgeScript::event_dispatch_hook(self : BridgeScript) -> String {
+  self.event_dispatch_hook
 }
 
 ///|
@@ -79,6 +90,7 @@ pub fn RuntimePlan::bridge_script(
     Ok({
       global_name: config.global_name,
       native_hook: config.native_hook,
+      event_dispatch_hook: config.event_dispatch_hook,
       window_label: config.window_label,
       routes,
       source: bridge_source(config, routes),
@@ -95,16 +107,72 @@ fn bridge_source(config : BridgeConfig, routes : Array[String]) -> String {
     .join(",")
   let global_name = config.global_name.js_string_literal()
   let native_hook = config.native_hook.js_string_literal()
+  let event_dispatch_hook = config.event_dispatch_hook.js_string_literal()
   let window_label = config.window_label.js_string_literal()
   [
     "(() => {",
     "  const globalName = \{global_name};",
     "  const nativeHook = \{native_hook};",
+    "  const eventDispatchHook = \{event_dispatch_hook};",
     "  const windowLabel = \{window_label};",
     "  const routes = [\{route_literals}];",
     "  let nextId = 0;",
+    "  const eventHandlers = new Map();",
+    "  const decodePayload = (payload) => {",
+    "    if (typeof payload !== \"string\") {",
+    "      return payload ?? null;",
+    "    }",
+    "    if (payload === \"\") {",
+    "      return null;",
+    "    }",
+    "    try {",
+    "      return JSON.parse(payload);",
+    "    } catch (_) {",
+    "      return payload;",
+    "    }",
+    "  };",
+    "  const dispatchEvent = (event) => {",
+    "    if (!event || typeof event.name !== \"string\") {",
+    "      return false;",
+    "    }",
+    "    const handlers = eventHandlers.get(event.name);",
+    "    if (!handlers || handlers.size === 0) {",
+    "      return false;",
+    "    }",
+    "    const payload = decodePayload(event.payload);",
+    "    for (const handler of Array.from(handlers)) {",
+    "      handler(payload, event);",
+    "    }",
+    "    return true;",
+    "  };",
     "  const api = {",
     "    routes: () => routes.slice(),",
+    "    listen: (name, handler) => {",
+    "      if (typeof name !== \"string\" || name === \"\") {",
+    "        throw new Error(\"Lepusa event name is required\");",
+    "      }",
+    "      if (typeof handler !== \"function\") {",
+    "        throw new Error(\"Lepusa event handler must be a function\");",
+    "      }",
+    "      let handlers = eventHandlers.get(name);",
+    "      if (!handlers) {",
+    "        handlers = new Set();",
+    "        eventHandlers.set(name, handlers);",
+    "      }",
+    "      handlers.add(handler);",
+    "      return () => api.unlisten(name, handler);",
+    "    },",
+    "    unlisten: (name, handler) => {",
+    "      const handlers = eventHandlers.get(name);",
+    "      if (!handlers) {",
+    "        return false;",
+    "      }",
+    "      const removed = handlers.delete(handler);",
+    "      if (handlers.size === 0) {",
+    "        eventHandlers.delete(name);",
+    "      }",
+    "      return removed;",
+    "    },",
     "    invoke: async (route, payload = null) => {",
     "      if (!routes.includes(route)) {",
     "        throw new Error(`Unknown Lepusa command route: ${route}`);",
@@ -139,6 +207,10 @@ fn bridge_source(config : BridgeConfig, routes : Array[String]) -> String {
     "      }",
     "    },",
     "  };",
+    "  Object.defineProperty(globalThis, eventDispatchHook, {",
+    "    value: dispatchEvent,",
+    "    configurable: true,",
+    "  });",
     "  for (const route of routes) {",
     "    const parts = route.split(\".\");",
     "    const leaf = parts.pop();",

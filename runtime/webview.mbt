@@ -11,6 +11,7 @@ pub struct RuntimeWebViewSpec {
   asset_protocol : String
   bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
   initialization_scripts : Array[String]
 } derive(Debug, Eq)
 
@@ -66,6 +67,7 @@ fn RuntimeWebViewSpec::from_window(
     asset_protocol,
     bridge_global_name: bridge.global_name(),
     native_hook: bridge.native_hook(),
+    event_dispatch_hook: bridge.event_dispatch_hook(),
     initialization_scripts: [bridge.source()],
   }
 }
@@ -127,6 +129,13 @@ pub fn RuntimeWebViewSpec::bridge_global_name(
 ///|
 pub fn RuntimeWebViewSpec::native_hook(self : RuntimeWebViewSpec) -> String {
   self.native_hook
+}
+
+///|
+pub fn RuntimeWebViewSpec::event_dispatch_hook(
+  self : RuntimeWebViewSpec,
+) -> String {
+  self.event_dispatch_hook
 }
 
 ///|

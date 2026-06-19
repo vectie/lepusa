@@ -27,6 +27,16 @@ pub fn Event::payload(self : Event) -> String {
 }
 
 ///|
+pub fn Event::to_json(self : Event) -> String {
+  [
+    "{",
+    "\"name\":\{self.name.json_string()},",
+    "\"payload\":\{self.payload.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn Event::validate(self : Event) -> Array[String] {
   let problems : Array[String] = []
   if self.name == "" {

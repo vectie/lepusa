@@ -218,6 +218,13 @@ bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,
 dispatches through `CommandRegistry` with plan capabilities, and encodes the
 `{id,payload}` or `{id,error}` response expected by the frontend bridge.
 
+Native-to-frontend events use the matching generated bridge hook. The bridge
+installs `window.lepusa.listen(name, handler)`,
+`window.lepusa.unlisten(name, handler)`, and
+`globalThis.__lepusaDispatchEvent(event)`. Platform backends should call the
+per-WebView `eventDispatchHook` from `RuntimeWebViewBoot` or
+`RuntimeWebViewSpec` when delivering `Event::to_json()` payloads into the page.
+
 `RuntimeHost::webviews()` produces the pending WebView creation specs platform
 backends need: resolved load URL, frame options, asset protocol, native hook
 name, and document-start initialization scripts. The platform layer should

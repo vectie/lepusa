@@ -206,6 +206,8 @@ test "events can become runtime commands" {
   let event = @lepusa.Event::new("ready", payload="{\"ok\":true}")
   assert_eq(event.name(), "ready")
   assert_eq(event.validate().is_empty(), true)
+  assert_true(event.to_json().contains("\"name\":\"ready\""))
+  assert_true(event.to_json().contains("\"payload\":\"{\\\"ok\\\":true}\""))
   assert_true(
     @lepusa.Cmd::emit(event, target=WindowTarget("main"))
     is Emit(WindowTarget("main"), _),
@@ -299,6 +301,10 @@ test "runtime plans expose portable launch manifest" {
         Ok(manifest) => {
           assert_eq(manifest.backend(), "headless")
           assert_eq(manifest.webviews()[0].title(), "Launch")
+          assert_eq(
+            manifest.webviews()[0].event_dispatch_hook(),
+            "__lepusaDispatchEvent",
+          )
           assert_eq(manifest.protocol_mappings()[0].root(), "memory:main")
           assert_eq(manifest.virtual_files()[0].path(), "index.html")
           assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
@@ -387,10 +393,11 @@ test "bridge config validates required names" {
   let config = @lepusa.BridgeConfig::new(
     global_name="",
     native_hook="",
+    event_dispatch_hook="",
     window_label="",
   )
   let problems = config.validate()
-  assert_eq(problems.length(), 3)
+  assert_eq(problems.length(), 4)
   assert_eq(problems[0], "bridge global name is required")
 }
 

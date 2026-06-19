@@ -48,18 +48,21 @@ pub fn AppMetadata::version(Self) -> String
 pub struct BridgeConfig {
   global_name : String
   native_hook : String
+  event_dispatch_hook : String
   window_label : String
 } derive(Eq, @debug.Debug)
-pub fn BridgeConfig::new(global_name? : String, native_hook? : String, window_label? : String) -> Self
+pub fn BridgeConfig::new(global_name? : String, native_hook? : String, event_dispatch_hook? : String, window_label? : String) -> Self
 pub fn BridgeConfig::validate(Self) -> Array[String]
 
 pub struct BridgeScript {
   global_name : String
   native_hook : String
+  event_dispatch_hook : String
   window_label : String
   routes : Array[String]
   source : String
 } derive(Eq, @debug.Debug)
+pub fn BridgeScript::event_dispatch_hook(Self) -> String
 pub fn BridgeScript::global_name(Self) -> String
 pub fn BridgeScript::native_hook(Self) -> String
 pub fn BridgeScript::routes(Self) -> Array[String]
@@ -175,6 +178,7 @@ pub struct Event {
 pub fn Event::name(Self) -> String
 pub fn Event::new(String, payload? : String) -> Self
 pub fn Event::payload(Self) -> String
+pub fn Event::to_json(Self) -> String
 pub fn Event::validate(Self) -> Array[String]
 
 pub(all) enum EventTarget {
@@ -443,11 +447,13 @@ pub struct RuntimeWebViewBoot {
   asset_protocol : String
   bridge_global_name : String
   native_hook : String
+  event_dispatch_hook : String
   initialization_scripts : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn RuntimeWebViewBoot::asset_protocol(Self) -> String
 pub fn RuntimeWebViewBoot::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewBoot::devtools(Self) -> Bool
+pub fn RuntimeWebViewBoot::event_dispatch_hook(Self) -> String
 pub fn RuntimeWebViewBoot::height(Self) -> Int
 pub fn RuntimeWebViewBoot::initialization_scripts(Self) -> Array[String]
 pub fn RuntimeWebViewBoot::label(Self) -> String

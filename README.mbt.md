@@ -128,6 +128,10 @@ virtual files, and safe local asset paths without doing platform file IO.
 It decodes the bridge request object, checks capabilities through the command
 registry, and returns the JSON response shape expected by `window.lepusa`.
 
+The generated bridge also exposes `window.lepusa.listen(name, handler)` and
+installs `globalThis.__lepusaDispatchEvent(event)` for native-to-frontend
+events.
+
 `RuntimeHost::webviews()` produces per-window boot specs for native backends:
 window frame data, load URL, asset protocol, native hook name, and document
 start scripts.
