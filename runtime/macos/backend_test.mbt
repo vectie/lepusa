@@ -407,26 +407,44 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(report.backend_name(), "macos")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
-          let startup = plan.execute_service_startup()
-          assert_true(startup.ok())
-          assert_eq(startup.action_count(), 2)
-          assert_true(
-            startup.action_reports()[0].status()
-            is NativeServiceActionSkipped(message) &&
-            message.contains("macOS service start"),
-          )
-          let shutdown = plan.execute_service_shutdown()
-          assert_eq(shutdown.action_count(), 1)
-          assert_true(
-            shutdown.action_reports()[0].status()
-            is NativeServiceActionSkipped(message) &&
-            message.contains("macOS service stop"),
-          )
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }
     Err(problem) => abort(problem)
   }
+}
+
+///|
+test "macos service executor reports native service failures" {
+  let service = @lepusa.LocalService::new(
+    name="missing",
+    command=["/definitely/not/a/lepusa/service"],
+    readiness_url="not-a-url",
+  )
+  let plan = @runtime.NativeServiceSupervisorPlan::new(
+    backend_name="macos",
+    webview_engine="WKWebView",
+    plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
+      service,
+    ]),
+  )
+  let startup = service_executor().execute_startup(plan)
+  assert_false(startup.ok())
+  assert_eq(startup.action_count(), 2)
+  assert_true(
+    startup.action_reports()[0].status() is NativeServiceActionFailed(message) &&
+    message.contains("macOS service start failed"),
+  )
+  assert_true(
+    startup.action_reports()[1].status() is NativeServiceActionFailed(message) &&
+    message.contains("macOS service readiness failed"),
+  )
+  let shutdown = service_executor().execute_shutdown(plan)
+  assert_true(shutdown.ok())
+  assert_true(
+    shutdown.action_reports()[0].status() is NativeServiceActionSkipped(message) &&
+    message.contains("process is not tracked"),
+  )
 }
 
 ///|

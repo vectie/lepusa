@@ -417,8 +417,9 @@ vocabulary for prepared, launched, failed, and unsupported runs.
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
 package exposes `runtime(host)` and `detect_runtime(host)` helpers that return
 the same `NativeRuntime` facade. Platform packages also expose service executor
-helpers that currently report skipped start/readiness/stop actions until their
-native process supervisors are wired.
+helpers. macOS starts tracked sidecar processes, polls HTTP readiness URLs, and
+stops tracked processes; Linux and Windows currently report explicit skipped
+service actions until their native supervisors are wired.
 
 `Source::localhost(...)` supports gateway-style apps that load a local HTTP
 service and optionally declare the sidecar command plus readiness URL metadata.
