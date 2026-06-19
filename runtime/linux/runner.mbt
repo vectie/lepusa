@@ -11,6 +11,7 @@ pub struct LinuxWebViewPlan {
   url : String
   load_url : String
   initialization_script : String
+  native_hook : String
   width : Int
   height : Int
   resizable : Bool
@@ -40,14 +41,17 @@ pub struct LinuxBundledRunResult {
 } derive(Debug)
 
 ///|
-#borrow(title, url, initialization_script)
+#borrow(title, url, initialization_script, native_hook, dispatch)
 extern "c" fn native_run_webview(
   title : Bytes,
   url : Bytes,
   initialization_script : Bytes,
+  native_hook : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
+  call_dispatch : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
+  dispatch : (Bytes) -> Bytes,
 ) -> Int = "lepusa_linux_run_webview"
 
 ///|
@@ -85,7 +89,7 @@ pub fn run(
         plan,
         status: match mode {
           LinuxDryRun => RunPrepared
-          LinuxOpenWindow => linux_open_window(plan)
+          LinuxOpenWindow => linux_open_window(plan, runtime)
         },
       })
   }
@@ -240,6 +244,11 @@ pub fn LinuxWebViewPlan::initialization_script(
 }
 
 ///|
+pub fn LinuxWebViewPlan::native_hook(self : LinuxWebViewPlan) -> String {
+  self.native_hook
+}
+
+///|
 pub fn LinuxWebViewPlan::width(self : LinuxWebViewPlan) -> Int {
   self.width
 }
@@ -349,7 +358,11 @@ fn linux_webview_plan_from_spec(
         title: spec.title(),
         url: spec.url(),
         load_url,
-        initialization_script: spec.initialization_scripts().join("\n"),
+        initialization_script: linux_initialization_script(
+          spec.native_hook(),
+          spec.initialization_scripts(),
+        ),
+        native_hook: spec.native_hook(),
         width: spec.width(),
         height: spec.height(),
         resizable: spec.resizable(),
@@ -409,7 +422,10 @@ fn linux_is_direct_load_url(url : String) -> Bool {
 }
 
 ///|
-fn linux_open_window(plan : LinuxRunPlan) -> @lepusa.RunStatus {
+fn linux_open_window(
+  plan : LinuxRunPlan,
+  runtime : @runtime.NativeRuntime,
+) -> @lepusa.RunStatus {
   let webview = match plan.first_webview() {
     Ok(webview) => webview
     Err(problem) => return RunFailed(problem)
@@ -418,6 +434,7 @@ fn linux_open_window(plan : LinuxRunPlan) -> @lepusa.RunStatus {
     @utf8.encode(webview.title()),
     @utf8.encode(webview.load_url()),
     @utf8.encode(webview.initialization_script()),
+    @utf8.encode(webview.native_hook()),
     webview.width(),
     webview.height(),
     if webview.resizable() {
@@ -425,10 +442,97 @@ fn linux_open_window(plan : LinuxRunPlan) -> @lepusa.RunStatus {
     } else {
       0
     },
+    fn(dispatch, message) { dispatch(message) },
+    linux_dispatch(runtime, plan),
   )
   match exit_code {
     0 => RunLaunched
     2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
     code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
   }
+}
+
+///|
+fn linux_dispatch(
+  runtime : @runtime.NativeRuntime,
+  plan : LinuxRunPlan,
+) -> (Bytes) -> Bytes {
+  let response_hook = match plan.first_webview() {
+    Ok(webview) => "\{webview.native_hook()}Response"
+    Err(_) => "__lepusaInvokeResponse"
+  }
+  fn(message : Bytes) -> Bytes {
+    let input = @utf8.decode(message) catch { _ => "" }
+    let response_json = runtime.dispatch_json(input)
+    @utf8.encode(linux_bridge_response_script(response_hook, response_json))
+  }
+}
+
+///|
+fn linux_initialization_script(
+  native_hook : String,
+  initialization_scripts : Array[String],
+) -> String {
+  let scripts : Array[String] = [linux_native_hook_script(native_hook)]
+  for script in initialization_scripts {
+    scripts.push(script)
+  }
+  scripts.join("\n")
+}
+
+///|
+fn linux_native_hook_script(hook : String) -> String {
+  let native_hook = hook.js_string_literal()
+  let response_hook = "\{hook}Response".js_string_literal()
+  [
+    "(() => {",
+    "  const nativeHook = \{native_hook};",
+    "  const responseHook = \{response_hook};",
+    "  const pending = new Map();",
+    "  Object.defineProperty(globalThis, responseHook, {",
+    "    value: (response) => {",
+    "      const id = response && String(response.id || \"\");",
+    "      const callbacks = pending.get(id);",
+    "      if (!callbacks) { return false; }",
+    "      pending.delete(id);",
+    "      if (response && response.error) { callbacks.reject(new Error(response.error)); }",
+    "      else { callbacks.resolve(response || null); }",
+    "      return true;",
+    "    },",
+    "    configurable: true,",
+    "  });",
+    "  Object.defineProperty(globalThis, nativeHook, {",
+    "    value: (request) => new Promise((resolve, reject) => {",
+    "      const handler = globalThis.webkit && globalThis.webkit.messageHandlers && globalThis.webkit.messageHandlers[nativeHook];",
+    "      if (!handler || typeof handler.postMessage !== \"function\") {",
+    "        reject(new Error(`Missing Lepusa Linux native message handler: ${nativeHook}`));",
+    "        return;",
+    "      }",
+    "      pending.set(String(request.id || \"\"), { resolve, reject });",
+    "      handler.postMessage(JSON.stringify(request));",
+    "    }),",
+    "    configurable: true,",
+    "  });",
+    "})();",
+  ].join("\n")
+}
+
+///|
+fn linux_bridge_response_script(
+  response_hook : String,
+  response_json : String,
+) -> String {
+  "globalThis[\{response_hook.js_string_literal()}](\{response_json});"
+}
+
+///|
+fn String::js_string_literal(self : String) -> String {
+  "\"" +
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="\n", new="\\n")
+  .replace_all(old="\r", new="\\r")
+  .replace_all(old="\t", new="\\t") +
+  "\""
 }

@@ -64,10 +64,11 @@
   message preparation separates native capture from async dispatch; open-window
   macOS launches now report unsupported when async routes require native
   scheduling; Linux now has a first WebKitGTK source-window loop for resolved
-  HTML/file/remote URLs; Windows exposes dry-run and unsupported-launch runner
-  contracts for source runtimes and packaged bundled manifests; native async
-  bridge scheduling, Linux protocol-complete packaged loading, and the Windows
-  WebView creation loop remain.
+  HTML/file/remote URLs plus sync WebKitGTK script-message bridge dispatch;
+  Windows exposes dry-run and unsupported-launch runner contracts for source
+  runtimes and packaged bundled manifests; native async bridge scheduling,
+  Linux protocol-complete packaged loading, and the Windows WebView creation
+  loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

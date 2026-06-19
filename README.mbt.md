@@ -480,6 +480,9 @@ that path by turning a posted bridge request into a response-callback script.
 The same runner registers a `WKURLSchemeHandler` for the Lepusa asset protocol.
 MoonBit still owns asset resolution; the Objective-C stub only turns the
 runtime asset packet into WebKit response/data/finish calls.
+The Linux source-window loop injects the same `window.lepusa` bridge plus a
+WebKitGTK message-handler bootstrap, so sync native commands can round-trip
+through MoonBit in an opened WebKitGTK window.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

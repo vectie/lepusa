@@ -76,8 +76,19 @@ test "linux backend prepares run plan and reports unsupported launch" {
               assert_eq(webview.title(), "Linux")
               assert_eq(webview.width(), 1000)
               assert_eq(webview.height(), 720)
+              assert_eq(webview.native_hook(), "__lepusaInvoke")
               assert_true(
                 webview.initialization_script().contains("__lepusaInvoke"),
+              )
+              assert_true(
+                webview
+                .initialization_script()
+                .contains("__lepusaInvokeResponse"),
+              )
+              assert_true(
+                webview
+                .initialization_script()
+                .contains("webkit.messageHandlers"),
               )
             }
             Err(problem) => abort(problem)
