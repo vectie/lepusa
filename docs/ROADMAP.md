@@ -95,7 +95,7 @@ Stabilize the cross-platform core set first:
 - deepLink: initial app URL scheme contract exists
 - singleInstance: initial app lock and launch handoff contract exists
 - tray: initial status icon and menu contract exists
-- auto-launch
+- autoLaunch: initial launch-at-login contract exists
 - window-state
 - updater
 - service-discovery

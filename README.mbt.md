@@ -145,12 +145,13 @@ runtime backend, windows, plugin command routes, command permission
 requirements, capability grants, bundle icon resources, and bundle signing
 prerequisites. Native CLI commands consume the nearest `lepusa.json` from the
 current directory, or a file passed with `--project`.
-Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
+Official plugins can be declared by name, for example
+`{ "name": "autoLaunch" }`, `{ "name": "clipboard" }`,
 `{ "name": "deepLink" }`, `{ "name": "dialog" }`, `{ "name": "fileDialog" }`,
-`{ "name": "localhost" }`, `{ "name": "notification" }`,
-`{ "name": "log" }`, `{ "name": "opener" }`, `{ "name": "process" }`,
-`{ "name": "shell" }`, `{ "name": "singleInstance" }`,
-`{ "name": "store" }`, `{ "name": "tray" }`, or `{ "name": "fs" }`;
+`{ "name": "localhost" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
+`{ "name": "opener" }`, `{ "name": "process" }`, `{ "name": "shell" }`,
+`{ "name": "singleInstance" }`, `{ "name": "store" }`,
+`{ "name": "tray" }`, or `{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
@@ -227,6 +228,11 @@ backends own cross-process locking and platform window activation.
 `@lepusa/plugins/tray` defines system tray routes such as `tray.setIcon`,
 `tray.setMenu`, `tray.setVisible`, and `tray.onMenuItemClick`, plus menu item
 policy metadata. Native backends own status icon creation and OS menu behavior.
+
+`@lepusa/plugins/auto_launch` defines launch-at-login routes such as
+`autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
+`autoLaunch.setEnabled`, plus startup registration policy metadata. Native
+backends own platform login item, registry, service, or desktop-entry behavior.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

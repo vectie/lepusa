@@ -1,5 +1,6 @@
 import {
   "vectie/lepusa",
+  "vectie/lepusa/plugins/auto_launch",
   "vectie/lepusa/plugins/clipboard",
   "vectie/lepusa/plugins/deep_link",
   "vectie/lepusa/plugins/dialog",

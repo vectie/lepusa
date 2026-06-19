@@ -190,6 +190,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid tray permission")
   }
+  match @lepusa.Permission::named("auto-launch") {
+    Ok(permission) => {
+      assert_true(permission is AutoLaunch)
+      assert_eq(permission.name(), "auto-launch")
+    }
+    Err(_) => abort("unexpected invalid auto launch permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")

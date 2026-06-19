@@ -343,6 +343,7 @@ pub(all) enum Permission {
   DeepLink
   SingleInstance
   Tray
+  AutoLaunch
   Shell
   Opener
   Dialog

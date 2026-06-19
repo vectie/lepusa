@@ -8,6 +8,7 @@ pub(all) enum Permission {
   DeepLink
   SingleInstance
   Tray
+  AutoLaunch
   Shell
   Opener
   Dialog
@@ -35,6 +36,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "deep-link" => Ok(DeepLink)
     "single-instance" => Ok(SingleInstance)
     "tray" => Ok(Tray)
+    "auto-launch" => Ok(AutoLaunch)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
     "dialog" => Ok(Dialog)
@@ -68,6 +70,7 @@ pub fn Permission::name(self : Permission) -> String {
     DeepLink => "deep-link"
     SingleInstance => "single-instance"
     Tray => "tray"
+    AutoLaunch => "auto-launch"
     Shell => "shell"
     Opener => "opener"
     Dialog => "dialog"
