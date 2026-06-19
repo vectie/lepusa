@@ -683,11 +683,31 @@ fn macos_launch_report(
 fn render_native_run_report(
   title : String,
   report : @lepusa.RunReport,
+  include_status? : Bool = true,
+  include_bridge_url? : Bool = false,
+  include_services? : Bool = false,
 ) -> CliResult {
+  let status = if include_status {
+    "status: \{report.status().name()}\n"
+  } else {
+    ""
+  }
   let load_url = if report.load_url() == "" {
     ""
   } else {
     "load-url: \{report.load_url()}\n"
+  }
+  let bridge_url = if include_bridge_url {
+    "bridge: \{report.bridge_url()}\n"
+  } else {
+    ""
+  }
+  let services = if include_services {
+    "local-services: \{report.local_services()}\n" +
+    "service-supervisor: \{report.service_supervisor()}\n" +
+    "service-start-order: \{report.service_start_order().join(",")}\n"
+  } else {
+    ""
   }
   let bridge_routes = if report.bridge_sync_routes() == 0 &&
     report.bridge_async_routes() == 0 {
@@ -702,10 +722,12 @@ fn render_native_run_report(
     "target: \{report.target()}\n" +
     "backend: \{report.backend()}\n" +
     "engine: \{report.engine()}\n" +
-    "status: \{report.status().name()}\n" +
+    status +
     "webviews: \{report.webviews()}\n" +
     "first-window-url: \{report.first_window_url()}\n" +
     load_url +
+    bridge_url +
+    services +
     "startup-operations: \{report.startup_operations()}\n" +
     "lifecycle-steps: \{report.lifecycle_steps()}\n" +
     bridge_routes,
@@ -717,25 +739,12 @@ fn render_native_run_summary(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
 ) -> CliResult {
-  let plan = runtime.runner_plan()
-  let services = plan.service_plan()
-  let first_window = match plan.webview_specs().get(0) {
-    Some(window) => window.url()
-    None => ""
-  }
-  ok(
-    "Lepusa run\n" +
-    "target: \{target.name()}\n" +
-    "backend: \{plan.backend_name()}\n" +
-    "engine: \{plan.webview_engine()}\n" +
-    "webviews: \{plan.webview_specs().length()}\n" +
-    "first-window-url: \{first_window}\n" +
-    "bridge: \{plan.session().bridge_url()}\n" +
-    "local-services: \{services.services().length()}\n" +
-    "service-supervisor: \{services.requires_supervisor()}\n" +
-    "service-start-order: \{services.startup_service_names().join(",")}\n" +
-    "startup-operations: \{plan.startup_operations().length()}\n" +
-    "lifecycle-steps: \{plan.lifecycle_steps().length()}\n",
+  render_native_run_report(
+    "Lepusa run",
+    runtime.run_report(target=target.name(), status=RunPrepared),
+    include_status=false,
+    include_bridge_url=true,
+    include_services=true,
   )
 }
 

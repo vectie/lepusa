@@ -77,6 +77,7 @@ test "bundled runtime manifest builds target-aware run plan" {
             "lepusa://rabbita/main/index.html",
           )
           assert_eq(report.load_url(), "lepusa://rabbita/main/index.html")
+          assert_eq(report.bridge_url(), "lepusa://runtime/bridge.js")
           assert_eq(report.local_services(), 1)
           assert_eq(report.service_start_order()[0], "api")
           assert_eq(report.startup_operations(), 2)

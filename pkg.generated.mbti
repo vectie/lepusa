@@ -486,6 +486,7 @@ pub struct RunReport {
   first_window_title : String
   first_window_url : String
   load_url : String
+  bridge_url : String
   local_services : Int
   service_supervisor : Bool
   service_start_order : Array[String]
@@ -497,13 +498,14 @@ pub struct RunReport {
 pub fn RunReport::backend(Self) -> String
 pub fn RunReport::bridge_async_routes(Self) -> Int
 pub fn RunReport::bridge_sync_routes(Self) -> Int
+pub fn RunReport::bridge_url(Self) -> String
 pub fn RunReport::engine(Self) -> String
 pub fn RunReport::first_window_title(Self) -> String
 pub fn RunReport::first_window_url(Self) -> String
 pub fn RunReport::lifecycle_steps(Self) -> Int
 pub fn RunReport::load_url(Self) -> String
 pub fn RunReport::local_services(Self) -> Int
-pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int, first_window_title? : String, first_window_url? : String, load_url? : String, local_services? : Int, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int, lifecycle_steps? : Int, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> Self
+pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int, first_window_title? : String, first_window_url? : String, load_url? : String, bridge_url? : String, local_services? : Int, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int, lifecycle_steps? : Int, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> Self
 pub fn RunReport::service_start_order(Self) -> Array[String]
 pub fn RunReport::service_supervisor(Self) -> Bool
 pub fn RunReport::startup_operations(Self) -> Int

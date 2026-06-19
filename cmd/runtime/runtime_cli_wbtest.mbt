@@ -170,6 +170,7 @@ test "runtime cli dry-runs bundled linux manifest by target" {
   assert_true(dry_run.output.contains("backend: linux"))
   assert_true(dry_run.output.contains("engine: WebKitGTK"))
   assert_true(dry_run.output.contains("status: prepared"))
+  assert_true(dry_run.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(dry_run.output.contains("startup-operations: 2"))
   assert_true(dry_run.output.contains("service-start-order: api"))
   let launch = render_runtime_run_text(

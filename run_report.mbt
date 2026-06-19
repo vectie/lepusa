@@ -16,6 +16,7 @@ pub struct RunReport {
   first_window_title : String
   first_window_url : String
   load_url : String
+  bridge_url : String
   local_services : Int
   service_supervisor : Bool
   service_start_order : Array[String]
@@ -35,6 +36,7 @@ pub fn RunReport::new(
   first_window_title? : String = "",
   first_window_url? : String = "",
   load_url? : String = "",
+  bridge_url? : String = "",
   local_services? : Int = 0,
   service_supervisor? : Bool = false,
   service_start_order? : Array[String] = [],
@@ -52,6 +54,7 @@ pub fn RunReport::new(
     first_window_title,
     first_window_url,
     load_url,
+    bridge_url,
     local_services,
     service_supervisor,
     service_start_order: service_start_order.copy(),
@@ -131,6 +134,11 @@ pub fn RunReport::load_url(self : RunReport) -> String {
 }
 
 ///|
+pub fn RunReport::bridge_url(self : RunReport) -> String {
+  self.bridge_url
+}
+
+///|
 pub fn RunReport::local_services(self : RunReport) -> Int {
   self.local_services
 }
@@ -177,6 +185,7 @@ pub fn RunReport::to_json(self : RunReport) -> String {
     "\"firstWindowTitle\":\{self.first_window_title.json_string()},",
     "\"firstWindowUrl\":\{self.first_window_url.json_string()},",
     "\"loadUrl\":\{self.load_url.json_string()},",
+    "\"bridgeUrl\":\{self.bridge_url.json_string()},",
     "\"localServices\":\{self.local_services},",
     "\"serviceSupervisor\":\{self.service_supervisor},",
     "\"serviceStartOrder\":[\{self.service_start_order.map(fn(name) { name.json_string() }).join(",")}],",

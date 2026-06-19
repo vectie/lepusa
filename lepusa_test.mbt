@@ -1089,6 +1089,7 @@ test "run report summarizes desktop launch state" {
     first_window_title="Main",
     first_window_url="lepusa://rabbita/main/index.html",
     load_url="lepusa://rabbita/main/index.html",
+    bridge_url="lepusa://runtime/bridge.js",
     local_services=1,
     service_supervisor=true,
     service_start_order=["api"],
@@ -1106,6 +1107,7 @@ test "run report summarizes desktop launch state" {
   assert_eq(report.status().message(), "loop pending")
   assert_eq(report.webviews(), 1)
   assert_eq(report.first_window_title(), "Main")
+  assert_eq(report.bridge_url(), "lepusa://runtime/bridge.js")
   assert_eq(report.local_services(), 1)
   assert_eq(report.service_start_order().length(), 1)
   assert_eq(report.startup_operations(), 2)
@@ -1114,5 +1116,6 @@ test "run report summarizes desktop launch state" {
   let json = report.to_json()
   assert_true(json.contains("\"target\":\"linux\""))
   assert_true(json.contains("\"firstWindowTitle\":\"Main\""))
+  assert_true(json.contains("\"bridgeUrl\":\"lepusa://runtime/bridge.js\""))
   assert_true(json.contains("\"serviceStartOrder\":[\"api\"]"))
 }

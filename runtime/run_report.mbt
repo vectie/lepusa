@@ -26,6 +26,7 @@ pub fn NativeRuntime::run_report(
     first_window_title~,
     first_window_url~,
     load_url~,
+    bridge_url=plan.session().bridge_url(),
     local_services=services.services().length(),
     service_supervisor=services.requires_supervisor(),
     service_start_order=services.startup_service_names(),

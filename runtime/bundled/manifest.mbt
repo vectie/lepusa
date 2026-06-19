@@ -102,6 +102,13 @@ pub fn BundledRuntimeManifest::runtime_backend(
 }
 
 ///|
+pub fn BundledRuntimeManifest::bridge_url(
+  self : BundledRuntimeManifest,
+) -> String {
+  optional_string(self.runtime, "bridgeUrl").unwrap_or("")
+}
+
+///|
 fn first_webview_url(webviews : Array[Json]) -> String {
   match webviews.get(0) {
     Some(Object(webview)) => optional_string(webview, "url").unwrap_or("")

@@ -204,6 +204,7 @@ test "native run report normalizes launch summaries" {
       assert_eq(report.first_window_title(), "Runtime")
       assert_eq(report.first_window_url(), "lepusa://inline/main/index.html")
       assert_eq(report.load_url(), "file:///tmp/index.html")
+      assert_eq(report.bridge_url(), "lepusa://runtime/bridge.js")
       assert_eq(report.startup_operations(), 1)
       assert_eq(report.lifecycle_steps(), 1)
       assert_eq(report.bridge_sync_routes(), 1)

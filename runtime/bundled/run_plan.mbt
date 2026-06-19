@@ -9,6 +9,7 @@ pub struct BundledRunPlan {
   target : String
   backend : String
   webview_engine : String
+  bridge_url : String
   webviews : Array[BundledWebView]
   service_plan : BundledServicePlan
   startup_operation_count : Int
@@ -43,6 +44,7 @@ pub fn BundledRuntimeManifest::run_plan(
     target: self.target(),
     backend: bundled_native_backend(self.target(), self.runtime_backend()),
     webview_engine: bundled_webview_engine(self.target()),
+    bridge_url: self.bridge_url(),
     webviews,
     service_plan,
     startup_operation_count: service_plan.startup_services().length() +
@@ -102,6 +104,11 @@ pub fn BundledRunPlan::backend(self : BundledRunPlan) -> String {
 ///|
 pub fn BundledRunPlan::webview_engine(self : BundledRunPlan) -> String {
   self.webview_engine
+}
+
+///|
+pub fn BundledRunPlan::bridge_url(self : BundledRunPlan) -> String {
+  self.bridge_url
 }
 
 ///|
@@ -165,6 +172,7 @@ pub fn BundledRunPlan::report(
     first_window_title~,
     first_window_url~,
     load_url=if load_url == "" { first_window_url } else { load_url },
+    bridge_url=self.bridge_url,
     local_services=services.services().length(),
     service_supervisor=services.requires_supervisor(),
     service_start_order=services.startup_service_names(),

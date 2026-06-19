@@ -139,6 +139,7 @@ fn render_macos_runtime_run(
           launch~,
           include_title=true,
           include_load_url=true,
+          include_bridge_url=true,
           include_bridge_routes=true,
         ),
       )
@@ -193,6 +194,7 @@ fn render_bundled_runtime_run_result(
     launch~,
     include_title=true,
     include_load_url=true,
+    include_bridge_url=true,
     include_bridge_routes=true,
   )
 }
@@ -203,6 +205,7 @@ fn render_runtime_run_report(
   launch~ : Bool,
   include_title? : Bool = false,
   include_load_url? : Bool = false,
+  include_bridge_url? : Bool = false,
   include_bridge_routes? : Bool = false,
 ) -> String {
   let title = if include_title {
@@ -212,6 +215,11 @@ fn render_runtime_run_report(
   }
   let load_url = if include_load_url {
     "load-url: \{report.load_url()}\n"
+  } else {
+    ""
+  }
+  let bridge_url = if include_bridge_url {
+    "bridge: \{report.bridge_url()}\n"
   } else {
     ""
   }
@@ -230,7 +238,7 @@ fn render_runtime_run_report(
     "status: \{report.status().name()}",
     "webviews: \{report.webviews()}",
     title + "first-window-url: \{report.first_window_url()}",
-    load_url + "local-services: \{report.local_services()}",
+    load_url + bridge_url + "local-services: \{report.local_services()}",
     "service-supervisor: \{report.service_supervisor()}",
     "service-start-order: \{report.service_start_order().join(",")}",
     "startup-operations: \{report.startup_operations()}",
