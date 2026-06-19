@@ -432,6 +432,48 @@ test "project config parses localhost source" {
 }
 
 ///|
+test "project config parses packaged asset source" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.packaged",
+    #|  "productName": "Packaged",
+    #|  "version": "0.1.0",
+    #|  "window": {
+    #|    "label": "main",
+    #|    "title": "Packaged",
+    #|    "source": { "packaged": "dist" }
+    #|  }
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.runtime_plan(project.root) {
+        Ok(plan) => {
+          assert_eq(
+            plan.windows()[0].url(),
+            "lepusa://packaged/main/index.html",
+          )
+          match plan.launch_manifest() {
+            Ok(manifest) => {
+              assert_eq(manifest.protocol_mappings()[0].root(), "package:dist")
+              match manifest.resolve_asset("lepusa://packaged/main/app.css") {
+                Ok(asset) =>
+                  assert_true(
+                    asset.body() is LaunchPackagedFile("dist/app.css"),
+                  )
+                Err(_) => abort("unexpected packaged launch asset")
+              }
+            }
+            Err(_) => abort("unexpected invalid launch manifest")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config parses command and capability permissions" {
   let config =
     #|{
@@ -781,6 +823,55 @@ async test "bundle write materializes planned resources" {
   let icon_path = bundle_root + "/resource-app/resource-app.png"
   assert_true(@fs.exists(icon_path))
   assert_eq(@fs.read_file(icon_path).text(), "icon-bytes")
+}
+
+///|
+async test "bundle write materializes packaged asset directories" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-packaged-project-\{stamp}"
+  let bundle_root = "/tmp/lepusa-packaged-bundle-\{stamp}-out"
+  @fs.mkdir(root + "/dist/css", recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/dist/index.html",
+    b"<main>packaged</main>",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.write_file(
+    root + "/dist/css/app.css",
+    b"body{}",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let config = [
+    "{",
+    "\"identifier\":\"dev.local.packaged\",",
+    "\"productName\":\"Packaged App\",",
+    "\"version\":\"0.1.0\",",
+    "\"window\":{\"label\":\"main\",\"title\":\"Packaged App\",",
+    "\"source\":{\"packaged\":\"\{root}/dist\"}}",
+    "}",
+  ].join("")
+  @fs.write_file(
+    root + "/lepusa.json",
+    config,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "bundle-write",
+    "linux",
+    bundle_root,
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("resources: 1"))
+  assert_true(result.output.contains("resources-written: 1"))
+  let asset_root = bundle_root + "/packaged-app/lepusa/assets/main"
+  assert_true(@fs.exists(asset_root + "/index.html"))
+  assert_true(@fs.exists(asset_root + "/css/app.css"))
+  assert_eq(@fs.read_file(asset_root + "/css/app.css").text(), "body{}")
 }
 
 ///|

@@ -390,6 +390,10 @@ fn source_from_object(
     Some(path) => return @lepusa.Source::local_path(path)
     None => ()
   }
+  match optional_config_string(object, "packaged") {
+    Some(path) => return @lepusa.Source::packaged(path)
+    None => ()
+  }
   match optional_config_string(object, "url") {
     Some(url) => return @lepusa.Source::url(url)
     None => ()
@@ -399,7 +403,7 @@ fn source_from_object(
     None => ()
   }
   problems.push(
-    "project source must include html, localPath, url, or localhost",
+    "project source must include html, localPath, packaged, url, or localhost",
   )
   @lepusa.Source::html("<main></main>")
 }

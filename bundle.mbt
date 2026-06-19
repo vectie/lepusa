@@ -280,17 +280,40 @@ pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
 
 ///|
 pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
+  let resources = self.asset_resources()
   match self.icon_path {
     Some(source_path) =>
-      [
+      resources.push(
         BundleResource::new(
           kind=IconResource,
           source_path~,
           path=self.icon_resource_path(),
         ),
-      ]
-    None => []
+      )
+    None => ()
   }
+  resources
+}
+
+///|
+fn BundlePlan::asset_resources(self : BundlePlan) -> Array[BundleResource] {
+  let resources : Array[BundleResource] = []
+  for window in self.runtime.windows() {
+    for mapping in window.source().protocol_mappings() {
+      if mapping.root().has_prefix("package:") {
+        resources.push(
+          BundleResource::new(
+            kind=AssetResource,
+            source_path=mapping.root()[8:].to_owned(),
+            path=self.shared_path(
+              "lepusa/assets/\{window.label().to_asset_segment()}",
+            ),
+          ),
+        )
+      }
+    }
+  }
+  resources
 }
 
 ///|

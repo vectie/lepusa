@@ -215,6 +215,7 @@ Support first-class source modes:
 - `Source::url`: development server or app-owned local server.
 - `Source::localhost`: local gateway source with optional sidecar command and
   readiness URL metadata.
+- `Source::packaged`: prebuilt app assets that bundle into the native package.
 - `Source::rabbita`: MoonBit-authored UI mounted into a generated shell.
 
 Production builds should prefer packaged assets served through a custom
@@ -228,6 +229,7 @@ local service.
 - remote URLs stay remote and require no protocol mapping
 - localhost sources stay HTTP URLs and may emit local service metadata
 - local paths become `asset_protocol://local/<window>/index.html`
+- packaged assets become `asset_protocol://packaged/<window>/index.html`
 - inline HTML becomes `asset_protocol://inline/<window>/index.html`
 - Rabbita mounts become `asset_protocol://rabbita/<window>/index.html`
 
@@ -243,12 +245,13 @@ back into app construction APIs.
 
 `RuntimeSession::resolve_asset(url)` is the custom-protocol contract native
 backends should call from their WebView protocol handler. It resolves the
-generated bridge, inline virtual files, and safe local asset paths while
-rejecting traversal attempts before platform file IO happens.
+generated bridge, inline virtual files, safe local asset paths, and safe
+packaged asset paths while rejecting traversal attempts before platform file IO
+happens.
 `RuntimeSession::resolve_asset_json(url)` and
 `RuntimeHost::resolve_asset_json(url)` expose the same decision as a compact
-backend wire envelope: `{ok,url,mimeType,body}` for virtual content or local
-file paths, and `{ok:false,url,error}` for denial or misses.
+backend wire envelope: `{ok,url,mimeType,body}` for virtual content, local file
+paths, or packaged file paths, and `{ok:false,url,error}` for denial or misses.
 The CLI command `lepusa asset <url>` runs that exact path against the current
 project manifest, giving backend implementers and app authors a no-window smoke
 test for protocol mappings and virtual asset generation.

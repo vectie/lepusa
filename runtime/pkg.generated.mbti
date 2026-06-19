@@ -79,6 +79,7 @@ type ParsedAssetUrl derive(Eq, @debug.Debug)
 pub(all) enum RuntimeAssetBody {
   VirtualContent(String)
   LocalFile(String)
+  PackagedFile(String)
 } derive(Eq, @debug.Debug)
 pub fn RuntimeAssetBody::to_json(Self) -> String
 

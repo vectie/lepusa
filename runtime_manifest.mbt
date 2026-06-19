@@ -52,6 +52,7 @@ pub struct RuntimeVirtualAsset {
 pub(all) enum RuntimeLaunchAssetBody {
   LaunchVirtualContent(String)
   LaunchLocalFile(String)
+  LaunchPackagedFile(String)
 } derive(Debug, Eq)
 
 ///|
@@ -310,6 +311,8 @@ pub fn RuntimeLaunchManifest::resolve_asset(
         self.resolve_virtual_asset(url, parsed)
       } else if parsed.authority == "local" {
         self.resolve_local_asset(url, parsed)
+      } else if parsed.authority == "packaged" {
+        self.resolve_packaged_asset(url, parsed)
       } else if parsed.authority == "runtime" {
         Err(
           "runtime assets are injected through WebView initialization scripts",
@@ -499,13 +502,49 @@ fn RuntimeLaunchManifest::resolve_local_asset(
 }
 
 ///|
+fn RuntimeLaunchManifest::resolve_packaged_asset(
+  self : RuntimeLaunchManifest,
+  url : String,
+  parsed : ParsedLaunchAssetUrl,
+) -> Result[RuntimeLaunchAsset, String] {
+  match parse_manifest_asset_path(parsed.path) {
+    Err(problem) => Err(problem)
+    Ok((window_label, path)) =>
+      match self.packaged_root_for(window_label) {
+        None => Err("packaged asset root not found: \{window_label}")
+        Some(root) =>
+          Ok({
+            url,
+            mime_type: mime_type_for_path(path),
+            body: LaunchPackagedFile(join_asset_path(root, path)),
+          })
+      }
+  }
+}
+
+///|
 fn RuntimeLaunchManifest::local_root_for(
   self : RuntimeLaunchManifest,
   label : String,
 ) -> String? {
   for mapping in self.protocol_mappings {
-    if mapping.window_label() == label && !mapping.root().has_prefix("memory:") {
+    if mapping.window_label() == label &&
+      !mapping.root().has_prefix("memory:") &&
+      !mapping.root().has_prefix("package:") {
       return Some(mapping.root())
+    }
+  }
+  None
+}
+
+///|
+fn RuntimeLaunchManifest::packaged_root_for(
+  self : RuntimeLaunchManifest,
+  label : String,
+) -> String? {
+  for mapping in self.protocol_mappings {
+    if mapping.window_label() == label && mapping.root().has_prefix("package:") {
+      return Some(mapping.root()[8:].to_owned())
     }
   }
   None

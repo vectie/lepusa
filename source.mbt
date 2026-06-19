@@ -2,6 +2,7 @@
 pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
+  PackagedAssets(String)
   RemoteUrl(String)
   Localhost(LocalhostSource)
   RabbitaCell(Cell)
@@ -56,6 +57,7 @@ pub fn VirtualFile::content(self : VirtualFile) -> String {
 pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
+  ResolvedPackagedAssets
   ResolvedRemoteUrl
   ResolvedLocalhost
   ResolvedRabbitaMount
@@ -112,6 +114,11 @@ pub fn Source::local_path(path : String) -> Source {
 }
 
 ///|
+pub fn Source::packaged(path : String) -> Source {
+  PackagedAssets(path)
+}
+
+///|
 pub fn Source::url(url : String) -> Source {
   RemoteUrl(url)
 }
@@ -144,6 +151,7 @@ pub fn Source::is_empty(self : Source) -> Bool {
   match self {
     InlineHtml(content) => content == ""
     LocalPath(path) => path == ""
+    PackagedAssets(path) => path == ""
     RemoteUrl(url) => url == ""
     Localhost(_) => false
     RabbitaCell(cell) => cell.id() == ""
@@ -183,6 +191,16 @@ pub fn Source::resolve(
         url: "\{asset_protocol}://local/\{safe_label}/index.html",
         protocol_mappings: [
           ProtocolMapping::new(scheme=asset_protocol, root=path),
+        ],
+        virtual_files: [],
+        local_services: [],
+      })
+    PackagedAssets(path) =>
+      Ok({
+        kind: ResolvedPackagedAssets,
+        url: "\{asset_protocol}://packaged/\{safe_label}/index.html",
+        protocol_mappings: [
+          ProtocolMapping::new(scheme=asset_protocol, root="package:\{path}"),
         ],
         virtual_files: [],
         local_services: [],

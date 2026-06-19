@@ -78,7 +78,7 @@ For reusable project configuration, use `ProjectManifest`:
 ///|
 let manifest = @lepusa.ProjectManifest::new(metadata)
   .with_window(
-    @lepusa.WindowConfig::new(source=@lepusa.Source::local_path("dist")),
+    @lepusa.WindowConfig::new(source=@lepusa.Source::packaged("dist")),
   )
   .with_plugin(@lepusa.Plugin::new("core").command_sync("invoke"))
   .with_capability(
@@ -301,11 +301,12 @@ app construction state.
 
 `RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
 native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
-virtual files, and safe local asset paths without doing platform file IO.
+virtual files, safe local asset paths, and packaged app assets without doing
+platform file IO.
 `RuntimeSession::resolve_asset_json(url)` and
 `RuntimeHost::resolve_asset_json(url)` expose the same boundary as a stable
 JSON envelope for native protocol handlers: virtual content, local file paths,
-or a structured error.
+packaged file paths, or a structured error.
 `lepusa asset <url> --project lepusa.json` prints that envelope directly, so
 desktop projects can smoke-test the custom protocol without starting a WebView.
 
@@ -369,6 +370,10 @@ per-window bridge initialization scripts embedded in the runtime manifest.
 directory. Project bundles carry registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
+`Source::packaged("dist")` also emits an asset resource mapping and
+`lepusa bundle-write` copies that directory into `lepusa/assets/<window>`, while
+runtime asset probes return `packaged-file` envelopes for
+`lepusa://packaged/<window>/...` URLs.
 
 ## Boundary
 

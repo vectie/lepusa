@@ -444,6 +444,7 @@ pub fn ResolvedSource::virtual_files(Self) -> Array[VirtualFile]
 pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
+  ResolvedPackagedAssets
   ResolvedRemoteUrl
   ResolvedLocalhost
   ResolvedRabbitaMount
@@ -501,6 +502,7 @@ pub fn RuntimeLaunchAsset::url(Self) -> String
 pub(all) enum RuntimeLaunchAssetBody {
   LaunchVirtualContent(String)
   LaunchLocalFile(String)
+  LaunchPackagedFile(String)
 } derive(Eq, @debug.Debug)
 
 pub struct RuntimeLaunchManifest {
@@ -645,6 +647,7 @@ pub fn SigningPrerequisiteKind::name(Self) -> String
 pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
+  PackagedAssets(String)
   RemoteUrl(String)
   Localhost(LocalhostSource)
   RabbitaCell(Cell)
@@ -654,6 +657,7 @@ pub fn Source::is_empty(Self) -> Bool
 pub fn Source::local_path(String) -> Self
 pub fn Source::localhost(port~ : Int, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
 pub fn Source::localhost_source(LocalhostSource) -> Self
+pub fn Source::packaged(String) -> Self
 pub fn Source::rabbita(Cell) -> Self
 pub fn Source::resolve(Self, window_label~ : String, asset_protocol? : String) -> Result[ResolvedSource, String]
 pub fn Source::url(String) -> Self

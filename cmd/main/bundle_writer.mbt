@@ -68,6 +68,10 @@ async fn copy_bundle_resource(
   destination : String,
   problems : Array[String],
 ) -> Unit {
+  if resource.kind() is AssetResource {
+    copy_bundle_asset_directory(resource.source_path(), destination, problems)
+    return
+  }
   let content = @fs.read_file(resource.source_path()) catch {
     error => {
       problems.push(
@@ -75,6 +79,68 @@ async fn copy_bundle_resource(
       )
       return
     }
+  }
+  @fs.write_file(
+    destination,
+    content,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  ) catch {
+    error =>
+      problems.push("could not write bundle resource \{destination}: \{error}")
+  }
+}
+
+///|
+async fn copy_bundle_asset_directory(
+  source : String,
+  destination : String,
+  problems : Array[String],
+) -> Unit {
+  let is_dir = @xfs.is_dir(source) catch {
+    _ => {
+      problems.push("could not inspect bundle asset \{source}")
+      return
+    }
+  }
+  if !is_dir {
+    copy_bundle_file(source, destination, problems)
+    return
+  }
+  ensure_directory(destination, problems)
+  if !problems.is_empty() {
+    return
+  }
+  let entries = @xfs.read_dir(source) catch {
+    _ => {
+      problems.push("could not read bundle asset directory \{source}")
+      return
+    }
+  }
+  for entry in entries {
+    copy_bundle_asset_directory(
+      join_path(source, entry),
+      join_path(destination, entry),
+      problems,
+    )
+  }
+}
+
+///|
+async fn copy_bundle_file(
+  source : String,
+  destination : String,
+  problems : Array[String],
+) -> Unit {
+  let content = @fs.read_file(source) catch {
+    error => {
+      problems.push("could not read bundle resource \{source}: \{error}")
+      return
+    }
+  }
+  ensure_directory(parent_directory(destination), problems)
+  if !problems.is_empty() {
+    return
   }
   @fs.write_file(
     destination,

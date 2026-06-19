@@ -367,6 +367,45 @@ test "runtime session maps local assets without allowing traversal" {
 }
 
 ///|
+test "runtime session maps packaged assets distinctly" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    label="ui",
+    source=@lepusa.Source::packaged("dist"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).snapshot() {
+        Ok(session) => {
+          assert_eq(
+            session.windows()[0].url(),
+            "lepusa://packaged/ui/index.html",
+          )
+          match session.resolve_asset("lepusa://packaged/ui/app.css") {
+            Ok(response) => {
+              assert_eq(response.mime_type(), "text/css")
+              assert_true(response.body() is PackagedFile("dist/app.css"))
+            }
+            Err(_) => abort("unexpected packaged asset mapping failure")
+          }
+          let packaged_json = session.resolve_asset_json(
+            "lepusa://packaged/ui/app.css",
+          )
+          assert_true(packaged_json.contains("\"kind\":\"packaged-file\""))
+          assert_true(packaged_json.contains("\"path\":\"dist/app.css\""))
+          match session.resolve_asset("lepusa://packaged/ui/../secret.txt") {
+            Ok(_) => abort("unexpected unsafe packaged asset success")
+            Err(problem) =>
+              assert_eq(problem, "unsafe asset path: ../secret.txt")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host dispatches through plan capabilities" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
     payload,

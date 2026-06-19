@@ -2,6 +2,7 @@
 pub(all) enum RuntimeAssetBody {
   VirtualContent(String)
   LocalFile(String)
+  PackagedFile(String)
 } derive(Debug, Eq)
 
 ///|
@@ -61,6 +62,13 @@ pub fn RuntimeAssetBody::to_json(self : RuntimeAssetBody) -> String {
       ["{", "\"kind\":\"local-file\",", "\"path\":\{path.json_string()}", "}"].join(
         "",
       )
+    PackagedFile(path) =>
+      [
+        "{",
+        "\"kind\":\"packaged-file\",",
+        "\"path\":\{path.json_string()}",
+        "}",
+      ].join("")
   }
 }
 
@@ -111,6 +119,8 @@ pub fn RuntimeSession::resolve_asset(
         self.resolve_virtual_asset(url, parsed)
       } else if parsed.authority == "local" {
         self.resolve_local_asset(url, parsed)
+      } else if parsed.authority == "packaged" {
+        self.resolve_packaged_asset(url, parsed)
       } else {
         Err("unknown asset authority: \{parsed.authority}")
       }
@@ -179,6 +189,27 @@ fn RuntimeSession::resolve_local_asset(
 }
 
 ///|
+fn RuntimeSession::resolve_packaged_asset(
+  self : RuntimeSession,
+  url : String,
+  parsed : ParsedAssetUrl,
+) -> Result[RuntimeAssetResponse, String] {
+  match parse_window_asset_path(parsed.path) {
+    Err(problem) => Err(problem)
+    Ok((window_label, path)) =>
+      match self.packaged_root_for(window_label) {
+        None => Err("packaged asset root not found: \{window_label}")
+        Some(root) =>
+          Ok({
+            url,
+            mime_type: mime_type_for_path(path),
+            body: PackagedFile(join_asset_path(root, path)),
+          })
+      }
+  }
+}
+
+///|
 fn RuntimeSession::local_root_for(
   self : RuntimeSession,
   label : String,
@@ -186,8 +217,22 @@ fn RuntimeSession::local_root_for(
   for mapping in self.protocol_mappings {
     if mapping.window_label() == label &&
       !mapping.root().has_prefix("memory:") &&
-      !mapping.root().has_prefix("rabbita:") {
+      !mapping.root().has_prefix("rabbita:") &&
+      !mapping.root().has_prefix("package:") {
       return Some(mapping.root())
+    }
+  }
+  None
+}
+
+///|
+fn RuntimeSession::packaged_root_for(
+  self : RuntimeSession,
+  label : String,
+) -> String? {
+  for mapping in self.protocol_mappings {
+    if mapping.window_label() == label && mapping.root().has_prefix("package:") {
+      return Some(mapping.root()[8:].to_owned())
     }
   }
   None

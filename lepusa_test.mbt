@@ -56,6 +56,21 @@ test "sources resolve into backend load targets" {
     Err(problem) => abort(problem)
   }
   match
+    @lepusa.Source::packaged("dist").resolve(
+      window_label="Main Window",
+      asset_protocol="lepusa",
+    ) {
+    Ok(resolved) => {
+      assert_true(resolved.kind() is ResolvedPackagedAssets)
+      assert_eq(resolved.url(), "lepusa://packaged/main-window/index.html")
+      let mappings = resolved.protocol_mappings()
+      assert_eq(mappings.length(), 1)
+      assert_eq(mappings[0].root(), "package:dist")
+      assert_eq(resolved.virtual_files().length(), 0)
+    }
+    Err(problem) => abort(problem)
+  }
+  match
     @lepusa.Source::localhost(
       port=4317,
       path="/app",
@@ -648,6 +663,7 @@ test "launch manifest resolves virtual and local assets" {
   let app = @lepusa.new(root)
     .window(label="ui", source=@lepusa.Source::html("<main>ui</main>"))
     .window(label="static", source=@lepusa.Source::local_path("dist"))
+    .window(label="packaged", source=@lepusa.Source::packaged("app-dist"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
       match plan.launch_manifest() {
@@ -669,6 +685,13 @@ test "launch manifest resolves virtual and local assets" {
             }
             Err(_) => abort("unexpected missing local asset")
           }
+          match manifest.resolve_asset("lepusa://packaged/packaged/app.js") {
+            Ok(asset) => {
+              assert_eq(asset.mime_type(), "application/javascript")
+              assert_true(asset.body() is LaunchPackagedFile("app-dist/app.js"))
+            }
+            Err(_) => abort("unexpected missing packaged asset")
+          }
           match manifest.resolve_asset("lepusa://local/static/../secret.txt") {
             Ok(_) => abort("unexpected unsafe local asset")
             Err(problem) =>
@@ -677,6 +700,42 @@ test "launch manifest resolves virtual and local assets" {
         }
         Err(_) => abort("unexpected invalid launch manifest")
       }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "bundle plans include packaged asset resources" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    label="main",
+    source=@lepusa.Source::packaged("dist"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(runtime) => {
+      let metadata = @lepusa.AppMetadata::new(
+        identifier="dev.vectie.assets",
+        product_name="Assets App",
+        version="0.1.0",
+      )
+      match @lepusa.BundleConfig::new(metadata, target=Linux).plan(runtime) {
+        Ok(plan) => {
+          let resources = plan.resources()
+          assert_eq(resources.length(), 1)
+          assert_true(resources[0].kind() is AssetResource)
+          assert_eq(resources[0].source_path(), "dist")
+          assert_eq(resources[0].path(), "assets-app/lepusa/assets/main")
+          match plan.files() {
+            Ok(files) => {
+              assert_true(files[1].content().contains("\"package:dist\""))
+              assert_true(files[1].content().contains("\"kind\":\"asset\""))
+            }
+            Err(_) => abort("unexpected invalid bundle files")
+          }
+        }
+        Err(_) => abort("unexpected invalid bundle plan")
+      }
+    }
     Err(_) => abort("unexpected invalid runtime plan")
   }
 }

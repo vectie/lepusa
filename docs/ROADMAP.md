@@ -43,8 +43,8 @@
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
-- Support `Source::html`, `Source::local_path`, `Source::url`,
-  `Source::localhost`, and packaged assets.
+- Support `Source::html`, `Source::local_path`, `Source::packaged`,
+  `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
 
 ## Milestone 3: Typed IPC And Capabilities
@@ -114,7 +114,7 @@ desktop core is reliable.
 - `BundlePlan::files()` emits platform metadata and one runtime manifest with
   per-window bridge initialization scripts.
 - `BundlePlan::resources()` emits target resource mappings for app icons and
-  future packaged assets.
+  packaged asset directories.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and
   package validation requirements.
 - App metadata manifest: id, product name, version, icons, capabilities,
