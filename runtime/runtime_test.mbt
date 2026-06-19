@@ -100,6 +100,46 @@ test "runtime host carries localhost service metadata" {
 }
 
 ///|
+test "runtime host carries filesystem scope metadata" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let manifest = @lepusa.ProjectManifest::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.vectie.runtime-scopes",
+        product_name="Runtime Scopes",
+        version="0.1.0",
+      ),
+      runtime=@lepusa.RuntimeConfig::headless(),
+    )
+    .with_window(
+      @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
+    )
+    .with_file_system_scope(
+      @lepusa.FileSystemScope::new(name="config", root="/app/config"),
+    )
+  match manifest.runtime_plan(root) {
+    Ok(plan) => {
+      let host = RuntimeHost::new(plan)
+      match host.snapshot() {
+        Ok(session) => {
+          assert_eq(session.file_system_scopes().length(), 1)
+          assert_eq(session.file_system_scopes()[0].name(), "config")
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+      match host.launch_manifest() {
+        Ok(manifest) => {
+          assert_eq(manifest.file_system_scopes().length(), 1)
+          assert_true(manifest.to_json().contains("\"filesystemScopes\""))
+          assert_true(manifest.to_json().contains("\"name\":\"config\""))
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host produces per-window webview boot specs" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

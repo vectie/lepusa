@@ -79,7 +79,7 @@ Stabilize the cross-platform core set first:
 
 - dialog
 - opener
-- fs: initial scoped permission contract exists
+- fs: initial scoped permission contract and runtime scope manifest exist
 - file-dialog with scoped default directories
 - process and shell with explicit permissions
 - clipboard

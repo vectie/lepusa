@@ -428,6 +428,10 @@ Project manifests may declare official plugins by name only. The CLI expands
 `log`, `store`, and `fs` to their official command contracts before planning,
 while plugins with explicit `commands` arrays keep their manifest-defined
 surface.
+They may also declare `filesystemScopes`, which lower into runtime sessions and
+native launch manifests as named roots. The scope data is separate from command
+capabilities: capabilities decide which windows may call filesystem commands,
+while scopes tell native backends where those commands are allowed to operate.
 
 ## Manifest Boundary
 
@@ -437,6 +441,7 @@ surface.
 - windows and sources
 - plugins and command routes
 - command permission requirements and capability grants
+- filesystem scopes
 - startup and lifecycle command trees
 - runtime config
 

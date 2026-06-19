@@ -4,6 +4,7 @@ pub struct ProjectManifest {
   windows : Array[WindowConfig]
   plugins : Array[Plugin]
   capabilities : Array[Capability]
+  filesystem_scopes : Array[FileSystemScope]
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
@@ -15,6 +16,7 @@ pub fn ProjectManifest::new(
   windows? : Array[WindowConfig] = [],
   plugins? : Array[Plugin] = [],
   capabilities? : Array[Capability] = [],
+  filesystem_scopes? : Array[FileSystemScope] = [],
   startup? : Cmd = None,
   lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
@@ -24,6 +26,7 @@ pub fn ProjectManifest::new(
     windows,
     plugins,
     capabilities,
+    filesystem_scopes,
     startup,
     lifecycle_hooks,
     runtime,
@@ -50,6 +53,13 @@ pub fn ProjectManifest::capabilities(
   self : ProjectManifest,
 ) -> Array[Capability] {
   self.capabilities.copy()
+}
+
+///|
+pub fn ProjectManifest::file_system_scopes(
+  self : ProjectManifest,
+) -> Array[FileSystemScope] {
+  self.filesystem_scopes.copy()
 }
 
 ///|
@@ -92,6 +102,16 @@ pub fn ProjectManifest::with_capability(
   let capabilities = self.capabilities.copy()
   capabilities.push(capability)
   { ..self, capabilities, }
+}
+
+///|
+pub fn ProjectManifest::with_file_system_scope(
+  self : ProjectManifest,
+  scope : FileSystemScope,
+) -> ProjectManifest {
+  let filesystem_scopes = self.filesystem_scopes.copy()
+  filesystem_scopes.push(scope)
+  { ..self, filesystem_scopes, }
 }
 
 ///|
@@ -152,6 +172,18 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
       problems.push(problem)
     }
   }
+  let scope_names : Array[String] = []
+  for scope in self.filesystem_scopes {
+    for problem in scope.validate() {
+      problems.push(problem)
+    }
+    let name = scope.name()
+    if name != "" && scope_names.contains(name) {
+      problems.push("filesystem scope must be unique: \{name}")
+    } else if name != "" {
+      scope_names.push(name)
+    }
+  }
   for hook in self.lifecycle_hooks {
     for problem in hook.event().validate(self.windows) {
       problems.push(problem)
@@ -198,7 +230,11 @@ pub fn ProjectManifest::runtime_plan(
 ) -> Result[RuntimePlan, Array[String]] {
   let problems = self.validate()
   if problems.is_empty() {
-    self.app(root).runtime_plan(config=self.runtime)
+    match self.app(root).runtime_plan(config=self.runtime) {
+      Ok(plan) =>
+        Ok(plan.with_file_system_scopes(self.filesystem_scopes.copy()))
+      Err(problems) => Err(problems)
+    }
   } else {
     Err(problems)
   }

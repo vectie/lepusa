@@ -8,6 +8,7 @@ pub struct RuntimeLaunchManifest {
   protocol_mappings : Array[RuntimeProtocolBinding]
   virtual_files : Array[RuntimeVirtualAsset]
   local_services : Array[LocalService]
+  filesystem_scopes : Array[FileSystemScope]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -131,6 +132,7 @@ pub fn RuntimePlan::launch_manifest(
       protocol_mappings,
       virtual_files,
       local_services,
+      filesystem_scopes: self.file_system_scopes(),
       startup_actions,
       lifecycle_hooks,
       command_routes: self.command_routes(),
@@ -239,6 +241,13 @@ pub fn RuntimeLaunchManifest::local_services(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::file_system_scopes(
+  self : RuntimeLaunchManifest,
+) -> Array[FileSystemScope] {
+  self.filesystem_scopes.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::startup_actions(
   self : RuntimeLaunchManifest,
 ) -> Array[RuntimeAction] {
@@ -278,6 +287,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"protocolMappings\":[\{self.protocol_mappings.map(runtime_protocol_binding_json).join(",")}],",
     "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
     "\"localServices\":[\{self.local_services.map(fn(service) { service.to_json() }).join(",")}],",
+    "\"filesystemScopes\":[\{self.filesystem_scopes.map(fn(scope) { scope.to_json() }).join(",")}],",
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",

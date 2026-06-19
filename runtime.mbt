@@ -41,6 +41,7 @@ pub struct RuntimePlan {
   asset_protocol : String
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
+  filesystem_scopes : Array[FileSystemScope]
 } derive(Debug, Eq)
 
 ///|
@@ -89,6 +90,21 @@ pub fn RuntimePlan::capability_count(self : RuntimePlan) -> Int {
 ///|
 pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
   self.command_routes.copy()
+}
+
+///|
+pub fn RuntimePlan::file_system_scopes(
+  self : RuntimePlan,
+) -> Array[FileSystemScope] {
+  self.filesystem_scopes.copy()
+}
+
+///|
+fn RuntimePlan::with_file_system_scopes(
+  self : RuntimePlan,
+  scopes : Array[FileSystemScope],
+) -> RuntimePlan {
+  { ..self, filesystem_scopes: scopes.copy() }
 }
 
 ///|
@@ -156,6 +172,7 @@ pub fn App::runtime_plan(
           asset_protocol: config.asset_protocol,
           command_routes: launch.command_routes(),
           windows,
+          filesystem_scopes: [],
         })
       } else {
         Err(problems)

@@ -345,6 +345,58 @@ test "project config parses command and capability permissions" {
 }
 
 ///|
+test "project config parses filesystem scopes" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.scopes",
+    #|  "productName": "Scopes",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Scopes" },
+    #|  "plugins": [
+    #|    { "name": "fs" }
+    #|  ],
+    #|  "capabilities": [
+    #|    {
+    #|      "name": "main-files",
+    #|      "windows": ["main"],
+    #|      "permissions": ["filesystem.read", "filesystem.write"]
+    #|    }
+    #|  ],
+    #|  "filesystemScopes": [
+    #|    { "name": "assets", "root": "assets" },
+    #|    { "name": "data", "root": ".lepusa/data", "writable": true }
+    #|  ]
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.runtime_plan(project.root) {
+        Ok(plan) => {
+          assert_eq(plan.file_system_scopes().length(), 2)
+          assert_eq(plan.file_system_scopes()[0].name(), "assets")
+          assert_true(plan.file_system_scopes()[1].writable())
+          assert_true(
+            plan.window_command_routes("main").contains("fs.readText"),
+          )
+          assert_true(
+            plan.window_command_routes("main").contains("fs.writeText"),
+          )
+          match plan.launch_manifest() {
+            Ok(manifest) => {
+              assert_eq(manifest.file_system_scopes().length(), 2)
+              assert_true(manifest.to_json().contains("\"filesystemScopes\""))
+              assert_true(manifest.to_json().contains("\"root\":\"assets\""))
+            }
+            Err(_) => abort("unexpected invalid launch manifest")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config expands official plugin declarations" {
   let config =
     #|{

@@ -421,6 +421,7 @@ fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
     "first-window-url: \{first_window}\n" +
     "plugins: \{plan.plugin_count()}\n" +
     "capabilities: \{plan.capability_count()}\n" +
+    "filesystem-scopes: \{plan.file_system_scopes().length()}\n" +
     "routes: \{routes}\n",
   )
 }
@@ -443,6 +444,7 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "routes: \{routes}\n" +
     "registered-routes: \{registered_routes}\n" +
     "local-services: \{session.local_services().length()}\n" +
+    "filesystem-scopes: \{session.file_system_scopes().length()}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n",
   )
 }
@@ -497,6 +499,10 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
         Ok(manifest) => manifest.local_services().length()
         Err(_) => 0
       }
+      let filesystem_scope_count = match plan.runtime_manifest() {
+        Ok(manifest) => manifest.file_system_scopes().length()
+        Err(_) => 0
+      }
       ok(
         "Lepusa bundle plan\n" +
         "target: \{plan.target().name()}\n" +
@@ -504,6 +510,7 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
         "executable: \{plan.executable_name()}\n" +
         "bundle: \{plan.bundle_name()}\n" +
         "local-services: \{local_service_count}\n" +
+        "filesystem-scopes: \{filesystem_scope_count}\n" +
         "files: \{files.length()}\n",
       )
     }
@@ -525,11 +532,16 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 Ok(manifest) => manifest.local_services().length()
                 Err(_) => 0
               }
+              let filesystem_scope_count = match plan.runtime_manifest() {
+                Ok(manifest) => manifest.file_system_scopes().length()
+                Err(_) => 0
+              }
               ok(
                 "Lepusa bundle write\n" +
                 "target: \{plan.target().name()}\n" +
                 "root: \{result.root}\n" +
                 "local-services: \{local_service_count}\n" +
+                "filesystem-scopes: \{filesystem_scope_count}\n" +
                 "files: \{result.files.length()}\n",
               )
             }

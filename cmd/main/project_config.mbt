@@ -46,6 +46,9 @@ fn loaded_project_from_object(
   let plugins = project_plugins_from_object(object, problems)
   let registry = project_registry_from_plugins(plugins)
   let capabilities = project_capabilities_from_object(object, problems)
+  let filesystem_scopes = project_filesystem_scopes_from_object(
+    object, problems,
+  )
   let startup = project_startup_from_object(object, problems)
   let lifecycle_hooks = project_lifecycle_from_object(object, problems)
   if problems.is_empty() {
@@ -62,6 +65,9 @@ fn loaded_project_from_object(
     }
     for capability in capabilities {
       manifest = manifest.with_capability(capability)
+    }
+    for scope in filesystem_scopes {
+      manifest = manifest.with_file_system_scope(scope)
     }
     for hook in lifecycle_hooks {
       manifest = manifest.with_lifecycle(hook.event(), hook.command())
@@ -272,6 +278,37 @@ fn capability_from_object(
     None => ()
   }
   capability
+}
+
+///|
+fn project_filesystem_scopes_from_object(
+  object : Map[String, Json],
+  problems : Array[String],
+) -> Array[@lepusa.FileSystemScope] {
+  let scopes : Array[@lepusa.FileSystemScope] = []
+  match optional_config_array(object, "filesystemScopes") {
+    Some(items) =>
+      for item in items {
+        match item {
+          Object(scope_object) =>
+            scopes.push(filesystem_scope_from_object(scope_object, problems))
+          _ => problems.push("project filesystemScopes entries must be objects")
+        }
+      }
+    None => ()
+  }
+  scopes
+}
+
+///|
+fn filesystem_scope_from_object(
+  object : Map[String, Json],
+  problems : Array[String],
+) -> @lepusa.FileSystemScope {
+  let name = required_config_string(object, "name", problems)
+  let root = required_config_string(object, "root", problems)
+  let writable = optional_config_bool(object, "writable").unwrap_or(false)
+  @lepusa.FileSystemScope::new(name~, root~, writable~)
 }
 
 ///|

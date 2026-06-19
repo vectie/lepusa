@@ -142,6 +142,8 @@ Official plugins can be declared by name, for example `{ "name": "log" }`,
 `{ "name": "store" }`, or `{ "name": "fs" }`; Lepusa expands those declarations
 to the package's official command contract. Custom plugins can still provide an
 explicit `commands` array.
+Projects can also declare `filesystemScopes`, named roots that are carried into
+runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
@@ -178,6 +180,8 @@ scoped path policy. It declares async routes such as `fs.readText`,
 `fs.writeText`, `fs.list`, and `fs.metadata`, plus split read/write capability
 helpers. The package validates named scopes and relative paths; native backends
 own the actual OS filesystem implementation behind those routes.
+Core `FileSystemScope` values carry named roots through `ProjectManifest`,
+`RuntimePlan`, `RuntimeSession`, and `RuntimeLaunchManifest`.
 
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin

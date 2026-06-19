@@ -760,6 +760,69 @@ test "project manifests validate reusable app configuration" {
 }
 
 ///|
+test "project manifests carry filesystem scopes into runtime manifests" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let manifest = @lepusa.ProjectManifest::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.vectie.scopes",
+        product_name="Scopes App",
+        version="0.1.0",
+      ),
+      runtime=@lepusa.RuntimeConfig::headless(),
+    )
+    .with_window(
+      @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
+    )
+    .with_file_system_scope(
+      @lepusa.FileSystemScope::new(name="data", root="/app/data", writable=true),
+    )
+  assert_eq(manifest.file_system_scopes().length(), 1)
+  match manifest.runtime_plan(root) {
+    Ok(runtime) => {
+      assert_eq(runtime.file_system_scopes().length(), 1)
+      assert_true(runtime.file_system_scopes()[0].writable())
+      match runtime.launch_manifest() {
+        Ok(launch) => {
+          assert_eq(launch.file_system_scopes().length(), 1)
+          assert_true(launch.to_json().contains("\"filesystemScopes\""))
+          assert_true(launch.to_json().contains("\"root\":\"/app/data\""))
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "project manifests validate filesystem scopes" {
+  let manifest = @lepusa.ProjectManifest::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.vectie.bad-scopes",
+        product_name="Bad Scopes",
+        version="0.1.0",
+      ),
+    )
+    .with_window(
+      @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
+    )
+    .with_file_system_scope(@lepusa.FileSystemScope::new(name="", root=""))
+    .with_file_system_scope(
+      @lepusa.FileSystemScope::new(name="bad/name", root="/tmp"),
+    )
+    .with_file_system_scope(
+      @lepusa.FileSystemScope::new(name="bad/name", root="/tmp2"),
+    )
+  let problems = manifest.validate()
+  assert_true(problems.contains("filesystem scope name is required"))
+  assert_true(problems.contains("filesystem scope root is required"))
+  assert_true(
+    problems.contains("filesystem scope name must not contain path separators"),
+  )
+  assert_true(problems.contains("filesystem scope must be unique: bad/name"))
+}
+
+///|
 test "project manifests build runtime and bundle plans" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let manifest = @lepusa.ProjectManifest::new(

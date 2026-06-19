@@ -7,6 +7,7 @@ pub struct RuntimeSession {
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
   local_services : Array[@lepusa.LocalService]
+  filesystem_scopes : Array[@lepusa.FileSystemScope]
   startup_actions : Array[@lepusa.RuntimeAction]
   lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -73,6 +74,7 @@ fn RuntimeSession::from_plan(
     protocol_mappings,
     virtual_files,
     local_services,
+    filesystem_scopes: plan.file_system_scopes(),
     startup_actions,
     lifecycle_hooks,
     command_routes: plan.command_routes(),
@@ -151,6 +153,13 @@ pub fn RuntimeSession::local_services(
   self : RuntimeSession,
 ) -> Array[@lepusa.LocalService] {
   self.local_services.copy()
+}
+
+///|
+pub fn RuntimeSession::file_system_scopes(
+  self : RuntimeSession,
+) -> Array[@lepusa.FileSystemScope] {
+  self.filesystem_scopes.copy()
 }
 
 ///|
