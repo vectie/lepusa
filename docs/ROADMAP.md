@@ -44,6 +44,7 @@
 - Implement:
   - `lepusa doctor`: validates public planning boundaries.
   - `lepusa plan`: prints a runtime plan summary.
+  - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa init`
   - `lepusa dev`

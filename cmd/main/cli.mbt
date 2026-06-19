@@ -20,6 +20,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("help") | Some("--help") | Some("-h") => ok(help_text())
     Some("doctor") => render_doctor()
     Some("plan") => render_plan()
+    Some("bridge") => render_bridge()
     Some("bundle-plan") => render_bundle_plan(args)
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
   }
@@ -43,6 +44,7 @@ fn help_text() -> String {
     #|Usage:
     #|  lepusa doctor
     #|  lepusa plan
+    #|  lepusa bridge
     #|  lepusa bundle-plan [macos|windows|linux]
     #|
   )
@@ -82,6 +84,18 @@ fn render_plan() -> CliResult {
       )
     }
     Err(problems) => fail(render_problems("Lepusa runtime plan", problems))
+  }
+}
+
+///|
+fn render_bridge() -> CliResult {
+  match sample_runtime_plan() {
+    Ok(plan) =>
+      match plan.bridge_script() {
+        Ok(script) => ok(script.source())
+        Err(problems) => fail(render_problems("Lepusa bridge", problems))
+      }
+    Err(problems) => fail(render_problems("Lepusa bridge", problems))
   }
 }
 

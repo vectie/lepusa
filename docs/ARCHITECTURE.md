@@ -141,6 +141,12 @@ await window.lepusa.invoke("dialog.show", { message: "Hello" })
 await window.lepusa.dialog.show({ message: "Hello" })
 ```
 
+`RuntimePlan::bridge_script()` generates the first bridge. It installs
+`window.lepusa`, validates known routes, calls the backend-provided
+`globalThis.__lepusaInvoke(request)` hook, and exposes namespace helpers for all
+registered routes. This bridge is framework-neutral and can be used from
+Rabbita, React, Vue, Svelte, or plain JavaScript.
+
 Command rules:
 
 - JSON schema generated from MoonBit `ToJson`/`FromJson` types where possible.

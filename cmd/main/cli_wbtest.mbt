@@ -3,6 +3,7 @@ test "help text names available commands" {
   let result = render_cli([])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("lepusa doctor"))
+  assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa bundle-plan"))
 }
 
@@ -31,6 +32,15 @@ test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
+}
+
+///|
+test "bridge prints generated javascript" {
+  let result = render_cli(["bridge"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("globalThis"))
+  assert_true(result.output.contains("core.invoke"))
+  assert_true(result.output.contains("__lepusaInvoke"))
 }
 
 ///|

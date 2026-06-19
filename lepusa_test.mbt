@@ -259,6 +259,48 @@ test "runtime plans collect plugin command routes" {
 }
 
 ///|
+test "runtime plans generate frontend bridge script" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("dialog").command_sync("show"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match
+        plan.bridge_script(
+          config=@lepusa.BridgeConfig::new(
+            global_name="lepusa",
+            native_hook="__lepusaInvoke",
+            window_label="main",
+          ),
+        ) {
+        Ok(script) => {
+          let routes = script.routes()
+          assert_eq(routes.length(), 1)
+          assert_eq(routes[0], "dialog.show")
+          assert_true(script.source().contains("globalThis"))
+          assert_true(script.source().contains("\"dialog.show\""))
+          assert_true(script.source().contains("__lepusaInvoke"))
+        }
+        Err(_) => abort("unexpected invalid bridge script")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "bridge config validates required names" {
+  let config = @lepusa.BridgeConfig::new(
+    global_name="",
+    native_hook="",
+    window_label="",
+  )
+  let problems = config.validate()
+  assert_eq(problems.length(), 3)
+  assert_eq(problems[0], "bridge global name is required")
+}
+
+///|
 test "bundle plans derive executable and package names from metadata" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(

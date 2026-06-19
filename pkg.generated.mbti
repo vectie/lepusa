@@ -45,6 +45,27 @@ pub fn AppMetadata::product_name(Self) -> String
 pub fn AppMetadata::validate(Self) -> Array[String]
 pub fn AppMetadata::version(Self) -> String
 
+pub struct BridgeConfig {
+  global_name : String
+  native_hook : String
+  window_label : String
+} derive(Eq, @debug.Debug)
+pub fn BridgeConfig::new(global_name? : String, native_hook? : String, window_label? : String) -> Self
+pub fn BridgeConfig::validate(Self) -> Array[String]
+
+pub struct BridgeScript {
+  global_name : String
+  native_hook : String
+  window_label : String
+  routes : Array[String]
+  source : String
+} derive(Eq, @debug.Debug)
+pub fn BridgeScript::global_name(Self) -> String
+pub fn BridgeScript::native_hook(Self) -> String
+pub fn BridgeScript::routes(Self) -> Array[String]
+pub fn BridgeScript::source(Self) -> String
+pub fn BridgeScript::window_label(Self) -> String
+
 pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
@@ -323,6 +344,7 @@ pub struct RuntimePlan {
 } derive(Eq, @debug.Debug)
 pub fn RuntimePlan::asset_protocol(Self) -> String
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
+pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capability_count(Self) -> Int
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool

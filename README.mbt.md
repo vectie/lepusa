@@ -99,6 +99,7 @@ The native CLI is intentionally small while the runtime backend is being built:
 ```bash
 moon run cmd/main --target native -- doctor
 moon run cmd/main --target native -- plan
+moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- bundle-plan macos
 ```
 
@@ -107,6 +108,10 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+`lepusa bridge` emits the JavaScript bridge that frontends load as
+`window.lepusa`, including `invoke(route, payload)` and route namespaces such as
+`lepusa.core.invoke(payload)`.
 
 ## Boundary
 
