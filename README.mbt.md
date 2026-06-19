@@ -138,10 +138,10 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 runtime backend, windows, plugin command routes, command permission
 requirements, and capability grants. Native CLI commands consume the nearest
 `lepusa.json` from the current directory, or a file passed with `--project`.
-Official plugins can be declared by name, for example `{ "name": "log" }`,
-`{ "name": "store" }`, or `{ "name": "fs" }`; Lepusa expands those declarations
-to the package's official command contract. Custom plugins can still provide an
-explicit `commands` array.
+Official plugins can be declared by name, for example `{ "name": "dialog" }`,
+`{ "name": "log" }`, `{ "name": "store" }`, or `{ "name": "fs" }`; Lepusa
+expands those declarations to the package's official command contract. Custom
+plugins can still provide an explicit `commands` array.
 Projects can also declare `filesystemScopes`, named roots that are carried into
 runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
@@ -182,6 +182,10 @@ helpers. The package validates named scopes and relative paths; native backends
 own the actual OS filesystem implementation behind those routes.
 Core `FileSystemScope` values carry named roots through `ProjectManifest`,
 `RuntimePlan`, `RuntimeSession`, and `RuntimeLaunchManifest`.
+
+`@lepusa/plugins/dialog` defines platform-neutral dialog routes:
+`dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the
+actual OS dialog implementation.
 
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin

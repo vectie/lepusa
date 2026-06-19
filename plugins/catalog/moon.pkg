@@ -1,5 +1,6 @@
 import {
   "vectie/lepusa",
+  "vectie/lepusa/plugins/dialog",
   "vectie/lepusa/plugins/fs" @fs_plugin,
   "vectie/lepusa/plugins/log",
   "vectie/lepusa/plugins/store",

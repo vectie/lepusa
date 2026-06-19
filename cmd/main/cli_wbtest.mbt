@@ -405,6 +405,7 @@ test "project config expands official plugin declarations" {
     #|  "version": "0.1.0",
     #|  "window": { "label": "main", "title": "Official Plugins" },
     #|  "plugins": [
+    #|    { "name": "dialog" },
     #|    { "name": "log" },
     #|    { "name": "store" },
     #|    { "name": "fs" }
@@ -414,7 +415,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["filesystem.read"]
+    #|      "permissions": ["dialog", "filesystem.read"]
     #|    }
     #|  ]
     #|}
@@ -424,6 +425,7 @@ test "project config expands official plugin declarations" {
       match project.manifest.runtime_plan(project.root) {
         Ok(plan) => {
           let routes = plan.command_routes()
+          assert_true(routes.contains("dialog.message"))
           assert_true(routes.contains("log.write"))
           assert_true(routes.contains("store.set"))
           assert_true(routes.contains("fs.readText"))
@@ -435,6 +437,7 @@ test "project config expands official plugin declarations" {
             plan.command_permission("fs.writeText") is Some(FileSystemWrite),
           )
           let window_routes = plan.window_command_routes("main")
+          assert_true(window_routes.contains("dialog.confirm"))
           assert_true(window_routes.contains("log.write"))
           assert_true(window_routes.contains("store.keys"))
           assert_true(window_routes.contains("fs.readText"))

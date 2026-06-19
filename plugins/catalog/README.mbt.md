@@ -7,6 +7,9 @@ individual plugin package as the official ecosystem grows.
 ```moonbit nocheck
 ///|
 test "lookup official plugins" {
+  let dialog = @catalog.plugin("dialog").unwrap()
+  assert_true(dialog.command_routes().contains("dialog.message"))
+
   let fs = @catalog.plugin("fs").unwrap()
   assert_true(fs.command_routes().contains("fs.readText"))
 

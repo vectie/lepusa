@@ -393,8 +393,9 @@ should expose the same small surface:
 `@lepusa/plugins/log` and `@lepusa/plugins/store` are pure cross-platform
 packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
 official filesystem command routes, read/write capability helpers, and scoped
-relative path policy. Native filesystem IO should be implemented by runtime
-backends behind that contract, not by widening core filesystem access.
+relative path policy. `@lepusa/plugins/dialog` declares message, confirm, and
+prompt routes. Native platform effects should be implemented by runtime
+backends behind those contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need
 official plugin declarations or pure MoonBit handler registration without
 importing every plugin package directly.

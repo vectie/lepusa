@@ -1,6 +1,7 @@
 ///|
 pub fn plugin(name : String) -> @lepusa.Plugin? {
   match name {
+    "dialog" => Some(@dialog.plugin())
     "log" => Some(@log.plugin())
     "store" => Some(@store.plugin())
     "fs" => Some(@fs_plugin.plugin())
@@ -27,5 +28,5 @@ pub fn registered_plugin_names() -> Array[String] {
 
 ///|
 pub fn plugin_names() -> Array[String] {
-  ["fs", "log", "store"]
+  ["dialog", "fs", "log", "store"]
 }
