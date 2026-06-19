@@ -43,6 +43,47 @@ test "bundled runtime manifest exposes service plan" {
 }
 
 ///|
+test "bundled runtime manifest builds target-aware run plan" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) => {
+      assert_eq(runtime.target(), "linux")
+      assert_eq(runtime.runtime_backend(), "headless")
+      match runtime.run() {
+        Ok(result) => {
+          assert_true(result.status() is BundledPrepared)
+          let plan = result.plan()
+          assert_eq(plan.target(), "linux")
+          assert_eq(plan.backend(), "linux")
+          assert_eq(plan.webview_engine(), "WebKitGTK")
+          assert_eq(plan.webviews().length(), 1)
+          assert_true(plan.first_webview() is Some(_))
+          assert_eq(plan.service_plan().startup_service_names()[0], "api")
+          assert_eq(plan.startup_operation_count(), 2)
+          assert_eq(plan.lifecycle_step_count(), 2)
+          assert_eq(plan.sync_route_count(), 1)
+          assert_eq(plan.async_route_count(), 0)
+        }
+        Err(problem) => abort(problem)
+      }
+      match runtime.run(mode=BundledOpenWindow) {
+        Ok(result) =>
+          match result.status() {
+            BundledLaunchUnsupported(message) =>
+              assert_true(message.contains("WebKitGTK launch loop"))
+            _ => abort("unexpected bundled launch status")
+          }
+        Err(problem) => abort(problem)
+      }
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime service plan validates service shape" {
   let manifest =
     #|{

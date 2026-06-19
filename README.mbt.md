@@ -430,8 +430,9 @@ registered official plugin routes into
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 Generated macOS `.app` launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`, which opens the first
-WKWebView from the packaged `lepusa/runtime.json`. `lepusa-runtime run
---manifest <runtime.json>` uses the same planning path without opening a
+macOS WKWebView from the packaged `lepusa/runtime.json` and reports unsupported
+for Linux and Windows until those WebView loops land. `lepusa-runtime run
+--manifest <runtime.json>` uses a target-aware planning path without opening a
 window, so bundles have a cheap validation probe. `lepusa-runtime bootstrap
 --manifest <runtime.json>` still emits packaged runtime bootstrap JSON for
 platform loops: manifest path, bundle root, app metadata, target, and the

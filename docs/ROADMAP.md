@@ -95,8 +95,8 @@
   - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: reads bundled runtime data for launcher stubs.
-  - `lepusa-runtime run`: prepares bundled macOS runtime launch plans without opening windows.
-  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`.
+  - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
+  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, and reports unsupported for Linux/Windows until their loops land.
   - `lepusa-runtime bootstrap`: emits bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.

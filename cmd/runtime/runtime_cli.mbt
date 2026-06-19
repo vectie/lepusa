@@ -103,36 +103,44 @@ fn render_runtime_run_text(
 ) -> RuntimeCliResult {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
-    Ok(manifest) => {
-      let services = runtime_service_summary(manifest)
-      let result = if launch {
-        @macos.launch_bundled(manifest)
+    Ok(manifest) =>
+      if launch && manifest.target() == "macos" {
+        render_macos_runtime_run(manifest, launch~)
       } else {
-        @macos.run_bundled(manifest)
+        let mode : @bundled.BundledRunMode = if launch {
+          BundledOpenWindow
+        } else {
+          BundledDryRun
+        }
+        match manifest.run(mode~) {
+          Ok(result) =>
+            runtime_ok(render_bundled_runtime_run_result(result, launch~))
+          Err(problem) =>
+            runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
+        }
       }
-      match result {
-        Err(problems) =>
-          runtime_fail(
-            render_runtime_run_problems("Lepusa runtime run", problems),
-          )
-        Ok(result) =>
-          runtime_ok(render_runtime_run_result(result, services, launch~))
-      }
-    }
   }
 }
 
 ///|
-struct RuntimeServiceSummary {
-  service_count : Int
-  requires_supervisor : Bool
-  start_order : String
-} derive(Debug, Eq)
+fn render_macos_runtime_run(
+  manifest : @bundled.BundledRuntimeManifest,
+  launch~ : Bool,
+) -> RuntimeCliResult {
+  let services = runtime_service_summary(manifest)
+  let result = @macos.launch_bundled(manifest)
+  match result {
+    Err(problems) =>
+      runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
+    Ok(result) =>
+      runtime_ok(render_macos_runtime_run_result(result, services, launch~))
+  }
+}
 
 ///|
-fn render_runtime_run_result(
+fn render_macos_runtime_run_result(
   result : @macos.MacOSRunResult,
-  services : RuntimeServiceSummary,
+  services : @bundled.BundledServicePlan,
   launch~ : Bool,
 ) -> String {
   let plan = result.plan()
@@ -152,6 +160,7 @@ fn render_runtime_run_result(
   [
     "Lepusa runtime run",
     "mode: \{if launch { "launch" } else { "dry-run" }}",
+    "target: macos",
     "backend: macos",
     "engine: WKWebView",
     "status: \{macos_status_name(result.status())}",
@@ -159,9 +168,9 @@ fn render_runtime_run_result(
     "title: \{title}",
     "first-window-url: \{first_window_url}",
     "load-url: \{load_url}",
-    "local-services: \{services.service_count}",
-    "service-supervisor: \{services.requires_supervisor}",
-    "service-start-order: \{services.start_order}",
+    "local-services: \{services.services().length()}",
+    "service-supervisor: \{services.requires_supervisor()}",
+    "service-start-order: \{services.startup_service_names().join(",")}",
     "startup-operations: \{plan.execution().startup_operations().length()}",
     "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}",
     "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}",
@@ -171,22 +180,50 @@ fn render_runtime_run_result(
 }
 
 ///|
+fn render_bundled_runtime_run_result(
+  result : @bundled.BundledRunResult,
+  launch~ : Bool,
+) -> String {
+  let plan = result.plan()
+  let services = plan.service_plan()
+  let first_webview = plan.first_webview()
+  let title = match first_webview {
+    Some(webview) => webview.title()
+    None => ""
+  }
+  let first_window_url = match first_webview {
+    Some(webview) => webview.url()
+    None => ""
+  }
+  [
+    "Lepusa runtime run",
+    "mode: \{if launch { "launch" } else { "dry-run" }}",
+    "target: \{plan.target()}",
+    "backend: \{plan.backend()}",
+    "engine: \{plan.webview_engine()}",
+    "status: \{bundled_status_name(result.status())}",
+    "webviews: \{plan.webviews().length()}",
+    "title: \{title}",
+    "first-window-url: \{first_window_url}",
+    "load-url: \{first_window_url}",
+    "local-services: \{services.services().length()}",
+    "service-supervisor: \{services.requires_supervisor()}",
+    "service-start-order: \{services.startup_service_names().join(",")}",
+    "startup-operations: \{plan.startup_operation_count()}",
+    "lifecycle-steps: \{plan.lifecycle_step_count()}",
+    "bridge-sync-routes: \{plan.sync_route_count()}",
+    "bridge-async-routes: \{plan.async_route_count()}",
+    "",
+  ].join("\n")
+}
+
+///|
 fn runtime_service_summary(
   manifest : @bundled.BundledRuntimeManifest,
-) -> RuntimeServiceSummary {
+) -> @bundled.BundledServicePlan {
   match manifest.service_plan() {
-    Ok(plan) =>
-      {
-        service_count: plan.services().length(),
-        requires_supervisor: plan.requires_supervisor(),
-        start_order: plan.startup_service_names().join(","),
-      }
-    Err(_) =>
-      {
-        service_count: manifest.local_service_jsons().length(),
-        requires_supervisor: false,
-        start_order: "",
-      }
+    Ok(plan) => plan
+    Err(_) => @bundled.BundledServicePlan::new(services=[])
   }
 }
 
@@ -197,6 +234,14 @@ fn macos_status_name(status : @macos.MacOSRunStatus) -> String {
     MacOSLaunched => "launched"
     MacOSLaunchFailed(_) => "launch-failed"
     MacOSLaunchUnsupported(_) => "launch-unsupported"
+  }
+}
+
+///|
+fn bundled_status_name(status : @bundled.BundledRunStatus) -> String {
+  match status {
+    BundledPrepared => "prepared"
+    BundledLaunchUnsupported(_) => "launch-unsupported"
   }
 }
 

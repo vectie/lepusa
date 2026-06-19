@@ -140,6 +140,50 @@ test "runtime cli dry-runs bundled macos launch" {
 }
 
 ///|
+test "runtime cli dry-runs bundled linux manifest by target" {
+  let manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "linux",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html"
+    #|    }],
+    #|    "localServices": [{
+    #|      "name": "api",
+    #|      "command": ["moon", "run", "cmd/server"],
+    #|      "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|    }],
+    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  let dry_run = render_runtime_run_text("/app/lepusa/runtime.json", manifest)
+  assert_eq(dry_run.exit_code, 0)
+  assert_true(dry_run.output.contains("target: linux"))
+  assert_true(dry_run.output.contains("backend: linux"))
+  assert_true(dry_run.output.contains("engine: WebKitGTK"))
+  assert_true(dry_run.output.contains("status: prepared"))
+  assert_true(dry_run.output.contains("startup-operations: 2"))
+  assert_true(dry_run.output.contains("service-start-order: api"))
+  let launch = render_runtime_run_text(
+    "/app/lepusa/runtime.json",
+    manifest,
+    launch=true,
+  )
+  assert_eq(launch.exit_code, 0)
+  assert_true(launch.output.contains("mode: launch"))
+  assert_true(launch.output.contains("status: launch-unsupported"))
+  assert_true(launch.output.contains("engine: WebKitGTK"))
+}
+
+///|
 test "runtime cli resolves bundled runtime assets" {
   let manifest =
     #|{

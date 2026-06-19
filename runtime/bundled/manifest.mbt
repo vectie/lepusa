@@ -88,6 +88,20 @@ pub fn BundledRuntimeManifest::asset_protocol(
 }
 
 ///|
+pub fn BundledRuntimeManifest::target(self : BundledRuntimeManifest) -> String {
+  optional_string(self.bundle, "target").unwrap_or(
+    optional_string(self.runtime, "backend").unwrap_or("macos"),
+  )
+}
+
+///|
+pub fn BundledRuntimeManifest::runtime_backend(
+  self : BundledRuntimeManifest,
+) -> String {
+  optional_string(self.runtime, "backend").unwrap_or(self.target())
+}
+
+///|
 fn first_webview_url(webviews : Array[Json]) -> String {
   match webviews.get(0) {
     Some(Object(webview)) => optional_string(webview, "url").unwrap_or("")

@@ -366,9 +366,10 @@ startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
 file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, emits bundled bootstrap JSON for native
-loops, exposes typed WebView boot data, resolves bundled asset URLs, dispatches
-registered official plugin commands, and selects local services plus lifecycle
-actions without re-entering project configuration.
+loops, exposes typed WebView boot data and target-aware bundled run plans,
+resolves bundled asset URLs, dispatches registered official plugin commands,
+and selects local services plus lifecycle actions without re-entering project
+configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is
@@ -561,10 +562,10 @@ lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a summary
 
 lepusa-runtime run --manifest <lepusa/runtime.json>
-  -> prepares a bundled macOS runtime launch plan without opening a window
+  -> prepares a target-aware bundled runtime launch plan without opening a window
 
 lepusa-runtime launch --manifest <lepusa/runtime.json>
-  -> prepares and opens the first bundled macOS WKWebView window
+  -> opens the first bundled macOS WKWebView window or reports unsupported for other targets
 
 lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
   -> emits bundled bootstrap JSON for native platform loops
