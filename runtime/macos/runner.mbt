@@ -740,7 +740,9 @@ fn runtime_dispatch(
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
     let response_json = runtime.dispatch_json(input)
-    @utf8.encode(bridge_response_script(response_hook, response_json))
+    @utf8.encode(
+      @runtime.native_bridge_response_script(response_hook, response_json),
+    )
   }
 }
 
@@ -776,7 +778,9 @@ fn bundled_dispatch(
           @lepusa.InvokeResponse::error("", problem),
         )
     }
-    @utf8.encode(bridge_response_script(response_hook, response_json))
+    @utf8.encode(
+      @runtime.native_bridge_response_script(response_hook, response_json),
+    )
   }
 }
 

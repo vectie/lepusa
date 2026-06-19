@@ -555,7 +555,9 @@ fn linux_dispatch(
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
     let response_json = runtime.dispatch_json(input)
-    @utf8.encode(linux_bridge_response_script(response_hook, response_json))
+    @utf8.encode(
+      @runtime.native_bridge_response_script(response_hook, response_json),
+    )
   }
 }
 
@@ -583,7 +585,9 @@ fn linux_bundled_dispatch(
           @lepusa.InvokeResponse::error("", problem),
         )
     }
-    @utf8.encode(linux_bridge_response_script(response_hook, response_json))
+    @utf8.encode(
+      @runtime.native_bridge_response_script(response_hook, response_json),
+    )
   }
 }
 
@@ -827,14 +831,6 @@ fn linux_native_hook_script(hook : String) -> String {
     "  });",
     "})();",
   ].join("\n")
-}
-
-///|
-fn linux_bridge_response_script(
-  response_hook : String,
-  response_json : String,
-) -> String {
-  "globalThis[\{response_hook.js_string_literal()}](\{response_json});"
 }
 
 ///|

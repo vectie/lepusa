@@ -11,6 +11,8 @@ pub fn decode_invoke_request_json(String) -> Result[@lepusa.InvokeRequest, Strin
 
 pub fn encode_invoke_response_json(@lepusa.InvokeResponse) -> String
 
+pub fn native_bridge_response_script(String, String) -> String
+
 // Errors
 
 // Types and methods
@@ -24,6 +26,29 @@ pub fn NativeBackend::plan(Self, RuntimeHost) -> Result[NativeLaunchPlan, Array[
 pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan, Array[String]]
 pub fn NativeBackend::service_executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeBackend::webview_engine(Self) -> String
+
+pub struct NativeBridgeDispatch {
+  window_label : String
+  response_hook : String
+  message : String
+  response_json : String
+  evaluation_script : String
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeDispatch::evaluation_script(Self) -> String
+pub fn NativeBridgeDispatch::message(Self) -> String
+pub fn NativeBridgeDispatch::response_hook(Self) -> String
+pub fn NativeBridgeDispatch::response_json(Self) -> String
+pub fn NativeBridgeDispatch::window_label(Self) -> String
+
+pub struct NativeBridgeMessage {
+  window_label : String
+  response_hook : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub async fn NativeBridgeMessage::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
+pub fn NativeBridgeMessage::message(Self) -> String
+pub fn NativeBridgeMessage::response_hook(Self) -> String
+pub fn NativeBridgeMessage::window_label(Self) -> String
 
 pub struct NativeLaunchPlan {
   backend_name : String
@@ -85,11 +110,14 @@ pub struct NativeRuntime {
 }
 pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
+pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
+pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_json(Self, String) -> String
 pub async fn NativeRuntime::dispatch_json_async(Self, String) -> String
 pub fn NativeRuntime::host(Self) -> RuntimeHost
 pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Result[String, Array[String]]
 pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
+pub fn NativeRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeMessage, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
 pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan

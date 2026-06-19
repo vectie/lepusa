@@ -488,7 +488,7 @@ async test "macos bridge dispatch returns response callback script" {
   match runtime(bridge_test_host()) {
     Ok(runtime) => {
       let message = "{\"id\":\"42\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
-      match dispatch_bridge_message(runtime, message) {
+      match runtime.dispatch_bridge_message(message) {
         Ok(dispatch) => {
           assert_eq(dispatch.window_label(), "main")
           assert_eq(dispatch.response_hook(), "__lepusaInvokeResponse")
@@ -518,7 +518,7 @@ async test "macos bridge prepares async messages before dispatch" {
   match runtime(async_bridge_test_host()) {
     Ok(runtime) => {
       let message = "{\"id\":\"44\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"readText\",\"payload\":\"true\"}"
-      match prepare_bridge_message(runtime, message) {
+      match runtime.prepare_bridge_message(message) {
         Ok(prepared) => {
           assert_eq(prepared.window_label(), "main")
           assert_eq(prepared.response_hook(), "__lepusaInvokeResponse")
@@ -610,10 +610,10 @@ async test "macos bridge dispatch reports missing window" {
   match runtime(bridge_test_host()) {
     Ok(runtime) => {
       let message = "{\"id\":\"43\",\"window_label\":\"other\",\"plugin\":\"core\",\"command\":\"invoke\"}"
-      match dispatch_bridge_message(runtime, message) {
+      match runtime.dispatch_bridge_message(message) {
         Ok(_) => abort("unexpected bridge dispatch success")
         Err(problems) =>
-          assert_eq(problems[0], "macOS bridge window not found: other")
+          assert_eq(problems[0], "native bridge window not found: other")
       }
     }
     Err(_) => abort("unexpected invalid macOS native runtime")

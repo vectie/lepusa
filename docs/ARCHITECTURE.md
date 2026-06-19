@@ -422,16 +422,18 @@ Protocol requests are passed back to MoonBit, which resolves runtime bridge,
 virtual, local, and packaged assets and returns a compact packet describing
 either in-memory content or a file path; Objective-C only adapts that packet to
 WebKit response calls.
-`prepare_bridge_message(runtime, message)` is the MoonBit-owned capture boundary
-for macOS: it resolves the target WebView and response hook without executing
-the command. The prepared message can then dispatch through
-`NativeRuntime.dispatch_json_async` and return the JavaScript source that calls
-the matching response hook in the page. Scheduling that prepared message from
-the Objective-C handler onto the runtime event loop is the remaining native
-integration step for async commands. `MacOSOpenWindow` reports the shared
-`RunUnsupported` status when the plan contains async command routes, so the
-current sync Objective-C callback cannot accidentally launch a partially working
-async bridge.
+`NativeRuntime::prepare_bridge_message(message)` is the MoonBit-owned
+capture boundary shared by platform packages: it resolves the target WebView
+and response hook without executing the command. The prepared message can then
+dispatch through `NativeRuntime.dispatch_json_async` and return the JavaScript
+source that calls the matching response hook in the page. macOS, Linux, and
+Windows use the same runtime response-script helper, so platform code does not
+duplicate callback semantics. Scheduling that prepared message from the native
+message handler onto the runtime event loop is the remaining native integration
+step for async commands. `MacOSOpenWindow` reports the shared `RunUnsupported`
+status when the plan contains async command routes, so the current sync
+Objective-C callback cannot accidentally launch a partially working async
+bridge.
 `lepusa run macos --launch` is the first protocol-complete GUI entry point. The
 Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge

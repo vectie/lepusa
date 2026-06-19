@@ -1094,3 +1094,104 @@ async test "runtime host dispatches async bridge handlers" {
     ),
   )
 }
+
+///|
+fn async_bridge_plan() -> @lepusa.RuntimePlan {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Runtime",
+      source=@lepusa.Source::html("<main>runtime</main>"),
+    )
+    .with_plugin(@lepusa.Plugin::new("core").command_async("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.invoke"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid async bridge plan")
+  }
+}
+
+///|
+async test "native runtime owns bridge message transport" {
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok("{\"async\":\{payload}}") },
+  )
+  let host = RuntimeHost::new(async_bridge_plan(), registry~)
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, host) {
+    Ok(runtime) => {
+      let message = "{\"id\":\"9\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
+      match runtime.prepare_bridge_message(message) {
+        Ok(prepared) => {
+          assert_eq(prepared.window_label(), "main")
+          assert_eq(prepared.response_hook(), "__lepusaInvokeResponse")
+          assert_eq(prepared.message(), message)
+          let dispatch = prepared.dispatch(runtime)
+          assert_eq(dispatch.window_label(), "main")
+          assert_eq(dispatch.response_hook(), "__lepusaInvokeResponse")
+          assert_true(dispatch.response_json().contains("\"id\":\"9\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("\"payload\":\"{\\\"async\\\":true}\""),
+          )
+          assert_true(
+            dispatch
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+        }
+        Err(_) => abort("unexpected bridge prepare failure")
+      }
+      match
+        runtime.dispatch_bridge_message(
+          "{\"id\":\"10\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"false\"}",
+        ) {
+        Ok(dispatch) => {
+          assert_true(dispatch.response_json().contains("\"id\":\"10\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("\"payload\":\"{\\\"async\\\":false}\""),
+          )
+        }
+        Err(_) => abort("unexpected bridge dispatch failure")
+      }
+    }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
+test "native bridge transport validates target window" {
+  let host = RuntimeHost::new(test_plan())
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, host) {
+    Ok(runtime) => {
+      match runtime.bridge_response_hook(window_label="main") {
+        Ok((window_label, hook)) => {
+          assert_eq(window_label, "main")
+          assert_eq(hook, "__lepusaInvokeResponse")
+        }
+        Err(problem) => abort(problem)
+      }
+      match
+        runtime.prepare_bridge_message(
+          "{\"id\":\"11\",\"window_label\":\"missing\",\"plugin\":\"core\",\"command\":\"invoke\"}",
+        ) {
+        Ok(_) => abort("unexpected bridge prepare success")
+        Err(problems) =>
+          assert_eq(problems[0], "native bridge window not found: missing")
+      }
+      assert_eq(
+        native_bridge_response_script("__hook", "{\"id\":\"1\"}"),
+        "globalThis[\"__hook\"]({\"id\":\"1\"});",
+      )
+    }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
