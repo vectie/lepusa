@@ -512,6 +512,11 @@ lepusa bundle-plan <target>
 Native run/build/bundle commands should consume the same `RuntimePlan` and
 `BundlePlan` objects rather than maintaining parallel configuration paths.
 
+`@lepusa/scaffold` owns standalone app and plugin skeleton generation. The CLI
+commands `lepusa init` and `lepusa plugin new` are wrappers over
+`write_app` and `write_plugin`, so editors, package managers, and future
+ecosystem tools can create Lepusa projects without invoking the CLI.
+
 Project manifests may declare official plugins by name only. The CLI expands
 official package names such as `autoLaunch`, `deepLink`, `singleInstance`,
 `tray`, `updater`, `windowState`, `serviceDiscovery`, `log`, `store`, and `fs`

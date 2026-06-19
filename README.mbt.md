@@ -35,6 +35,8 @@ The first implementation slice already owns the public MoonBit foundation:
   including official plugin expansion and capability-scoped command routing
 - `@lepusa/bundle` native bundle materialization from `BundlePlan` without
   coupling build tools to CLI internals
+- `@lepusa/scaffold` app and plugin skeleton generation for ecosystem tooling
+  without shelling through `lepusa init`
 - `@lepusa/runtime` host/session snapshots that native WebView backends can
   consume without reinterpreting app configuration
 
@@ -159,9 +161,10 @@ application construction state.
 When a window omits `source`, `App` lowers the root `Cell` into a generated
 Rabbita-style HTML document served from the runtime manifest as a virtual file.
 
-`lepusa init` writes a standalone MoonBit project skeleton that imports
-`vectie/lepusa` directly. It is intentionally small: `moon.mod`, `moon.pkg`,
-`lepusa.json`, `main.mbt`, and `README.mbt.md`.
+`@lepusa/scaffold.write_app` writes a standalone MoonBit project skeleton that
+imports `vectie/lepusa` directly. It is intentionally small: `moon.mod`,
+`moon.pkg`, `lepusa.json`, `main.mbt`, and `README.mbt.md`. `lepusa init` is
+the CLI wrapper over that package.
 
 `lepusa.json` is the app-neutral project boundary. It describes metadata,
 runtime backend, windows, plugin command routes, command permission
@@ -197,8 +200,9 @@ The `examples/` directory contains checked project manifests for the three
 foundation app shapes: Rabbita-style MoonBit UI, packaged static assets, and a
 localhost gateway with sidecar/readiness metadata.
 
-`lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
-native command registration, and a scoped capability helper.
+`@lepusa/scaffold.write_plugin` writes a standalone plugin skeleton with plugin
+metadata, native command registration, and a scoped capability helper.
+`lepusa plugin new` is the CLI wrapper over that package.
 
 `BundlePlan::signing_prerequisites()` exposes target-specific distribution
 requirements for macOS, Windows, and Linux. The generated bundle runtime file

@@ -1,39 +1,49 @@
 ///|
-struct ProjectInitResult {
+pub struct AppScaffoldResult {
   root : String
   files : Array[String]
 } derive(Debug, Eq)
 
 ///|
-struct ProjectFile {
+pub fn AppScaffoldResult::root(self : AppScaffoldResult) -> String {
+  self.root
+}
+
+///|
+pub fn AppScaffoldResult::files(self : AppScaffoldResult) -> Array[String] {
+  self.files
+}
+
+///|
+struct ScaffoldFile {
   path : String
   content : String
 } derive(Debug, Eq)
 
 ///|
-fn ProjectFile::new(path~ : String, content~ : String) -> ProjectFile {
+fn ScaffoldFile::new(path~ : String, content~ : String) -> ScaffoldFile {
   { path, content }
 }
 
 ///|
-fn ProjectFile::path(self : ProjectFile) -> String {
+fn ScaffoldFile::path(self : ScaffoldFile) -> String {
   self.path
 }
 
 ///|
-fn ProjectFile::content(self : ProjectFile) -> String {
+fn ScaffoldFile::content(self : ScaffoldFile) -> String {
   self.content
 }
 
 ///|
-async fn write_project_skeleton(
+pub async fn write_app(
   out_dir : String,
-) -> Result[ProjectInitResult, Array[String]] {
+) -> Result[AppScaffoldResult, Array[String]] {
   let root = normalize_project_root(out_dir)
   let problems : Array[String] = []
   let files : Array[String] = []
   ensure_directory(root, problems)
-  for file in project_skeleton_files() {
+  for file in app_skeleton_files() {
     let path = join_path(root, file.path())
     ensure_directory(parent_directory(path), problems)
     if problems.is_empty() {
@@ -69,13 +79,13 @@ fn normalize_project_root(path : String) -> String {
 }
 
 ///|
-fn project_skeleton_files() -> Array[ProjectFile] {
+fn app_skeleton_files() -> Array[ScaffoldFile] {
   [
-    ProjectFile::new(path="moon.mod", content=project_moon_mod()),
-    ProjectFile::new(path="moon.pkg", content=project_moon_pkg()),
-    ProjectFile::new(path="lepusa.json", content=project_lepusa_json()),
-    ProjectFile::new(path="main.mbt", content=project_main_mbt()),
-    ProjectFile::new(path="README.mbt.md", content=project_readme()),
+    ScaffoldFile::new(path="moon.mod", content=project_moon_mod()),
+    ScaffoldFile::new(path="moon.pkg", content=project_moon_pkg()),
+    ScaffoldFile::new(path="lepusa.json", content=project_lepusa_json()),
+    ScaffoldFile::new(path="main.mbt", content=project_main_mbt()),
+    ScaffoldFile::new(path="README.mbt.md", content=project_readme()),
   ]
 }
 

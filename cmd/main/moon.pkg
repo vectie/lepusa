@@ -9,6 +9,7 @@ import {
   "vectie/lepusa/runtime/linux" @linux_backend,
   "vectie/lepusa/runtime/macos" @macos_backend,
   "vectie/lepusa/runtime/windows" @windows_backend,
+  "vectie/lepusa/scaffold",
 }
 
 supported_targets = "+native"

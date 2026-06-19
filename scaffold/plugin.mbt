@@ -1,15 +1,32 @@
 ///|
-struct PluginInitResult {
+pub struct PluginScaffoldResult {
   root : String
   plugin_name : String
   files : Array[String]
 } derive(Debug, Eq)
 
 ///|
-async fn write_plugin_skeleton(
+pub fn PluginScaffoldResult::root(self : PluginScaffoldResult) -> String {
+  self.root
+}
+
+///|
+pub fn PluginScaffoldResult::plugin_name(self : PluginScaffoldResult) -> String {
+  self.plugin_name
+}
+
+///|
+pub fn PluginScaffoldResult::files(
+  self : PluginScaffoldResult,
+) -> Array[String] {
+  self.files
+}
+
+///|
+pub async fn write_plugin(
   plugin_name : String,
   out_dir : String,
-) -> Result[PluginInitResult, Array[String]] {
+) -> Result[PluginScaffoldResult, Array[String]] {
   let normalized_name = normalize_plugin_name(plugin_name)
   if normalized_name == "" {
     return Err(["plugin name is required"])
@@ -72,12 +89,12 @@ fn normalize_plugin_name(name : String) -> String {
 }
 
 ///|
-fn plugin_skeleton_files(plugin_name : String) -> Array[ProjectFile] {
+fn plugin_skeleton_files(plugin_name : String) -> Array[ScaffoldFile] {
   [
-    ProjectFile::new(path="moon.mod", content=plugin_moon_mod(plugin_name)),
-    ProjectFile::new(path="moon.pkg", content=plugin_moon_pkg()),
-    ProjectFile::new(path="plugin.mbt", content=plugin_main_mbt(plugin_name)),
-    ProjectFile::new(path="README.mbt.md", content=plugin_readme(plugin_name)),
+    ScaffoldFile::new(path="moon.mod", content=plugin_moon_mod(plugin_name)),
+    ScaffoldFile::new(path="moon.pkg", content=plugin_moon_pkg()),
+    ScaffoldFile::new(path="plugin.mbt", content=plugin_main_mbt(plugin_name)),
+    ScaffoldFile::new(path="README.mbt.md", content=plugin_readme(plugin_name)),
   ]
 }
 

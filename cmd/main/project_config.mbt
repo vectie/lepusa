@@ -7,3 +7,12 @@ async fn load_project_config(
   }
   @project.ProjectConfig::parse(text, base_dir=parent_directory(path))
 }
+
+///|
+fn parent_directory(path : String) -> String {
+  let normalized = path.trim_end(chars="/\\").to_owned()
+  match normalized.rev_find("/") {
+    Some(index) => if index == 0 { "/" } else { normalized[:index].to_owned() }
+    None => "."
+  }
+}

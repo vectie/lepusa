@@ -241,13 +241,13 @@ async fn render_plugin(args : Array[String]) -> CliResult {
 async fn render_plugin_new(args : Array[String]) -> CliResult {
   let name = args.get(2).unwrap_or("")
   let out_dir = args.get(3).unwrap_or("")
-  match write_plugin_skeleton(name, out_dir) {
+  match @scaffold.write_plugin(name, out_dir) {
     Ok(result) =>
       ok(
         "Lepusa plugin new\n" +
-        "plugin: \{result.plugin_name}\n" +
-        "root: \{result.root}\n" +
-        "files: \{result.files.length()}\n",
+        "plugin: \{result.plugin_name()}\n" +
+        "root: \{result.root()}\n" +
+        "files: \{result.files().length()}\n",
       )
     Err(problems) => fail(render_problems("Lepusa plugin new", problems))
   }
@@ -273,12 +273,12 @@ async fn render_doctor_async(args : Array[String]) -> CliResult {
 ///|
 async fn render_init(args : Array[String]) -> CliResult {
   let out_dir = args.get(1).unwrap_or("lepusa-app")
-  match write_project_skeleton(out_dir) {
+  match @scaffold.write_app(out_dir) {
     Ok(result) =>
       ok(
         "Lepusa init\n" +
-        "root: \{result.root}\n" +
-        "files: \{result.files.length()}\n",
+        "root: \{result.root()}\n" +
+        "files: \{result.files().length()}\n",
       )
     Err(problems) => fail(render_problems("Lepusa init", problems))
   }
