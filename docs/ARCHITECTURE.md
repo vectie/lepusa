@@ -159,8 +159,8 @@ Command rules:
 - Built-in permission names for project manifests are `filesystem.read`,
   `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
   `clipboard`, `notification`, `localhost`, `deep-link`, `single-instance`,
-  `tray`, `auto-launch`, `process.info`, `process.environment`, and
-  `process.control`; custom names use `custom:<name>`.
+  `tray`, `auto-launch`, `window-state`, `process.info`, `process.environment`,
+  and `process.control`; custom names use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to
   that window.
@@ -429,7 +429,8 @@ app URL scheme registration and dispatch routes.
 `@lepusa/plugins/single_instance` declares app lock, focus, and second-launch
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes. `@lepusa/plugins/auto_launch` declares launch-at-login
-status and enablement routes. `@lepusa/plugins/dialog` declares message,
+status and enablement routes. `@lepusa/plugins/window_state` declares window
+geometry persistence routes. `@lepusa/plugins/dialog` declares message,
 confirm, and prompt routes. `@lepusa/plugins/clipboard` and
 `@lepusa/plugins/notification` declare clipboard and notification routes.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
@@ -468,9 +469,9 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 
 Project manifests may declare official plugins by name only. The CLI expands
 official package names such as `autoLaunch`, `deepLink`, `singleInstance`,
-`tray`, `log`, `store`, and `fs` to their official command contracts before
-planning, while plugins with explicit `commands` arrays keep their
-manifest-defined surface.
+`tray`, `windowState`, `log`, `store`, and `fs` to their official command
+contracts before planning, while plugins with explicit `commands` arrays keep
+their manifest-defined surface.
 They may also declare `filesystemScopes`, which lower into runtime sessions and
 native launch manifests as named roots. The scope data is separate from command
 capabilities: capabilities decide which windows may call filesystem commands,

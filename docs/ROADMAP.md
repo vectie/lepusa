@@ -96,7 +96,7 @@ Stabilize the cross-platform core set first:
 - singleInstance: initial app lock and launch handoff contract exists
 - tray: initial status icon and menu contract exists
 - autoLaunch: initial launch-at-login contract exists
-- window-state
+- windowState: initial window geometry persistence contract exists
 - updater
 - service-discovery
 

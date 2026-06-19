@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/window_state"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+// Errors
+
+// Types and methods
+pub struct WindowStatePolicy {
+  store_name : String
+  rules : Array[WindowStateRule]
+} derive(Eq, @debug.Debug)
+pub fn WindowStatePolicy::new(store_name~ : String, rules? : Array[WindowStateRule]) -> Self
+pub fn WindowStatePolicy::rule(Self, WindowStateRule) -> Self
+pub fn WindowStatePolicy::rules(Self) -> Array[WindowStateRule]
+pub fn WindowStatePolicy::store_name(Self) -> String
+pub fn WindowStatePolicy::validate(Self) -> Array[String]
+
+pub struct WindowStateRule {
+  window_label : String
+  remember_size : Bool
+  remember_position : Bool
+  remember_visibility : Bool
+} derive(Eq, @debug.Debug)
+pub fn WindowStateRule::new(window_label~ : String, remember_size? : Bool, remember_position? : Bool, remember_visibility? : Bool) -> Self
+pub fn WindowStateRule::remember_position(Self) -> Bool
+pub fn WindowStateRule::remember_size(Self) -> Bool
+pub fn WindowStateRule::remember_visibility(Self) -> Bool
+pub fn WindowStateRule::validate(Self) -> Array[String]
+pub fn WindowStateRule::window_label(Self) -> String
+
+// Type aliases
+
+// Traits

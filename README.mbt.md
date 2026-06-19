@@ -151,7 +151,7 @@ Official plugins can be declared by name, for example
 `{ "name": "localhost" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
 `{ "name": "opener" }`, `{ "name": "process" }`, `{ "name": "shell" }`,
 `{ "name": "singleInstance" }`, `{ "name": "store" }`,
-`{ "name": "tray" }`, or `{ "name": "fs" }`;
+`{ "name": "tray" }`, `{ "name": "windowState" }`, or `{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
@@ -233,6 +233,11 @@ policy metadata. Native backends own status icon creation and OS menu behavior.
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
 `autoLaunch.setEnabled`, plus startup registration policy metadata. Native
 backends own platform login item, registry, service, or desktop-entry behavior.
+
+`@lepusa/plugins/window_state` defines window persistence routes such as
+`windowState.save`, `windowState.restore`, and `windowState.clear`, plus
+window-label policy metadata. Native backends own geometry capture, restoration,
+and storage.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

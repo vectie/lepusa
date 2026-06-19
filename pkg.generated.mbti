@@ -344,6 +344,7 @@ pub(all) enum Permission {
   SingleInstance
   Tray
   AutoLaunch
+  WindowState
   Shell
   Opener
   Dialog

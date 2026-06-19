@@ -197,6 +197,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid auto launch permission")
   }
+  match @lepusa.Permission::named("window-state") {
+    Ok(permission) => {
+      assert_true(permission is WindowState)
+      assert_eq(permission.name(), "window-state")
+    }
+    Err(_) => abort("unexpected invalid window state permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")
