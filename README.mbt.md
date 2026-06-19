@@ -169,6 +169,12 @@ let app = @lepusa.new(root)
 declares `store.get`, `store.set`, `store.delete`, `store.clear`, and
 `store.keys`, backed by a MoonBit `Store`.
 
+`@lepusa/plugins/fs` defines the official filesystem command contract and
+scoped path policy. It declares async routes such as `fs.readText`,
+`fs.writeText`, `fs.list`, and `fs.metadata`, plus split read/write capability
+helpers. The package validates named scopes and relative paths; native backends
+own the actual OS filesystem implementation behind those routes.
+
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME

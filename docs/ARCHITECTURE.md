@@ -387,13 +387,14 @@ should expose the same small surface:
 
 - a `plugin()` declaration for `ProjectManifest` and `App`
 - capability helpers scoped to all windows or one window
-- registry helpers that add native command handlers
-- package-local validation and payload decoding
+- registry helpers when the plugin can be implemented purely in MoonBit
+- package-local validation, payload decoding, and policy contracts
 
-`@lepusa/plugins/log` and `@lepusa/plugins/store` are the first packages
-following this shape. They are pure and cross-platform, so they establish the
-plugin boundary before platform FFI plugins such as dialog, opener, clipboard,
-and filesystem are added.
+`@lepusa/plugins/log` and `@lepusa/plugins/store` are pure cross-platform
+packages with MoonBit command registries. `@lepusa/plugins/fs` declares the
+official filesystem command routes, read/write capability helpers, and scoped
+relative path policy. Native filesystem IO should be implemented by runtime
+backends behind that contract, not by widening core filesystem access.
 
 ## CLI Boundary
 

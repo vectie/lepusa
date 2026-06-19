@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/fs"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn read_capability(name? : String) -> @lepusa.Capability
+
+pub fn read_capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn read_write_capability(name? : String) -> @lepusa.Capability
+
+pub fn read_write_capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn write_capability(name? : String) -> @lepusa.Capability
+
+pub fn write_capability_for_window(String, name? : String) -> @lepusa.Capability
+
+// Errors
+
+// Types and methods
+pub struct FsPolicy {
+  scopes : Array[Scope]
+} derive(Eq, @debug.Debug)
+pub fn FsPolicy::new(scopes? : Array[Scope]) -> Self
+pub fn FsPolicy::resolve(Self, scope_name~ : String, path~ : String, write? : Bool) -> Result[String, String]
+pub fn FsPolicy::scope(Self, Scope) -> Self
+pub fn FsPolicy::scopes(Self) -> Array[Scope]
+pub fn FsPolicy::validate(Self) -> Array[String]
+
+pub struct Scope {
+  name : String
+  root : String
+  writable : Bool
+} derive(Eq, @debug.Debug)
+pub fn Scope::name(Self) -> String
+pub fn Scope::new(name~ : String, root~ : String, writable? : Bool) -> Self
+pub fn Scope::root(Self) -> String
+pub fn Scope::validate(Self) -> Array[String]
+pub fn Scope::writable(Self) -> Bool
+
+// Type aliases
+
+// Traits
