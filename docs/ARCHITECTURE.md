@@ -370,12 +370,15 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 - windows and sources
 - plugins and command routes
 - capabilities
-- startup command
+- startup and lifecycle command trees
 - runtime config
 
 It intentionally does not own product routes, schemas, persistent state, or
 frontend component code. It lowers into `App`, `LaunchPlan`, `RuntimePlan`, and
 `BundlePlan`.
+Project JSON command objects map to the same portable command model as MoonBit
+app code: `effect`, `emit`, `navigate`, and `batch` lower through
+`RuntimePlan::actions(cmd)` into backend-executable runtime operations.
 
 ## Non-Goals
 

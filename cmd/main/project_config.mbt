@@ -44,11 +44,14 @@ fn loaded_project_from_object(
   let windows = project_windows_from_object(object, problems)
   let plugins = project_plugins_from_object(object, problems)
   let capabilities = project_capabilities_from_object(object, problems)
+  let startup = project_startup_from_object(object, problems)
+  let lifecycle_hooks = project_lifecycle_from_object(object, problems)
   if problems.is_empty() {
     let mut manifest = @lepusa.ProjectManifest::new(
       @lepusa.AppMetadata::new(identifier~, product_name~, version~),
       runtime~,
     )
+    manifest = manifest.with_startup(startup)
     for window in windows {
       manifest = manifest.with_window(window)
     }
@@ -57,6 +60,9 @@ fn loaded_project_from_object(
     }
     for capability in capabilities {
       manifest = manifest.with_capability(capability)
+    }
+    for hook in lifecycle_hooks {
+      manifest = manifest.with_lifecycle(hook.event(), hook.command())
     }
     Ok({ manifest, root })
   } else {

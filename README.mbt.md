@@ -138,6 +138,9 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 runtime backend, windows, plugin command routes, and capability grants. Native
 CLI commands consume the nearest `lepusa.json` from the current directory, or a
 file passed with `--project`.
+It also describes runtime behavior through `startup` and `lifecycle` commands:
+`effect`, `emit`, `navigate`, and `batch` map directly to the portable
+`RuntimeAction` model consumed by native backends.
 
 `lepusa plugin new` writes a standalone plugin skeleton with plugin metadata,
 native command registration, and a scoped capability helper.

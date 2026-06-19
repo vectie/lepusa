@@ -89,6 +89,8 @@ async test "init writes standalone project skeleton" {
   assert_true(
     config_file.contains("\"commands\": [\"core.invoke\", \"core.events\"]"),
   )
+  assert_true(config_file.contains("\"startup\": { \"effect\": \"boot\" }"))
+  assert_true(config_file.contains("\"event\": \"app-will-exit\""))
   let main_file = @fs.read_file(root + "/main.mbt").text()
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
@@ -124,6 +126,7 @@ async test "generated project config drives dev plan" {
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
+  assert_true(result.output.contains("startup-operations: 1"))
 }
 
 ///|
@@ -141,6 +144,10 @@ async test "generated project config drives manifest and bundle write" {
     ),
   )
   assert_true(manifest.output.contains("Hello Lepusa"))
+  assert_true(manifest.output.contains("\"startupActions\""))
+  assert_true(manifest.output.contains("\"name\":\"boot\""))
+  assert_true(manifest.output.contains("\"kind\":\"app-will-exit\""))
+  assert_true(manifest.output.contains("\"name\":\"shutdown\""))
   let out = "/tmp/lepusa-project-bundle-out-\{@async.now().to_int()}"
   let build = render_cli_async(["build", "linux", out, "--project", project])
   assert_eq(build.exit_code, 0)
@@ -148,6 +155,58 @@ async test "generated project config drives manifest and bundle write" {
   let bundle_root = out + "/lepusa-app"
   assert_true(@fs.exists(bundle_root + "/lepusa/runtime.json"))
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
+}
+
+///|
+test "project config parses startup and lifecycle commands" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.actions",
+    #|  "productName": "Actions",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Actions" },
+    #|  "startup": [
+    #|    { "emit": { "name": "ready", "target": { "window": "main" } } },
+    #|    {
+    #|      "navigate": {
+    #|        "window": "main",
+    #|        "source": { "html": "<main>ready</main>" }
+    #|      }
+    #|    }
+    #|  ],
+    #|  "lifecycle": [
+    #|    {
+    #|      "event": "window-close-requested",
+    #|      "window": "main",
+    #|      "command": { "effect": "persist" }
+    #|    }
+    #|  ]
+    #|}
+    #|
+  match parse_project_config(config) {
+    Ok(project) =>
+      match project.manifest.runtime_plan(project.root) {
+        Ok(plan) => {
+          match plan.startup_actions() {
+            Ok(actions) => {
+              assert_eq(actions.length(), 2)
+              assert_true(actions[0] is RuntimeEmit(WindowTarget("main"), _))
+              assert_true(actions[1] is RuntimeNavigate("main", _))
+            }
+            Err(_) => abort("unexpected invalid startup actions")
+          }
+          match plan.lifecycle_actions(WindowCloseRequested("main")) {
+            Ok(actions) => {
+              assert_eq(actions.length(), 1)
+              assert_true(actions[0] is RuntimeEffect("persist"))
+            }
+            Err(_) => abort("unexpected invalid lifecycle actions")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
 }
 
 ///|

@@ -150,6 +150,13 @@ fn project_lepusa_json() -> String {
     #|      "windows": ["main"],
     #|      "commands": ["core.invoke", "core.events"]
     #|    }
+    #|  ],
+    #|  "startup": { "effect": "boot" },
+    #|  "lifecycle": [
+    #|    {
+    #|      "event": "app-will-exit",
+    #|      "command": { "effect": "shutdown" }
+    #|    }
     #|  ]
     #|}
     #|

@@ -69,6 +69,7 @@
   - `lepusa dev`: lowers the project to a runtime development plan.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
+- Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing prerequisites.
 
