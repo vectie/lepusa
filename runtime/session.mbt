@@ -24,6 +24,7 @@ pub struct RuntimeWindow {
   height : Int
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
+  event_dispatch_hook : String
 } derive(Debug, Eq)
 
 ///|
@@ -47,13 +48,22 @@ fn RuntimeSession::from_plan(
   startup_actions~ : Array[@lepusa.RuntimeAction],
   lifecycle_hooks~ : Array[@lepusa.RuntimeLifecycleHook],
   registered_routes~ : Array[String],
+  webviews~ : Array[RuntimeWebViewSpec],
 ) -> RuntimeSession {
   let windows : Array[RuntimeWindow] = []
   let protocol_mappings : Array[RuntimeProtocolMapping] = []
   let virtual_files : Array[RuntimeVirtualFile] = []
   let local_services : Array[@lepusa.LocalService] = []
   for window in plan.windows() {
-    windows.push(RuntimeWindow::from_resolved(window))
+    windows.push(
+      RuntimeWindow::from_resolved(
+        window,
+        event_dispatch_hook=event_dispatch_hook_for_window(
+          webviews,
+          window.label(),
+        ),
+      ),
+    )
     for mapping in window.source().protocol_mappings() {
       protocol_mappings.push(
         RuntimeProtocolMapping::from_mapping(window.label(), mapping),
@@ -86,6 +96,7 @@ fn RuntimeSession::from_plan(
 ///|
 fn RuntimeWindow::from_resolved(
   window : @lepusa.ResolvedWindow,
+  event_dispatch_hook~ : String,
 ) -> RuntimeWindow {
   {
     label: window.label(),
@@ -95,7 +106,21 @@ fn RuntimeWindow::from_resolved(
     height: window.height(),
     resizable: window.resizable(),
     title_bar: window.title_bar(),
+    event_dispatch_hook,
   }
+}
+
+///|
+fn event_dispatch_hook_for_window(
+  webviews : Array[RuntimeWebViewSpec],
+  label : String,
+) -> String {
+  for webview in webviews {
+    if webview.label() == label {
+      return webview.event_dispatch_hook()
+    }
+  }
+  "__lepusaDispatchEvent"
 }
 
 ///|
@@ -251,6 +276,11 @@ pub fn RuntimeWindow::title_bar(self : RuntimeWindow) -> @lepusa.TitleBarStyle {
 }
 
 ///|
+pub fn RuntimeWindow::event_dispatch_hook(self : RuntimeWindow) -> String {
+  self.event_dispatch_hook
+}
+
+///|
 pub fn RuntimeProtocolMapping::window_label(
   self : RuntimeProtocolMapping,
 ) -> String {
@@ -292,7 +322,8 @@ fn runtime_window_json(window : RuntimeWindow) -> String {
     "\"width\":\{window.width()},",
     "\"height\":\{window.height()},",
     "\"resizable\":\{window.resizable().json_bool()},",
-    "\"titleBar\":\{window.title_bar().native_manifest_name().json_string()}",
+    "\"titleBar\":\{window.title_bar().native_manifest_name().json_string()},",
+    "\"eventDispatchHook\":\{window.event_dispatch_hook().json_string()}",
     "}",
   ].join("")
 }

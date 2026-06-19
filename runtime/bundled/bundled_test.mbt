@@ -186,6 +186,8 @@ test "bundled runtime manifest emits bootstrap json" {
       assert_true(bootstrap.contains("\"startupOperations\""))
       assert_true(bootstrap.contains("\"kind\":\"start-service\""))
       assert_true(bootstrap.contains("\"kind\":\"run-effect\""))
+      assert_true(bootstrap.contains("\"kind\":\"dispatch-event\""))
+      assert_true(bootstrap.contains("\"script\":\"(() => {\\n"))
       assert_true(bootstrap.contains("\"lifecycleOperations\""))
       assert_true(bootstrap.contains("\"kind\":\"app-will-exit\""))
       assert_true(bootstrap.contains("\"bridgeRoutes\""))
@@ -405,7 +407,11 @@ fn sample_bundled_manifest() -> String {
     #|      },
     #|      {
     #|        "event": { "kind": "window-close-requested", "label": "main" },
-    #|        "actions": [{ "kind": "emit", "event": { "name": "closing" } }]
+    #|        "actions": [{
+    #|          "kind": "emit",
+    #|          "target": { "kind": "window", "label": "main" },
+    #|          "event": { "name": "closing" }
+    #|        }]
     #|      }
     #|    ],
     #|    "commandRoutes": ["log.write"],

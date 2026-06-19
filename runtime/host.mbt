@@ -40,6 +40,7 @@ pub fn RuntimeHost::snapshot(
   let mut bridge_source = ""
   let startup_actions : Array[@lepusa.RuntimeAction] = []
   let lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook] = []
+  let webviews : Array[RuntimeWebViewSpec] = []
   match self.plan.bridge_script() {
     Ok(bridge) => bridge_source = bridge.source()
     Err(bridge_problems) =>
@@ -67,6 +68,16 @@ pub fn RuntimeHost::snapshot(
         problems.push(problem)
       }
   }
+  match self.webviews() {
+    Ok(specs) =>
+      for spec in specs {
+        webviews.push(spec)
+      }
+    Err(webview_problems) =>
+      for problem in webview_problems {
+        problems.push(problem)
+      }
+  }
   if problems.is_empty() {
     Ok(
       RuntimeSession::from_plan(
@@ -75,6 +86,7 @@ pub fn RuntimeHost::snapshot(
         startup_actions~,
         lifecycle_hooks~,
         registered_routes=self.registry.routes(),
+        webviews~,
       ),
     )
   } else {

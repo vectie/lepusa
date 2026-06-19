@@ -276,6 +276,10 @@ installs `window.lepusa.listen(name, handler)`,
 `globalThis.__lepusaDispatchEvent(event)`. Platform backends should call the
 per-WebView `eventDispatchHook` from `RuntimeWebViewBoot` or
 `RuntimeWebViewSpec` when delivering `Event::to_json()` payloads into the page.
+`RuntimeSession::apply_actions` resolves `Cmd::emit` into per-WebView
+`FrontendEventDispatch` values, including the hook name and exact JavaScript
+expression to evaluate. `AppTarget` emits one dispatch per WebView; window and
+WebView targets resolve to the matching label before the platform boundary.
 
 `RuntimePlan::actions(cmd)` lowers app commands into backend-executable
 `RuntimeAction` values. Startup commands become `startupActions` in the launch
@@ -322,7 +326,7 @@ view of the same model for native runners that dispatch lifecycle events.
 `RuntimeSession::apply_actions(actions)` is the portable execution step: it
 returns backend operations to perform and an updated session with navigation
 asset mappings already applied. Native backends should translate
-`RuntimeStartService`, `RuntimeSendEvent`, `RuntimeRunEffect`, and
+`RuntimeStartService`, `RuntimeDispatchEvent`, `RuntimeRunEffect`, and
 `RuntimeNavigateWindow` to platform calls instead of mutating session
 internals.
 

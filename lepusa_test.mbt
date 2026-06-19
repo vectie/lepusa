@@ -442,6 +442,21 @@ test "events can become runtime commands" {
 }
 
 ///|
+test "frontend event dispatch carries executable bridge script" {
+  let dispatch = @lepusa.FrontendEventDispatch::new(
+    window_label="main",
+    event=@lepusa.Event::new("ready", payload="{\"ok\":true}"),
+  )
+  assert_eq(dispatch.window_label(), "main")
+  assert_eq(dispatch.hook(), "__lepusaDispatchEvent")
+  assert_true(
+    dispatch.script().contains("globalThis[\"__lepusaDispatchEvent\"]"),
+  )
+  assert_true(dispatch.script().contains("\"name\":\"ready\""))
+  assert_true(dispatch.to_json().contains("\"windowLabel\":\"main\""))
+}
+
+///|
 test "runtime plans lower commands to backend actions" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

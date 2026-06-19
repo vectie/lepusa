@@ -586,9 +586,12 @@ test "runtime session applies startup actions as backend operations" {
         Ok(step) => {
           let operations = step.operations()
           assert_eq(operations.length(), 3)
-          assert_true(
-            operations[0] is RuntimeSendEvent(WindowTarget("main"), _),
-          )
+          assert_true(operations[0] is RuntimeDispatchEvent(_))
+          guard operations[0] is RuntimeDispatchEvent(dispatch) else {
+            fail("expected frontend event dispatch")
+          }
+          assert_eq(dispatch.window_label(), "main")
+          assert_true(dispatch.script().contains("__lepusaDispatchEvent"))
           assert_true(operations[1] is RuntimeRunEffect("boot"))
           assert_true(
             operations[2]
@@ -989,7 +992,11 @@ test "runtime host applies lifecycle actions to an existing session" {
             Ok(step) => {
               let operations = step.operations()
               assert_eq(operations.length(), 2)
-              assert_true(operations[0] is RuntimeSendEvent(AppTarget, _))
+              assert_true(operations[0] is RuntimeDispatchEvent(_))
+              guard operations[0] is RuntimeDispatchEvent(dispatch) else {
+                fail("expected frontend event dispatch")
+              }
+              assert_eq(dispatch.window_label(), "main")
               assert_true(operations[1] is RuntimeRunEffect("persist"))
               assert_eq(
                 step.session().windows()[0].url(),

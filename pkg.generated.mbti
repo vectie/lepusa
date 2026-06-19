@@ -237,6 +237,19 @@ pub fn FileSystemScope::to_json(Self) -> String
 pub fn FileSystemScope::validate(Self) -> Array[String]
 pub fn FileSystemScope::writable(Self) -> Bool
 
+pub struct FrontendEventDispatch {
+  window_label : String
+  hook : String
+  event : Event
+  script : String
+} derive(Eq, @debug.Debug)
+pub fn FrontendEventDispatch::event(Self) -> Event
+pub fn FrontendEventDispatch::hook(Self) -> String
+pub fn FrontendEventDispatch::new(window_label~ : String, hook? : String, event~ : Event) -> Self
+pub fn FrontendEventDispatch::script(Self) -> String
+pub fn FrontendEventDispatch::to_json(Self) -> String
+pub fn FrontendEventDispatch::window_label(Self) -> String
+
 pub struct Html {
   content : String
 } derive(Eq, @debug.Debug)

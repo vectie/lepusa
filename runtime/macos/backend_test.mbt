@@ -148,7 +148,12 @@ test "macos backend prepares startup operations for native runner" {
       assert_eq(plan.webviews().length(), 1)
       let operations = plan.startup_operations()
       assert_eq(operations.length(), 3)
-      assert_true(operations[0] is NativeSendEvent(WindowTarget("main"), _))
+      assert_true(operations[0] is NativeDispatchEvent(_))
+      guard operations[0] is NativeDispatchEvent(dispatch) else {
+        fail("expected native frontend event dispatch")
+      }
+      assert_eq(dispatch.window_label(), "main")
+      assert_true(dispatch.script().contains("__lepusaDispatchEvent"))
       assert_true(operations[1] is NativeRunEffect("boot"))
       assert_true(
         operations[2]
@@ -368,7 +373,7 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(webview.height(), 640)
           assert_eq(webview.resizable(), false)
           let execution = plan.execution()
-          assert_eq(execution.startup_operations().length(), 2)
+          assert_eq(execution.startup_operations().length(), 3)
           assert_true(
             execution.startup_operations()[0].contains(
               "\"kind\":\"start-service\"",
@@ -376,6 +381,16 @@ test "macos backend prepares bundled runtime manifest" {
           )
           assert_true(
             execution.startup_operations()[1].contains("\"name\":\"boot\""),
+          )
+          assert_true(
+            execution.startup_operations()[2].contains(
+              "\"kind\":\"dispatch-event\"",
+            ),
+          )
+          assert_true(
+            execution.startup_operations()[2].contains(
+              "\"windowLabel\":\"main\"",
+            ),
           )
           let lifecycle_steps = execution.lifecycle_steps()
           assert_eq(lifecycle_steps.length(), 1)
@@ -570,7 +585,14 @@ fn bundled_macos_manifest() -> String {
     #|        "command": ["moon", "run", "cmd/server"]
     #|      }
     #|    ],
-    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "startupActions": [
+    #|      { "kind": "effect", "name": "boot" },
+    #|      {
+    #|        "kind": "emit",
+    #|        "target": { "kind": "window", "label": "main" },
+    #|        "event": { "name": "ready", "payload": "{}" }
+    #|      }
+    #|    ],
     #|    "lifecycleHooks": [
     #|      {
     #|        "event": { "kind": "app-will-exit" },

@@ -33,8 +33,9 @@ pub fn BundledRuntimeManifest::bootstrap_plan(
       Ok({
         manifest: self,
         run_plan,
-        startup_operations: self.bundled_startup_operations(),
-        lifecycle_operations: match self.bundled_lifecycle_operations() {
+        startup_operations: self.bundled_startup_operations(run_plan.webviews()),
+        lifecycle_operations: match
+          self.bundled_lifecycle_operations(run_plan.webviews()) {
           Ok(operations) => operations
           Err(problem) => return Err(problem)
         },
@@ -115,13 +116,17 @@ fn BundledWebView::bootstrap_json(self : BundledWebView) -> String {
 ///|
 fn BundledRuntimeManifest::bundled_startup_operations(
   self : BundledRuntimeManifest,
+  webviews : Array[BundledWebView],
 ) -> Array[String] {
   let operations : Array[String] = []
   for service in self.local_service_jsons() {
     operations.push(bundled_start_service_operation_json(service))
   }
   for action in self.startup_action_jsons() {
-    operations.push(bundled_operation_json_from_runtime_action_json(action))
+    for
+      operation in bundled_operations_from_runtime_action_json(action, webviews) {
+      operations.push(operation)
+    }
   }
   operations
 }
@@ -129,12 +134,13 @@ fn BundledRuntimeManifest::bundled_startup_operations(
 ///|
 fn BundledRuntimeManifest::bundled_lifecycle_operations(
   self : BundledRuntimeManifest,
+  webviews : Array[BundledWebView],
 ) -> Result[Array[String], String] {
   let operations : Array[String] = []
   match self.lifecycle_plans() {
     Ok(plans) =>
       for plan in plans {
-        operations.push(bundled_lifecycle_operation_json(plan))
+        operations.push(bundled_lifecycle_operation_json(plan, webviews))
       }
     Err(problem) => return Err(problem)
   }
@@ -142,11 +148,21 @@ fn BundledRuntimeManifest::bundled_lifecycle_operations(
 }
 
 ///|
-fn bundled_lifecycle_operation_json(plan : BundledLifecyclePlan) -> String {
+fn bundled_lifecycle_operation_json(
+  plan : BundledLifecyclePlan,
+  webviews : Array[BundledWebView],
+) -> String {
+  let operations : Array[String] = []
+  for action in plan.action_jsons() {
+    for
+      operation in bundled_operations_from_runtime_action_json(action, webviews) {
+      operations.push(operation)
+    }
+  }
   [
     "{",
     "\"event\":\{bundled_lifecycle_event_json(plan.event())},",
-    "\"operations\":[\{plan.action_jsons().map(bundled_operation_json_from_runtime_action_json).join(",")}]",
+    "\"operations\":[\{operations.join(",")}]",
     "}",
   ].join("")
 }
@@ -171,43 +187,121 @@ fn bundled_lifecycle_event_json(event : BundledLifecycleEvent) -> String {
 }
 
 ///|
-fn bundled_operation_json_from_runtime_action_json(
+fn bundled_operations_from_runtime_action_json(
   action_json : String,
-) -> String {
+  webviews : Array[BundledWebView],
+) -> Array[String] {
   try @json.parse(action_json) catch {
-    _ => "{\"kind\":\"runtime-action\",\"action\":\{action_json.json_string()}}"
+    _ => [bundled_runtime_action_json(action_json)]
   } noraise {
     Object(action) =>
       match optional_string(action, "kind").unwrap_or("") {
         "effect" =>
           [
-            "{",
-            "\"kind\":\"run-effect\",",
-            "\"name\":\{optional_string(action, "name").unwrap_or("").json_string()}",
-            "}",
-          ].join("")
+            [
+              "{",
+              "\"kind\":\"run-effect\",",
+              "\"name\":\{optional_string(action, "name").unwrap_or("").json_string()}",
+              "}",
+            ].join(""),
+          ]
         "emit" =>
           match (action.get("target"), action.get("event")) {
             (Some(target), Some(event)) =>
-              [
-                "{",
-                "\"kind\":\"send-event\",",
-                "\"target\":\{json_value_string(target)},",
-                "\"event\":\{json_value_string(event)}",
-                "}",
-              ].join("")
-            _ => "{\"kind\":\"runtime-action\",\"action\":\{action_json}}"
+              bundled_event_operations(target, event, webviews, action_json)
+            _ => [bundled_runtime_action_json(action_json)]
           }
         "navigate" =>
           [
-            "{",
-            "\"kind\":\"navigate-window\",",
-            "\"label\":\{optional_string(action, "windowLabel").unwrap_or("").json_string()},",
-            "\"url\":\{optional_string(action, "url").unwrap_or("").json_string()}",
-            "}",
-          ].join("")
-        _ => "{\"kind\":\"runtime-action\",\"action\":\{action_json}}"
+            [
+              "{",
+              "\"kind\":\"navigate-window\",",
+              "\"label\":\{optional_string(action, "windowLabel").unwrap_or("").json_string()},",
+              "\"url\":\{optional_string(action, "url").unwrap_or("").json_string()}",
+              "}",
+            ].join(""),
+          ]
+        _ => [bundled_runtime_action_json(action_json)]
       }
-    _ => "{\"kind\":\"runtime-action\",\"action\":\{action_json}}"
+    _ => [bundled_runtime_action_json(action_json)]
   }
+}
+
+///|
+fn bundled_event_operations(
+  target : Json,
+  event_json : Json,
+  webviews : Array[BundledWebView],
+  action_json : String,
+) -> Array[String] {
+  match event_from_json(event_json) {
+    None => [bundled_runtime_action_json(action_json)]
+    Some(event) => {
+      let operations : Array[String] = []
+      for webview in webviews {
+        if bundled_target_matches_webview(target, webview) {
+          operations.push(bundled_dispatch_operation_json(webview, event))
+        }
+      }
+      if operations.is_empty() {
+        [bundled_runtime_action_json(action_json)]
+      } else {
+        operations
+      }
+    }
+  }
+}
+
+///|
+fn event_from_json(value : Json) -> @lepusa.Event? {
+  match value {
+    Object(event) =>
+      Some(
+        @lepusa.Event::new(
+          optional_string(event, "name").unwrap_or(""),
+          payload=optional_string(event, "payload").unwrap_or(""),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn bundled_target_matches_webview(
+  target : Json,
+  webview : BundledWebView,
+) -> Bool {
+  match target {
+    Object(object) =>
+      match optional_string(object, "kind").unwrap_or("") {
+        "app" => true
+        "window" | "webview" =>
+          optional_string(object, "label").unwrap_or("") == webview.label()
+        _ => false
+      }
+    _ => false
+  }
+}
+
+///|
+fn bundled_dispatch_operation_json(
+  webview : BundledWebView,
+  event : @lepusa.Event,
+) -> String {
+  let dispatch = @lepusa.FrontendEventDispatch::new(
+    window_label=webview.label(),
+    hook=webview.event_dispatch_hook(),
+    event~,
+  )
+  [
+    "{",
+    "\"kind\":\"dispatch-event\",",
+    "\"dispatch\":\{dispatch.to_json()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn bundled_runtime_action_json(action_json : String) -> String {
+  "{\"kind\":\"runtime-action\",\"action\":\{action_json.json_string()}}"
 }

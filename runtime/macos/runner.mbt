@@ -136,7 +136,8 @@ pub fn prepare_bundled_run(
           Err(problem) => problems.push(problem)
         }
       }
-      let execution = match macos_execution_plan_from_bundled(manifest) {
+      let execution = match
+        macos_execution_plan_from_bundled(manifest, bundled_webviews) {
         Ok(execution) => Some(execution)
         Err(execution_problems) => {
           for problem in execution_problems {
@@ -215,6 +216,7 @@ fn macos_execution_plan_from_runner(
 ///|
 fn macos_execution_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
+  webviews : Array[@bundled.BundledWebView],
 ) -> Result[MacOSExecutionPlan, Array[String]] {
   let startup_operations : Array[String] = []
   let problems : Array[String] = []
@@ -222,8 +224,11 @@ fn macos_execution_plan_from_bundled(
     startup_operations.push(macos_start_service_operation_json(service))
   }
   for action in manifest.startup_action_jsons() {
-    match macos_operation_json_from_runtime_action_json(action) {
-      Ok(operation) => startup_operations.push(operation)
+    match macos_operation_jsons_from_runtime_action_json(action, webviews) {
+      Ok(operations) =>
+        for operation in operations {
+          startup_operations.push(operation)
+        }
       Err(problem) => problems.push(problem)
     }
   }
@@ -233,8 +238,12 @@ fn macos_execution_plan_from_bundled(
       for plan in plans {
         let operations : Array[String] = []
         for action in plan.action_jsons() {
-          match macos_operation_json_from_runtime_action_json(action) {
-            Ok(operation) => operations.push(operation)
+          match
+            macos_operation_jsons_from_runtime_action_json(action, webviews) {
+            Ok(action_operations) =>
+              for operation in action_operations {
+                operations.push(operation)
+              }
             Err(problem) => problems.push(problem)
           }
         }
@@ -311,39 +320,32 @@ fn macos_bundled_lifecycle_event_json(
 }
 
 ///|
-fn macos_operation_json_from_runtime_action_json(
+fn macos_operation_jsons_from_runtime_action_json(
   action_json : String,
-) -> Result[String, String] {
+  webviews : Array[@bundled.BundledWebView],
+) -> Result[Array[String], String] {
   try @json.parse(action_json) catch {
     error => Err("invalid runtime action json: \{error}")
   } noraise {
     Object(action) =>
       match optional_response_string(action, "kind").unwrap_or("") {
         "effect" =>
-          Ok(
+          Ok([
             [
               "{",
               "\"kind\":\"run-effect\",",
               "\"name\":\{optional_response_string(action, "name").unwrap_or("").json_string()}",
               "}",
             ].join(""),
-          )
+          ])
         "emit" =>
           match (action.get("target"), action.get("event")) {
             (Some(target), Some(event)) =>
-              Ok(
-                [
-                  "{",
-                  "\"kind\":\"send-event\",",
-                  "\"target\":\{json_value_string(target)},",
-                  "\"event\":\{json_value_string(event)}",
-                  "}",
-                ].join(""),
-              )
+              macos_event_operation_jsons(target, event, webviews)
             _ => Err("runtime emit action requires target and event")
           }
         "navigate" =>
-          Ok(
+          Ok([
             [
               "{",
               "\"kind\":\"navigate-window\",",
@@ -351,11 +353,85 @@ fn macos_operation_json_from_runtime_action_json(
               "\"url\":\{optional_response_string(action, "url").unwrap_or("").json_string()}",
               "}",
             ].join(""),
-          )
+          ])
         kind => Err("unsupported runtime action kind for macOS: \{kind}")
       }
     _ => Err("runtime action must be a json object")
   }
+}
+
+///|
+fn macos_event_operation_jsons(
+  target : Json,
+  event_json : Json,
+  webviews : Array[@bundled.BundledWebView],
+) -> Result[Array[String], String] {
+  match macos_event_from_json(event_json) {
+    None => Err("runtime emit event must be a json object")
+    Some(event) => {
+      let operations : Array[String] = []
+      for webview in webviews {
+        if macos_target_matches_webview(target, webview) {
+          operations.push(macos_dispatch_operation_json(webview, event))
+        }
+      }
+      if operations.is_empty() {
+        Err("runtime emit target did not match a webview")
+      } else {
+        Ok(operations)
+      }
+    }
+  }
+}
+
+///|
+fn macos_event_from_json(value : Json) -> @lepusa.Event? {
+  match value {
+    Object(event) =>
+      Some(
+        @lepusa.Event::new(
+          optional_response_string(event, "name").unwrap_or(""),
+          payload=optional_response_string(event, "payload").unwrap_or(""),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn macos_target_matches_webview(
+  target : Json,
+  webview : @bundled.BundledWebView,
+) -> Bool {
+  match target {
+    Object(object) =>
+      match optional_response_string(object, "kind").unwrap_or("") {
+        "app" => true
+        "window" | "webview" =>
+          optional_response_string(object, "label").unwrap_or("") ==
+          webview.label()
+        _ => false
+      }
+    _ => false
+  }
+}
+
+///|
+fn macos_dispatch_operation_json(
+  webview : @bundled.BundledWebView,
+  event : @lepusa.Event,
+) -> String {
+  let dispatch = @lepusa.FrontendEventDispatch::new(
+    window_label=webview.label(),
+    hook=webview.event_dispatch_hook(),
+    event~,
+  )
+  [
+    "{",
+    "\"kind\":\"dispatch-event\",",
+    "\"dispatch\":\{dispatch.to_json()}",
+    "}",
+  ].join("")
 }
 
 ///|

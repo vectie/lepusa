@@ -1,7 +1,7 @@
 ///|
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
-  RuntimeSendEvent(@lepusa.EventTarget, @lepusa.Event)
+  RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
 } derive(Debug, Eq)
@@ -32,12 +32,11 @@ pub fn RuntimeOperation::to_json(self : RuntimeOperation) -> String {
         "\"service\":\{service.to_json()}",
         "}",
       ].join("")
-    RuntimeSendEvent(target, event) =>
+    RuntimeDispatchEvent(dispatch) =>
       [
         "{",
-        "\"kind\":\"send-event\",",
-        "\"target\":\{target.to_json()},",
-        "\"event\":\{event.to_json()}",
+        "\"kind\":\"dispatch-event\",",
+        "\"dispatch\":\{dispatch.to_json()}",
         "}",
       ].join("")
     RuntimeRunEffect(name) =>
@@ -138,11 +137,65 @@ fn RuntimeSession::apply_action(
       if event.name() == "" {
         Err("event name is required")
       } else {
-        operations.push(RuntimeSendEvent(target, event))
-        Ok(self)
+        self.dispatch_event(target, event, operations)
       }
     RuntimeNavigate(window_label, source) =>
       self.navigate_window(window_label, source, operations)
+  }
+}
+
+///|
+fn RuntimeSession::dispatch_event(
+  self : RuntimeSession,
+  target : @lepusa.EventTarget,
+  event : @lepusa.Event,
+  operations : Array[RuntimeOperation],
+) -> Result[RuntimeSession, String] {
+  let windows = self.target_windows(target)
+  if windows.is_empty() {
+    return Err("event target not found: \{event_target_name(target)}")
+  }
+  for window in windows {
+    operations.push(
+      RuntimeDispatchEvent(
+        @lepusa.FrontendEventDispatch::new(
+          window_label=window.label(),
+          hook=window.event_dispatch_hook(),
+          event~,
+        ),
+      ),
+    )
+  }
+  Ok(self)
+}
+
+///|
+fn RuntimeSession::target_windows(
+  self : RuntimeSession,
+  target : @lepusa.EventTarget,
+) -> Array[RuntimeWindow] {
+  let windows : Array[RuntimeWindow] = []
+  match target {
+    AppTarget =>
+      for window in self.windows {
+        windows.push(window)
+      }
+    WindowTarget(label) | WebviewTarget(label) =>
+      for window in self.windows {
+        if window.label() == label {
+          windows.push(window)
+        }
+      }
+  }
+  windows
+}
+
+///|
+fn event_target_name(target : @lepusa.EventTarget) -> String {
+  match target {
+    AppTarget => "app"
+    WindowTarget(label) => "window \{label}"
+    WebviewTarget(label) => "webview \{label}"
   }
 }
 

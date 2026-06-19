@@ -38,7 +38,7 @@ pub fn NativeLaunchPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
 
 pub(all) enum NativeOperation {
   NativeStartService(@lepusa.LocalService)
-  NativeSendEvent(@lepusa.EventTarget, @lepusa.Event)
+  NativeDispatchEvent(@lepusa.FrontendEventDispatch)
   NativeRunEffect(String)
   NativeNavigateWindow(String, String)
 } derive(Eq, @debug.Debug)
@@ -226,7 +226,7 @@ pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[St
 
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
-  RuntimeSendEvent(@lepusa.EventTarget, @lepusa.Event)
+  RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
 } derive(Eq, @debug.Debug)
@@ -372,7 +372,9 @@ pub struct RuntimeWindow {
   height : Int
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
+  event_dispatch_hook : String
 } derive(Eq, @debug.Debug)
+pub fn RuntimeWindow::event_dispatch_hook(Self) -> String
 pub fn RuntimeWindow::height(Self) -> Int
 pub fn RuntimeWindow::label(Self) -> String
 pub fn RuntimeWindow::resizable(Self) -> Bool
