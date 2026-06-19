@@ -11,6 +11,22 @@ import {
 // Errors
 
 // Types and methods
+type ParsedAssetUrl derive(Eq, @debug.Debug)
+
+pub(all) enum RuntimeAssetBody {
+  VirtualContent(String)
+  LocalFile(String)
+} derive(Eq, @debug.Debug)
+
+pub struct RuntimeAssetResponse {
+  url : String
+  mime_type : String
+  body : RuntimeAssetBody
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAssetResponse::body(Self) -> RuntimeAssetBody
+pub fn RuntimeAssetResponse::mime_type(Self) -> String
+pub fn RuntimeAssetResponse::url(Self) -> String
+
 pub struct RuntimeHost {
   plan : @lepusa.RuntimePlan
   registry : @lepusa.CommandRegistry
@@ -44,10 +60,12 @@ pub struct RuntimeSession {
 pub fn RuntimeSession::asset_protocol(Self) -> String
 pub fn RuntimeSession::backend(Self) -> @lepusa.RuntimeBackend
 pub fn RuntimeSession::bridge_source(Self) -> String
+pub fn RuntimeSession::bridge_url(Self) -> String
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
+pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]
 pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
 pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
 

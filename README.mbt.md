@@ -116,6 +116,10 @@ runtime and bundler work concrete outputs to consume.
 window frames, protocol mappings, virtual files, generated bridge source, and
 command dispatch through the declared capabilities.
 
+`RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
+native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
+virtual files, and safe local asset paths without doing platform file IO.
+
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.

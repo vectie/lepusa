@@ -49,6 +49,65 @@ test "runtime host snapshots windows protocols and bridge" {
 }
 
 ///|
+test "runtime session resolves virtual runtime and window assets" {
+  let host = RuntimeHost::new(test_plan())
+  match host.snapshot() {
+    Ok(session) => {
+      match session.resolve_asset("lepusa://runtime/bridge.js") {
+        Ok(response) => {
+          assert_eq(response.mime_type(), "application/javascript")
+          assert_true(response.body() is VirtualContent(_))
+          guard response.body() is VirtualContent(content) else {
+            fail("expected virtual bridge")
+          }
+          assert_true(content.contains("__lepusaInvoke"))
+        }
+        Err(_) => abort("unexpected missing bridge asset")
+      }
+      match session.resolve_asset("lepusa://inline/main/index.html") {
+        Ok(response) => {
+          assert_eq(response.mime_type(), "text/html")
+          assert_true(response.body() is VirtualContent("<main>runtime</main>"))
+        }
+        Err(_) => abort("unexpected missing inline asset")
+      }
+      match session.resolve_asset("lepusa://inline/main/index.html?v=1#app") {
+        Ok(response) => assert_eq(response.mime_type(), "text/html")
+        Err(_) => abort("unexpected missing inline asset with suffix")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime session")
+  }
+}
+
+///|
+test "runtime session maps local assets without allowing traversal" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(source=@lepusa.Source::local_path("dist"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).snapshot() {
+        Ok(session) => {
+          match session.resolve_asset("lepusa://local/main/app.css") {
+            Ok(response) => {
+              assert_eq(response.mime_type(), "text/css")
+              assert_true(response.body() is LocalFile("dist/app.css"))
+            }
+            Err(_) => abort("unexpected local asset mapping failure")
+          }
+          match session.resolve_asset("lepusa://local/main/../secret.txt") {
+            Ok(_) => abort("unexpected unsafe asset success")
+            Err(problem) =>
+              assert_eq(problem, "unsafe asset path: ../secret.txt")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host dispatches through plan capabilities" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
     payload,

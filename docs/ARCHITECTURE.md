@@ -206,6 +206,11 @@ command dispatch through the plan's capability set. Platform backends should add
 event loop and WebView ownership underneath this package instead of reaching
 back into app construction APIs.
 
+`RuntimeSession::resolve_asset(url)` is the custom-protocol contract native
+backends should call from their WebView protocol handler. It resolves the
+generated bridge, inline virtual files, and safe local asset paths while
+rejecting traversal attempts before platform file IO happens.
+
 ## Bundling
 
 `BundlePlan` is a pure framework contract: it computes platform metadata,
