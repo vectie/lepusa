@@ -114,6 +114,7 @@ moon run cmd/main --target native -- lifecycle app-will-exit --project _build/le
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
+moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
@@ -385,6 +386,9 @@ in the runtime manifest.
 directory. Project bundles carry registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
+The generated launcher stubs call `lepusa-runtime --manifest <runtime.json>`;
+today that runtime command prints a no-window bundle manifest summary, and it is
+the narrow executable boundary for the future platform WebView loop.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

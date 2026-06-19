@@ -75,6 +75,7 @@
   - `lepusa bundle`: alias for materializing the current bundle plan.
   - `lepusa plugin new`: writes a standalone plugin package skeleton.
   - `lepusa dev`: lowers the project to a runtime development plan.
+  - `lepusa-runtime --manifest`: reads bundled runtime data for launcher stubs.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.

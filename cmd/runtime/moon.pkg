@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/core/json",
+  "moonbitlang/x/sys",
+}
+
+supported_targets = "+native"
+
+options(
+  "bin-name": "lepusa-runtime",
+  "bin-target": "native",
+  "is-main": true,
+  targets: { "main.mbt": [ "native" ] },
+)
