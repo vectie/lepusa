@@ -33,7 +33,7 @@ test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
-  assert_true(result.output.contains("files: 3"))
+  assert_true(result.output.contains("files: 2"))
 }
 
 ///|
@@ -42,21 +42,19 @@ async test "bundle write materializes planned files" {
   let result = render_cli_async(["bundle-write", "linux", root])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: linux"))
-  assert_true(result.output.contains("files: 3"))
+  assert_true(result.output.contains("files: 2"))
   let bundle_root = root + "/lepusa-example"
   let desktop_path = bundle_root + "/lepusa-example.desktop"
   let runtime_path = bundle_root + "/lepusa/runtime.json"
-  let bridge_path = bundle_root + "/lepusa/bridge.js"
   assert_true(@fs.exists(desktop_path))
   assert_true(@fs.exists(runtime_path))
-  assert_true(@fs.exists(bridge_path))
   assert_true(
     @fs.read_file(desktop_path).text().contains("Name=Lepusa Example"),
   )
-  assert_true(
-    @fs.read_file(runtime_path).text().contains("\"target\":\"linux\""),
-  )
-  assert_true(@fs.read_file(bridge_path).text().contains("__lepusaInvoke"))
+  let runtime_manifest = @fs.read_file(runtime_path).text()
+  assert_true(runtime_manifest.contains("\"target\":\"linux\""))
+  assert_true(runtime_manifest.contains("\"initializationScripts\""))
+  assert_true(runtime_manifest.contains("__lepusaInvoke"))
 }
 
 ///|

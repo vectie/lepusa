@@ -322,7 +322,7 @@ test "bundle plans derive executable and package names from metadata" {
           assert_eq(plan.bundle_name(), "lepusa-example.app")
           match plan.files() {
             Ok(files) => {
-              assert_eq(files.length(), 4)
+              assert_eq(files.length(), 3)
               assert_eq(
                 files[0].path(),
                 "lepusa-example.app/Contents/Info.plist",
@@ -332,7 +332,9 @@ test "bundle plans derive executable and package names from metadata" {
                 files[2].path(),
                 "lepusa-example.app/Contents/Resources/lepusa/runtime.json",
               )
-              assert_true(files[3].content().contains("windowLabel"))
+              assert_true(files[2].content().contains("\"webviews\""))
+              assert_true(files[2].content().contains("windowLabel"))
+              assert_true(files[2].content().contains("__lepusaInvoke"))
             }
             Err(_) => abort("unexpected invalid bundle files")
           }

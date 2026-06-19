@@ -238,11 +238,13 @@ under this package, not in the portable facade or CLI.
 
 ## Bundling
 
-`BundlePlan` is a pure framework contract: it computes platform metadata,
-`lepusa/runtime.json`, and the generated frontend bridge without touching the
-filesystem. The native CLI owns materialization through `lepusa bundle-write`,
-which writes the planned files into an output directory and applies executable
-permissions where the plan asks for them.
+`BundlePlan` is a pure framework contract: it computes platform metadata and
+`lepusa/runtime.json` without touching the filesystem. The runtime manifest
+includes per-window WebView boot data and initialization scripts, so bundle
+writers do not emit a separate default bridge file that can drift from
+multi-window runtime state. The native CLI owns materialization through
+`lepusa bundle-write`, which writes the planned files into an output directory
+and applies executable permissions where the plan asks for them.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume
