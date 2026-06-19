@@ -117,8 +117,17 @@ test "run prints native runner smoke summary" {
 ///|
 test "run launch rejects unwired native targets" {
   let result = render_cli(["run", "linux", "--launch"])
-  assert_eq(result.exit_code, 1)
-  assert_true(result.output.contains("native launch is not implemented"))
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa launch"))
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("backend: linux"))
+  assert_true(result.output.contains("engine: WebKitGTK"))
+  assert_true(result.output.contains("status: unsupported"))
+  assert_true(result.output.contains("webviews: 1"))
+  assert_true(
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
+  )
+  assert_true(result.output.contains("startup-operations: 0"))
 }
 
 ///|

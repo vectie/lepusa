@@ -404,9 +404,9 @@ integration step for async commands. `MacOSOpenWindow` reports
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
-Windows still expose runner contracts and host availability checks, but their
-native launch loops intentionally fail until those platform packages implement
-their WebView creation paths.
+Windows expose the same package-owned dry-run and launch-result boundary, but
+their `LinuxOpenWindow` and `WindowsOpenWindow` modes report unsupported until
+those platform packages implement their WebView creation paths.
 
 ## Bundling
 

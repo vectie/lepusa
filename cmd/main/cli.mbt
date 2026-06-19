@@ -634,10 +634,16 @@ fn render_native_launch(
         Ok(result) => render_macos_launch_result(result)
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
-    Windows | Linux =>
-      fail(
-        "Lepusa launch\n[fail] native launch is not implemented for target: \{target.name()}\n",
-      )
+    Windows =>
+      match @windows_backend.launch(runtime) {
+        Ok(result) => render_windows_launch_result(result)
+        Err(problems) => fail(render_problems("Lepusa launch", problems))
+      }
+    Linux =>
+      match @linux_backend.launch(runtime) {
+        Ok(result) => render_linux_launch_result(result)
+        Err(problems) => fail(render_problems("Lepusa launch", problems))
+      }
   }
 }
 
@@ -673,6 +679,50 @@ fn render_macos_launch_result(
     "lifecycle-steps: \{plan.execution().lifecycle_steps().length()}\n" +
     "bridge-sync-routes: \{plan.bridge().sync_command_routes().length()}\n" +
     "bridge-async-routes: \{plan.bridge().async_command_routes().length()}\n",
+  )
+}
+
+///|
+fn render_linux_launch_result(
+  result : @linux_backend.LinuxRunResult,
+) -> CliResult {
+  let plan = result.plan()
+  let status = match result.status() {
+    LinuxPrepared => "prepared"
+    LinuxLaunchUnsupported(_) => "unsupported"
+  }
+  ok(
+    "Lepusa launch\n" +
+    "target: linux\n" +
+    "backend: linux\n" +
+    "engine: WebKitGTK\n" +
+    "status: \{status}\n" +
+    "webviews: \{plan.webview_count()}\n" +
+    "first-window-url: \{plan.first_webview_url()}\n" +
+    "startup-operations: \{plan.startup_operation_count()}\n" +
+    "lifecycle-steps: \{plan.lifecycle_step_count()}\n",
+  )
+}
+
+///|
+fn render_windows_launch_result(
+  result : @windows_backend.WindowsRunResult,
+) -> CliResult {
+  let plan = result.plan()
+  let status = match result.status() {
+    WindowsPrepared => "prepared"
+    WindowsLaunchUnsupported(_) => "unsupported"
+  }
+  ok(
+    "Lepusa launch\n" +
+    "target: windows\n" +
+    "backend: windows\n" +
+    "engine: WebView2\n" +
+    "status: \{status}\n" +
+    "webviews: \{plan.webview_count()}\n" +
+    "first-window-url: \{plan.first_webview_url()}\n" +
+    "startup-operations: \{plan.startup_operation_count()}\n" +
+    "lifecycle-steps: \{plan.lifecycle_step_count()}\n",
   )
 }
 

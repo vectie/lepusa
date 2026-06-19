@@ -52,3 +52,33 @@ test "linux backend exposes native runtime facade" {
     Err(_) => abort("unexpected invalid Linux native runtime")
   }
 }
+
+///|
+test "linux backend prepares run plan and reports unsupported launch" {
+  match runtime(test_host()) {
+    Ok(runtime) => {
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is LinuxPrepared)
+          assert_eq(result.plan().webview_count(), 1)
+          assert_eq(
+            result.plan().first_webview_url(),
+            "lepusa://inline/main/index.html",
+          )
+          assert_eq(result.plan().startup_operation_count(), 1)
+        }
+        Err(_) => abort("unexpected invalid Linux dry run")
+      }
+      match launch(runtime) {
+        Ok(result) =>
+          match result.status() {
+            LinuxLaunchUnsupported(message) =>
+              assert_true(message.contains("WebKitGTK launch loop"))
+            _ => abort("unexpected Linux launch status")
+          }
+        Err(_) => abort("unexpected invalid Linux launch plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid Linux native runtime")
+  }
+}

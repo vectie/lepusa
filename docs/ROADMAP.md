@@ -59,8 +59,9 @@
   expose sync versus async bridge route metadata; MoonBit-side macOS bridge
   message preparation separates native capture from async dispatch; open-window
   macOS launches now report unsupported when async routes require native
-  scheduling; native async bridge scheduling and Linux/Windows launch loops
-  remain.
+  scheduling; Linux and Windows expose dry-run and unsupported-launch runner
+  contracts; native async bridge scheduling and Linux/Windows WebView creation
+  loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

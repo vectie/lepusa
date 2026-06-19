@@ -57,3 +57,33 @@ test "windows backend exposes native runtime facade" {
     Err(_) => abort("unexpected invalid Windows native runtime")
   }
 }
+
+///|
+test "windows backend prepares run plan and reports unsupported launch" {
+  match runtime(test_host()) {
+    Ok(runtime) => {
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is WindowsPrepared)
+          assert_eq(result.plan().webview_count(), 1)
+          assert_eq(
+            result.plan().first_webview_url(),
+            "lepusa://inline/main/index.html",
+          )
+          assert_eq(result.plan().startup_operation_count(), 1)
+        }
+        Err(_) => abort("unexpected invalid Windows dry run")
+      }
+      match launch(runtime) {
+        Ok(result) =>
+          match result.status() {
+            WindowsLaunchUnsupported(message) =>
+              assert_true(message.contains("WebView2 launch loop"))
+            _ => abort("unexpected Windows launch status")
+          }
+        Err(_) => abort("unexpected invalid Windows launch plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid Windows native runtime")
+  }
+}
