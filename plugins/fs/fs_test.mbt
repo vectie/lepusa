@@ -25,8 +25,14 @@ test "fs capabilities split read write and scoped window grants" {
 ///|
 test "fs policy validates scopes and resolves safe relative paths" {
   let policy = FsPolicy::new()
-    .scope(Scope::new(name="assets", root="/app/assets"))
-    .scope(Scope::new(name="data", root="/app/data/", writable=true))
+    .scope(@lepusa.FileSystemScope::new(name="assets", root="/app/assets"))
+    .scope(
+      @lepusa.FileSystemScope::new(
+        name="data",
+        root="/app/data/",
+        writable=true,
+      ),
+    )
   assert_eq(policy.validate().length(), 0)
   assert_true(policy.scopes()[1].writable())
   assert_eq(
@@ -42,7 +48,7 @@ test "fs policy validates scopes and resolves safe relative paths" {
 ///|
 test "fs policy rejects unsafe paths and read-only writes" {
   let policy = FsPolicy::new().scope(
-    Scope::new(name="assets", root="/app/assets"),
+    @lepusa.FileSystemScope::new(name="assets", root="/app/assets"),
   )
   assert_true(
     policy.resolve(scope_name="assets", path="../secret")
@@ -69,9 +75,9 @@ test "fs policy rejects unsafe paths and read-only writes" {
 ///|
 test "fs policy reports invalid and duplicate scopes" {
   let problems = FsPolicy::new()
-    .scope(Scope::new(name="", root=""))
-    .scope(Scope::new(name="bad/name", root="/tmp"))
-    .scope(Scope::new(name="bad/name", root="/tmp2"))
+    .scope(@lepusa.FileSystemScope::new(name="", root=""))
+    .scope(@lepusa.FileSystemScope::new(name="bad/name", root="/tmp"))
+    .scope(@lepusa.FileSystemScope::new(name="bad/name", root="/tmp2"))
     .validate()
   assert_true(problems.contains("filesystem scope name is required"))
   assert_true(problems.contains("filesystem scope root is required"))

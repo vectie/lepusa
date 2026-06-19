@@ -25,24 +25,13 @@ pub fn write_capability_for_window(String, name? : String) -> @lepusa.Capability
 
 // Types and methods
 pub struct FsPolicy {
-  scopes : Array[Scope]
+  scopes : Array[@lepusa.FileSystemScope]
 } derive(Eq, @debug.Debug)
-pub fn FsPolicy::new(scopes? : Array[Scope]) -> Self
+pub fn FsPolicy::new(scopes? : Array[@lepusa.FileSystemScope]) -> Self
 pub fn FsPolicy::resolve(Self, scope_name~ : String, path~ : String, write? : Bool) -> Result[String, String]
-pub fn FsPolicy::scope(Self, Scope) -> Self
-pub fn FsPolicy::scopes(Self) -> Array[Scope]
+pub fn FsPolicy::scope(Self, @lepusa.FileSystemScope) -> Self
+pub fn FsPolicy::scopes(Self) -> Array[@lepusa.FileSystemScope]
 pub fn FsPolicy::validate(Self) -> Array[String]
-
-pub struct Scope {
-  name : String
-  root : String
-  writable : Bool
-} derive(Eq, @debug.Debug)
-pub fn Scope::name(Self) -> String
-pub fn Scope::new(name~ : String, root~ : String, writable? : Bool) -> Self
-pub fn Scope::root(Self) -> String
-pub fn Scope::validate(Self) -> Array[String]
-pub fn Scope::writable(Self) -> Bool
 
 // Type aliases
 

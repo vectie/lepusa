@@ -25,8 +25,10 @@ test "declare scoped fs access" {
 ///|
 test "resolve paths inside named scopes" {
   let policy = @fs.FsPolicy::new()
-    .scope(@fs.Scope::new(name="assets", root="/app/assets"))
-    .scope(@fs.Scope::new(name="data", root="/app/data", writable=true))
+    .scope(@lepusa.FileSystemScope::new(name="assets", root="/app/assets"))
+    .scope(
+      @lepusa.FileSystemScope::new(name="data", root="/app/data", writable=true),
+    )
 
   assert_eq(
     policy.resolve(scope_name="assets", path="icons/main.png").unwrap(),

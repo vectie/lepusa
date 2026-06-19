@@ -1,68 +1,25 @@
 ///|
-pub struct Scope {
-  name : String
-  root : String
-  writable : Bool
-} derive(Debug, Eq)
-
-///|
-pub fn Scope::new(
-  name~ : String,
-  root~ : String,
-  writable? : Bool = false,
-) -> Scope {
-  { name, root, writable }
-}
-
-///|
-pub fn Scope::name(self : Scope) -> String {
-  self.name
-}
-
-///|
-pub fn Scope::root(self : Scope) -> String {
-  self.root
-}
-
-///|
-pub fn Scope::writable(self : Scope) -> Bool {
-  self.writable
-}
-
-///|
-pub fn Scope::validate(self : Scope) -> Array[String] {
-  let problems : Array[String] = []
-  if self.name == "" {
-    problems.push("filesystem scope name is required")
-  }
-  if self.root == "" {
-    problems.push("filesystem scope root is required")
-  }
-  if self.name.contains("/") || self.name.contains("\\") {
-    problems.push("filesystem scope name must not contain path separators")
-  }
-  problems
-}
-
-///|
 pub struct FsPolicy {
-  scopes : Array[Scope]
+  scopes : Array[@lepusa.FileSystemScope]
 } derive(Debug, Eq)
 
 ///|
-pub fn FsPolicy::new(scopes? : Array[Scope] = []) -> FsPolicy {
+pub fn FsPolicy::new(scopes? : Array[@lepusa.FileSystemScope] = []) -> FsPolicy {
   { scopes, }
 }
 
 ///|
-pub fn FsPolicy::scope(self : FsPolicy, scope : Scope) -> FsPolicy {
+pub fn FsPolicy::scope(
+  self : FsPolicy,
+  scope : @lepusa.FileSystemScope,
+) -> FsPolicy {
   let scopes = self.scopes.copy()
   scopes.push(scope)
   { scopes, }
 }
 
 ///|
-pub fn FsPolicy::scopes(self : FsPolicy) -> Array[Scope] {
+pub fn FsPolicy::scopes(self : FsPolicy) -> Array[@lepusa.FileSystemScope] {
   self.scopes.copy()
 }
 
@@ -106,7 +63,10 @@ pub fn FsPolicy::resolve(
 }
 
 ///|
-fn FsPolicy::find_scope(self : FsPolicy, name : String) -> Scope? {
+fn FsPolicy::find_scope(
+  self : FsPolicy,
+  name : String,
+) -> @lepusa.FileSystemScope? {
   for scope in self.scopes {
     if scope.name() == name {
       return Some(scope)
