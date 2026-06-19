@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/store"
+
+import {
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, store? : Store) -> @lepusa.CommandRegistry
+
+pub fn registry(store? : Store) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub struct Store {
+  values : Map[String, String]
+}
+pub fn Store::clear(Self) -> Int
+pub fn Store::delete(Self, String) -> Bool
+pub fn Store::get(Self, String) -> String?
+pub fn Store::keys(Self) -> Array[String]
+pub fn Store::new() -> Self
+pub fn Store::set(Self, String, String) -> Unit
+
+// Type aliases
+
+// Traits

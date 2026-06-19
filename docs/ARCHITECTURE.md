@@ -347,9 +347,10 @@ should expose the same small surface:
 - registry helpers that add native command handlers
 - package-local validation and payload decoding
 
-`@lepusa/plugins/log` is the first package following this shape. It is pure and
-cross-platform, so it establishes the plugin boundary before platform FFI
-plugins such as dialog, opener, clipboard, and filesystem are added.
+`@lepusa/plugins/log` and `@lepusa/plugins/store` are the first packages
+following this shape. They are pure and cross-platform, so they establish the
+plugin boundary before platform FFI plugins such as dialog, opener, clipboard,
+and filesystem are added.
 
 ## CLI Boundary
 

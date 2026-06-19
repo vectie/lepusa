@@ -162,6 +162,10 @@ let app = @lepusa.new(root)
   .with_capability(@log.capability_for_window("main"))
 ```
 
+`@lepusa/plugins/store` follows the same shape for scoped key-value state. It
+declares `store.get`, `store.set`, `store.delete`, `store.clear`, and
+`store.keys`, backed by a MoonBit `Store`.
+
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
 document-start scripts, protocol mappings, inline virtual files with MIME

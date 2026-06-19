@@ -85,7 +85,7 @@ Stabilize the cross-platform core set first:
 - clipboard
 - notification
 - log: initial pure command-registry package exists
-- store
+- store: initial pure command-registry package exists
 - localhost
 - single-instance
 - deep-link
