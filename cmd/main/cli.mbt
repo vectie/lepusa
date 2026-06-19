@@ -682,6 +682,7 @@ fn render_native_run_summary(
   runtime : @runtime.NativeRuntime,
 ) -> CliResult {
   let plan = runtime.runner_plan()
+  let services = plan.service_plan()
   let first_window = match plan.webview_specs().get(0) {
     Some(window) => window.url()
     None => ""
@@ -694,7 +695,9 @@ fn render_native_run_summary(
     "webviews: \{plan.webview_specs().length()}\n" +
     "first-window-url: \{first_window}\n" +
     "bridge: \{plan.session().bridge_url()}\n" +
-    "local-services: \{plan.session().local_services().length()}\n" +
+    "local-services: \{services.services().length()}\n" +
+    "service-supervisor: \{services.requires_supervisor()}\n" +
+    "service-start-order: \{services.startup_service_names().join(",")}\n" +
     "startup-operations: \{plan.startup_operations().length()}\n" +
     "lifecycle-steps: \{plan.lifecycle_steps().length()}\n",
   )
@@ -735,6 +738,7 @@ fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
 ///|
 fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
   let session = dev.session()
+  let services = dev.service_plan()
   let routes = session.command_routes().join(",")
   let registered_routes = session.registered_routes().join(",")
   let first_window = match dev.webviews().get(0) {
@@ -749,7 +753,9 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "asset-protocol: \{session.asset_protocol()}\n" +
     "routes: \{routes}\n" +
     "registered-routes: \{registered_routes}\n" +
-    "local-services: \{session.local_services().length()}\n" +
+    "local-services: \{services.services().length()}\n" +
+    "service-supervisor: \{services.requires_supervisor()}\n" +
+    "service-start-order: \{services.startup_service_names().join(",")}\n" +
     "filesystem-scopes: \{session.file_system_scopes().length()}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n",
   )

@@ -681,6 +681,15 @@ test "runtime runner starts services before app startup actions" {
           assert_eq(operations.length(), 2)
           assert_true(operations[0] is RuntimeStartService(_))
           assert_true(operations[1] is RuntimeRunEffect("boot"))
+          let services = runner.service_plan()
+          assert_eq(services.services().length(), 1)
+          assert_eq(services.service_names()[0], "gateway")
+          assert_eq(services.startup_services().length(), 1)
+          assert_eq(services.startup_service_names()[0], "gateway")
+          assert_true(services.requires_supervisor())
+          assert_true(
+            services.to_json().contains("\"startOrder\":[\"gateway\"]"),
+          )
           assert_eq(runner.lifecycle_steps().length(), 0)
         }
         Err(_) => abort("unexpected invalid runner plan")
@@ -707,11 +716,27 @@ test "runtime host builds dev plan for backend runners" {
           )
           assert_eq(dev.startup_operations().length(), 1)
           assert_true(dev.startup_operations()[0] is RuntimeRunEffect("boot"))
+          let services = dev.service_plan()
+          assert_eq(services.services().length(), 0)
+          assert_false(services.requires_supervisor())
         }
         Err(_) => abort("unexpected invalid dev plan")
       }
     Err(_) => abort("unexpected invalid runtime plan")
   }
+}
+
+///|
+test "runtime service plan validates startup service declarations" {
+  let service = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/server"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let plan = RuntimeServicePlan::new(startup_services=[service])
+  let problems = plan.validate()
+  assert_eq(problems.length(), 1)
+  assert_eq(problems[0], "startup service is not declared: api")
 }
 
 ///|

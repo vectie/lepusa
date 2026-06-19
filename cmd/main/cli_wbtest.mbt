@@ -406,6 +406,8 @@ async test "checked examples cover rabbita static and gateway modes" {
     gateway.output.contains("first-window-url: http://127.0.0.1:4317/"),
   )
   assert_true(gateway.output.contains("local-services: 1"))
+  assert_true(gateway.output.contains("service-supervisor: true"))
+  assert_true(gateway.output.contains("service-start-order: gateway"))
   assert_true(gateway.output.contains("startup-operations: 2"))
   let gateway_run = render_cli_async([
     "run", "linux", "--project", "examples/gateway/lepusa.json",
@@ -415,6 +417,8 @@ async test "checked examples cover rabbita static and gateway modes" {
     gateway_run.output.contains("first-window-url: http://127.0.0.1:4317/"),
   )
   assert_true(gateway_run.output.contains("local-services: 1"))
+  assert_true(gateway_run.output.contains("service-supervisor: true"))
+  assert_true(gateway_run.output.contains("service-start-order: gateway"))
   assert_true(gateway_run.output.contains("startup-operations: 2"))
 }
 

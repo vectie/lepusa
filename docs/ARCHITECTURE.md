@@ -334,6 +334,10 @@ adds the launch manifest to the resolved WebViews, stepped session, and startup
 operations so platform packages can translate a single runtime object. Local
 services are emitted as `RuntimeStartService` operations before app startup
 commands.
+`RuntimeServicePlan` is the service-specific view over the same data. It exposes
+declared services, startup services, start order, validation, and a
+`requiresSupervisor` flag so dev tools and native runners can supervise
+localhost sidecars without parsing project manifests or generic operation JSON.
 `NativeRuntime::new(backend, host)` is the backend-owned wrapper over that
 handoff. It is the narrow surface a real WKWebView/WebView2/WebKitGTK loop
 needs while creating windows, serving custom protocol requests, handling bridge

@@ -58,6 +58,7 @@ pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
 pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
 pub fn NativeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[NativeRunnerStep, Array[String]]
 pub fn NativeRunnerPlan::lifecycle_steps(Self) -> Array[NativeRunnerStep]
+pub fn NativeRunnerPlan::service_plan(Self) -> RuntimeServicePlan
 pub fn NativeRunnerPlan::session(Self) -> RuntimeSession
 pub fn NativeRunnerPlan::startup_operations(Self) -> Array[NativeOperation]
 pub fn NativeRunnerPlan::webview_engine(Self) -> String
@@ -113,6 +114,7 @@ pub struct RuntimeDevPlan {
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
 } derive(Eq, @debug.Debug)
+pub fn RuntimeDevPlan::service_plan(Self) -> RuntimeServicePlan
 pub fn RuntimeDevPlan::session(Self) -> RuntimeSession
 pub fn RuntimeDevPlan::startup_operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
@@ -136,6 +138,7 @@ pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::resolve_asset_json(Self, String) -> String
 pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]]
+pub fn RuntimeHost::service_plan(Self) -> Result[RuntimeServicePlan, Array[String]]
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::startup_step(Self) -> Result[RuntimeStep, Array[String]]
@@ -169,6 +172,7 @@ pub struct RuntimeRunnerPlan {
 pub fn RuntimeRunnerPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn RuntimeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> RuntimeRunnerStep
 pub fn RuntimeRunnerPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
+pub fn RuntimeRunnerPlan::service_plan(Self) -> RuntimeServicePlan
 pub fn RuntimeRunnerPlan::session(Self) -> RuntimeSession
 pub fn RuntimeRunnerPlan::startup_operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeRunnerPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
@@ -182,6 +186,19 @@ pub fn RuntimeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
 pub fn RuntimeRunnerStep::operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeRunnerStep::session(Self) -> RuntimeSession
 pub fn RuntimeRunnerStep::to_json(Self) -> String
+
+pub struct RuntimeServicePlan {
+  services : Array[@lepusa.LocalService]
+  startup_services : Array[@lepusa.LocalService]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeServicePlan::new(services? : Array[@lepusa.LocalService], startup_services? : Array[@lepusa.LocalService]) -> Self
+pub fn RuntimeServicePlan::requires_supervisor(Self) -> Bool
+pub fn RuntimeServicePlan::service_names(Self) -> Array[String]
+pub fn RuntimeServicePlan::services(Self) -> Array[@lepusa.LocalService]
+pub fn RuntimeServicePlan::startup_service_names(Self) -> Array[String]
+pub fn RuntimeServicePlan::startup_services(Self) -> Array[@lepusa.LocalService]
+pub fn RuntimeServicePlan::to_json(Self) -> String
+pub fn RuntimeServicePlan::validate(Self) -> Array[String]
 
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend
