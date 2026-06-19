@@ -976,6 +976,12 @@ test "bundle plans derive executable and package names from metadata" {
             plan.signing().entitlements_path().unwrap(),
             "macos/entitlements.plist",
           )
+          let artifacts = plan.artifacts()
+          assert_eq(artifacts.length(), 2)
+          assert_true(artifacts[0].kind() is AppBundleArtifact)
+          assert_eq(artifacts[0].path(), "lepusa-example.app")
+          assert_true(artifacts[1].kind() is DiskImageArtifact)
+          assert_eq(artifacts[1].path(), "lepusa-example-0.1.0.dmg")
           let steps = plan.signing_steps()
           assert_eq(steps.length(), 2)
           assert_eq(steps[0].name(), "codesign-app")
@@ -1036,6 +1042,10 @@ test "bundle plans derive executable and package names from metadata" {
                 "lepusa-example.app/Contents/Resources/lepusa/runtime.json",
               )
               assert_true(files[2].content().contains("\"webviews\""))
+              assert_true(files[2].content().contains("\"artifacts\""))
+              assert_true(
+                files[2].content().contains("lepusa-example-0.1.0.dmg"),
+              )
               assert_true(files[2].content().contains("\"resources\""))
               assert_true(files[2].content().contains("assets/app.icns"))
               assert_true(files[2].content().contains("windowLabel"))
@@ -1099,6 +1109,12 @@ test "bundle files include platform metadata" {
         Ok(plan) =>
           match plan.files() {
             Ok(files) => {
+              let artifacts = plan.artifacts()
+              assert_eq(artifacts.length(), 2)
+              assert_true(artifacts[0].kind() is PortableDirectoryArtifact)
+              assert_eq(artifacts[0].path(), "files-app")
+              assert_true(artifacts[1].kind() is DesktopEntryArtifact)
+              assert_eq(artifacts[1].path(), "files-app/files-app.desktop")
               assert_eq(plan.signing_prerequisites().length(), 2)
               assert_eq(files.length(), 3)
               assert_eq(files[0].path(), "files-app/files-app.desktop")

@@ -109,6 +109,23 @@ pub struct BundleResource {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum BundleArtifactKind {
+  AppBundleArtifact
+  DiskImageArtifact
+  ExecutableArtifact
+  InstallerArtifact
+  PortableDirectoryArtifact
+  DesktopEntryArtifact
+} derive(Debug, Eq)
+
+///|
+pub struct BundleArtifact {
+  kind : BundleArtifactKind
+  path : String
+  description : String
+} derive(Debug, Eq)
+
+///|
 pub struct BundleFile {
   path : String
   content : String
@@ -293,6 +310,53 @@ pub fn BundleResource::to_json(self : BundleResource) -> String {
 }
 
 ///|
+pub fn BundleArtifact::new(
+  kind~ : BundleArtifactKind,
+  path~ : String,
+  description~ : String,
+) -> BundleArtifact {
+  { kind, path, description }
+}
+
+///|
+pub fn BundleArtifact::kind(self : BundleArtifact) -> BundleArtifactKind {
+  self.kind
+}
+
+///|
+pub fn BundleArtifact::path(self : BundleArtifact) -> String {
+  self.path
+}
+
+///|
+pub fn BundleArtifact::description(self : BundleArtifact) -> String {
+  self.description
+}
+
+///|
+pub fn BundleArtifactKind::name(self : BundleArtifactKind) -> String {
+  match self {
+    AppBundleArtifact => "app-bundle"
+    DiskImageArtifact => "disk-image"
+    ExecutableArtifact => "executable"
+    InstallerArtifact => "installer"
+    PortableDirectoryArtifact => "portable-directory"
+    DesktopEntryArtifact => "desktop-entry"
+  }
+}
+
+///|
+pub fn BundleArtifact::to_json(self : BundleArtifact) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.name().json_string()},",
+    "\"path\":\{self.path.json_string()},",
+    "\"description\":\{self.description.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn SigningPrerequisite::new(
   kind~ : SigningPrerequisiteKind,
   name~ : String,
@@ -465,6 +529,51 @@ pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
     None => ()
   }
   resources
+}
+
+///|
+pub fn BundlePlan::artifacts(self : BundlePlan) -> Array[BundleArtifact] {
+  match self.target {
+    MacOS =>
+      [
+        BundleArtifact::new(
+          kind=AppBundleArtifact,
+          path=self.bundle_name(),
+          description="macOS application bundle directory",
+        ),
+        BundleArtifact::new(
+          kind=DiskImageArtifact,
+          path="\{self.executable_name}-\{self.metadata.version()}.dmg",
+          description="macOS distributable disk image",
+        ),
+      ]
+    Windows =>
+      [
+        BundleArtifact::new(
+          kind=ExecutableArtifact,
+          path="\{self.executable_name}/\{self.bundle_name()}",
+          description="Windows application executable",
+        ),
+        BundleArtifact::new(
+          kind=InstallerArtifact,
+          path="\{self.executable_name}-\{self.metadata.version()}-setup.exe",
+          description="Windows installer package",
+        ),
+      ]
+    Linux =>
+      [
+        BundleArtifact::new(
+          kind=PortableDirectoryArtifact,
+          path=self.executable_name(),
+          description="Linux portable application directory",
+        ),
+        BundleArtifact::new(
+          kind=DesktopEntryArtifact,
+          path="\{self.executable_name}/\{self.executable_name}.desktop",
+          description="Linux desktop integration entry",
+        ),
+      ]
+  }
 }
 
 ///|
@@ -801,6 +910,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"productName\":\{self.metadata.product_name().json_string()},",
           "\"version\":\{self.metadata.version().json_string()},",
           "\"target\":\{self.target.name().json_string()},",
+          "\"artifacts\":[\{self.artifacts().map(fn(artifact) { artifact.to_json() }).join(",")}],",
           "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
           "\"signing\":\{self.signing.to_json()},",
           "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",

@@ -74,6 +74,27 @@ pub fn BridgeScript::routes(Self) -> Array[String]
 pub fn BridgeScript::source(Self) -> String
 pub fn BridgeScript::window_label(Self) -> String
 
+pub struct BundleArtifact {
+  kind : BundleArtifactKind
+  path : String
+  description : String
+} derive(Eq, @debug.Debug)
+pub fn BundleArtifact::description(Self) -> String
+pub fn BundleArtifact::kind(Self) -> BundleArtifactKind
+pub fn BundleArtifact::new(kind~ : BundleArtifactKind, path~ : String, description~ : String) -> Self
+pub fn BundleArtifact::path(Self) -> String
+pub fn BundleArtifact::to_json(Self) -> String
+
+pub(all) enum BundleArtifactKind {
+  AppBundleArtifact
+  DiskImageArtifact
+  ExecutableArtifact
+  InstallerArtifact
+  PortableDirectoryArtifact
+  DesktopEntryArtifact
+} derive(Eq, @debug.Debug)
+pub fn BundleArtifactKind::name(Self) -> String
+
 pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
@@ -104,6 +125,7 @@ pub struct BundlePlan {
   icon_path : String?
   signing : SigningConfig
 } derive(Eq, @debug.Debug)
+pub fn BundlePlan::artifacts(Self) -> Array[BundleArtifact]
 pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
 pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]

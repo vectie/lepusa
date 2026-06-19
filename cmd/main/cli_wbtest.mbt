@@ -1147,6 +1147,12 @@ async test "build and bundle aliases materialize planned files" {
   assert_true(bundle.output.contains("target: windows"))
   assert_true(@fs.exists(bundle_root + "/lepusa-example/app.manifest.xml"))
   assert_true(@fs.exists(bundle_root + "/lepusa-example/lepusa-example.cmd"))
+  let windows_runtime_json = @fs.read_file(
+    bundle_root + "/lepusa-example/lepusa/runtime.json",
+  ).text()
+  assert_true(windows_runtime_json.contains("\"kind\":\"executable\""))
+  assert_true(windows_runtime_json.contains("\"kind\":\"installer\""))
+  assert_true(windows_runtime_json.contains("lepusa-example-0.1.0-setup.exe"))
 }
 
 ///|

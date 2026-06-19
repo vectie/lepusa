@@ -154,9 +154,11 @@ desktop core is reliable.
 
 ## Milestone 6: Bundling
 
-- macOS `.app` and DMG path.
-- Windows executable and installer path.
-- Linux desktop integration and portable bundle path.
+- macOS `.app` and DMG artifact paths are represented in `BundlePlan`.
+- Windows executable and installer artifact paths are represented in
+  `BundlePlan`.
+- Linux desktop integration and portable bundle artifact paths are represented
+  in `BundlePlan`.
 - `BundlePlan::files()` emits platform metadata, launcher stubs, and one
   runtime manifest with per-window bridge initialization scripts.
 - `BundlePlan::resources()` emits target resource mappings for app icons and
