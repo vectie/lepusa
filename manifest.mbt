@@ -103,7 +103,7 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
     problems.push("at least one window is required")
   }
   for window in self.windows {
-    for problem in window.validate() {
+    for problem in window.validate_for_app() {
       problems.push(problem)
     }
   }

@@ -219,9 +219,7 @@ fn sample_manifest() -> @lepusa.ProjectManifest {
     sample_metadata(),
     runtime=@lepusa.RuntimeConfig::headless(),
   )
-  .with_window(
-    @lepusa.WindowConfig::new(source=@lepusa.Source::html("<main></main>")),
-  )
+  .with_window(@lepusa.WindowConfig::new())
   .with_plugin(
     @lepusa.Plugin::new("core").command_sync("invoke").command_stream("events"),
   )

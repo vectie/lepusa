@@ -443,12 +443,12 @@ pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
   RemoteUrl(String)
-  RabbitaMount(String)
+  RabbitaCell(Cell)
 } derive(Eq, @debug.Debug)
 pub fn Source::html(String) -> Self
 pub fn Source::is_empty(Self) -> Bool
 pub fn Source::local_path(String) -> Self
-pub fn Source::rabbita(String) -> Self
+pub fn Source::rabbita(Cell) -> Self
 pub fn Source::resolve(Self, window_label~ : String, asset_protocol? : String) -> Result[ResolvedSource, String]
 pub fn Source::url(String) -> Self
 

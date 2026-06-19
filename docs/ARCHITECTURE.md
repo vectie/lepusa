@@ -48,7 +48,6 @@ let app = @lepusa.new(cell)
     title="Example",
     width=1000,
     height=720,
-    source=@lepusa.Source::local_path("dist"),
   )
 let plan = app.launch_plan()
 ```
@@ -191,6 +190,8 @@ local service.
 
 `RuntimePlan` resolves each `WindowConfig` into a `ResolvedWindow`:
 
+- source-less `App` windows become generated Rabbita HTML backed by the app
+  root `Cell`
 - remote URLs stay remote and require no protocol mapping
 - local paths become `asset_protocol://local/<window>/index.html`
 - inline HTML becomes `asset_protocol://inline/<window>/index.html`

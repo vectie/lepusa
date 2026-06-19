@@ -24,7 +24,7 @@ test "runtime plan prints command routes" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("windows: 1"))
   assert_true(
-    result.output.contains("first-window-url: lepusa://inline/main/index.html"),
+    result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
   assert_true(result.output.contains("routes: core.invoke,core.events"))
 }
@@ -34,6 +34,9 @@ test "manifest prints native runner json" {
   let result = render_cli(["manifest"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("\"backend\":\"headless\""))
+  assert_true(
+    result.output.contains("\"url\":\"lepusa://rabbita/main/index.html\""),
+  )
   assert_true(result.output.contains("\"webviews\""))
   assert_true(result.output.contains("\"protocolMappings\""))
   assert_true(result.output.contains("\"virtualFiles\""))

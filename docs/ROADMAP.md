@@ -16,6 +16,8 @@
 
 - Add `cell_with_dispatch`, `new`, `with_startup`, `window`, validation, and
   `launch_plan` APIs with syntax close to Rabbita.
+- Lower source-less `App` windows into generated Rabbita-style HTML from the
+  root `Cell`.
 - Add native `run` once the first runtime backend is wired.
 - Run a desktop counter app authored in MoonBit model/update/view style.
 - Support direct `WindowConfig::new(..., source=...)` hosting for non-Rabbita

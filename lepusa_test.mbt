@@ -236,6 +236,35 @@ test "app builds a launch plan as the native runtime boundary" {
 }
 
 ///|
+test "app windows default to rabbita root cell source" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<strong>Hello</strong>"))
+  let app = @lepusa.new(root).window(title="Rabbita")
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let window = plan.windows()[0]
+      assert_eq(window.url(), "lepusa://rabbita/main/index.html")
+      assert_true(window.source().kind() is ResolvedRabbitaMount)
+      let files = window.source().virtual_files()
+      assert_eq(files.length(), 1)
+      assert_true(files[0].content().contains("<main id=\"lepusa-root\">"))
+      assert_true(files[0].content().contains("<strong>Hello</strong>"))
+      match plan.launch_manifest() {
+        Ok(manifest) => {
+          assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
+          assert_true(
+            manifest.virtual_files()[0]
+            .content()
+            .contains("<strong>Hello</strong>"),
+          )
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime plans collect plugin command routes" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)

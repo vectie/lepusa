@@ -38,6 +38,17 @@ pub fn WindowConfig::with_source(
 }
 
 ///|
+fn WindowConfig::with_default_source(
+  self : WindowConfig,
+  root : Cell,
+) -> WindowConfig {
+  match self.source {
+    Some(_) => self
+    None => { ..self, source: Some(Source::rabbita(root)) }
+  }
+}
+
+///|
 pub struct ResolvedWindow {
   label : String
   title : String
@@ -118,6 +129,19 @@ pub fn WindowConfig::resolve(
 
 ///|
 pub fn WindowConfig::validate(self : WindowConfig) -> Array[String] {
+  self.validate_source(required=true)
+}
+
+///|
+fn WindowConfig::validate_for_app(self : WindowConfig) -> Array[String] {
+  self.validate_source(required=false)
+}
+
+///|
+fn WindowConfig::validate_source(
+  self : WindowConfig,
+  required~ : Bool,
+) -> Array[String] {
   let problems : Array[String] = []
   if self.label == "" {
     problems.push("window label is required")
@@ -132,7 +156,7 @@ pub fn WindowConfig::validate(self : WindowConfig) -> Array[String] {
     problems.push("window height must be positive")
   }
   match self.source {
-    None => problems.push("window source is required")
+    None => if required { problems.push("window source is required") }
     Some(source) =>
       if source.is_empty() {
         problems.push("window source must not be empty")

@@ -118,8 +118,8 @@ pub fn App::validate(self : App) -> Array[String] {
   if self.windows.is_empty() {
     problems.push("at least one window is required")
   }
-  for window in self.windows {
-    for problem in window.validate() {
+  for window in self.materialized_windows() {
+    for problem in window.validate_for_app() {
       problems.push(problem)
     }
   }
@@ -142,7 +142,7 @@ pub fn App::launch_plan(self : App) -> Result[LaunchPlan, Array[String]] {
   if problems.is_empty() {
     Ok({
       root: self.root,
-      windows: self.windows.copy(),
+      windows: self.materialized_windows(),
       plugins: self.plugins.copy(),
       capabilities: self.capabilities.copy(),
       startup: self.startup,
@@ -150,4 +150,13 @@ pub fn App::launch_plan(self : App) -> Result[LaunchPlan, Array[String]] {
   } else {
     Err(problems)
   }
+}
+
+///|
+fn App::materialized_windows(self : App) -> Array[WindowConfig] {
+  let windows : Array[WindowConfig] = []
+  for window in self.windows {
+    windows.push(window.with_default_source(self.root))
+  }
+  windows
 }

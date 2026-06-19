@@ -3,7 +3,7 @@ pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
   RemoteUrl(String)
-  RabbitaMount(String)
+  RabbitaCell(Cell)
 } derive(Debug, Eq)
 
 ///|
@@ -107,8 +107,8 @@ pub fn Source::url(url : String) -> Source {
 }
 
 ///|
-pub fn Source::rabbita(mount : String) -> Source {
-  RabbitaMount(mount)
+pub fn Source::rabbita(cell : Cell) -> Source {
+  RabbitaCell(cell)
 }
 
 ///|
@@ -117,7 +117,7 @@ pub fn Source::is_empty(self : Source) -> Bool {
     InlineHtml(content) => content == ""
     LocalPath(path) => path == ""
     RemoteUrl(url) => url == ""
-    RabbitaMount(mount) => mount == ""
+    RabbitaCell(cell) => cell.id() == ""
   }
 }
 
@@ -163,16 +163,49 @@ pub fn Source::resolve(
         protocol_mappings: [],
         virtual_files: [],
       })
-    RabbitaMount(mount) =>
+    RabbitaCell(cell) =>
       Ok({
         kind: ResolvedRabbitaMount,
         url: "\{asset_protocol}://rabbita/\{safe_label}/index.html",
         protocol_mappings: [
-          ProtocolMapping::new(scheme=asset_protocol, root="rabbita:\{mount}"),
+          ProtocolMapping::new(
+            scheme=asset_protocol,
+            root="memory:\{safe_label}",
+          ),
         ],
-        virtual_files: [],
+        virtual_files: [
+          VirtualFile::new(path="index.html", content=cell.rabbita_document()),
+        ],
       })
   }
+}
+
+///|
+fn Cell::rabbita_document(self : Cell) -> String {
+  [
+    "<!doctype html>",
+    "<html>",
+    "<head>",
+    "<meta charset=\"utf-8\">",
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+    "</head>",
+    "<body>",
+    "<main id=\"\{self.id().html_attr_escape()}\">",
+    self.html().content(),
+    "</main>",
+    "</body>",
+    "</html>",
+  ].join("")
+}
+
+///|
+fn String::html_attr_escape(self : String) -> String {
+  self
+  .replace_all(old="&", new="&amp;")
+  .replace_all(old="\"", new="&quot;")
+  .replace_all(old="<", new="&lt;")
+  .replace_all(old=">", new="&gt;")
+  .replace_all(old="'", new="&#39;")
 }
 
 ///|

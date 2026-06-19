@@ -46,12 +46,7 @@ fn main {
   )
   let app = @lepusa.new(cell)
   app.with_startup(load_initial_state(dispatch))
-  app.window(
-    title="Hello Lepusa",
-    width=1000,
-    height=720,
-    source=@lepusa.Source::local_path("dist"),
-  )
+  app.window(title="Hello Lepusa", width=1000, height=720)
   match app.launch_plan() {
     Ok(plan) => boot_native_runtime(plan)
     Err(problems) => fail_fast(problems)
@@ -112,6 +107,9 @@ runtime and bundler work concrete outputs to consume.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+When a window omits `source`, `App` lowers the root `Cell` into a generated
+Rabbita-style HTML document served from the runtime manifest as a virtual file.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimePlan::launch_manifest()`: WebView boot data, bridge hook names,
