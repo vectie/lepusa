@@ -1,12 +1,13 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 6)
+  assert_eq(names.length(), 7)
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("dialog"))
   assert_true(names.contains("fs"))
   assert_true(names.contains("log"))
   assert_true(names.contains("notification"))
+  assert_true(names.contains("shell"))
   assert_true(names.contains("store"))
   assert_true(
     plugin("clipboard").unwrap().command_routes().contains("clipboard.readText"),
@@ -20,6 +21,9 @@ test "catalog exposes official plugin declarations" {
     .unwrap()
     .command_routes()
     .contains("notification.show"),
+  )
+  assert_true(
+    plugin("shell").unwrap().command_routes().contains("shell.execute"),
   )
   assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
   assert_true(plugin("fs").unwrap().command_routes().contains("fs.readText"))

@@ -396,6 +396,7 @@ official filesystem command routes, read/write capability helpers, and scoped
 relative path policy. `@lepusa/plugins/dialog` declares message, confirm, and
 prompt routes. `@lepusa/plugins/clipboard` and
 `@lepusa/plugins/notification` declare clipboard and notification routes.
+`@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
 Native platform effects should be implemented by runtime backends behind those
 contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need
