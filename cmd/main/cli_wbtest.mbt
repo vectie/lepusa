@@ -600,6 +600,49 @@ async test "bundle write materializes planned files" {
 }
 
 ///|
+async test "bundle write materializes planned resources" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-resource-project-\{stamp}"
+  let bundle_root = "/tmp/lepusa-resource-bundle-\{stamp}-out"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.mkdir(root + "/assets", recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/assets/icon.png",
+    "icon-bytes",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let config = [
+    "{",
+    "\"identifier\":\"dev.local.resource\",",
+    "\"productName\":\"Resource App\",",
+    "\"version\":\"0.1.0\",",
+    "\"icon\":\"\{root}/assets/icon.png\",",
+    "\"window\":{\"label\":\"main\",\"title\":\"Resource App\"}",
+    "}",
+  ].join("")
+  @fs.write_file(
+    root + "/lepusa.json",
+    config,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "bundle-write",
+    "linux",
+    bundle_root,
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("resources: 1"))
+  assert_true(result.output.contains("resources-written: 1"))
+  let icon_path = bundle_root + "/resource-app/resource-app.png"
+  assert_true(@fs.exists(icon_path))
+  assert_eq(@fs.read_file(icon_path).text(), "icon-bytes")
+}
+
+///|
 async test "build and bundle aliases materialize planned files" {
   let build_root = "/tmp/lepusa-build-\{@async.now().to_int()}"
   let build = render_cli_async(["build", "macos", build_root])

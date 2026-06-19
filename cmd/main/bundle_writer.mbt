@@ -2,6 +2,7 @@
 struct BundleWriteResult {
   root : String
   files : Array[String]
+  resources : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -14,6 +15,7 @@ async fn write_bundle_plan(
       let root = normalize_output_root(out_dir)
       let problems : Array[String] = []
       let written : Array[String] = []
+      let copied_resources : Array[String] = []
       ensure_directory(root, problems)
       for file in files {
         let path = join_path(root, file.path())
@@ -39,13 +41,49 @@ async fn write_bundle_plan(
           }
         }
       }
+      for resource in plan.resources() {
+        let path = join_path(root, resource.path())
+        ensure_directory(parent_directory(path), problems)
+        if problems.is_empty() {
+          let problem_count = problems.length()
+          copy_bundle_resource(resource, path, problems)
+          if problems.length() == problem_count {
+            copied_resources.push(path)
+          }
+        }
+      }
       if problems.is_empty() {
-        Ok({ root, files: written })
+        Ok({ root, files: written, resources: copied_resources })
       } else {
         Err(problems)
       }
     }
     Err(problems) => Err(problems)
+  }
+}
+
+///|
+async fn copy_bundle_resource(
+  resource : @lepusa.BundleResource,
+  destination : String,
+  problems : Array[String],
+) -> Unit {
+  let content = @fs.read_file(resource.source_path()).text() catch {
+    error => {
+      problems.push(
+        "could not read bundle resource \{resource.source_path()}: \{error}",
+      )
+      return
+    }
+  }
+  @fs.write_file(
+    destination,
+    content,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  ) catch {
+    error =>
+      problems.push("could not write bundle resource \{destination}: \{error}")
   }
 }
 

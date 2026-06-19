@@ -559,6 +559,7 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 "local-services: \{local_service_count}\n" +
                 "filesystem-scopes: \{filesystem_scope_count}\n" +
                 "resources: \{plan.resources().length()}\n" +
+                "resources-written: \{result.resources.length()}\n" +
                 "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
                 "files: \{result.files.length()}\n",
               )

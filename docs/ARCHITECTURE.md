@@ -399,6 +399,8 @@ installer packaging without inventing another configuration model.
 owned assets. The first resource type is the application icon, mapped to the
 target's native bundle location and recorded in the generated bundle runtime
 file under `resources`.
+`lepusa bundle-write` copies planned resources to those bundle paths; future
+installer/signing steps should consume the same `BundleResource` list.
 
 `BundlePlan::signing_prerequisites()` is the signing boundary for that next
 step. It lists target-specific identities, tools, notarization tools, runtime
