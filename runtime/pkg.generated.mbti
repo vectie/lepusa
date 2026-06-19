@@ -22,6 +22,7 @@ pub fn NativeBackend::name(Self) -> String
 pub fn NativeBackend::new(name~ : String, webview_engine~ : String) -> Self
 pub fn NativeBackend::plan(Self, RuntimeHost) -> Result[NativeLaunchPlan, Array[String]]
 pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan, Array[String]]
+pub fn NativeBackend::service_executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeBackend::webview_engine(Self) -> String
 
 pub struct NativeLaunchPlan {
@@ -119,12 +120,29 @@ pub fn NativeServiceActionStatus::message(Self) -> String
 pub fn NativeServiceActionStatus::name(Self) -> String
 pub fn NativeServiceActionStatus::to_json(Self) -> String
 
+pub struct NativeServiceExecutor {
+  backend_name : String
+  webview_engine : String
+  start_service : (@lepusa.LocalService) -> NativeServiceActionStatus
+  wait_until_ready : (@lepusa.LocalService) -> NativeServiceActionStatus
+  stop_service : (@lepusa.LocalService) -> NativeServiceActionStatus
+}
+pub fn NativeServiceExecutor::backend_name(Self) -> String
+pub fn NativeServiceExecutor::execute_action(Self, @lepusa.LocalServiceSupervisorAction) -> NativeServiceActionReport
+pub fn NativeServiceExecutor::execute_all(Self, NativeServiceSupervisorPlan) -> NativeServiceSupervisorReport
+pub fn NativeServiceExecutor::execute_shutdown(Self, NativeServiceSupervisorPlan) -> NativeServiceSupervisorReport
+pub fn NativeServiceExecutor::execute_startup(Self, NativeServiceSupervisorPlan) -> NativeServiceSupervisorReport
+pub fn NativeServiceExecutor::new(backend_name~ : String, webview_engine~ : String, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> Self
+pub fn NativeServiceExecutor::prepared(backend_name~ : String, webview_engine~ : String) -> Self
+pub fn NativeServiceExecutor::webview_engine(Self) -> String
+
 pub struct NativeServiceSupervisorPlan {
   backend_name : String
   webview_engine : String
   plan : @lepusa.LocalServiceSupervisorPlan
 } derive(Eq, @debug.Debug)
 pub fn NativeServiceSupervisorPlan::backend_name(Self) -> String
+pub fn NativeServiceSupervisorPlan::executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeServiceSupervisorPlan::new(backend_name~ : String, webview_engine~ : String, plan~ : @lepusa.LocalServiceSupervisorPlan) -> Self
 pub fn NativeServiceSupervisorPlan::prepared_report(Self) -> NativeServiceSupervisorReport
 pub fn NativeServiceSupervisorPlan::requires_supervisor(Self) -> Bool
@@ -364,5 +382,6 @@ pub fn RuntimeWindow::url(Self) -> String
 pub fn RuntimeWindow::width(Self) -> Int
 
 // Type aliases
+pub type NativeServiceActionHandler = (@lepusa.LocalService) -> NativeServiceActionStatus
 
 // Traits

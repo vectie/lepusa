@@ -29,6 +29,18 @@ pub struct NativeServiceSupervisorReport {
 } derive(Debug, Eq)
 
 ///|
+pub type NativeServiceActionHandler = (@lepusa.LocalService) -> NativeServiceActionStatus
+
+///|
+pub struct NativeServiceExecutor {
+  backend_name : String
+  webview_engine : String
+  start_service : NativeServiceActionHandler
+  wait_until_ready : NativeServiceActionHandler
+  stop_service : NativeServiceActionHandler
+}
+
+///|
 pub fn NativeServiceSupervisorPlan::new(
   backend_name~ : String,
   webview_engine~ : String,
@@ -144,6 +156,22 @@ pub fn NativeServiceSupervisorPlan::to_json(
 }
 
 ///|
+pub fn NativeServiceSupervisorPlan::executor(
+  self : NativeServiceSupervisorPlan,
+  start_service~ : NativeServiceActionHandler,
+  wait_until_ready~ : NativeServiceActionHandler,
+  stop_service~ : NativeServiceActionHandler,
+) -> NativeServiceExecutor {
+  NativeServiceExecutor::new(
+    backend_name=self.backend_name,
+    webview_engine=self.webview_engine,
+    start_service~,
+    wait_until_ready~,
+    stop_service~,
+  )
+}
+
+///|
 pub fn NativeServiceActionReport::new(
   action~ : @lepusa.LocalServiceSupervisorAction,
   status? : NativeServiceActionStatus = NativeServiceActionPrepared,
@@ -198,6 +226,117 @@ pub fn NativeServiceActionReport::to_json(
     "\"status\":\{self.status.to_json()}",
     "}",
   ].join("")
+}
+
+///|
+pub fn NativeServiceExecutor::new(
+  backend_name~ : String,
+  webview_engine~ : String,
+  start_service~ : NativeServiceActionHandler,
+  wait_until_ready~ : NativeServiceActionHandler,
+  stop_service~ : NativeServiceActionHandler,
+) -> NativeServiceExecutor {
+  {
+    backend_name,
+    webview_engine,
+    start_service,
+    wait_until_ready,
+    stop_service,
+  }
+}
+
+///|
+pub fn NativeServiceExecutor::prepared(
+  backend_name~ : String,
+  webview_engine~ : String,
+) -> NativeServiceExecutor {
+  NativeServiceExecutor::new(
+    backend_name~,
+    webview_engine~,
+    start_service=fn(_) { NativeServiceActionPrepared },
+    wait_until_ready=fn(_) { NativeServiceActionPrepared },
+    stop_service=fn(_) { NativeServiceActionPrepared },
+  )
+}
+
+///|
+pub fn NativeServiceExecutor::backend_name(
+  self : NativeServiceExecutor,
+) -> String {
+  self.backend_name
+}
+
+///|
+pub fn NativeServiceExecutor::webview_engine(
+  self : NativeServiceExecutor,
+) -> String {
+  self.webview_engine
+}
+
+///|
+pub fn NativeServiceExecutor::execute_startup(
+  self : NativeServiceExecutor,
+  plan : NativeServiceSupervisorPlan,
+) -> NativeServiceSupervisorReport {
+  self.execute_actions(plan.startup_actions())
+}
+
+///|
+pub fn NativeServiceExecutor::execute_shutdown(
+  self : NativeServiceExecutor,
+  plan : NativeServiceSupervisorPlan,
+) -> NativeServiceSupervisorReport {
+  self.execute_actions(plan.shutdown_actions())
+}
+
+///|
+pub fn NativeServiceExecutor::execute_all(
+  self : NativeServiceExecutor,
+  plan : NativeServiceSupervisorPlan,
+) -> NativeServiceSupervisorReport {
+  let actions = plan.startup_actions()
+  actions.append(plan.shutdown_actions())
+  self.execute_actions(actions)
+}
+
+///|
+pub fn NativeServiceExecutor::execute_action(
+  self : NativeServiceExecutor,
+  action : @lepusa.LocalServiceSupervisorAction,
+) -> NativeServiceActionReport {
+  match action {
+    StartLocalService(service) =>
+      NativeServiceActionReport::new(
+        action~,
+        status=(self.start_service)(service),
+      )
+    WaitLocalServiceReady(service) =>
+      NativeServiceActionReport::new(
+        action~,
+        status=(self.wait_until_ready)(service),
+      )
+    StopLocalService(service) =>
+      NativeServiceActionReport::new(
+        action~,
+        status=(self.stop_service)(service),
+      )
+  }
+}
+
+///|
+fn NativeServiceExecutor::execute_actions(
+  self : NativeServiceExecutor,
+  actions : Array[@lepusa.LocalServiceSupervisorAction],
+) -> NativeServiceSupervisorReport {
+  let reports : Array[NativeServiceActionReport] = []
+  for action in actions {
+    reports.push(self.execute_action(action))
+  }
+  NativeServiceSupervisorReport::new(
+    backend_name=self.backend_name,
+    webview_engine=self.webview_engine,
+    action_reports=reports,
+  )
 }
 
 ///|

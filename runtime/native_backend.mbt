@@ -100,6 +100,22 @@ pub fn NativeBackend::runner_plan(
 }
 
 ///|
+pub fn NativeBackend::service_executor(
+  self : NativeBackend,
+  start_service~ : NativeServiceActionHandler,
+  wait_until_ready~ : NativeServiceActionHandler,
+  stop_service~ : NativeServiceActionHandler,
+) -> NativeServiceExecutor {
+  NativeServiceExecutor::new(
+    backend_name=self.name,
+    webview_engine=self.webview_engine,
+    start_service~,
+    wait_until_ready~,
+    stop_service~,
+  )
+}
+
+///|
 pub fn NativeLaunchPlan::backend_name(self : NativeLaunchPlan) -> String {
   self.backend_name
 }

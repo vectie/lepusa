@@ -351,6 +351,11 @@ contract before wiring platform-specific process spawning and readiness probes.
 contract. It records per-action prepared, started, ready, stopped, skipped, or
 failed states so platform loops can report real process/readiness outcomes
 without changing the app-facing service model.
+`NativeServiceExecutor` is the backend hook surface beneath the report: a
+platform backend supplies start, readiness, and stop handlers, then executes
+startup or shutdown action sets and receives a `NativeServiceSupervisorReport`.
+This keeps process spawning and HTTP probing owned by platform code while
+preserving one framework-level service contract.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

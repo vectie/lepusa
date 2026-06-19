@@ -893,6 +893,82 @@ test "native service supervisor report captures action failures" {
 }
 
 ///|
+test "native service executor runs startup and shutdown hooks" {
+  let service = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/server"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let plan = NativeServiceSupervisorPlan::new(
+    backend_name="test",
+    webview_engine="SystemWebView",
+    plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
+      service,
+    ]),
+  )
+  let executor = plan.executor(
+    start_service=fn(_) { NativeServiceActionStarted },
+    wait_until_ready=fn(service) {
+      if service.name() == "api" {
+        NativeServiceActionReady
+      } else {
+        NativeServiceActionFailed("unexpected service")
+      }
+    },
+    stop_service=fn(_) { NativeServiceActionStopped },
+  )
+  let startup = executor.execute_startup(plan)
+  assert_eq(startup.backend_name(), "test")
+  assert_true(startup.ok())
+  assert_eq(startup.action_count(), 2)
+  assert_true(
+    startup.action_reports()[0].status() is NativeServiceActionStarted,
+  )
+  assert_true(startup.action_reports()[1].status() is NativeServiceActionReady)
+  let shutdown = executor.execute_shutdown(plan)
+  assert_eq(shutdown.action_count(), 1)
+  assert_true(
+    shutdown.action_reports()[0].status() is NativeServiceActionStopped,
+  )
+  let all = executor.execute_all(plan)
+  assert_eq(all.action_count(), 3)
+  assert_true(all.to_json().contains("\"name\":\"ready\""))
+}
+
+///|
+test "native backend creates service executor with backend metadata" {
+  let service = @lepusa.LocalService::new(
+    name="api",
+    command=["moon", "run", "cmd/server"],
+    readiness_url="http://127.0.0.1:4317/ready",
+  )
+  let plan = NativeServiceSupervisorPlan::new(
+    backend_name="test",
+    webview_engine="SystemWebView",
+    plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
+      service,
+    ]),
+  )
+  let executor = NativeBackend::new(
+    name="native-test",
+    webview_engine="SystemWebView",
+  ).service_executor(
+    start_service=fn(_) { NativeServiceActionStarted },
+    wait_until_ready=fn(_) { NativeServiceActionFailed("not ready") },
+    stop_service=fn(_) { NativeServiceActionSkipped("not started") },
+  )
+  assert_eq(executor.backend_name(), "native-test")
+  assert_eq(executor.webview_engine(), "SystemWebView")
+  let startup = executor.execute_startup(plan)
+  assert_false(startup.ok())
+  assert_eq(startup.failed_count(), 1)
+  assert_true(
+    startup.action_reports()[1].status() is NativeServiceActionFailed(_),
+  )
+  assert_true(startup.to_json().contains("\"message\":\"not ready\""))
+}
+
+///|
 test "runtime host applies lifecycle actions to an existing session" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
