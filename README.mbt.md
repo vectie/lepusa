@@ -120,6 +120,10 @@ command dispatch through the declared capabilities.
 native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
 virtual files, and safe local asset paths without doing platform file IO.
 
+`RuntimeHost::dispatch_json(input)` is the native hook boundary for WebView IPC.
+It decodes the bridge request object, checks capabilities through the command
+registry, and returns the JSON response shape expected by `window.lepusa`.
+
 `lepusa bridge` emits the JavaScript bridge that frontends load as
 `window.lepusa`, including `invoke(route, payload)` and route namespaces such as
 `lepusa.core.invoke(payload)`.

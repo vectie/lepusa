@@ -27,6 +27,8 @@
 - Add `@lepusa/runtime` host/session boundary over `RuntimePlan`.
 - Add pure custom-protocol asset resolution for bridge, inline, Rabbita, and
   local assets.
+- Add the native hook JSON codec from generated bridge requests to capability
+  checked `CommandRegistry` dispatch.
 - Implement or port WebView window creation for macOS, Windows, and Linux.
 - Support `Source::html`, `Source::local_path`, `Source::url`, and packaged
   assets.

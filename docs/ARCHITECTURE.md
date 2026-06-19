@@ -211,6 +211,12 @@ backends should call from their WebView protocol handler. It resolves the
 generated bridge, inline virtual files, and safe local asset paths while
 rejecting traversal attempts before platform file IO happens.
 
+`RuntimeHost::dispatch_json(input)` is the native hook contract. The generated
+bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,
+`command`, and string `payload`; the runtime decodes it into `InvokeRequest`,
+dispatches through `CommandRegistry` with plan capabilities, and encodes the
+`{id,payload}` or `{id,error}` response expected by the frontend bridge.
+
 ## Bundling
 
 `BundlePlan` is a pure framework contract: it computes platform metadata,

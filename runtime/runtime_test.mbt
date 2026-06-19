@@ -135,3 +135,44 @@ test "runtime host dispatches through plan capabilities" {
   )
   assert_true(denied is InvokeError("2", "permission denied: core.invoke"))
 }
+
+///|
+test "runtime wire codec decodes bridge requests and encodes responses" {
+  match
+    decode_invoke_request_json(
+      "{\"id\":\"7\",\"windowLabel\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"{\\\"x\\\":1}\"}",
+    ) {
+    Ok(request) => {
+      assert_eq(request.id(), "7")
+      assert_eq(request.window_label(), "main")
+      assert_eq(request.route(), "core.invoke")
+      assert_eq(request.payload(), "{\"x\":1}")
+    }
+    Err(_) => abort("unexpected invalid bridge request")
+  }
+  let json = encode_invoke_response_json(@lepusa.InvokeResponse::ok("7", "{}"))
+  assert_true(json.contains("\"id\":\"7\""))
+  assert_true(json.contains("\"payload\":\"{}\""))
+}
+
+///|
+test "runtime host dispatches bridge json through capability checks" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok("{\"seen\":\{payload}}")
+  })
+  let host = RuntimeHost::new(test_plan(), registry~)
+  let response = host.dispatch_json(
+    "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
+  )
+  assert_true(response.contains("\"id\":\"1\""))
+  assert_true(response.contains("\"payload\":\"{\\\"seen\\\":true}\""))
+  let denied = host.dispatch_json(
+    "{\"id\":\"2\",\"window_label\":\"other\",\"plugin\":\"core\",\"command\":\"invoke\"}",
+  )
+  assert_true(denied.contains("\"id\":\"2\""))
+  assert_true(denied.contains("\"error\":\"permission denied: core.invoke\""))
+  let malformed = host.dispatch_json("{}")
+  assert_true(malformed.contains("\"error\":\"invoke id is required\""))
+}

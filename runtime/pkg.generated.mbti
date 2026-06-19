@@ -7,6 +7,9 @@ import {
 }
 
 // Values
+pub fn decode_invoke_request_json(String) -> Result[@lepusa.InvokeRequest, String]
+
+pub fn encode_invoke_response_json(@lepusa.InvokeResponse) -> String
 
 // Errors
 
@@ -32,6 +35,7 @@ pub struct RuntimeHost {
   registry : @lepusa.CommandRegistry
 }
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
+pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
