@@ -386,11 +386,13 @@ Protocol requests are passed back to MoonBit, which resolves runtime bridge,
 virtual, local, and packaged assets and returns a compact packet describing
 either in-memory content or a file path; Objective-C only adapts that packet to
 WebKit response calls.
-`dispatch_bridge_message(runtime, message)` remains the MoonBit-owned async
-test boundary for macOS: it accepts the JSON posted by the WebView, dispatches
-through `NativeRuntime.dispatch_json_async`, and returns the JavaScript source
-that calls the matching response hook in the page. Async command scheduling
-from the C handler is a separate runtime event-loop step.
+`prepare_bridge_message(runtime, message)` is the MoonBit-owned capture boundary
+for macOS: it resolves the target WebView and response hook without executing
+the command. The prepared message can then dispatch through
+`NativeRuntime.dispatch_json_async` and return the JavaScript source that calls
+the matching response hook in the page. Scheduling that prepared message from
+the Objective-C handler onto the runtime event loop is the remaining native
+integration step for async commands.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows still expose runner contracts and host availability checks, but their
 native launch loops intentionally fail until those platform packages implement

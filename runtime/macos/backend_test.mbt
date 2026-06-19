@@ -406,6 +406,38 @@ async test "macos bridge dispatch returns response callback script" {
 }
 
 ///|
+async test "macos bridge prepares async messages before dispatch" {
+  match runtime(async_bridge_test_host()) {
+    Ok(runtime) => {
+      let message = "{\"id\":\"44\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"readText\",\"payload\":\"true\"}"
+      match prepare_bridge_message(runtime, message) {
+        Ok(prepared) => {
+          assert_eq(prepared.window_label(), "main")
+          assert_eq(prepared.response_hook(), "__lepusaInvokeResponse")
+          assert_eq(prepared.message(), message)
+          let dispatch = prepared.dispatch(runtime)
+          assert_eq(dispatch.window_label(), "main")
+          assert_eq(dispatch.response_hook(), "__lepusaInvokeResponse")
+          assert_true(dispatch.response_json().contains("\"id\":\"44\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("\"payload\":\"{\\\"read\\\":true}\""),
+          )
+          assert_true(
+            dispatch
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+        }
+        Err(_) => abort("unexpected bridge prepare failure")
+      }
+    }
+    Err(_) => abort("unexpected invalid async macOS native runtime")
+  }
+}
+
+///|
 fn bundled_macos_manifest() -> String {
   (
     #|{

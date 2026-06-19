@@ -1,4 +1,11 @@
 ///|
+pub struct MacOSBridgeMessage {
+  window_label : String
+  response_hook : String
+  message : String
+} derive(Debug, Eq)
+
+///|
 pub struct MacOSBridgeDispatch {
   window_label : String
   response_hook : String
@@ -13,23 +20,57 @@ pub async fn dispatch_bridge_message(
   message : String,
   window_label? : String = "",
 ) -> Result[MacOSBridgeDispatch, Array[String]] {
+  match prepare_bridge_message(runtime, message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) => Ok(prepared.dispatch(runtime))
+  }
+}
+
+///|
+pub fn prepare_bridge_message(
+  runtime : @runtime.NativeRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[MacOSBridgeMessage, Array[String]] {
   let resolved_window_label = resolve_bridge_window_label(
     message,
     window_label~,
   )
   match response_hook_for_window(runtime, resolved_window_label) {
     Err(problem) => Err([problem])
-    Ok((window_label, response_hook)) => {
-      let response_json = runtime.dispatch_json_async(message)
-      Ok({
-        window_label,
-        response_hook,
-        message,
-        response_json,
-        evaluation_script: bridge_response_script(response_hook, response_json),
-      })
-    }
+    Ok((window_label, response_hook)) =>
+      Ok({ window_label, response_hook, message })
   }
+}
+
+///|
+pub async fn MacOSBridgeMessage::dispatch(
+  self : MacOSBridgeMessage,
+  runtime : @runtime.NativeRuntime,
+) -> MacOSBridgeDispatch {
+  let response_json = runtime.dispatch_json_async(self.message)
+  {
+    window_label: self.window_label,
+    response_hook: self.response_hook,
+    message: self.message,
+    response_json,
+    evaluation_script: bridge_response_script(self.response_hook, response_json),
+  }
+}
+
+///|
+pub fn MacOSBridgeMessage::window_label(self : MacOSBridgeMessage) -> String {
+  self.window_label
+}
+
+///|
+pub fn MacOSBridgeMessage::response_hook(self : MacOSBridgeMessage) -> String {
+  self.response_hook
+}
+
+///|
+pub fn MacOSBridgeMessage::message(self : MacOSBridgeMessage) -> String {
+  self.message
 }
 
 ///|
