@@ -345,6 +345,7 @@ pub(all) enum Permission {
   Tray
   AutoLaunch
   WindowState
+  Updater
   Shell
   Opener
   Dialog

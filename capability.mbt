@@ -10,6 +10,7 @@ pub(all) enum Permission {
   Tray
   AutoLaunch
   WindowState
+  Updater
   Shell
   Opener
   Dialog
@@ -39,6 +40,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "tray" => Ok(Tray)
     "auto-launch" => Ok(AutoLaunch)
     "window-state" => Ok(WindowState)
+    "updater" => Ok(Updater)
     "shell" => Ok(Shell)
     "opener" => Ok(Opener)
     "dialog" => Ok(Dialog)
@@ -74,6 +76,7 @@ pub fn Permission::name(self : Permission) -> String {
     Tray => "tray"
     AutoLaunch => "auto-launch"
     WindowState => "window-state"
+    Updater => "updater"
     Shell => "shell"
     Opener => "opener"
     Dialog => "dialog"

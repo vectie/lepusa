@@ -1,7 +1,7 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 16)
+  assert_eq(names.length(), 17)
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
@@ -17,6 +17,7 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("singleInstance"))
   assert_true(names.contains("store"))
   assert_true(names.contains("tray"))
+  assert_true(names.contains("updater"))
   assert_true(names.contains("windowState"))
   assert_true(
     plugin("autoLaunch").unwrap().command_routes().contains("autoLaunch.status"),
@@ -66,6 +67,9 @@ test "catalog exposes official plugin declarations" {
   )
   assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
   assert_true(plugin("tray").unwrap().command_routes().contains("tray.setMenu"))
+  assert_true(
+    plugin("updater").unwrap().command_routes().contains("updater.check"),
+  )
   assert_true(
     plugin("windowState").unwrap().command_routes().contains("windowState.save"),
   )

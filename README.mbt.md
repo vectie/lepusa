@@ -151,7 +151,8 @@ Official plugins can be declared by name, for example
 `{ "name": "localhost" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
 `{ "name": "opener" }`, `{ "name": "process" }`, `{ "name": "shell" }`,
 `{ "name": "singleInstance" }`, `{ "name": "store" }`,
-`{ "name": "tray" }`, `{ "name": "windowState" }`, or `{ "name": "fs" }`;
+`{ "name": "tray" }`, `{ "name": "updater" }`,
+`{ "name": "windowState" }`, or `{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
 `commands` array.
@@ -238,6 +239,11 @@ backends own platform login item, registry, service, or desktop-entry behavior.
 `windowState.save`, `windowState.restore`, and `windowState.clear`, plus
 window-label policy metadata. Native backends own geometry capture, restoration,
 and storage.
+
+`@lepusa/plugins/updater` defines update lifecycle routes such as
+`updater.check`, `updater.download`, `updater.install`, and
+`updater.downloadAndInstall`, plus feed/channel policy metadata. Native
+backends own feed retrieval, signature verification, installation, and restart.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the

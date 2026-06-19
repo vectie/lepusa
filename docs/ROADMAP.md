@@ -97,7 +97,7 @@ Stabilize the cross-platform core set first:
 - tray: initial status icon and menu contract exists
 - autoLaunch: initial launch-at-login contract exists
 - windowState: initial window geometry persistence contract exists
-- updater
+- updater: initial update lifecycle contract exists
 - service-discovery
 
 Plugins with mobile-only or platform-specific behavior can follow after the

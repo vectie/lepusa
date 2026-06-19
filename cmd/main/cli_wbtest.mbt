@@ -499,6 +499,7 @@ test "project config expands official plugin declarations" {
     #|    { "name": "singleInstance" },
     #|    { "name": "store" },
     #|    { "name": "tray" },
+    #|    { "name": "updater" },
     #|    { "name": "windowState" },
     #|    { "name": "fs" }
     #|  ],
@@ -507,7 +508,7 @@ test "project config expands official plugin declarations" {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": ["log.write", "store.keys"],
-    #|      "permissions": ["auto-launch", "clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell", "single-instance", "tray", "window-state"]
+    #|      "permissions": ["auto-launch", "clipboard", "deep-link", "dialog", "file-dialog", "filesystem.read", "localhost", "notification", "opener", "process.info", "shell", "single-instance", "tray", "updater", "window-state"]
     #|    }
     #|  ]
     #|}
@@ -531,6 +532,7 @@ test "project config expands official plugin declarations" {
           assert_true(routes.contains("singleInstance.acquire"))
           assert_true(routes.contains("store.set"))
           assert_true(routes.contains("tray.setMenu"))
+          assert_true(routes.contains("updater.check"))
           assert_true(routes.contains("windowState.save"))
           assert_true(routes.contains("fs.readText"))
           assert_true(routes.contains("fs.writeText"))
@@ -557,6 +559,7 @@ test "project config expands official plugin declarations" {
           assert_true(window_routes.contains("singleInstance.onSecondLaunch"))
           assert_true(window_routes.contains("store.keys"))
           assert_true(window_routes.contains("tray.onMenuItemClick"))
+          assert_true(window_routes.contains("updater.downloadAndInstall"))
           assert_true(window_routes.contains("windowState.restore"))
           assert_true(window_routes.contains("fs.readText"))
           assert_false(window_routes.contains("fs.writeText"))

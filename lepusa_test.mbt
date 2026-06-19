@@ -204,6 +204,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid window state permission")
   }
+  match @lepusa.Permission::named("updater") {
+    Ok(permission) => {
+      assert_true(permission is Updater)
+      assert_eq(permission.name(), "updater")
+    }
+    Err(_) => abort("unexpected invalid updater permission")
+  }
   match @lepusa.Permission::named("custom:workspace.admin") {
     Ok(permission) => assert_true(permission is Custom("workspace.admin"))
     Err(_) => abort("unexpected invalid custom permission")
