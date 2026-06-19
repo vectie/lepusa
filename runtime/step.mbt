@@ -38,10 +38,32 @@ pub fn RuntimeHost::lifecycle_step(
   session : RuntimeSession,
   event : @lepusa.LifecycleEvent,
 ) -> Result[RuntimeStep, Array[String]] {
-  match self.lifecycle_actions(event) {
-    Ok(actions) => session.apply_actions(actions)
-    Err(problems) => Err(problems)
+  ignore(self)
+  session.lifecycle_step(event)
+}
+
+///|
+pub fn RuntimeSession::lifecycle_actions(
+  self : RuntimeSession,
+  event : @lepusa.LifecycleEvent,
+) -> Array[@lepusa.RuntimeAction] {
+  let actions : Array[@lepusa.RuntimeAction] = []
+  for hook in self.lifecycle_hooks {
+    if hook.event() == event {
+      for action in hook.actions() {
+        actions.push(action)
+      }
+    }
   }
+  actions
+}
+
+///|
+pub fn RuntimeSession::lifecycle_step(
+  self : RuntimeSession,
+  event : @lepusa.LifecycleEvent,
+) -> Result[RuntimeStep, Array[String]] {
+  self.apply_actions(self.lifecycle_actions(event))
 }
 
 ///|

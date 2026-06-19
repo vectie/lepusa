@@ -55,11 +55,22 @@ pub struct NativeRunnerPlan {
 pub fn NativeRunnerPlan::backend_name(Self) -> String
 pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
 pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
+pub fn NativeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[NativeRunnerStep, Array[String]]
 pub fn NativeRunnerPlan::session(Self) -> RuntimeSession
 pub fn NativeRunnerPlan::startup_operations(Self) -> Array[NativeOperation]
 pub fn NativeRunnerPlan::webview_engine(Self) -> String
 pub fn NativeRunnerPlan::webview_specs(Self) -> Array[RuntimeWebViewSpec]
 pub fn NativeRunnerPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
+
+pub struct NativeRunnerStep {
+  event : @lepusa.LifecycleEvent
+  session : RuntimeSession
+  operations : Array[NativeOperation]
+} derive(Eq, @debug.Debug)
+pub fn NativeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
+pub fn NativeRunnerStep::operations(Self) -> Array[NativeOperation]
+pub fn NativeRunnerStep::session(Self) -> RuntimeSession
+pub fn NativeRunnerStep::to_json(Self) -> String
 
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 
@@ -156,7 +167,9 @@ pub fn RuntimeSession::bridge_url(Self) -> String
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
 pub fn RuntimeSession::file_system_scopes(Self) -> Array[@lepusa.FileSystemScope]
+pub fn RuntimeSession::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::lifecycle_hooks(Self) -> Array[@lepusa.RuntimeLifecycleHook]
+pub fn RuntimeSession::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::local_services(Self) -> Array[@lepusa.LocalService]
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]

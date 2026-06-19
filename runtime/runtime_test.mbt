@@ -110,6 +110,15 @@ test "native backend lowers host runner plan with portable operations" {
       assert_eq(plan.webview_specs().length(), 1)
       assert_eq(plan.webview_specs()[0].native_hook(), "__lepusaInvoke")
       assert_true(plan.startup_operations()[0] is NativeRunEffect("boot"))
+      match plan.lifecycle_step(AppWillExit) {
+        Ok(step) => {
+          assert_true(step.event() is AppWillExit)
+          assert_true(step.operations()[0] is NativeRunEffect("flush"))
+          assert_true(step.to_json().contains("\"kind\":\"app-will-exit\""))
+          assert_true(step.to_json().contains("\"name\":\"flush\""))
+        }
+        Err(_) => abort("unexpected invalid native lifecycle step")
+      }
       let json = plan.bootstrap_json()
       assert_true(json.contains("\"nativeBackend\":\"test\""))
       assert_true(json.contains("\"webviewSpecs\""))
@@ -439,6 +448,53 @@ test "runtime session applies startup actions as backend operations" {
           }
         }
         Err(_) => abort("unexpected invalid startup step")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime session applies lifecycle hooks without host state" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>before</main>"))
+    .on_window_close_requested(
+      "main",
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::effect("persist"),
+        @lepusa.Cmd::navigate(
+          "main",
+          @lepusa.Source::html("<main>closing</main>"),
+        ),
+      ]),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).snapshot() {
+        Ok(session) =>
+          match session.lifecycle_step(WindowCloseRequested("main")) {
+            Ok(step) => {
+              assert_eq(step.operations().length(), 2)
+              assert_true(step.operations()[0] is RuntimeRunEffect("persist"))
+              assert_true(
+                step.operations()[1]
+                is RuntimeNavigateWindow(
+                  "main",
+                  "lepusa://inline/main/index.html"
+                ),
+              )
+              match
+                step.session().resolve_asset("lepusa://inline/main/index.html") {
+                Ok(asset) =>
+                  assert_true(
+                    asset.body() is VirtualContent("<main>closing</main>"),
+                  )
+                Err(_) => abort("unexpected missing lifecycle asset")
+              }
+            }
+            Err(_) => abort("unexpected invalid lifecycle step")
+          }
+        Err(_) => abort("unexpected invalid runtime session")
       }
     Err(_) => abort("unexpected invalid runtime plan")
   }
