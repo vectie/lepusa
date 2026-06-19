@@ -18,6 +18,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
   match args.get(0) {
     Some("help") | Some("--help") | Some("-h") => runtime_ok(runtime_help())
     Some("asset") => render_runtime_asset(args)
+    Some("lifecycle") => render_runtime_lifecycle(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
       runtime_fail("unknown runtime command: \{command}\n\n" + runtime_help())
@@ -193,6 +194,7 @@ fn runtime_help() -> String {
     #|Usage:
     #|  lepusa-runtime --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
     #|
   )
 }

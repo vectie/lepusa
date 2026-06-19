@@ -492,6 +492,9 @@ lepusa-runtime --manifest <lepusa/runtime.json>
 lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
   -> resolves bundled runtime assets for native protocol handlers
 
+lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
+  -> selects bundled local services and actions for native lifecycle dispatch
+
 lepusa bundle-plan <target>
   -> prints platform bundle name, executable name, app identifier, file count
 ```

@@ -77,6 +77,7 @@
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: reads bundled runtime data for launcher stubs.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
+  - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.

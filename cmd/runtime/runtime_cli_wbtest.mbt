@@ -111,6 +111,72 @@ test "runtime cli resolves bundled runtime assets" {
 }
 
 ///|
+test "runtime cli renders lifecycle actions from bundled manifest" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "localServices": [
+    #|      { "name": "api", "command": ["moon", "run", "cmd/server"] }
+    #|    ],
+    #|    "startupActions": [
+    #|      { "kind": "effect", "name": "boot" }
+    #|    ],
+    #|    "lifecycleHooks": [
+    #|      {
+    #|        "event": { "kind": "app-will-exit" },
+    #|        "actions": [{ "kind": "effect", "name": "flush" }]
+    #|      },
+    #|      {
+    #|        "event": { "kind": "window-close-requested", "label": "main" },
+    #|        "actions": [{ "kind": "emit", "event": { "name": "closing" } }]
+    #|      }
+    #|    ]
+    #|  }
+    #|}
+  let startup = render_runtime_lifecycle_text(manifest, {
+    kind: "app-started",
+    label: "",
+  })
+  assert_eq(startup.exit_code, 0)
+  assert_true(startup.output.contains("\"localServices\""))
+  assert_true(startup.output.contains("\"name\":\"api\""))
+  assert_true(startup.output.contains("\"name\":\"boot\""))
+  let shutdown = render_runtime_lifecycle_text(manifest, {
+    kind: "app-will-exit",
+    label: "",
+  })
+  assert_true(shutdown.output.contains("\"name\":\"flush\""))
+  assert_false(shutdown.output.contains("\"name\":\"api\""))
+  let close = render_runtime_lifecycle_text(manifest, {
+    kind: "window-close-requested",
+    label: "main",
+  })
+  assert_true(close.output.contains("\"label\":\"main\""))
+  assert_true(close.output.contains("\"name\":\"closing\""))
+  let missing = render_runtime_lifecycle_text(manifest, {
+    kind: "window-closed",
+    label: "main",
+  })
+  assert_true(missing.output.contains("\"actions\":[]"))
+}
+
+///|
+test "runtime cli validates lifecycle arguments" {
+  assert_true(
+    runtime_lifecycle_event_arg(["lifecycle"])
+    is Err("lifecycle event is required"),
+  )
+  assert_true(
+    runtime_lifecycle_event_arg(["lifecycle", "window-closed"])
+    is Err("lifecycle window is required"),
+  )
+  assert_true(
+    runtime_lifecycle_event_arg(["lifecycle", "app-will-exit"])
+    is Ok({ kind: "app-will-exit", label: "" }),
+  )
+}
+
+///|
 test "runtime cli parses manifest flag" {
   assert_true(runtime_manifest_arg([]) is Ok("lepusa/runtime.json"))
   assert_true(
