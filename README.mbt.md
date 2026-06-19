@@ -116,6 +116,10 @@ moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 These commands exercise the public planning contracts and give the native
 runtime and bundler work concrete outputs to consume.
 
+`lepusa doctor` checks the portable runtime plan and reports host WebView
+availability for the platform backend descriptors: WKWebView on macOS, WebView2
+on Windows, and WebKitGTK on Linux.
+
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
 

@@ -73,7 +73,8 @@
   generation, and bundle materialization.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
-- Make `doctor` report platform WebView dependencies and signing prerequisites.
+- Make `doctor` report platform WebView dependencies.
+- Make `doctor` report signing prerequisites.
 
 ## Milestone 5: Official Plugins
 

@@ -242,20 +242,7 @@ async fn render_plugin_new(args : Array[String]) -> CliResult {
 ///|
 async fn render_doctor_async(args : Array[String]) -> CliResult {
   match project_runtime_host(args) {
-    Ok(host) => {
-      let plan = host.plan()
-      match host.launch_manifest() {
-        Ok(manifest) =>
-          ok(
-            "Lepusa doctor\n" +
-            "[ok] public-api: root package can build launch/runtime plans\n" +
-            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
-            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
-            "[ok] ipc: routes=\{plan.command_routes().length()}\n",
-          )
-        Err(problems) => fail(render_problems("Lepusa doctor", problems))
-      }
-    }
+    Ok(host) => render_doctor_host(host)
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
   }
 }
@@ -371,19 +358,46 @@ fn parse_invoke_route(route : String) -> Result[(String, String), String] {
 ///|
 fn render_doctor() -> CliResult {
   match sample_runtime_plan() {
-    Ok(plan) =>
-      match plan.launch_manifest() {
-        Ok(manifest) =>
-          ok(
-            "Lepusa doctor\n" +
-            "[ok] public-api: root package can build launch/runtime plans\n" +
-            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
-            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
-            "[ok] ipc: routes=\{plan.command_routes().length()}\n",
-          )
-        Err(problems) => fail(render_problems("Lepusa doctor", problems))
-      }
+    Ok(plan) => render_doctor_host(@runtime.RuntimeHost::new(plan))
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
+fn render_doctor_host(host : @runtime.RuntimeHost) -> CliResult {
+  let plan = host.plan()
+  match host.launch_manifest() {
+    Ok(manifest) =>
+      ok(
+        "Lepusa doctor\n" +
+        "[ok] public-api: root package can build launch/runtime plans\n" +
+        "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
+        "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
+        "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
+        render_native_backend_diagnostics(),
+      )
+    Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
+fn render_native_backend_diagnostics() -> String {
+  [
+    render_native_backend_line("macos", @macos_backend.detect()),
+    render_native_backend_line("windows", @windows_backend.detect()),
+    render_native_backend_line("linux", @linux_backend.detect()),
+  ].join("")
+}
+
+///|
+fn render_native_backend_line(
+  platform : String,
+  backend : Result[@runtime.NativeBackend, String],
+) -> String {
+  match backend {
+    Ok(backend) =>
+      "[ok] platform: \{platform} engine=\{backend.webview_engine()}\n"
+    Err(problem) => "[warn] platform: \{platform} \{problem}\n"
   }
 }
 

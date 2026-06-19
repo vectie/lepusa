@@ -23,6 +23,10 @@ test "doctor renders framework boundary checks" {
   assert_true(result.output.contains("[ok] public-api"))
   assert_true(result.output.contains("backend=headless"))
   assert_true(result.output.contains("[ok] manifest: webviews=1 routes=2"))
+  assert_true(result.output.contains("platform: macos"))
+  assert_true(result.output.contains("engine=WKWebView"))
+  assert_true(result.output.contains("platform: windows"))
+  assert_true(result.output.contains("platform: linux"))
 }
 
 ///|
@@ -135,6 +139,19 @@ async test "generated project config drives dev plan" {
   assert_true(result.output.contains("store.set"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("startup-operations: 1"))
+}
+
+///|
+async test "generated project config drives doctor backend diagnostics" {
+  let root = "/tmp/lepusa-project-doctor-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async(["doctor", "--project", root + "/lepusa.json"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("backend=system-webview"))
+  assert_true(result.output.contains("platform: macos"))
+  assert_true(result.output.contains("platform: windows"))
+  assert_true(result.output.contains("platform: linux"))
 }
 
 ///|

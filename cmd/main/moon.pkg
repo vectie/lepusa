@@ -6,6 +6,9 @@ import {
   "vectie/lepusa",
   "vectie/lepusa/plugins/catalog",
   "vectie/lepusa/runtime",
+  "vectie/lepusa/runtime/linux" @linux_backend,
+  "vectie/lepusa/runtime/macos" @macos_backend,
+  "vectie/lepusa/runtime/windows" @windows_backend,
 }
 
 supported_targets = "+native"
