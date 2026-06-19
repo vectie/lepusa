@@ -370,7 +370,11 @@ enters a Cocoa/WKWebView run loop through an explicit `launch(runtime)` call.
 Objective-C window creation lives under this package, not in the portable
 facade or CLI. `prepare_run(runtime)` is the testable boundary: it converts
 virtual Lepusa assets into `data:` URLs and local or packaged assets into
-`file:` URLs before a native window is opened.
+`file:` URLs before a native window is opened, and it merges the generated
+Lepusa bridge with a macOS-native hook bootstrap script. The C stub installs
+that combined source as a `WKUserScript` at document start, so launched pages
+receive `window.lepusa`, `__lepusaInvoke`, and the future
+`__lepusaInvokeResponse` callback surface before application code runs.
 `lepusa run macos --launch` is the first explicit GUI entry point. Linux and
 Windows still expose runner contracts and host availability checks, but their
 native launch loops intentionally fail until those platform packages implement

@@ -448,6 +448,9 @@ loops can consume bundled runtime data without depending on CLI internals.
 `BundledRuntime::new(manifest)` keeps the native command registry state alive
 for repeated bridge calls, while the manifest helper remains useful for
 one-shot probes.
+The macOS runner prepares and injects the generated bridge as a document-start
+WKUserScript, together with a native hook bootstrap for the future
+`window.webkit.messageHandlers.__lepusaInvoke` dispatch path.
 `Source::packaged("dist")` also emits an asset resource mapping and
 `lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
 The generated bundle runtime manifest rewrites packaged protocol roots to that

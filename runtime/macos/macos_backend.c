@@ -28,7 +28,9 @@ typedef void *(*LepusaMsgSendId)(void *, void *);
 typedef void *(*LepusaMsgSendIdId)(void *, void *, void *);
 typedef void *(*LepusaMsgSendIdCStr)(void *, void *, const char *);
 typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
+typedef void *(*LepusaMsgSendIdRectId)(void *, void *, LepusaRect, void *);
 typedef void *(*LepusaMsgSendIdRectStyle)(void *, void *, LepusaRect, unsigned long, unsigned long, int);
+typedef void *(*LepusaMsgSendIdScript)(void *, void *, void *, long, int);
 typedef void (*LepusaMsgSendVoid)(void *, void *);
 typedef void (*LepusaMsgSendVoidId)(void *, void *, void *);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
@@ -117,6 +119,7 @@ MOONBIT_FFI_EXPORT
 int32_t lepusa_macos_run_webview(
   moonbit_bytes_t title,
   moonbit_bytes_t url,
+  moonbit_bytes_t initialization_script,
   int32_t width,
   int32_t height,
   int32_t resizable
@@ -164,19 +167,47 @@ int32_t lepusa_macos_run_webview(
     return 4;
   }
 
+  void *configuration = lepusa_msg_id(
+    lepusa_cls("WKWebViewConfiguration"),
+    "new"
+  );
+  void *controller = lepusa_msg_id(
+    lepusa_cls("WKUserContentController"),
+    "new"
+  );
+  if (configuration == NULL || controller == NULL) {
+    return 5;
+  }
+
+  void *script_source = lepusa_ns_string(initialization_script);
+  void *user_script_alloc = lepusa_msg_id(lepusa_cls("WKUserScript"), "alloc");
+  void *user_script = ((LepusaMsgSendIdScript)lepusa_objc_msg_send)(
+    user_script_alloc,
+    lepusa_sel("initWithSource:injectionTime:forMainFrameOnly:"),
+    script_source,
+    0,
+    0
+  );
+  if (user_script == NULL) {
+    return 5;
+  }
+  lepusa_msg_void_id(controller, "addUserScript:", user_script);
+  lepusa_msg_void_id(configuration, "setUserContentController:", controller);
+
   void *webview_alloc = lepusa_msg_id(lepusa_cls("WKWebView"), "alloc");
-  void *webview = ((LepusaMsgSendIdRect)lepusa_objc_msg_send)(
+  void *webview = ((LepusaMsgSendIdRectId)lepusa_objc_msg_send)(
     webview_alloc,
-    lepusa_sel("initWithFrame:"),
-    frame
+    lepusa_sel("initWithFrame:configuration:"),
+    frame,
+    configuration
   );
   if (webview == NULL) {
-    return 5;
+    return 6;
   }
 
   void *ns_url = lepusa_ns_url(url);
   if (ns_url == NULL) {
-    return 6;
+    return 7;
   }
   void *request = ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
     lepusa_cls("NSURLRequest"),
@@ -184,7 +215,7 @@ int32_t lepusa_macos_run_webview(
     ns_url
   );
   if (request == NULL) {
-    return 7;
+    return 8;
   }
 
   lepusa_msg_void_id(window, "setTitle:", lepusa_ns_string(title));

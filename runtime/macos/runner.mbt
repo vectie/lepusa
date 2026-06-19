@@ -16,6 +16,7 @@ pub struct MacOSRunPlan {
   title : String
   url : String
   load_url : String
+  initialization_script : String
   width : Int
   height : Int
   resizable : Bool
@@ -29,10 +30,11 @@ pub struct MacOSRunResult {
 } derive(Debug, Eq)
 
 ///|
-#borrow(title, url)
+#borrow(title, url, initialization_script)
 extern "c" fn run_webview(
   title : Bytes,
   url : Bytes,
+  initialization_script : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
@@ -52,6 +54,7 @@ pub fn prepare_run(
             title: spec.title(),
             url: spec.url(),
             load_url,
+            initialization_script: macos_initialization_script(spec),
             width: spec.width(),
             height: spec.height(),
             resizable: spec.resizable(),
@@ -76,6 +79,7 @@ pub fn run(
           let exit_code = run_webview(
             @utf8.encode(plan.title),
             @utf8.encode(plan.load_url),
+            @utf8.encode(plan.initialization_script),
             plan.width,
             plan.height,
             if plan.resizable {
@@ -117,6 +121,11 @@ pub fn MacOSRunPlan::url(self : MacOSRunPlan) -> String {
 ///|
 pub fn MacOSRunPlan::load_url(self : MacOSRunPlan) -> String {
   self.load_url
+}
+
+///|
+pub fn MacOSRunPlan::initialization_script(self : MacOSRunPlan) -> String {
+  self.initialization_script
 }
 
 ///|
@@ -194,4 +203,62 @@ fn file_url(path : String) -> String {
   } else {
     "file://\{path}"
   }
+}
+
+///|
+fn macos_initialization_script(spec : @runtime.RuntimeWebViewSpec) -> String {
+  let scripts : Array[String] = [macos_native_hook_script(spec)]
+  for script in spec.initialization_scripts() {
+    scripts.push(script)
+  }
+  scripts.join("\n")
+}
+
+///|
+fn macos_native_hook_script(spec : @runtime.RuntimeWebViewSpec) -> String {
+  let native_hook = spec.native_hook().js_string_literal()
+  let response_hook = "\{spec.native_hook()}Response".js_string_literal()
+  [
+    "(() => {",
+    "  const nativeHook = \{native_hook};",
+    "  const responseHook = \{response_hook};",
+    "  const pending = new Map();",
+    "  Object.defineProperty(globalThis, responseHook, {",
+    "    value: (response) => {",
+    "      const id = response && String(response.id || \"\");",
+    "      const callbacks = pending.get(id);",
+    "      if (!callbacks) { return false; }",
+    "      pending.delete(id);",
+    "      if (response && response.error) { callbacks.reject(new Error(response.error)); }",
+    "      else { callbacks.resolve(response || null); }",
+    "      return true;",
+    "    },",
+    "    configurable: true,",
+    "  });",
+    "  Object.defineProperty(globalThis, nativeHook, {",
+    "    value: (request) => new Promise((resolve, reject) => {",
+    "      const handler = globalThis.webkit && globalThis.webkit.messageHandlers && globalThis.webkit.messageHandlers[nativeHook];",
+    "      if (!handler || typeof handler.postMessage !== \"function\") {",
+    "        reject(new Error(`Missing Lepusa macOS native message handler: ${nativeHook}`));",
+    "        return;",
+    "      }",
+    "      pending.set(String(request.id || \"\"), { resolve, reject });",
+    "      handler.postMessage(JSON.stringify(request));",
+    "    }),",
+    "    configurable: true,",
+    "  });",
+    "})();",
+  ].join("\n")
+}
+
+///|
+fn String::js_string_literal(self : String) -> String {
+  "\"" +
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="\n", new="\\n")
+  .replace_all(old="\r", new="\\r")
+  .replace_all(old="\t", new="\\t") +
+  "\""
 }

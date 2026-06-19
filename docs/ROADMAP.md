@@ -49,8 +49,9 @@
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.
 - Implement or port WebView window creation for macOS, Windows, and Linux:
-  first macOS WKWebView launch path exists; custom protocol callbacks and
-  Linux/Windows launch loops remain.
+  first macOS WKWebView launch path and document-start bridge injection exist;
+  macOS script message dispatch, custom protocol callbacks, and Linux/Windows
+  launch loops remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

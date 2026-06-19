@@ -127,6 +127,13 @@ test "macos backend prepares first webview load url" {
           assert_eq(plan.url(), "lepusa://inline/main/index.html")
           assert_true(plan.load_url().has_prefix("data:text/html;base64,"))
           assert_false(plan.load_url().contains("lepusa://"))
+          assert_true(
+            plan.initialization_script().contains("webkit.messageHandlers"),
+          )
+          assert_true(
+            plan.initialization_script().contains("__lepusaInvokeResponse"),
+          )
+          assert_true(plan.initialization_script().contains("windowLabel"))
           assert_eq(plan.width(), 1000)
           assert_eq(plan.height(), 720)
           assert_eq(plan.webviews(), 1)
@@ -146,6 +153,9 @@ test "macos backend dry run does not enter native loop" {
           assert_true(result.status() is MacOSPrepared)
           assert_true(
             result.plan().load_url().has_prefix("data:text/html;base64,"),
+          )
+          assert_true(
+            result.plan().initialization_script().contains("__lepusaInvoke"),
           )
         }
         Err(_) => abort("unexpected invalid macOS dry run")
