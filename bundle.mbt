@@ -305,9 +305,7 @@ fn BundlePlan::asset_resources(self : BundlePlan) -> Array[BundleResource] {
           BundleResource::new(
             kind=AssetResource,
             source_path=mapping.root()[8:].to_owned(),
-            path=self.shared_path(
-              "lepusa/assets/\{window.label().to_asset_segment()}",
-            ),
+            path=self.packaged_asset_resource_path(window.label()),
           ),
         )
       }
@@ -449,7 +447,10 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
 pub fn BundlePlan::runtime_manifest(
   self : BundlePlan,
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
-  self.runtime.launch_manifest(registered_routes=self.registered_routes)
+  match self.runtime.launch_manifest(registered_routes=self.registered_routes) {
+    Ok(manifest) => Ok(with_bundle_packaged_roots(manifest))
+    Err(problems) => Err(problems)
+  }
 }
 
 ///|
@@ -460,6 +461,37 @@ pub fn BundlePlan::runtime_manifest_json(
     Ok(runtime_manifest) => Ok(runtime_manifest.to_json())
     Err(problems) => Err(problems)
   }
+}
+
+///|
+fn with_bundle_packaged_roots(
+  manifest : RuntimeLaunchManifest,
+) -> RuntimeLaunchManifest {
+  let protocol_mappings : Array[RuntimeProtocolBinding] = []
+  for binding in manifest.protocol_mappings {
+    if binding.root.has_prefix("package:") {
+      protocol_mappings.push({
+        ..binding,
+        root: "package:\{packaged_asset_runtime_root(binding.window_label)}",
+      })
+    } else {
+      protocol_mappings.push(binding)
+    }
+  }
+  { ..manifest, protocol_mappings, }
+}
+
+///|
+fn packaged_asset_runtime_root(window_label : String) -> String {
+  "lepusa/assets/\{window_label.to_asset_segment()}"
+}
+
+///|
+fn BundlePlan::packaged_asset_resource_path(
+  self : BundlePlan,
+  window_label : String,
+) -> String {
+  self.shared_path(packaged_asset_runtime_root(window_label))
 }
 
 ///|

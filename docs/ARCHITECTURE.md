@@ -418,6 +418,9 @@ installer packaging without inventing another configuration model.
 owned assets. The first resource type is the application icon, mapped to the
 target's native bundle location and recorded in the generated bundle runtime
 file under `resources`.
+Packaged asset resources keep their source path as bundler input, while the
+generated bundle runtime manifest rewrites `package:` protocol mappings to the
+bundle-relative `lepusa/assets/<window>` directory.
 `lepusa bundle-write` copies planned resources to those bundle paths; future
 installer/signing steps should consume the same `BundleResource` list.
 

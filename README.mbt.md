@@ -371,9 +371,10 @@ directory. Project bundles carry registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 `Source::packaged("dist")` also emits an asset resource mapping and
-`lepusa bundle-write` copies that directory into `lepusa/assets/<window>`, while
-runtime asset probes return `packaged-file` envelopes for
-`lepusa://packaged/<window>/...` URLs.
+`lepusa bundle-write` copies that directory into `lepusa/assets/<window>`.
+The generated bundle runtime manifest rewrites packaged protocol roots to that
+bundle-relative location, while runtime asset probes return `packaged-file`
+envelopes for `lepusa://packaged/<window>/...` URLs.
 
 ## Boundary
 

@@ -727,7 +727,10 @@ test "bundle plans include packaged asset resources" {
           assert_eq(resources[0].path(), "assets-app/lepusa/assets/main")
           match plan.files() {
             Ok(files) => {
-              assert_true(files[1].content().contains("\"package:dist\""))
+              assert_true(
+                files[1].content().contains("\"package:lepusa/assets/main\""),
+              )
+              assert_false(files[1].content().contains("\"package:dist\""))
               assert_true(files[1].content().contains("\"kind\":\"asset\""))
             }
             Err(_) => abort("unexpected invalid bundle files")

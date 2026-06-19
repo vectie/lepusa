@@ -872,6 +872,11 @@ async test "bundle write materializes packaged asset directories" {
   assert_true(@fs.exists(asset_root + "/index.html"))
   assert_true(@fs.exists(asset_root + "/css/app.css"))
   assert_eq(@fs.read_file(asset_root + "/css/app.css").text(), "body{}")
+  let runtime_json = @fs.read_file(
+    bundle_root + "/packaged-app/lepusa/runtime.json",
+  ).text()
+  assert_true(runtime_json.contains("\"package:lepusa/assets/main\""))
+  assert_false(runtime_json.contains("\"package:\{root}/dist\""))
 }
 
 ///|
