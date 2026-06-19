@@ -28,8 +28,8 @@ The first implementation slice already owns the public MoonBit foundation:
 - Rabbita-style `cell_with_dispatch` and `new(cell)` app construction
 - `WindowConfig`, `Source`, `Plugin`, `Capability`, `Cmd`, `Event`, and typed
   IPC request/response contracts
-- validation and `LaunchPlan` generation as the boundary a native runtime will
-  consume next
+- validation, `LaunchPlan`, `RuntimePlan`, and `BundlePlan` generation as the
+  boundaries native runtime and platform bundler code will consume next
 
 The common authoring path is intentionally small:
 
@@ -54,6 +54,20 @@ fn main {
     Err(problems) => fail_fast(problems)
   }
 }
+```
+
+For backend and packaging work, the app model can be lowered without pulling in
+product-specific code:
+
+```moonbit nocheck
+let runtime = app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview())
+let bundle = @lepusa.BundleConfig::new(
+  @lepusa.AppMetadata::new(
+    identifier="dev.example.app",
+    product_name="Example App",
+    version="0.1.0",
+  ),
+)
 ```
 
 ## Boundary

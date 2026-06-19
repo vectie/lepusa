@@ -25,12 +25,48 @@ pub struct App {
   startup : Cmd
 } derive(Eq, @debug.Debug)
 pub fn App::launch_plan(Self) -> Result[LaunchPlan, Array[String]]
+pub fn App::runtime_plan(Self, config? : RuntimeConfig) -> Result[RuntimePlan, Array[String]]
 pub fn App::validate(Self) -> Array[String]
 pub fn App::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
 pub fn App::with_capability(Self, Capability) -> Self
 pub fn App::with_plugin(Self, Plugin) -> Self
 pub fn App::with_startup(Self, Cmd) -> Self
 pub fn App::with_window(Self, WindowConfig) -> Self
+
+pub struct AppMetadata {
+  identifier : String
+  product_name : String
+  version : String
+} derive(Eq, @debug.Debug)
+pub fn AppMetadata::executable_name(Self) -> String
+pub fn AppMetadata::new(identifier~ : String, product_name~ : String, version~ : String) -> Self
+pub fn AppMetadata::validate(Self) -> Array[String]
+
+pub struct BundleConfig {
+  metadata : AppMetadata
+  target : BundleTarget
+  icon_path : String?
+} derive(Eq, @debug.Debug)
+pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : String) -> Self
+pub fn BundleConfig::plan(Self, RuntimePlan) -> Result[BundlePlan, Array[String]]
+pub fn BundleConfig::validate(Self) -> Array[String]
+
+pub struct BundlePlan {
+  metadata : AppMetadata
+  target : BundleTarget
+  runtime : RuntimePlan
+  executable_name : String
+  bundle_name : String
+  icon_path : String?
+} derive(Eq, @debug.Debug)
+pub fn BundlePlan::bundle_name(Self) -> String
+pub fn BundlePlan::executable_name(Self) -> String
+
+pub(all) enum BundleTarget {
+  MacOS
+  Windows
+  Linux
+} derive(Eq, @debug.Debug)
 
 pub struct Capability {
   name : String
@@ -128,6 +164,7 @@ pub struct LaunchPlan {
   startup : Cmd
 } derive(Eq, @debug.Debug)
 pub fn LaunchPlan::capability_count(Self) -> Int
+pub fn LaunchPlan::command_routes(Self) -> Array[String]
 pub fn LaunchPlan::plugin_count(Self) -> Int
 pub fn LaunchPlan::window_count(Self) -> Int
 
@@ -150,12 +187,37 @@ pub fn Plugin::command(Self, String, mode? : CommandMode) -> Self
 pub fn Plugin::command_async(Self, String) -> Self
 pub fn Plugin::command_event(Self, String) -> Self
 pub fn Plugin::command_names(Self) -> Array[String]
+pub fn Plugin::command_routes(Self) -> Array[String]
 pub fn Plugin::command_stream(Self, String) -> Self
 pub fn Plugin::command_sync(Self, String) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
 pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self
 pub fn Plugin::validate(Self) -> Array[String]
+
+pub(all) enum RuntimeBackend {
+  SystemWebView
+  Headless
+} derive(Eq, @debug.Debug)
+
+pub struct RuntimeConfig {
+  backend : RuntimeBackend
+  devtools : Bool
+  asset_protocol : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeConfig::headless() -> Self
+pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String) -> Self
+pub fn RuntimeConfig::validate(Self) -> Array[String]
+
+pub struct RuntimePlan {
+  launch : LaunchPlan
+  backend : RuntimeBackend
+  devtools : Bool
+  asset_protocol : String
+  command_routes : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimePlan::backend(Self) -> RuntimeBackend
+pub fn RuntimePlan::command_routes(Self) -> Array[String]
 
 pub(all) enum Source {
   InlineHtml(String)

@@ -119,3 +119,53 @@ test "app builds a launch plan as the native runtime boundary" {
     Err(_) => abort("unexpected invalid app")
   }
 }
+
+///|
+test "runtime plans collect plugin command routes" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("dialog")
+      .command_sync("show")
+      .command_async("confirm"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      assert_true(plan.backend() is @lepusa.Headless)
+      let routes = plan.command_routes()
+      assert_eq(routes.length(), 2)
+      assert_eq(routes[0], "dialog.show")
+      assert_eq(routes[1], "dialog.confirm")
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "bundle plans derive executable and package names from metadata" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    source=@lepusa.Source::html("<main></main>"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(runtime) => {
+      let bundle = @lepusa.BundleConfig::new(
+        @lepusa.AppMetadata::new(
+          identifier="dev.vectie.lepusa.example",
+          product_name="Lepusa Example",
+          version="0.1.0",
+        ),
+        target=@lepusa.MacOS,
+      )
+      match bundle.plan(runtime) {
+        Ok(plan) => {
+          assert_eq(plan.executable_name(), "lepusa-example")
+          assert_eq(plan.bundle_name(), "lepusa-example.app")
+        }
+        Err(_) => abort("unexpected invalid bundle plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}

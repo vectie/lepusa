@@ -88,6 +88,11 @@ pub fn Plugin::command_names(self : Plugin) -> Array[String] {
 }
 
 ///|
+pub fn Plugin::command_routes(self : Plugin) -> Array[String] {
+  self.commands.map(fn(command) { "\{self.name}.\{command.name()}" })
+}
+
+///|
 pub fn Plugin::validate(self : Plugin) -> Array[String] {
   let problems : Array[String] = []
   if self.name == "" {

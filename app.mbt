@@ -23,6 +23,17 @@ pub fn LaunchPlan::capability_count(self : LaunchPlan) -> Int {
 }
 
 ///|
+pub fn LaunchPlan::command_routes(self : LaunchPlan) -> Array[String] {
+  let routes : Array[String] = []
+  for plugin in self.plugins {
+    for route in plugin.command_routes() {
+      routes.push(route)
+    }
+  }
+  routes
+}
+
+///|
 pub struct App {
   root : Cell
   windows : Array[WindowConfig]

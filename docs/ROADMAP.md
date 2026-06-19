@@ -5,6 +5,8 @@
 - Publish `lepusa` as the public framework name.
 - Own public concrete API types in `lepusa` or non-internal `lepusa/*`
   packages.
+- Own `LaunchPlan`, `RuntimePlan`, and `BundlePlan` as the first native backend
+  boundaries.
 - Import useful runtime ideas from existing experiments without making Lepusa a
   wrapper layer over them.
 - Keep product-specific requirements out of core packages.

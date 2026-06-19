@@ -96,6 +96,10 @@ pub type Cmd
 pub type Event
 pub type InvokeRequest
 pub type InvokeResponse
+pub type RuntimeConfig
+pub type RuntimePlan
+pub type BundleConfig
+pub type BundlePlan
 pub type Html
 pub type Dispatch
 
@@ -104,6 +108,10 @@ pub fn new(root : Cell) -> App
 pub fn App::with_startup(self : App, cmd : Cmd) -> App
 pub fn App::window(self : App, ...) -> App
 pub fn App::launch_plan(self : App) -> Result[LaunchPlan, Array[String]]
+pub fn App::runtime_plan(self : App, config? : RuntimeConfig) -> Result[
+  RuntimePlan,
+  Array[String],
+]
 
 pub fn Source::html(html : String) -> Source
 pub fn Source::local_path(path : String) -> Source
