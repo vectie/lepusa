@@ -64,6 +64,7 @@
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.
   - `lepusa bridge`: prints the generated frontend IPC bridge.
+  - `lepusa asset`: prints the runtime asset protocol JSON envelope.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton.

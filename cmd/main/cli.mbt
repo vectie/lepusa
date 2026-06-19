@@ -88,6 +88,7 @@ fn render_cli(args : Array[String]) -> CliResult {
     Some("init") => fail("init requires the native async runner\n")
     Some("plugin") => fail("plugin commands require the native async runner\n")
     Some("invoke") => fail("invoke requires the native async runner\n")
+    Some("asset") => fail("asset requires the native async runner\n")
     Some("bundle-write") =>
       fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
@@ -106,6 +107,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("init") => render_init(args)
     Some("plugin") => render_plugin(args)
     Some("invoke") => render_invoke_async(args)
+    Some("asset") => render_asset_async(args)
     Some("bundle-plan") => render_bundle_plan_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
@@ -137,6 +139,7 @@ fn help_text() -> String {
     #|  lepusa bridge
     #|  lepusa dev
     #|  lepusa invoke <window> <plugin.command> [payload]
+    #|  lepusa asset <url>
     #|  lepusa init [out-dir]
     #|  lepusa plugin new <name> [out-dir]
     #|  lepusa bundle-plan [macos|windows|linux]
@@ -319,6 +322,19 @@ async fn render_dev_async(args : Array[String]) -> CliResult {
         Err(problems) => fail(render_problems("Lepusa dev", problems))
       }
     Err(problems) => fail(render_problems("Lepusa dev", problems))
+  }
+}
+
+///|
+async fn render_asset_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let url = values.get(0).unwrap_or("")
+  if url == "" {
+    return fail("asset url is required\n")
+  }
+  match project_runtime_host(args) {
+    Ok(host) => ok(host.resolve_asset_json(url) + "\n")
+    Err(problems) => fail(render_problems("Lepusa asset", problems))
   }
 }
 

@@ -249,6 +249,9 @@ rejecting traversal attempts before platform file IO happens.
 `RuntimeHost::resolve_asset_json(url)` expose the same decision as a compact
 backend wire envelope: `{ok,url,mimeType,body}` for virtual content or local
 file paths, and `{ok:false,url,error}` for denial or misses.
+The CLI command `lepusa asset <url>` runs that exact path against the current
+project manifest, giving backend implementers and app authors a no-window smoke
+test for protocol mappings and virtual asset generation.
 
 `RuntimeHost::dispatch_json(input)` is the native hook contract. The generated
 bridge sends a JSON object with `id`, `windowLabel`/`window_label`, `plugin`,

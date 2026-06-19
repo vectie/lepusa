@@ -108,6 +108,7 @@ moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.jso
 moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- native-plan linux --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -304,6 +305,8 @@ virtual files, and safe local asset paths without doing platform file IO.
 `RuntimeHost::resolve_asset_json(url)` expose the same boundary as a stable
 JSON envelope for native protocol handlers: virtual content, local file paths,
 or a structured error.
+`lepusa asset <url> --project lepusa.json` prints that envelope directly, so
+desktop projects can smoke-test the custom protocol without starting a WebView.
 
 `RuntimeHost::dispatch_json(input)` is the native hook boundary for WebView IPC.
 It decodes the bridge request object, verifies the route is declared by the

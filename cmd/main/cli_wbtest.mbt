@@ -6,6 +6,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa invoke"))
+  assert_true(result.output.contains("lepusa asset"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa init"))
@@ -90,6 +91,24 @@ test "bundle plan supports target selection" {
 }
 
 ///|
+async test "asset command resolves sample runtime assets" {
+  let result = render_cli_async(["asset", "lepusa://rabbita/main/index.html"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"ok\":true"))
+  assert_true(result.output.contains("\"kind\":\"virtual\""))
+  assert_true(result.output.contains("\"mimeType\":\"text/html\""))
+  assert_true(result.output.contains("<main></main>"))
+  let missing = render_cli_async(["asset", "lepusa://rabbita/main/missing.js"])
+  assert_eq(missing.exit_code, 0)
+  assert_true(missing.output.contains("\"ok\":false"))
+  assert_true(
+    missing.output.contains(
+      "\"error\":\"virtual asset not found: main/missing.js\"",
+    ),
+  )
+}
+
+///|
 async test "init writes standalone project skeleton" {
   let root = "/tmp/lepusa-init-\{@async.now().to_int()}"
   let result = render_cli_async(["init", root])
@@ -115,6 +134,23 @@ async test "init writes standalone project skeleton" {
   let main_file = @fs.read_file(root + "/main.mbt").text()
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
+}
+
+///|
+async test "generated project config resolves runtime assets" {
+  let root = "/tmp/lepusa-project-asset-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "asset",
+    "lepusa://rabbita/main/index.html",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"ok\":true"))
+  assert_true(result.output.contains("\"kind\":\"virtual\""))
+  assert_true(result.output.contains("Hello Lepusa"))
 }
 
 ///|
