@@ -735,8 +735,18 @@ test "runtime plans expose portable launch manifest" {
           assert_eq(manifest.virtual_files()[0].path(), "index.html")
           assert_eq(manifest.virtual_files()[0].mime_type(), "text/html")
           assert_eq(manifest.virtual_files()[0].content(), "<main></main>")
+          assert_eq(manifest.capabilities().length(), 1)
+          assert_eq(manifest.capabilities()[0].name(), "main-core")
+          assert_eq(manifest.capabilities()[0].windows()[0], "main")
+          assert_true(
+            manifest.capabilities()[0]
+            .permissions()
+            .contains("custom:core.invoke"),
+          )
           assert_eq(manifest.registered_routes()[0], "core.invoke")
           assert_true(manifest.to_json().contains("\"virtualFiles\""))
+          assert_true(manifest.to_json().contains("\"capabilities\""))
+          assert_true(manifest.to_json().contains("\"custom:core.invoke\""))
           assert_true(manifest.to_json().contains("\"initializationScripts\""))
         }
         Err(_) => abort("unexpected invalid launch manifest")

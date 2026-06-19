@@ -16,6 +16,11 @@ test "runtime cli summarizes bundled manifest envelope" {
     #|    }],
     #|    "startupActions": [{ "kind": "event" }],
     #|    "lifecycleHooks": [{ "event": "app-started" }],
+    #|    "capabilities": [{
+    #|      "name": "main-log",
+    #|      "windows": ["main"],
+    #|      "permissions": ["custom:log.write"]
+    #|    }],
     #|    "commandRoutes": ["log.write"],
     #|    "registeredRoutes": ["log.write"]
     #|  }
@@ -37,6 +42,7 @@ test "runtime cli summarizes bundled manifest envelope" {
   assert_true(result.output.contains("service-start-order: api"))
   assert_true(result.output.contains("startup-actions: 1"))
   assert_true(result.output.contains("lifecycle-hooks: 1"))
+  assert_true(result.output.contains("capabilities: 1"))
   assert_true(result.output.contains("command-routes: 1"))
   assert_true(result.output.contains("registered-routes: 1"))
 }
@@ -65,6 +71,11 @@ test "runtime cli renders bundled bootstrap json" {
     #|    "localServices": [],
     #|    "startupActions": [],
     #|    "lifecycleHooks": [],
+    #|    "capabilities": [{
+    #|      "name": "main-log",
+    #|      "windows": ["main"],
+    #|      "permissions": ["custom:log.write"]
+    #|    }],
     #|    "commandRoutes": ["log.write"],
     #|    "registeredRoutes": ["log.write"]
     #|  }
@@ -81,6 +92,8 @@ test "runtime cli renders bundled bootstrap json" {
   assert_true(result.output.contains("\"webviewSpecs\""))
   assert_true(result.output.contains("\"startupOperations\""))
   assert_true(result.output.contains("\"lifecycleOperations\""))
+  assert_true(result.output.contains("\"capabilities\""))
+  assert_true(result.output.contains("\"permissions\":[\"custom:log.write\"]"))
   assert_true(result.output.contains("\"bridgeRoutes\""))
   assert_true(result.output.contains("\"registeredRoutes\":[\"log.write\"]"))
 }

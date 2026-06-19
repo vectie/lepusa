@@ -156,6 +156,9 @@ Command rules:
 - Every command is denied by default unless a capability grants it.
 - `Permission::command(route)` is the default permission for custom command
   routes.
+- `RuntimeLaunchManifest.capabilities` carries the capability grants as native
+  runtime data, so packaged apps and platform diagnostics can inspect the same
+  permissions that dispatch enforces.
 - Built-in permission names for project manifests are `filesystem.read`,
   `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
   `clipboard`, `notification`, `localhost`, `deep-link`, `single-instance`,
@@ -388,9 +391,9 @@ file and passes its directory as `base_dir`.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, drives generated launcher stubs through
 target-aware bundled launch plans, emits bundled bootstrap JSON for native
-loops, exposes typed WebView boot data, resolves bundled asset URLs, dispatches
-registered official plugin commands, and selects local services plus lifecycle
-actions without re-entering project configuration.
+loops, exposes typed WebView boot data, preserves capability grants, resolves
+bundled asset URLs, dispatches registered official plugin commands, and selects
+local services plus lifecycle actions without re-entering project configuration.
 
 `@lepusa/runtime/macos` owns macOS-specific backend integration. It is a native
 package with a small C stub that validates the system WebKit framework is

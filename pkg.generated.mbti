@@ -151,6 +151,7 @@ pub fn Capability::permission(Self, Permission) -> Self
 pub fn Capability::permissions(Self) -> Array[Permission]
 pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
+pub fn Capability::windows(Self) -> Array[String]
 
 pub struct Cell {
   id : String
@@ -562,6 +563,15 @@ pub(all) enum RuntimeBackend {
 } derive(Eq, @debug.Debug)
 pub fn RuntimeBackend::name(Self) -> String
 
+pub struct RuntimeCapabilityGrant {
+  name : String
+  windows : Array[String]
+  permissions : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeCapabilityGrant::name(Self) -> String
+pub fn RuntimeCapabilityGrant::permissions(Self) -> Array[String]
+pub fn RuntimeCapabilityGrant::windows(Self) -> Array[String]
+
 pub struct RuntimeConfig {
   backend : RuntimeBackend
   devtools : Bool
@@ -596,6 +606,7 @@ pub struct RuntimeLaunchManifest {
   virtual_files : Array[RuntimeVirtualAsset]
   local_services : Array[LocalService]
   filesystem_scopes : Array[FileSystemScope]
+  capabilities : Array[RuntimeCapabilityGrant]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -604,6 +615,7 @@ pub struct RuntimeLaunchManifest {
 pub fn RuntimeLaunchManifest::asset_protocol(Self) -> String
 pub fn RuntimeLaunchManifest::backend(Self) -> String
 pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
+pub fn RuntimeLaunchManifest::capabilities(Self) -> Array[RuntimeCapabilityGrant]
 pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::file_system_scopes(Self) -> Array[FileSystemScope]

@@ -181,6 +181,8 @@ test "bundled runtime manifest emits bootstrap json" {
       assert_true(bootstrap.contains("\"runtime\":{"))
       assert_true(bootstrap.contains("\"webviewSpecs\""))
       assert_true(bootstrap.contains("\"allowedRoutes\":[\"log.write\"]"))
+      assert_true(bootstrap.contains("\"capabilities\""))
+      assert_true(bootstrap.contains("\"permissions\":[\"custom:log.write\"]"))
       assert_true(bootstrap.contains("\"startupOperations\""))
       assert_true(bootstrap.contains("\"kind\":\"start-service\""))
       assert_true(bootstrap.contains("\"kind\":\"run-effect\""))
@@ -377,6 +379,13 @@ fn sample_bundled_manifest() -> String {
     #|        "path": "index.html",
     #|        "mimeType": "text/html",
     #|        "content": "<main></main>"
+    #|      }
+    #|    ],
+    #|    "capabilities": [
+    #|      {
+    #|        "name": "main-log",
+    #|        "windows": ["main"],
+    #|        "permissions": ["custom:log.write"]
     #|      }
     #|    ],
     #|    "localServices": [

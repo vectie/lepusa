@@ -47,6 +47,7 @@ pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String 
   )
   let lifecycle_hooks = optional_array(self.runtime, "lifecycleHooks").unwrap_or([],
   )
+  let capabilities = optional_array(self.runtime, "capabilities").unwrap_or([])
   let routes = optional_array(self.runtime, "commandRoutes").unwrap_or([])
   let registered_routes = optional_array(self.runtime, "registeredRoutes").unwrap_or([],
   )
@@ -64,6 +65,7 @@ pub fn BundledRuntimeManifest::summary(self : BundledRuntimeManifest) -> String 
   "service-start-order: \{service_start_order}\n" +
   "startup-actions: \{startup_actions.length()}\n" +
   "lifecycle-hooks: \{lifecycle_hooks.length()}\n" +
+  "capabilities: \{capabilities.length()}\n" +
   "command-routes: \{routes.length()}\n" +
   "registered-routes: \{registered_routes.length()}\n"
 }

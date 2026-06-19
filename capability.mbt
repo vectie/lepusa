@@ -148,6 +148,11 @@ pub fn Capability::permissions(self : Capability) -> Array[Permission] {
 }
 
 ///|
+pub fn Capability::windows(self : Capability) -> Array[String] {
+  self.windows.copy()
+}
+
+///|
 pub fn Capability::validate(self : Capability) -> Array[String] {
   let problems : Array[String] = []
   if self.name == "" {

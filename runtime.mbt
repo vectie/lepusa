@@ -88,6 +88,11 @@ pub fn RuntimePlan::capability_count(self : RuntimePlan) -> Int {
 }
 
 ///|
+pub fn RuntimePlan::capabilities(self : RuntimePlan) -> Array[Capability] {
+  self.launch.capabilities()
+}
+
+///|
 pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
   self.command_routes.copy()
 }
@@ -139,11 +144,6 @@ pub fn RuntimePlan::window_command_routes(
     }
   }
   routes
-}
-
-///|
-pub fn RuntimePlan::capabilities(self : RuntimePlan) -> Array[Capability] {
-  self.launch.capabilities()
 }
 
 ///|

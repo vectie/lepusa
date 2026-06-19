@@ -395,9 +395,9 @@ start scripts.
 `lepusa.core.invoke(payload)`.
 
 `lepusa dev` lowers the current project into a runtime development plan:
-resolved WebViews, asset protocol, capability-filtered routes, runtime session,
-and startup operations. This is the stable boundary the platform-specific
-window loops will execute.
+resolved WebViews, asset protocol, capability grants, capability-filtered
+routes, runtime session, and startup operations. This is the stable boundary
+the platform-specific window loops will execute.
 
 `RuntimeHost::runner_plan()` is the platform-neutral native-loop contract:
 launch manifest, resolved WebViews, stepped runtime session, and startup

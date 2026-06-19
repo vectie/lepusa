@@ -9,6 +9,7 @@ pub struct RuntimeLaunchManifest {
   virtual_files : Array[RuntimeVirtualAsset]
   local_services : Array[LocalService]
   filesystem_scopes : Array[FileSystemScope]
+  capabilities : Array[RuntimeCapabilityGrant]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_routes : Array[String]
@@ -46,6 +47,13 @@ pub struct RuntimeVirtualAsset {
   path : String
   mime_type : String
   content : String
+} derive(Debug, Eq)
+
+///|
+pub struct RuntimeCapabilityGrant {
+  name : String
+  windows : Array[String]
+  permissions : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -134,6 +142,9 @@ pub fn RuntimePlan::launch_manifest(
       virtual_files,
       local_services,
       filesystem_scopes: self.file_system_scopes(),
+      capabilities: self
+      .capabilities()
+      .map(RuntimeCapabilityGrant::from_capability),
       startup_actions,
       lifecycle_hooks,
       command_routes: self.command_routes(),
@@ -249,6 +260,13 @@ pub fn RuntimeLaunchManifest::file_system_scopes(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::capabilities(
+  self : RuntimeLaunchManifest,
+) -> Array[RuntimeCapabilityGrant] {
+  self.capabilities.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::startup_actions(
   self : RuntimeLaunchManifest,
 ) -> Array[RuntimeAction] {
@@ -289,6 +307,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"virtualFiles\":[\{self.virtual_files.map(runtime_virtual_asset_json).join(",")}],",
     "\"localServices\":[\{self.local_services.map(fn(service) { service.to_json() }).join(",")}],",
     "\"filesystemScopes\":[\{self.filesystem_scopes.map(fn(scope) { scope.to_json() }).join(",")}],",
+    "\"capabilities\":[\{self.capabilities.map(runtime_capability_grant_json).join(",")}],",
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
@@ -401,6 +420,38 @@ pub fn RuntimeWebViewBoot::initialization_scripts(
   self : RuntimeWebViewBoot,
 ) -> Array[String] {
   self.initialization_scripts.copy()
+}
+
+///|
+pub fn RuntimeCapabilityGrant::name(self : RuntimeCapabilityGrant) -> String {
+  self.name
+}
+
+///|
+pub fn RuntimeCapabilityGrant::windows(
+  self : RuntimeCapabilityGrant,
+) -> Array[String] {
+  self.windows.copy()
+}
+
+///|
+pub fn RuntimeCapabilityGrant::permissions(
+  self : RuntimeCapabilityGrant,
+) -> Array[String] {
+  self.permissions.copy()
+}
+
+///|
+fn RuntimeCapabilityGrant::from_capability(
+  capability : Capability,
+) -> RuntimeCapabilityGrant {
+  {
+    name: capability.name(),
+    windows: capability.windows(),
+    permissions: capability
+    .permissions()
+    .map(fn(permission) { permission.name() }),
+  }
 }
 
 ///|
@@ -667,6 +718,17 @@ fn runtime_virtual_asset_json(asset : RuntimeVirtualAsset) -> String {
     "\"path\":\{asset.path().json_string()},",
     "\"mimeType\":\{asset.mime_type().json_string()},",
     "\"content\":\{asset.content().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn runtime_capability_grant_json(grant : RuntimeCapabilityGrant) -> String {
+  [
+    "{",
+    "\"name\":\{grant.name().json_string()},",
+    "\"windows\":[\{grant.windows().map(fn(window) { window.json_string() }).join(",")}],",
+    "\"permissions\":[\{grant.permissions().map(fn(permission) { permission.json_string() }).join(",")}]",
     "}",
   ].join("")
 }

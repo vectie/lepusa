@@ -35,7 +35,7 @@
 - Add async command registry dispatch for native plugin handlers.
 - Add per-window WebView boot specs for platform backends.
 - Add a portable runtime launch manifest for WebViews, bridge hooks, protocol
-  mappings, and command routes.
+  mappings, command routes, and capability grants.
 - Lower `Cmd` startup trees into backend-executable runtime actions.
 - Add runtime lifecycle hooks for startup, shutdown, and window close events:
   initial generic and native runner lowering exists
@@ -78,7 +78,9 @@
 
 - Stabilize `Plugin::command`, `command_sync`, async command behavior, and
   backend-to-frontend events.
-- Add capability manifests and runtime permission checks.
+- Add capability manifests and runtime permission checks: launch and bundled
+  runtime manifests now carry capability grants, and dispatch already enforces
+  those permissions.
 - Generate a small JavaScript bridge under `window.lepusa`.
 - Add tests for denied commands, malformed payloads, and plugin namespace
   collisions.

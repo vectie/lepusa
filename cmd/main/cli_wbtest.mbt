@@ -325,6 +325,8 @@ async test "generated project config drives manifest and bundle write" {
   assert_true(manifest.output.contains("\"backend\":\"system-webview\""))
   assert_true(manifest.output.contains("\"commandRoutes\""))
   assert_true(manifest.output.contains("\"registeredRoutes\""))
+  assert_true(manifest.output.contains("\"capabilities\""))
+  assert_true(manifest.output.contains("\"custom:log.write\""))
   assert_true(manifest.output.contains("\"log.write\""))
   assert_true(manifest.output.contains("\"store.keys\""))
   assert_true(manifest.output.contains("Count: 0"))
@@ -344,6 +346,8 @@ async test "generated project config drives manifest and bundle write" {
   assert_true(@fs.exists(bundle_root + "/lepusa-app.desktop"))
   let runtime_json = @fs.read_file(bundle_root + "/lepusa/runtime.json").text()
   assert_true(runtime_json.contains("\"registeredRoutes\""))
+  assert_true(runtime_json.contains("\"capabilities\""))
+  assert_true(runtime_json.contains("\"custom:log.write\""))
   assert_true(runtime_json.contains("\"log.write\""))
   assert_true(runtime_json.contains("\"store.set\""))
   assert_true(runtime_json.contains("\"signingPrerequisites\""))
@@ -761,7 +765,14 @@ async test "project config parses filesystem scopes" {
           match plan.launch_manifest() {
             Ok(manifest) => {
               assert_eq(manifest.file_system_scopes().length(), 2)
+              assert_eq(manifest.capabilities()[0].name(), "main-files")
+              assert_true(
+                manifest.capabilities()[0]
+                .permissions()
+                .contains("filesystem.read"),
+              )
               assert_true(manifest.to_json().contains("\"filesystemScopes\""))
+              assert_true(manifest.to_json().contains("\"capabilities\""))
               assert_true(manifest.to_json().contains("\"root\":\"assets\""))
             }
             Err(_) => abort("unexpected invalid launch manifest")
@@ -988,6 +999,7 @@ async test "bundle write materializes planned files" {
   assert_true(launcher.contains("lepusa/runtime.json"))
   let runtime_manifest = @fs.read_file(runtime_path).text()
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))
+  assert_true(runtime_manifest.contains("\"capabilities\""))
   assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
