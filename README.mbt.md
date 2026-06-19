@@ -140,9 +140,10 @@ requirements, and capability grants. Native CLI commands consume the nearest
 `lepusa.json` from the current directory, or a file passed with `--project`.
 Official plugins can be declared by name, for example `{ "name": "clipboard" }`,
 `{ "name": "dialog" }`, `{ "name": "notification" }`, `{ "name": "log" }`,
-`{ "name": "shell" }`, `{ "name": "store" }`, or `{ "name": "fs" }`; Lepusa expands those
-declarations to the package's official command contract. Custom plugins can
-still provide an explicit `commands` array.
+`{ "name": "opener" }`, `{ "name": "shell" }`, `{ "name": "store" }`, or
+`{ "name": "fs" }`; Lepusa expands those declarations to the package's
+official command contract. Custom plugins can still provide an explicit
+`commands` array.
 Projects can also declare `filesystemScopes`, named roots that are carried into
 runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
@@ -191,6 +192,10 @@ actual OS dialog implementation.
 `@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare the
 platform-neutral clipboard and notification routes. Native backends own system
 clipboard and OS notification integration.
+
+`@lepusa/plugins/opener` declares platform-neutral URL and path opener routes:
+`opener.openUrl`, `opener.openPath`, and `opener.revealPath`. Native backends
+own the platform-specific open/reveal implementation.
 
 `@lepusa/plugins/shell` declares explicit shell execution and process lifecycle
 routes. Native backends own execution, process tracking, and platform-specific

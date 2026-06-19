@@ -157,7 +157,7 @@ Command rules:
 - `Permission::command(route)` is the default permission for custom command
   routes.
 - Built-in permission names for project manifests are `filesystem.read`,
-  `filesystem.write`, `network`, `shell`, `dialog`, `clipboard`, and
+  `filesystem.write`, `network`, `shell`, `dialog`, `opener`, `clipboard`, and
   `notification`; custom names use `custom:<name>`.
 - `RuntimePlan::command_routes()` lists every declared route, while
   `RuntimePlan::window_command_routes(label)` returns only routes granted to

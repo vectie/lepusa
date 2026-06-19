@@ -1,0 +1,21 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/opener"
+
+import {
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

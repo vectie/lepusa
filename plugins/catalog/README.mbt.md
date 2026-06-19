@@ -16,6 +16,9 @@ test "lookup official plugins" {
   let notification = @catalog.plugin("notification").unwrap()
   assert_true(notification.command_routes().contains("notification.show"))
 
+  let opener = @catalog.plugin("opener").unwrap()
+  assert_true(opener.command_routes().contains("opener.openUrl"))
+
   let shell = @catalog.plugin("shell").unwrap()
   assert_true(shell.command_routes().contains("shell.execute"))
 

@@ -78,7 +78,7 @@
 Stabilize the cross-platform core set first:
 
 - dialog: initial platform-neutral command contract exists
-- opener
+- opener: initial platform-neutral command contract exists
 - fs: initial scoped permission contract and runtime scope manifest exist
 - file-dialog with scoped default directories
 - shell: initial platform-neutral command contract exists
