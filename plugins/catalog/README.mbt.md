@@ -39,5 +39,18 @@ test "lookup official plugins" {
 
   let registry = @catalog.register(registry, "log")
   assert_true(registry.contains("log.write"))
+
+  let service = @lepusa.LocalService::new(
+    "api",
+    command=["moon", "run", "cmd/main"],
+    readiness_url="http://127.0.0.1:8080/health",
+  )
+  let context = @catalog.CatalogContext::new(local_services=[service])
+  let registry = @catalog.register_with_context(
+    registry,
+    "serviceDiscovery",
+    context~,
+  )
+  assert_true(registry.contains("serviceDiscovery.resolve"))
 }
 ```

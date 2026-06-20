@@ -626,11 +626,13 @@ async test "checked examples cover rabbita static and gateway modes" {
   let gateway_strict = render_cli_async([
     "verify", "linux", "--strict", "--project", "examples/gateway/lepusa.json",
   ])
-  assert_eq(gateway_strict.exit_code, 1)
+  assert_eq(gateway_strict.exit_code, 0)
   assert_true(gateway_strict.output.contains("mode: strict"))
-  assert_true(gateway_strict.output.contains("[warn] handlers:"))
   assert_true(
-    gateway_strict.output.contains("[fail] strict: missing concrete handlers"),
+    gateway_strict.output.contains("[ok] handlers: registered=9 missing=0"),
+  )
+  assert_true(
+    gateway_strict.output.contains("[ok] strict: native launch gate passed"),
   )
 }
 

@@ -2,14 +2,15 @@
 fn project_registry_from_plugins(
   plugins : Array[@lepusa.Plugin],
   filesystem_scopes~ : Array[@lepusa.FileSystemScope],
+  local_services? : Array[@lepusa.LocalService] = [],
 ) -> @lepusa.CommandRegistry {
   let mut registry = @lepusa.CommandRegistry::new()
+  let context = @catalog.CatalogContext::new(
+    filesystem_scopes~,
+    local_services~,
+  )
   for plugin in plugins {
-    registry = @catalog.register_with_filesystem_scopes(
-      registry,
-      plugin.name(),
-      scopes=filesystem_scopes,
-    )
+    registry = @catalog.register_with_context(registry, plugin.name(), context~)
   }
   registry
 }

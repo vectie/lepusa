@@ -13,12 +13,17 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : ServiceDiscoveryPolicy) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : ServiceDiscoveryPolicy) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
 pub struct ServiceDiscoveryPolicy {
   services : Array[ServiceEndpoint]
 } derive(Eq, @debug.Debug)
+pub fn ServiceDiscoveryPolicy::from_local_services(Array[@lepusa.LocalService]) -> Self
 pub fn ServiceDiscoveryPolicy::new(services? : Array[ServiceEndpoint]) -> Self
 pub fn ServiceDiscoveryPolicy::service(Self, ServiceEndpoint) -> Self
 pub fn ServiceDiscoveryPolicy::service_names(Self) -> Array[String]

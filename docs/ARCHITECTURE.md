@@ -622,15 +622,17 @@ metadata, delete, exists, and directory creation operations.
 `@lepusa/plugins/file_dialog` declares file picker routes and scoped
 default-directory policy.
 `@lepusa/plugins/localhost` declares local service lifecycle and readiness
-routes. `@lepusa/plugins/deep_link` declares app URL scheme registration and
-dispatch routes.
+routes, plus portable metadata handlers for configured local services.
+`@lepusa/plugins/deep_link` declares app URL scheme registration and dispatch
+routes.
 `@lepusa/plugins/single_instance` declares app lock, focus, and second-launch
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes. `@lepusa/plugins/auto_launch` declares launch-at-login
 status and enablement routes. `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes. `@lepusa/plugins/service_discovery`
-declares service lookup, status, watch, and change-event routes.
+declares service lookup, status, watch, change-event routes, and portable
+metadata handlers for configured endpoints.
 `@lepusa/plugins/dialog` declares message, confirm, and prompt routes.
 `@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare
 clipboard and notification routes.

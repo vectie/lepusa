@@ -99,10 +99,29 @@ fn loaded_project_from_object(
       None => ()
     }
     manifest = manifest.with_signing(signing)
-    let registry = project_registry_from_plugins(plugins, filesystem_scopes~)
+    let registry = project_registry_from_plugins(
+      plugins,
+      filesystem_scopes~,
+      local_services=project_local_services(manifest, root),
+    )
     Ok({ manifest, root, registry })
   } else {
     Err(problems)
+  }
+}
+
+///|
+fn project_local_services(
+  manifest : @lepusa.ProjectManifest,
+  root : @lepusa.Cell,
+) -> Array[@lepusa.LocalService] {
+  match manifest.runtime_plan(root) {
+    Ok(plan) =>
+      match plan.launch_manifest() {
+        Ok(launch) => launch.local_services()
+        Err(_) => []
+      }
+    Err(_) => []
   }
 }
 

@@ -12,6 +12,8 @@ pub fn plugin_names() -> Array[String]
 
 pub fn register(@lepusa.CommandRegistry, String) -> @lepusa.CommandRegistry
 
+pub fn register_with_context(@lepusa.CommandRegistry, String, context~ : CatalogContext) -> @lepusa.CommandRegistry
+
 pub fn register_with_filesystem_scopes(@lepusa.CommandRegistry, String, scopes~ : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
 
 pub fn registered_plugin_names() -> Array[String]
@@ -19,6 +21,13 @@ pub fn registered_plugin_names() -> Array[String]
 // Errors
 
 // Types and methods
+pub struct CatalogContext {
+  filesystem_scopes : Array[@lepusa.FileSystemScope]
+  local_services : Array[@lepusa.LocalService]
+}
+pub fn CatalogContext::filesystem_scopes(Self) -> Array[@lepusa.FileSystemScope]
+pub fn CatalogContext::local_services(Self) -> Array[@lepusa.LocalService]
+pub fn CatalogContext::new(filesystem_scopes? : Array[@lepusa.FileSystemScope], local_services? : Array[@lepusa.LocalService]) -> Self
 
 // Type aliases
 

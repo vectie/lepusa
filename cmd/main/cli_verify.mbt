@@ -175,7 +175,7 @@ fn verify_handler_coverage(
 
 ///|
 fn missing_handler_routes(host : @runtime.RuntimeHost) -> Array[String] {
-  let declared = host.plan().command_routes()
+  let declared = handler_required_routes(host)
   let registered = host.registry().routes()
   let missing : Array[String] = []
   for route in declared {

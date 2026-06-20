@@ -7,7 +7,13 @@ priv struct CatalogPlugin {
 ///|
 priv struct CatalogRegistration {
   name : String
-  register : (@lepusa.CommandRegistry, Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+  register : (@lepusa.CommandRegistry, CatalogContext) -> @lepusa.CommandRegistry
+}
+
+///|
+pub struct CatalogContext {
+  filesystem_scopes : Array[@lepusa.FileSystemScope]
+  local_services : Array[@lepusa.LocalService]
 }
 
 ///|
@@ -25,7 +31,7 @@ pub fn register(
   registry : @lepusa.CommandRegistry,
   plugin_name : String,
 ) -> @lepusa.CommandRegistry {
-  register_with_filesystem_scopes(registry, plugin_name, scopes=[])
+  register_with_context(registry, plugin_name, context=CatalogContext::new())
 }
 
 ///|
@@ -34,12 +40,50 @@ pub fn register_with_filesystem_scopes(
   plugin_name : String,
   scopes~ : Array[@lepusa.FileSystemScope],
 ) -> @lepusa.CommandRegistry {
+  register_with_context(
+    registry,
+    plugin_name,
+    context=CatalogContext::new(filesystem_scopes=scopes),
+  )
+}
+
+///|
+pub fn register_with_context(
+  registry : @lepusa.CommandRegistry,
+  plugin_name : String,
+  context~ : CatalogContext,
+) -> @lepusa.CommandRegistry {
   for entry in catalog_registrations() {
     if entry.name == plugin_name {
-      return (entry.register)(registry, scopes)
+      return (entry.register)(registry, context)
     }
   }
   registry
+}
+
+///|
+pub fn CatalogContext::new(
+  filesystem_scopes? : Array[@lepusa.FileSystemScope] = [],
+  local_services? : Array[@lepusa.LocalService] = [],
+) -> CatalogContext {
+  {
+    filesystem_scopes: filesystem_scopes.copy(),
+    local_services: local_services.copy(),
+  }
+}
+
+///|
+pub fn CatalogContext::filesystem_scopes(
+  self : CatalogContext,
+) -> Array[@lepusa.FileSystemScope] {
+  self.filesystem_scopes.copy()
+}
+
+///|
+pub fn CatalogContext::local_services(
+  self : CatalogContext,
+) -> Array[@lepusa.LocalService] {
+  self.local_services.copy()
 }
 
 ///|
@@ -81,15 +125,40 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
   [
     {
       name: "fs",
-      register: fn(registry, scopes) {
-        @fs_plugin.register(registry, policy=@fs_plugin.FsPolicy::new(scopes~))
+      register: fn(registry, context) {
+        @fs_plugin.register(
+          registry,
+          policy=@fs_plugin.FsPolicy::new(scopes=context.filesystem_scopes()),
+        )
       },
     },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },
+    {
+      name: "localhost",
+      register: fn(registry, context) {
+        @localhost.register(
+          registry,
+          policy=@localhost.LocalhostPolicy::new(
+            services=context.local_services(),
+          ),
+        )
+      },
+    },
     { name: "opener", register: fn(registry, _) { @opener.register(registry) } },
     {
       name: "process",
       register: fn(registry, _) { @process.register(registry) },
+    },
+    {
+      name: "serviceDiscovery",
+      register: fn(registry, context) {
+        @service_discovery.register(
+          registry,
+          policy=@service_discovery.ServiceDiscoveryPolicy::from_local_services(
+            context.local_services(),
+          ),
+        )
+      },
     },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
     {

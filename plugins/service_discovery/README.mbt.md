@@ -2,7 +2,9 @@
 
 `@lepusa/plugins/service_discovery` declares a compact native contract for
 discovering app-local and companion services without choosing a transport
-backend.
+backend. Its portable registry exposes configured endpoint metadata through
+`list`, `resolve`, `status`, and `watch` handlers; native runtimes own live
+resolver integration, health checks, and change notifications.
 
 ```moonbit no-check
 ///|
@@ -19,6 +21,9 @@ let policy = @service_discovery.ServiceDiscoveryPolicy::new().service(
     health_path="/health",
   ),
 )
+
+///|
+let registry = @service_discovery.registry(policy~)
 ```
 
 The manifest routes are `serviceDiscovery.list`, `serviceDiscovery.resolve`,

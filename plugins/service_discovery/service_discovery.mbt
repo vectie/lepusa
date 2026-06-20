@@ -114,10 +114,10 @@ pub fn ServiceDiscoveryPolicy::validate(
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("serviceDiscovery")
-  .command_async("list", permission=ServiceDiscovery)
-  .command_async("resolve", permission=ServiceDiscovery)
-  .command_async("status", permission=ServiceDiscovery)
-  .command_async("watch", permission=ServiceDiscovery)
+  .command_sync("list", permission=ServiceDiscovery)
+  .command_sync("resolve", permission=ServiceDiscovery)
+  .command_sync("status", permission=ServiceDiscovery)
+  .command_sync("watch", permission=ServiceDiscovery)
   .command_event("onServiceChanged", permission=ServiceDiscovery)
 }
 
@@ -132,6 +132,211 @@ pub fn capability_for_window(
   name? : String = "service-discovery",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
+}
+
+///|
+pub fn registry(
+  policy? : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
+) -> @lepusa.CommandRegistry {
+  register(@lepusa.CommandRegistry::new(), policy~)
+}
+
+///|
+pub fn register(
+  registry : @lepusa.CommandRegistry,
+  policy? : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_fn("serviceDiscovery.list", permission=ServiceDiscovery, handler=fn(
+    _,
+  ) {
+    handle_list(policy)
+  })
+  .register_fn("serviceDiscovery.resolve", permission=ServiceDiscovery, handler=fn(
+    payload,
+  ) {
+    handle_resolve(policy, payload)
+  })
+  .register_fn("serviceDiscovery.status", permission=ServiceDiscovery, handler=fn(
+    payload,
+  ) {
+    handle_status(policy, payload)
+  })
+  .register_fn("serviceDiscovery.watch", permission=ServiceDiscovery, handler=fn(
+    payload,
+  ) {
+    handle_watch(policy, payload)
+  })
+}
+
+///|
+pub fn ServiceDiscoveryPolicy::from_local_services(
+  services : Array[@lepusa.LocalService],
+) -> ServiceDiscoveryPolicy {
+  let policy = ServiceDiscoveryPolicy::new()
+  for service in services {
+    let health_path = health_path_from_url(service.readiness_url())
+    policy.services.push(
+      match health_path {
+        Some(path) =>
+          ServiceEndpoint::new(
+            name=service.name(),
+            url=service.readiness_url(),
+            health_path=path,
+          )
+        None =>
+          ServiceEndpoint::new(name=service.name(), url=service.readiness_url())
+      },
+    )
+  }
+  policy
+}
+
+///|
+fn handle_list(policy : ServiceDiscoveryPolicy) -> Result[String, String] {
+  Ok(
+    Json::object({
+      "services": Json::array(
+        policy.services().map(fn(service) { service_endpoint_json(service) }),
+      ),
+    }).stringify(),
+  )
+}
+
+///|
+fn handle_resolve(
+  policy : ServiceDiscoveryPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match
+    selected_endpoint(policy, payload, context="service discovery resolve") {
+    Ok(service) => Ok(service_endpoint_json(service).stringify())
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_status(
+  policy : ServiceDiscoveryPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match selected_endpoint(policy, payload, context="service discovery status") {
+    Ok(service) =>
+      Ok(
+        Json::object({
+          "name": Json::string(service.name()),
+          "url": Json::string(service.url()),
+          "healthPath": optional_string_json(service.health_path()),
+          "status": Json::string("configured"),
+        }).stringify(),
+      )
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_watch(
+  policy : ServiceDiscoveryPolicy,
+  payload : String,
+) -> Result[String, String] {
+  let service = if payload == "" {
+    None
+  } else {
+    match
+      selected_endpoint(policy, payload, context="service discovery watch") {
+      Ok(service) => Some(service)
+      Err(problem) => return Err(problem)
+    }
+  }
+  Ok(
+    Json::object({
+      "event": Json::string("serviceDiscovery.onServiceChanged"),
+      "status": Json::string("registered"),
+      "name": optional_string_json(service.map(fn(service) { service.name() })),
+    }).stringify(),
+  )
+}
+
+///|
+fn selected_endpoint(
+  policy : ServiceDiscoveryPolicy,
+  payload : String,
+  context~ : String,
+) -> Result[ServiceEndpoint, String] {
+  let services = policy.services()
+  let name = if payload == "" && services.length() == 1 {
+    services[0].name()
+  } else {
+    match service_name_payload(payload, context~) {
+      Ok(name) => name
+      Err(problem) => return Err(problem)
+    }
+  }
+  for service in services {
+    if service.name() == name {
+      return Ok(service)
+    }
+  }
+  Err("\{context} service not found: \{name}")
+}
+
+///|
+fn service_name_payload(
+  payload : String,
+  context~ : String,
+) -> Result[String, String] {
+  let json = @json.parse(payload) catch {
+    error => return Err("invalid \{context} payload: \{error}")
+  }
+  let name = match json {
+    String(value) => value
+    Object(object) => string_field(object, "name").unwrap_or("")
+    _ => return Err("\{context} payload must be a string or object")
+  }
+  if name == "" {
+    Err("\{context} service name is required")
+  } else {
+    Ok(name)
+  }
+}
+
+///|
+fn service_endpoint_json(service : ServiceEndpoint) -> Json {
+  Json::object({
+    "name": Json::string(service.name()),
+    "url": Json::string(service.url()),
+    "healthPath": optional_string_json(service.health_path()),
+  })
+}
+
+///|
+fn optional_string_json(value : String?) -> Json {
+  match value {
+    Some(value) => Json::string(value)
+    None => Json::null()
+  }
+}
+
+///|
+fn health_path_from_url(url : String) -> String? {
+  let scheme_index = url.find("://")
+  let path_start = match scheme_index {
+    Some(index) =>
+      url[index + 3:].find("/").map(fn(offset) { index + 3 + offset })
+    None => url.find("/")
+  }
+  match path_start {
+    Some(index) => Some(url[index:].to_owned())
+    None => None
+  }
+}
+
+///|
+fn string_field(object : Map[String, Json], key : String) -> String? {
+  match object.get(key) {
+    Some(String(value)) => Some(value)
+    _ => None
+  }
 }
 
 ///|

@@ -259,11 +259,11 @@ runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
-When a project declares official `log`, `store`, `fs`, `opener`, `process`, or
-`windowState` plugins, the CLI binds their MoonBit-native handlers into the
-project `RuntimeHost` without adding moon-suite-specific behavior. `fs`
-handlers run through the async command registry and are constrained by named
-`filesystemScopes`.
+When a project declares official `log`, `store`, `fs`, `opener`, `process`,
+`localhost`, `serviceDiscovery`, or `windowState` plugins, the CLI binds their
+MoonBit-native handlers into the project `RuntimeHost` without adding
+moon-suite-specific behavior. `fs` handlers run through the async command
+registry and are constrained by named `filesystemScopes`.
 `process.info`, `process.cwd`, `process.env`, and `process.setEnv` are portable
 handlers; `process.exit` remains a declared route for backend-owned termination
 policy.
@@ -331,7 +331,8 @@ filesystem access.
 `localhost.status`, `localhost.start`, `localhost.stop`, and
 `localhost.waitUntilReady`, plus service metadata policy. `LocalService` and
 `LocalServiceSupervisorPlan` provide the shared start, readiness, and shutdown
-handoff; native backends own process execution and HTTP probing.
+handoff. Its portable registry reports configured services and delegated
+lifecycle actions; native backends own process execution and HTTP probing.
 
 `@lepusa/plugins/deep_link` defines app URL scheme routes such as
 `deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus
@@ -365,8 +366,9 @@ backends own feed retrieval, signature verification, installation, and restart.
 `@lepusa/plugins/service_discovery` defines service lookup and status routes
 such as `serviceDiscovery.list`, `serviceDiscovery.resolve`,
 `serviceDiscovery.status`, and `serviceDiscovery.onServiceChanged`, plus
-endpoint policy metadata. Native backends own resolver integration, health
-checks, and change watching.
+endpoint policy metadata. Its portable registry lists, resolves, and reports
+configured endpoints, including endpoints derived from local services; native
+backends own resolver integration, health checks, and change watching.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
 `dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the
@@ -395,7 +397,8 @@ process termination policy.
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin
 declarations and bind MoonBit handlers where they exist, including scoped async
-filesystem handlers and portable process/window-state handlers.
+filesystem handlers and portable process, localhost, service-discovery, and
+window-state handlers.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,

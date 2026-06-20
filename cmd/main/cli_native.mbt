@@ -109,7 +109,7 @@ fn render_doctor_host(
 
 ///|
 fn render_handler_coverage(host : @runtime.RuntimeHost) -> String {
-  let declared = host.plan().command_routes()
+  let declared = handler_required_routes(host)
   let registered = host.registry().routes()
   let missing : Array[String] = []
   for route in declared {
@@ -121,6 +121,20 @@ fn render_handler_coverage(host : @runtime.RuntimeHost) -> String {
     "[ok] handlers: registered=\{registered.length()} missing=0\n"
   } else {
     "[warn] handlers: registered=\{registered.length()} missing=\{missing.length()} routes=\{missing.join(",")}\n"
+  }
+}
+
+///|
+fn handler_required_routes(host : @runtime.RuntimeHost) -> Array[String] {
+  match host.dev_plan() {
+    Ok(dev) => {
+      let routes = dev.bridge_sync_routes()
+      for route in dev.bridge_async_routes() {
+        routes.push(route)
+      }
+      routes
+    }
+    Err(_) => host.plan().command_routes()
   }
 }
 
