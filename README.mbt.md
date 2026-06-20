@@ -684,10 +684,9 @@ loops one reusable path for startup, lifecycle, and bridge-drain work.
 Capability-approved `window.*` bridge dispatches also lower their plugin
 response into a `window-control` executable operation, so native loops can apply
 window actions without parsing JavaScript response callbacks.
-The macOS WKWebView and Linux WebKitGTK loops consume the first native action
-set directly from the bridge handoff packet: title, show, hide, focus,
-minimize, maximize, unmaximize, and close. Size, position, and fullscreen stay
-as typed operations until the native geometry layer is added.
+The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
+set directly from the bridge handoff packet: title, size, position, fullscreen,
+show, hide, focus, minimize, maximize, unmaximize, and close.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation policy instead of the
 generic skipped-operation fallback.

@@ -39,6 +39,7 @@ static const unsigned long LEPUSA_NS_WINDOW_STYLE_TITLED = 1UL << 0;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_CLOSABLE = 1UL << 1;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_MINIATURIZABLE = 1UL << 2;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_RESIZABLE = 1UL << 3;
+static const unsigned long LEPUSA_NS_WINDOW_STYLE_FULLSCREEN = 1UL << 14;
 static const unsigned long LEPUSA_NS_BACKING_STORE_BUFFERED = 2UL;
 static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_REGULAR = 0;
 
@@ -56,8 +57,11 @@ typedef void (*LepusaMsgSendVoid)(void *, void *);
 typedef void (*LepusaMsgSendVoidId)(void *, void *, void *);
 typedef void (*LepusaMsgSendVoidIdId)(void *, void *, void *, void *);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
+typedef void (*LepusaMsgSendVoidPoint)(void *, void *, LepusaPoint);
+typedef void (*LepusaMsgSendVoidSize)(void *, void *, LepusaSize);
 typedef int (*LepusaMsgSendInt)(void *, void *);
 typedef int (*LepusaMsgSendIntInt)(void *, void *, int);
+typedef unsigned long (*LepusaMsgSendULong)(void *, void *);
 typedef void *(*LepusaObjcGetClass)(const char *);
 typedef void *(*LepusaSelRegisterName)(const char *);
 typedef void *(*LepusaObjcAllocateClassPair)(void *, const char *, size_t);
@@ -649,6 +653,105 @@ static int lepusa_extract_handoff_title(
   return 0;
 }
 
+static const char *lepusa_handoff_payload_key(
+  moonbit_bytes_t packet,
+  const char *field,
+  const char **end_out
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (field == NULL ||
+      !lepusa_handoff_operations_range(packet, &operations, &operations_len)) {
+    return NULL;
+  }
+  const char *end = operations + operations_len;
+  char key[128];
+  snprintf(key, sizeof(key), "\\\"%s\\\"", field);
+  const char *cursor = lepusa_find_range(operations, end, key);
+  if (cursor == NULL) {
+    return NULL;
+  }
+  cursor += strlen(key);
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor >= end || *cursor != ':') {
+    return NULL;
+  }
+  cursor++;
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (end_out != NULL) {
+    *end_out = end;
+  }
+  return cursor;
+}
+
+static int lepusa_extract_handoff_int_field(
+  moonbit_bytes_t packet,
+  const char *field,
+  int *value_out
+) {
+  const char *end = NULL;
+  const char *cursor = lepusa_handoff_payload_key(packet, field, &end);
+  if (cursor == NULL || value_out == NULL) {
+    return 0;
+  }
+  int sign = 1;
+  if (cursor < end && *cursor == '-') {
+    sign = -1;
+    cursor++;
+  }
+  if (cursor >= end || !isdigit((unsigned char)*cursor)) {
+    return 0;
+  }
+  int value = 0;
+  while (cursor < end && isdigit((unsigned char)*cursor)) {
+    value = value * 10 + (*cursor - '0');
+    cursor++;
+  }
+  *value_out = sign * value;
+  return 1;
+}
+
+static int lepusa_extract_handoff_bool_field(
+  moonbit_bytes_t packet,
+  const char *field,
+  int *value_out
+) {
+  const char *end = NULL;
+  const char *cursor = lepusa_handoff_payload_key(packet, field, &end);
+  if (value_out == NULL) {
+    return 0;
+  }
+  if (cursor != NULL) {
+    if (cursor + 4 <= end && memcmp(cursor, "true", 4) == 0) {
+      *value_out = 1;
+      return 1;
+    }
+    if (cursor + 5 <= end && memcmp(cursor, "false", 5) == 0) {
+      *value_out = 0;
+      return 1;
+    }
+  }
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_handoff_operations_range(packet, &operations, &operations_len)) {
+    return 0;
+  }
+  end = operations + operations_len;
+  if (lepusa_find_range(operations, end, "\"payload\":\"true\"") != NULL) {
+    *value_out = 1;
+    return 1;
+  }
+  if (lepusa_find_range(operations, end, "\"payload\":\"false\"") != NULL) {
+    *value_out = 0;
+    return 1;
+  }
+  return 0;
+}
+
 static void lepusa_apply_window_controls_from_handoff_packet(
   void *window,
   moonbit_bytes_t packet
@@ -664,6 +767,44 @@ static void lepusa_apply_window_controls_from_handoff_packet(
       "setTitle:",
       lepusa_ns_string_from_range(title, (int32_t)strlen(title))
     );
+  } else if (lepusa_handoff_has_window_action(packet, "setSize")) {
+    int width = 0;
+    int height = 0;
+    if (lepusa_extract_handoff_int_field(packet, "width", &width) &&
+        lepusa_extract_handoff_int_field(packet, "height", &height) &&
+        width > 0 &&
+        height > 0) {
+      LepusaSize size = { (double)width, (double)height };
+      ((LepusaMsgSendVoidSize)lepusa_objc_msg_send)(
+        window,
+        lepusa_sel("setContentSize:"),
+        size
+      );
+    }
+  } else if (lepusa_handoff_has_window_action(packet, "setPosition")) {
+    int x = 0;
+    int y = 0;
+    if (lepusa_extract_handoff_int_field(packet, "x", &x) &&
+        lepusa_extract_handoff_int_field(packet, "y", &y)) {
+      LepusaPoint origin = { (double)x, (double)y };
+      ((LepusaMsgSendVoidPoint)lepusa_objc_msg_send)(
+        window,
+        lepusa_sel("setFrameOrigin:"),
+        origin
+      );
+    }
+  } else if (lepusa_handoff_has_window_action(packet, "setFullscreen")) {
+    int fullscreen = 0;
+    if (lepusa_extract_handoff_bool_field(packet, "fullscreen", &fullscreen)) {
+      unsigned long style = ((LepusaMsgSendULong)lepusa_objc_msg_send)(
+        window,
+        lepusa_sel("styleMask")
+      );
+      int is_fullscreen = (style & LEPUSA_NS_WINDOW_STYLE_FULLSCREEN) != 0;
+      if ((fullscreen && !is_fullscreen) || (!fullscreen && is_fullscreen)) {
+        lepusa_msg_void_id(window, "toggleFullScreen:", NULL);
+      }
+    }
   } else if (lepusa_handoff_has_window_action(packet, "show") ||
              lepusa_handoff_has_window_action(packet, "focus")) {
     lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);

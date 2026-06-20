@@ -1960,7 +1960,11 @@ fn window_control_plan() -> @lepusa.RuntimePlan {
       source=@lepusa.Source::html("<main>runtime</main>"),
     )
     .with_plugin(
-      @lepusa.Plugin::new("window").command_sync("setTitle", permission=Window),
+      @lepusa.Plugin::new("window")
+      .command_sync("setTitle", permission=Window)
+      .command_sync("setSize", permission=Window)
+      .command_sync("setPosition", permission=Window)
+      .command_sync("setFullscreen", permission=Window),
     )
     .with_capability(
       @lepusa.Capability::new("window").window("main").permission(Window),
@@ -1973,10 +1977,8 @@ fn window_control_plan() -> @lepusa.RuntimePlan {
 
 ///|
 test "bridge dispatch lowers approved window responses to native operations" {
-  let registry = @lepusa.CommandRegistry::new().register_fn(
-    "window.setTitle",
-    permission=Window,
-    handler=fn(payload) {
+  let registry = @lepusa.CommandRegistry::new()
+    .register_fn("window.setTitle", permission=Window, handler=fn(payload) {
       Ok(
         Json::object({
           "status": Json::string("queued"),
@@ -1989,8 +1991,51 @@ test "bridge dispatch lowers approved window responses to native operations" {
           }),
         }).stringify(),
       )
-    },
-  )
+    })
+    .register_fn("window.setSize", permission=Window, handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "windowLabel": Json::string("main"),
+          "action": Json::string("setSize"),
+          "operation": Json::object({
+            "windowLabel": Json::string("main"),
+            "action": Json::string("setSize"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    })
+    .register_fn("window.setPosition", permission=Window, handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "windowLabel": Json::string("main"),
+          "action": Json::string("setPosition"),
+          "operation": Json::object({
+            "windowLabel": Json::string("main"),
+            "action": Json::string("setPosition"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    })
+    .register_fn("window.setFullscreen", permission=Window, handler=fn(
+      payload,
+    ) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "windowLabel": Json::string("main"),
+          "action": Json::string("setFullscreen"),
+          "operation": Json::object({
+            "windowLabel": Json::string("main"),
+            "action": Json::string("setFullscreen"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    })
   let host = RuntimeHost::new(window_control_plan(), registry~)
   let message = "{\"id\":\"11\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setTitle\",\"payload\":\"{\\\"title\\\":\\\"Ready\\\"}\"}"
   match host.prepare_bridge_message(message) {
@@ -2028,6 +2073,89 @@ test "bridge dispatch lowers approved window responses to native operations" {
       assert_true(packet.contains("\"action\":\"setTitle\""))
     }
     Err(_) => abort("unexpected bridge prepare failure")
+  }
+  let size_message = "{\"id\":\"12\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setSize\",\"payload\":\"{\\\"width\\\":900,\\\"height\\\":640}\"}"
+  match host.prepare_bridge_message(size_message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      match dispatch.native_window_control() {
+        Some(control) => {
+          assert_eq(control.action(), "setSize")
+          assert_eq(control.payload(), "{\"width\":900,\"height\":640}")
+        }
+        None => abort("expected native size window control operation")
+      }
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(size_message)),
+      ) catch {
+        _ => abort("unexpected invalid size window control packet bytes")
+      }
+      assert_true(packet.contains("\"action\":\"setSize\""))
+      assert_true(packet.contains("\\\"width\\\":900"))
+      assert_true(packet.contains("\\\"height\\\":640"))
+    }
+    Err(_) => abort("unexpected size bridge prepare failure")
+  }
+  let position_message = "{\"id\":\"13\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setPosition\",\"payload\":\"{\\\"x\\\":120,\\\"y\\\":80}\"}"
+  match host.prepare_bridge_message(position_message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      match dispatch.native_window_control() {
+        Some(control) => {
+          assert_eq(control.action(), "setPosition")
+          assert_eq(control.payload(), "{\"x\":120,\"y\":80}")
+        }
+        None => abort("expected native position window control operation")
+      }
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(position_message)),
+      ) catch {
+        _ => abort("unexpected invalid position window control packet bytes")
+      }
+      assert_true(packet.contains("\"action\":\"setPosition\""))
+      assert_true(packet.contains("\\\"x\\\":120"))
+      assert_true(packet.contains("\\\"y\\\":80"))
+    }
+    Err(_) => abort("unexpected position bridge prepare failure")
+  }
+  let fullscreen_message = "{\"id\":\"14\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setFullscreen\",\"payload\":\"{\\\"fullscreen\\\":true}\"}"
+  match host.prepare_bridge_message(fullscreen_message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      match dispatch.native_window_control() {
+        Some(control) => {
+          assert_eq(control.action(), "setFullscreen")
+          assert_eq(control.payload(), "{\"fullscreen\":true}")
+        }
+        None => abort("expected native fullscreen window control operation")
+      }
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(fullscreen_message)),
+      ) catch {
+        _ => abort("unexpected invalid fullscreen window control packet bytes")
+      }
+      assert_true(packet.contains("\"action\":\"setFullscreen\""))
+      assert_true(packet.contains("\\\"fullscreen\\\":true"))
+    }
+    Err(_) => abort("unexpected fullscreen bridge prepare failure")
   }
 }
 

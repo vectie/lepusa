@@ -43,6 +43,10 @@ typedef void (*LepusaGtkWindowPresent)(void *);
 typedef void (*LepusaGtkWindowIconify)(void *);
 typedef void (*LepusaGtkWindowMaximize)(void *);
 typedef void (*LepusaGtkWindowUnmaximize)(void *);
+typedef void (*LepusaGtkWindowResize)(void *, int, int);
+typedef void (*LepusaGtkWindowMove)(void *, int, int);
+typedef void (*LepusaGtkWindowFullscreen)(void *);
+typedef void (*LepusaGtkWindowUnfullscreen)(void *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
@@ -120,6 +124,10 @@ typedef struct {
   LepusaGtkWindowIconify gtk_window_iconify;
   LepusaGtkWindowMaximize gtk_window_maximize;
   LepusaGtkWindowUnmaximize gtk_window_unmaximize;
+  LepusaGtkWindowResize gtk_window_resize;
+  LepusaGtkWindowMove gtk_window_move;
+  LepusaGtkWindowFullscreen gtk_window_fullscreen;
+  LepusaGtkWindowUnfullscreen gtk_window_unfullscreen;
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
@@ -227,6 +235,10 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_iconify", (void **)&api->gtk_window_iconify);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_maximize", (void **)&api->gtk_window_maximize);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_unmaximize", (void **)&api->gtk_window_unmaximize);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_resize", (void **)&api->gtk_window_resize);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_move", (void **)&api->gtk_window_move);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_fullscreen", (void **)&api->gtk_window_fullscreen);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_unfullscreen", (void **)&api->gtk_window_unfullscreen);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
@@ -581,6 +593,121 @@ static int lepusa_linux_extract_handoff_title(
   return 0;
 }
 
+static const char *lepusa_linux_handoff_payload_key(
+  moonbit_bytes_t packet,
+  const char *field,
+  const char **end_out
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (field == NULL ||
+      !lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
+    return NULL;
+  }
+  const char *end = operations + operations_len;
+  char key[128];
+  snprintf(key, sizeof(key), "\\\"%s\\\"", field);
+  const char *cursor = lepusa_linux_find_range(operations, end, key);
+  if (cursor == NULL) {
+    return NULL;
+  }
+  cursor += strlen(key);
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor >= end || *cursor != ':') {
+    return NULL;
+  }
+  cursor++;
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (end_out != NULL) {
+    *end_out = end;
+  }
+  return cursor;
+}
+
+static int lepusa_linux_extract_handoff_int_field(
+  moonbit_bytes_t packet,
+  const char *field,
+  int *value_out
+) {
+  const char *end = NULL;
+  const char *cursor = lepusa_linux_handoff_payload_key(packet, field, &end);
+  if (cursor == NULL || value_out == NULL) {
+    return 0;
+  }
+  int sign = 1;
+  if (cursor < end && *cursor == '-') {
+    sign = -1;
+    cursor++;
+  }
+  if (cursor >= end || !isdigit((unsigned char)*cursor)) {
+    return 0;
+  }
+  int value = 0;
+  while (cursor < end && isdigit((unsigned char)*cursor)) {
+    value = value * 10 + (*cursor - '0');
+    cursor++;
+  }
+  *value_out = sign * value;
+  return 1;
+}
+
+static int lepusa_linux_extract_handoff_bool_field(
+  moonbit_bytes_t packet,
+  const char *field,
+  int *value_out
+) {
+  const char *end = NULL;
+  const char *cursor = lepusa_linux_handoff_payload_key(packet, field, &end);
+  if (value_out == NULL) {
+    return 0;
+  }
+  if (cursor != NULL) {
+    if (cursor + 4 <= end && memcmp(cursor, "true", 4) == 0) {
+      *value_out = 1;
+      return 1;
+    }
+    if (cursor + 5 <= end && memcmp(cursor, "false", 5) == 0) {
+      *value_out = 0;
+      return 1;
+    }
+  }
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
+    return 0;
+  }
+  end = operations + operations_len;
+  if (lepusa_linux_find_range(
+        operations,
+        end,
+        "\"payload\":\"true\""
+      ) != NULL) {
+    *value_out = 1;
+    return 1;
+  }
+  if (lepusa_linux_find_range(
+        operations,
+        end,
+        "\"payload\":\"false\""
+      ) != NULL) {
+    *value_out = 0;
+    return 1;
+  }
+  return 0;
+}
+
 static void lepusa_linux_apply_window_controls_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -595,6 +722,35 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
   if (lepusa_linux_handoff_has_window_action(packet, "setTitle") &&
       lepusa_linux_extract_handoff_title(packet, title, sizeof(title))) {
     context->api->gtk_window_set_title(context->window, title);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "setSize")) {
+    int width = 0;
+    int height = 0;
+    if (lepusa_linux_extract_handoff_int_field(packet, "width", &width) &&
+        lepusa_linux_extract_handoff_int_field(packet, "height", &height) &&
+        width > 0 &&
+        height > 0) {
+      context->api->gtk_window_resize(context->window, width, height);
+    }
+  } else if (lepusa_linux_handoff_has_window_action(packet, "setPosition")) {
+    int x = 0;
+    int y = 0;
+    if (lepusa_linux_extract_handoff_int_field(packet, "x", &x) &&
+        lepusa_linux_extract_handoff_int_field(packet, "y", &y)) {
+      context->api->gtk_window_move(context->window, x, y);
+    }
+  } else if (lepusa_linux_handoff_has_window_action(packet, "setFullscreen")) {
+    int fullscreen = 0;
+    if (lepusa_linux_extract_handoff_bool_field(
+          packet,
+          "fullscreen",
+          &fullscreen
+        )) {
+      if (fullscreen) {
+        context->api->gtk_window_fullscreen(context->window);
+      } else {
+        context->api->gtk_window_unfullscreen(context->window);
+      }
+    }
   } else if (lepusa_linux_handoff_has_window_action(packet, "show")) {
     context->api->gtk_widget_show_all(context->window);
   } else if (lepusa_linux_handoff_has_window_action(packet, "focus")) {
