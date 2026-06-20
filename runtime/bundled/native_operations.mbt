@@ -1,9 +1,17 @@
 ///|
 pub struct BundledNativeLifecycleStep {
   event : BundledLifecycleEvent
+  executable_operations : Array[@runtime.NativeExecutableOperation]
   evaluation_scripts : Array[@runtime.NativeEvaluationScript]
   navigations : Array[@runtime.NativeNavigation]
 } derive(Debug)
+
+///|
+pub fn BundledBootstrapPlan::startup_executable_operations(
+  self : BundledBootstrapPlan,
+) -> Result[Array[@runtime.NativeExecutableOperation], String] {
+  bundled_native_executable_operations(self.startup_operations())
+}
 
 ///|
 pub fn BundledBootstrapPlan::startup_evaluation_scripts(
@@ -24,6 +32,13 @@ pub fn BundledBootstrapPlan::native_lifecycle_steps(
   self : BundledBootstrapPlan,
 ) -> Result[Array[BundledNativeLifecycleStep], String] {
   bundled_native_lifecycle_steps(self.lifecycle_operations())
+}
+
+///|
+pub fn BundledNativeRunPlan::startup_executable_operations(
+  self : BundledNativeRunPlan,
+) -> Result[Array[@runtime.NativeExecutableOperation], String] {
+  self.bootstrap().startup_executable_operations()
 }
 
 ///|
@@ -52,6 +67,13 @@ pub fn BundledNativeLifecycleStep::event(
   self : BundledNativeLifecycleStep,
 ) -> BundledLifecycleEvent {
   self.event
+}
+
+///|
+pub fn BundledNativeLifecycleStep::executable_operations(
+  self : BundledNativeLifecycleStep,
+) -> Array[@runtime.NativeExecutableOperation] {
+  self.executable_operations.copy()
 }
 
 ///|
@@ -96,13 +118,18 @@ fn bundled_native_lifecycle_step(
           match bundled_lifecycle_event_from_json(event_json) {
             Ok(event) => {
               let operation_strings = operations_json.map(json_value_string)
-              Ok({
-                event,
-                evaluation_scripts: bundled_native_evaluation_scripts(
-                  operation_strings,
-                ),
-                navigations: bundled_native_navigations(operation_strings),
-              })
+              match bundled_native_executable_operations(operation_strings) {
+                Ok(executable_operations) =>
+                  Ok({
+                    event,
+                    executable_operations,
+                    evaluation_scripts: bundled_native_evaluation_scripts(
+                      operation_strings,
+                    ),
+                    navigations: bundled_native_navigations(operation_strings),
+                  })
+                Err(problem) => Err(problem)
+              }
             }
             Err(problem) => Err(problem)
           }
@@ -110,6 +137,20 @@ fn bundled_native_lifecycle_step(
       }
     _ => Err("bundled native lifecycle operation must be an object")
   }
+}
+
+///|
+fn bundled_native_executable_operations(
+  operations : Array[String],
+) -> Result[Array[@runtime.NativeExecutableOperation], String] {
+  let executable : Array[@runtime.NativeExecutableOperation] = []
+  for operation in operations {
+    match bundled_native_executable_operation(operation) {
+      Ok(item) => executable.push(item)
+      Err(problem) => return Err(problem)
+    }
+  }
+  Ok(executable)
 }
 
 ///|
@@ -138,6 +179,67 @@ fn bundled_native_navigations(
     }
   }
   navigations
+}
+
+///|
+fn bundled_native_executable_operation(
+  operation : String,
+) -> Result[@runtime.NativeExecutableOperation, String] {
+  try @json.parse(operation) catch {
+    error => Err("invalid bundled native operation: \{error}")
+  } noraise {
+    Object(object) =>
+      match optional_string(object, "kind").unwrap_or("") {
+        "start-service" =>
+          match object.get("service") {
+            Some(service_json) =>
+              match bundled_service_from_json(service_json) {
+                Ok(service) =>
+                  Ok(@runtime.NativeExecutableOperation::start_service(service))
+                Err(problem) => Err(problem)
+              }
+            None => Err("bundled start-service operation requires service")
+          }
+        "dispatch-event" =>
+          match bundled_native_evaluation_script(operation) {
+            Some(script) =>
+              Ok(@runtime.NativeExecutableOperation::evaluate_script(script))
+            None => Err("bundled dispatch-event operation requires dispatch")
+          }
+        "evaluate-script" =>
+          Ok(
+            @runtime.NativeExecutableOperation::evaluate_script(
+              @runtime.NativeEvaluationScript::new(
+                window_label=optional_string(object, "windowLabel").unwrap_or(
+                  "",
+                ),
+                script=optional_string(object, "script").unwrap_or(""),
+              ),
+            ),
+          )
+        "run-effect" =>
+          Ok(
+            @runtime.NativeExecutableOperation::run_effect(
+              optional_string(object, "name").unwrap_or(""),
+            ),
+          )
+        "navigate-window" =>
+          Ok(
+            @runtime.NativeExecutableOperation::navigate(
+              @runtime.NativeNavigation::new(
+                window_label=match optional_string(object, "label") {
+                  Some(label) => label
+                  None => optional_string(object, "windowLabel").unwrap_or("")
+                },
+                url=optional_string(object, "url").unwrap_or(""),
+              ),
+            ),
+          )
+        "" => Err("bundled native operation kind is required")
+        kind => Err("unsupported bundled native operation kind: \{kind}")
+      }
+    _ => Err("bundled native operation must be an object")
+  }
 }
 
 ///|

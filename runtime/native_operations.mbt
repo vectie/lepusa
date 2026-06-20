@@ -11,6 +11,14 @@ pub struct NativeNavigation {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum NativeExecutableOperation {
+  NativeExecutableStartService(@lepusa.LocalService)
+  NativeExecutableEvaluateScript(NativeEvaluationScript)
+  NativeExecutableRunEffect(String)
+  NativeExecutableNavigate(NativeNavigation)
+} derive(Debug, Eq)
+
+///|
 pub fn NativeEvaluationScript::new(
   window_label~ : String,
   script~ : String,
@@ -69,12 +77,163 @@ pub fn NativeNavigation::to_json(self : NativeNavigation) -> String {
 }
 
 ///|
+pub fn NativeExecutableOperation::start_service(
+  service : @lepusa.LocalService,
+) -> NativeExecutableOperation {
+  NativeExecutableStartService(service)
+}
+
+///|
+pub fn NativeExecutableOperation::evaluate_script(
+  script : NativeEvaluationScript,
+) -> NativeExecutableOperation {
+  NativeExecutableEvaluateScript(script)
+}
+
+///|
+pub fn NativeExecutableOperation::run_effect(
+  name : String,
+) -> NativeExecutableOperation {
+  NativeExecutableRunEffect(name)
+}
+
+///|
+pub fn NativeExecutableOperation::navigate(
+  navigation : NativeNavigation,
+) -> NativeExecutableOperation {
+  NativeExecutableNavigate(navigation)
+}
+
+///|
+pub fn NativeExecutableOperation::kind(
+  self : NativeExecutableOperation,
+) -> String {
+  match self {
+    NativeExecutableStartService(_) => "start-service"
+    NativeExecutableEvaluateScript(_) => "evaluate-script"
+    NativeExecutableRunEffect(_) => "run-effect"
+    NativeExecutableNavigate(_) => "navigate-window"
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::service(
+  self : NativeExecutableOperation,
+) -> @lepusa.LocalService? {
+  match self {
+    NativeExecutableStartService(service) => Some(service)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::evaluation_script(
+  self : NativeExecutableOperation,
+) -> NativeEvaluationScript? {
+  match self {
+    NativeExecutableEvaluateScript(script) => Some(script)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::effect_name(
+  self : NativeExecutableOperation,
+) -> String? {
+  match self {
+    NativeExecutableRunEffect(name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::navigation(
+  self : NativeExecutableOperation,
+) -> NativeNavigation? {
+  match self {
+    NativeExecutableNavigate(navigation) => Some(navigation)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::window_label(
+  self : NativeExecutableOperation,
+) -> String? {
+  match self.evaluation_script() {
+    Some(script) => Some(script.window_label())
+    None =>
+      match self.navigation() {
+        Some(navigation) => Some(navigation.window_label())
+        None => None
+      }
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::to_json(
+  self : NativeExecutableOperation,
+) -> String {
+  match self {
+    NativeExecutableStartService(service) =>
+      [
+        "{",
+        "\"kind\":\"start-service\",",
+        "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
+    NativeExecutableEvaluateScript(script) =>
+      [
+        "{",
+        "\"kind\":\"evaluate-script\",",
+        "\"windowLabel\":\{script.window_label().json_string()},",
+        "\"script\":\{script.script().json_string()}",
+        "}",
+      ].join("")
+    NativeExecutableRunEffect(name) =>
+      ["{", "\"kind\":\"run-effect\",", "\"name\":\{name.json_string()}", "}"].join(
+        "",
+      )
+    NativeExecutableNavigate(navigation) =>
+      [
+        "{",
+        "\"kind\":\"navigate-window\",",
+        "\"windowLabel\":\{navigation.window_label().json_string()},",
+        "\"url\":\{navigation.url().json_string()}",
+        "}",
+      ].join("")
+  }
+}
+
+///|
 pub fn NativeOperation::kind(self : NativeOperation) -> String {
   match self {
     NativeStartService(_) => "start-service"
     NativeDispatchEvent(_) => "evaluate-script"
     NativeRunEffect(_) => "run-effect"
     NativeNavigateWindow(_, _) => "navigate-window"
+  }
+}
+
+///|
+pub fn NativeOperation::executable(
+  self : NativeOperation,
+) -> NativeExecutableOperation {
+  match self {
+    NativeStartService(service) =>
+      NativeExecutableOperation::start_service(service)
+    NativeDispatchEvent(dispatch) =>
+      NativeExecutableOperation::evaluate_script(
+        NativeEvaluationScript::new(
+          window_label=dispatch.window_label(),
+          script=dispatch.script(),
+        ),
+      )
+    NativeRunEffect(name) => NativeExecutableOperation::run_effect(name)
+    NativeNavigateWindow(window_label, url) =>
+      NativeExecutableOperation::navigate(
+        NativeNavigation::new(window_label~, url~),
+      )
   }
 }
 
@@ -134,6 +293,13 @@ pub fn NativeOperation::window_label(self : NativeOperation) -> String? {
 }
 
 ///|
+pub fn NativeRunnerPlan::startup_executable_operations(
+  self : NativeRunnerPlan,
+) -> Array[NativeExecutableOperation] {
+  native_executable_operations(self.startup_operations())
+}
+
+///|
 pub fn NativeRunnerPlan::startup_evaluation_scripts(
   self : NativeRunnerPlan,
 ) -> Array[NativeEvaluationScript] {
@@ -148,6 +314,13 @@ pub fn NativeRunnerPlan::startup_navigations(
 }
 
 ///|
+pub fn NativeRunnerStep::executable_operations(
+  self : NativeRunnerStep,
+) -> Array[NativeExecutableOperation] {
+  native_executable_operations(self.operations())
+}
+
+///|
 pub fn NativeRunnerStep::evaluation_scripts(
   self : NativeRunnerStep,
 ) -> Array[NativeEvaluationScript] {
@@ -159,6 +332,13 @@ pub fn NativeRunnerStep::navigations(
   self : NativeRunnerStep,
 ) -> Array[NativeNavigation] {
   native_navigations(self.operations())
+}
+
+///|
+fn native_executable_operations(
+  operations : Array[NativeOperation],
+) -> Array[NativeExecutableOperation] {
+  operations.map(fn(operation) { operation.executable() })
 }
 
 ///|

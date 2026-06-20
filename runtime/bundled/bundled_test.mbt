@@ -399,6 +399,22 @@ test "bundled native run plans expose executable operation views" {
           runtime.webview_plan(webview, initialization_script="")
         }) {
         Ok(plan) => {
+          match plan.startup_executable_operations() {
+            Ok(executable) => {
+              assert_eq(executable.length(), 3)
+              assert_eq(executable[0].kind(), "start-service")
+              assert_eq(executable[0].service().unwrap().name(), "api")
+              assert_eq(executable[1].kind(), "evaluate-script")
+              assert_eq(executable[1].window_label().unwrap(), "main")
+              assert_true(executable[1].to_json().contains("\"script\""))
+              assert_eq(executable[2].kind(), "navigate-window")
+              assert_eq(
+                executable[2].navigation().unwrap().url(),
+                "lepusa://rabbita/main/next.html",
+              )
+            }
+            Err(problem) => abort(problem)
+          }
           let scripts = plan.startup_evaluation_scripts()
           assert_eq(scripts.length(), 1)
           assert_eq(scripts[0].window_label(), "main")
@@ -412,6 +428,9 @@ test "bundled native run plans expose executable operation views" {
             Ok(steps) => {
               assert_eq(steps.length(), 2)
               assert_eq(steps[1].event().kind(), "window-close-requested")
+              let lifecycle_executable = steps[1].executable_operations()
+              assert_eq(lifecycle_executable.length(), 1)
+              assert_eq(lifecycle_executable[0].kind(), "evaluate-script")
               let lifecycle_scripts = steps[1].evaluation_scripts()
               assert_eq(lifecycle_scripts.length(), 1)
               assert_true(lifecycle_scripts[0].script().contains("closing"))

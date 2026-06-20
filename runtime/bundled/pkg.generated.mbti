@@ -22,6 +22,7 @@ pub fn BundledBootstrapPlan::lifecycle_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
 pub fn BundledBootstrapPlan::run_plan(Self) -> BundledRunPlan
 pub fn BundledBootstrapPlan::startup_evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
+pub fn BundledBootstrapPlan::startup_executable_operations(Self) -> Result[Array[@runtime.NativeExecutableOperation], String]
 pub fn BundledBootstrapPlan::startup_navigations(Self) -> Array[@runtime.NativeNavigation]
 pub fn BundledBootstrapPlan::startup_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::to_json(Self) -> String
@@ -70,11 +71,13 @@ pub fn BundledLifecyclePlan::event(Self) -> BundledLifecycleEvent
 
 pub struct BundledNativeLifecycleStep {
   event : BundledLifecycleEvent
+  executable_operations : Array[@runtime.NativeExecutableOperation]
   evaluation_scripts : Array[@runtime.NativeEvaluationScript]
   navigations : Array[@runtime.NativeNavigation]
 } derive(@debug.Debug)
 pub fn BundledNativeLifecycleStep::evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
 pub fn BundledNativeLifecycleStep::event(Self) -> BundledLifecycleEvent
+pub fn BundledNativeLifecycleStep::executable_operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledNativeLifecycleStep::navigations(Self) -> Array[@runtime.NativeNavigation]
 
 pub struct BundledNativeRunPlan {
@@ -97,6 +100,7 @@ pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn BundledNativeRunPlan::service_supervisor_plan(Self) -> @runtime.NativeServiceSupervisorPlan
 pub fn BundledNativeRunPlan::service_supervisor_report(Self) -> @runtime.NativeServiceSupervisorReport
 pub fn BundledNativeRunPlan::startup_evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
+pub fn BundledNativeRunPlan::startup_executable_operations(Self) -> Result[Array[@runtime.NativeExecutableOperation], String]
 pub fn BundledNativeRunPlan::startup_navigations(Self) -> Array[@runtime.NativeNavigation]
 pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int
 pub fn BundledNativeRunPlan::webview_count(Self) -> Int

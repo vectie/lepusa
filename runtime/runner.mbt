@@ -41,28 +41,39 @@ pub fn RuntimeHost::runner_plan(
         problems.push(problem)
       }
   }
-  match self.startup_step() {
-    Ok(step) => {
-      session = Some(step.session())
-      for service in step.session().local_services() {
-        startup_operations.push(RuntimeStartService(service))
-      }
-      for operation in step.operations() {
-        startup_operations.push(operation)
-      }
-      match runtime_lifecycle_steps_from_session(step.session()) {
-        Ok(steps) =>
-          for step in steps {
-            lifecycle_steps.push(step)
+  match self.snapshot() {
+    Ok(initial_session) =>
+      match initial_session.apply_actions(initial_session.startup_actions()) {
+        Ok(step) => {
+          session = Some(step.session())
+          for
+            service in runtime_runner_startup_services(
+              initial_session,
+              step.session(),
+            ) {
+            startup_operations.push(RuntimeStartService(service))
           }
-        Err(lifecycle_problems) =>
-          for problem in lifecycle_problems {
+          for operation in step.operations() {
+            startup_operations.push(operation)
+          }
+          match runtime_lifecycle_steps_from_session(step.session()) {
+            Ok(steps) =>
+              for step in steps {
+                lifecycle_steps.push(step)
+              }
+            Err(lifecycle_problems) =>
+              for problem in lifecycle_problems {
+                problems.push(problem)
+              }
+          }
+        }
+        Err(step_problems) =>
+          for problem in step_problems {
             problems.push(problem)
           }
       }
-    }
-    Err(step_problems) =>
-      for problem in step_problems {
+    Err(snapshot_problems) =>
+      for problem in snapshot_problems {
         problems.push(problem)
       }
   }
@@ -81,6 +92,34 @@ pub fn RuntimeHost::runner_plan(
       }
     _ => Err(problems)
   }
+}
+
+///|
+fn runtime_runner_startup_services(
+  initial_session : RuntimeSession,
+  startup_session : RuntimeSession,
+) -> Array[@lepusa.LocalService] {
+  let services : Array[@lepusa.LocalService] = []
+  for service in initial_session.local_services() {
+    services.push(service)
+  }
+  for service in startup_session.local_services() {
+    if !runtime_service_names(services).contains(service.name()) {
+      services.push(service)
+    }
+  }
+  services
+}
+
+///|
+fn runtime_service_names(
+  services : Array[@lepusa.LocalService],
+) -> Array[String] {
+  let names : Array[String] = []
+  for service in services {
+    names.push(service.name())
+  }
+  names
 }
 
 ///|

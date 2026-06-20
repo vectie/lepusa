@@ -147,7 +147,12 @@ test "native backend lowers host runner plan with portable operations" {
 test "native runner exposes executable operation views" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
-    .window(label="main", source=@lepusa.Source::html("<main>before</main>"))
+    .window(
+      label="main",
+      source=@lepusa.Source::localhost(port=4317, readiness_path="/ready", command=[
+        "moon", "run", "cmd/server",
+      ]),
+    )
     .with_startup(
       @lepusa.Cmd::batch([
         @lepusa.Cmd::emit(
@@ -174,22 +179,41 @@ test "native runner exposes executable operation views" {
       match backend.runner_plan(RuntimeHost::new(plan)) {
         Ok(runner) => {
           let startup = runner.startup_operations()
-          assert_eq(startup.length(), 3)
-          assert_eq(startup[0].kind(), "evaluate-script")
-          assert_eq(startup[0].window_label().unwrap(), "main")
+          assert_eq(startup.length(), 4)
+          assert_eq(startup[0].kind(), "start-service")
+          assert_eq(startup[0].service().unwrap().name(), "main")
+          assert_eq(startup[1].kind(), "evaluate-script")
+          assert_eq(startup[1].window_label().unwrap(), "main")
           assert_true(
-            startup[0]
+            startup[1]
             .evaluation_script()
             .unwrap()
             .script()
             .contains("__lepusaDispatchEvent"),
           )
-          assert_eq(startup[1].kind(), "run-effect")
-          assert_eq(startup[1].effect_name().unwrap(), "boot")
-          assert_eq(startup[2].kind(), "navigate-window")
-          assert_eq(startup[2].navigation().unwrap().window_label(), "main")
+          assert_eq(startup[2].kind(), "run-effect")
+          assert_eq(startup[2].effect_name().unwrap(), "boot")
+          assert_eq(startup[3].kind(), "navigate-window")
+          assert_eq(startup[3].navigation().unwrap().window_label(), "main")
           assert_eq(
-            startup[2].navigation().unwrap().url(),
+            startup[3].navigation().unwrap().url(),
+            "lepusa://inline/main/index.html",
+          )
+          let executable = runner.startup_executable_operations()
+          assert_eq(executable.length(), 4)
+          assert_eq(executable[0].kind(), "start-service")
+          assert_eq(
+            executable[0].service().unwrap().readiness_url(),
+            "http://127.0.0.1:4317/ready",
+          )
+          assert_eq(executable[1].kind(), "evaluate-script")
+          assert_eq(executable[1].window_label().unwrap(), "main")
+          assert_true(executable[1].to_json().contains("\"script\""))
+          assert_eq(executable[2].kind(), "run-effect")
+          assert_eq(executable[2].effect_name().unwrap(), "boot")
+          assert_eq(executable[3].kind(), "navigate-window")
+          assert_eq(
+            executable[3].navigation().unwrap().url(),
             "lepusa://inline/main/index.html",
           )
           let scripts = runner.startup_evaluation_scripts()
@@ -202,6 +226,9 @@ test "native runner exposes executable operation views" {
           assert_true(navigations[0].to_json().contains("\"url\""))
           match runner.lifecycle_step(WindowCloseRequested("main")) {
             Ok(step) => {
+              let lifecycle_executable = step.executable_operations()
+              assert_eq(lifecycle_executable.length(), 1)
+              assert_eq(lifecycle_executable[0].kind(), "evaluate-script")
               let lifecycle_scripts = step.evaluation_scripts()
               assert_eq(lifecycle_scripts.length(), 1)
               assert_true(lifecycle_scripts[0].script().contains("closing"))

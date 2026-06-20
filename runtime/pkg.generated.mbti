@@ -74,6 +74,24 @@ pub fn NativeEvaluationScript::script(Self) -> String
 pub fn NativeEvaluationScript::to_json(Self) -> String
 pub fn NativeEvaluationScript::window_label(Self) -> String
 
+pub(all) enum NativeExecutableOperation {
+  NativeExecutableStartService(@lepusa.LocalService)
+  NativeExecutableEvaluateScript(NativeEvaluationScript)
+  NativeExecutableRunEffect(String)
+  NativeExecutableNavigate(NativeNavigation)
+} derive(Eq, @debug.Debug)
+pub fn NativeExecutableOperation::effect_name(Self) -> String?
+pub fn NativeExecutableOperation::evaluate_script(NativeEvaluationScript) -> Self
+pub fn NativeExecutableOperation::evaluation_script(Self) -> NativeEvaluationScript?
+pub fn NativeExecutableOperation::kind(Self) -> String
+pub fn NativeExecutableOperation::navigate(NativeNavigation) -> Self
+pub fn NativeExecutableOperation::navigation(Self) -> NativeNavigation?
+pub fn NativeExecutableOperation::run_effect(String) -> Self
+pub fn NativeExecutableOperation::service(Self) -> @lepusa.LocalService?
+pub fn NativeExecutableOperation::start_service(@lepusa.LocalService) -> Self
+pub fn NativeExecutableOperation::to_json(Self) -> String
+pub fn NativeExecutableOperation::window_label(Self) -> String?
+
 pub struct NativeLaunchPlan {
   backend_name : String
   webview_engine : String
@@ -102,6 +120,7 @@ pub(all) enum NativeOperation {
 } derive(Eq, @debug.Debug)
 pub fn NativeOperation::effect_name(Self) -> String?
 pub fn NativeOperation::evaluation_script(Self) -> NativeEvaluationScript?
+pub fn NativeOperation::executable(Self) -> NativeExecutableOperation
 pub fn NativeOperation::from_runtime(RuntimeOperation) -> Self
 pub fn NativeOperation::kind(Self) -> String
 pub fn NativeOperation::navigation(Self) -> NativeNavigation?
@@ -152,6 +171,7 @@ pub fn NativeRunnerPlan::service_supervisor_plan(Self) -> NativeServiceSuperviso
 pub fn NativeRunnerPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport
 pub fn NativeRunnerPlan::session(Self) -> RuntimeSession
 pub fn NativeRunnerPlan::startup_evaluation_scripts(Self) -> Array[NativeEvaluationScript]
+pub fn NativeRunnerPlan::startup_executable_operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeRunnerPlan::startup_navigations(Self) -> Array[NativeNavigation]
 pub fn NativeRunnerPlan::startup_operations(Self) -> Array[NativeOperation]
 pub fn NativeRunnerPlan::webview_engine(Self) -> String
@@ -165,6 +185,7 @@ pub struct NativeRunnerStep {
 } derive(Eq, @debug.Debug)
 pub fn NativeRunnerStep::evaluation_scripts(Self) -> Array[NativeEvaluationScript]
 pub fn NativeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
+pub fn NativeRunnerStep::executable_operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeRunnerStep::navigations(Self) -> Array[NativeNavigation]
 pub fn NativeRunnerStep::operations(Self) -> Array[NativeOperation]
 pub fn NativeRunnerStep::session(Self) -> RuntimeSession

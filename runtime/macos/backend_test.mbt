@@ -384,7 +384,7 @@ test "macos backend prepares bundled runtime manifest" {
           )
           assert_true(
             execution.startup_operations()[2].contains(
-              "\"kind\":\"dispatch-event\"",
+              "\"kind\":\"evaluate-script\"",
             ),
           )
           assert_true(
