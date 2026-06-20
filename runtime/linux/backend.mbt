@@ -36,6 +36,20 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
 }
 
 ///|
+pub fn preflight() -> @runtime.NativeBackendPreflight {
+  @runtime.NativeBackendPreflight::new(
+    platform="linux",
+    webview_engine="WebKitGTK",
+    dependency_name="webkitgtk",
+    dependency_available=available(),
+    webview_creation_loop=true,
+    async_bridge_drain=false,
+    dependency_message="Linux WebKitGTK backend is not available",
+    webview_creation_message="Linux WebKitGTK launch loop is unavailable",
+  )
+}
+
+///|
 pub fn runtime(
   host : @runtime.RuntimeHost,
 ) -> Result[@runtime.NativeRuntime, Array[String]] {

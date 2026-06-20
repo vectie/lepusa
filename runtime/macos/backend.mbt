@@ -36,6 +36,20 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
 }
 
 ///|
+pub fn preflight() -> @runtime.NativeBackendPreflight {
+  @runtime.NativeBackendPreflight::new(
+    platform="macos",
+    webview_engine="WKWebView",
+    dependency_name="wkwebview",
+    dependency_available=available(),
+    webview_creation_loop=true,
+    async_bridge_drain=false,
+    dependency_message="macOS Cocoa/WebKit backend is not available",
+    webview_creation_message="macOS WKWebView creation loop is unavailable",
+  )
+}
+
+///|
 pub fn runtime(
   host : @runtime.RuntimeHost,
 ) -> Result[@runtime.NativeRuntime, Array[String]] {

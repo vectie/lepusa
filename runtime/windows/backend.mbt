@@ -5,12 +5,6 @@ extern "c" fn backend_available() -> Int = "lepusa_windows_backend_available"
 extern "c" fn backend_engine_name() -> Bytes = "lepusa_windows_backend_engine_name"
 
 ///|
-pub struct WindowsPreflight {
-  webview2_loader : Bool
-  webview_creation_loop : Bool
-} derive(Debug, Eq)
-
-///|
 pub fn backend() -> @runtime.NativeBackend {
   @runtime.NativeBackend::new(
     name="windows",
@@ -34,72 +28,21 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
 
 ///|
 pub fn launch_capability() -> @runtime.NativeLaunchCapability {
-  let preflight = preflight()
-  @runtime.NativeLaunchCapability::new(
-    webview_creation=preflight.webview_creation_loop(),
+  preflight().launch_capability()
+}
+
+///|
+pub fn preflight() -> @runtime.NativeBackendPreflight {
+  @runtime.NativeBackendPreflight::new(
+    platform="windows",
+    webview_engine="WebView2",
+    dependency_name="webview2-loader",
+    dependency_available=available(),
+    webview_creation_loop=false,
     async_bridge_drain=false,
-    webview_creation_message=preflight.problem(),
+    dependency_message="Windows WebView2 loader is not available",
+    webview_creation_message="Windows WebView2 creation loop is unavailable",
   )
-}
-
-///|
-pub fn preflight() -> WindowsPreflight {
-  { webview2_loader: available(), webview_creation_loop: false }
-}
-
-///|
-pub fn WindowsPreflight::webview2_loader(self : WindowsPreflight) -> Bool {
-  self.webview2_loader
-}
-
-///|
-pub fn WindowsPreflight::webview_creation_loop(self : WindowsPreflight) -> Bool {
-  self.webview_creation_loop
-}
-
-///|
-pub fn WindowsPreflight::can_launch(self : WindowsPreflight) -> Bool {
-  self.webview2_loader && self.webview_creation_loop
-}
-
-///|
-pub fn WindowsPreflight::problem(self : WindowsPreflight) -> String {
-  if !self.webview2_loader {
-    "Windows WebView2 loader is not available"
-  } else if !self.webview_creation_loop {
-    "Windows WebView2 creation loop is unavailable"
-  } else {
-    ""
-  }
-}
-
-///|
-pub fn WindowsPreflight::to_json(self : WindowsPreflight) -> String {
-  [
-    "{",
-    "\"webview2Loader\":\{self.webview2_loader.to_string()},",
-    "\"webviewCreationLoop\":\{self.webview_creation_loop.to_string()},",
-    "\"canLaunch\":\{self.can_launch().to_string()},",
-    "\"problem\":\{windows_json_string(self.problem())}",
-    "}",
-  ].join("")
-}
-
-///|
-fn windows_json_string(value : String) -> String {
-  let out = ["\""]
-  for ch in value {
-    match ch {
-      '"' => out.push("\\\"")
-      '\\' => out.push("\\\\")
-      '\n' => out.push("\\n")
-      '\r' => out.push("\\r")
-      '\t' => out.push("\\t")
-      _ => out.push(ch.to_string())
-    }
-  }
-  out.push("\"")
-  out.join("")
 }
 
 ///|

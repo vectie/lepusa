@@ -450,11 +450,13 @@ async test "generated project config drives doctor backend diagnostics" {
   assert_true(result.output.contains("[ok] signing: prerequisites=3"))
   assert_true(result.output.contains("Developer ID Application certificate"))
   assert_true(result.output.contains("platform: macos"))
+  assert_true(result.output.contains("platform-detail: macos"))
   assert_true(result.output.contains("platform: windows"))
   assert_true(result.output.contains("platform-detail: windows"))
   assert_true(result.output.contains("webview2-loader="))
   assert_true(result.output.contains("creation-loop=false"))
   assert_true(result.output.contains("platform: linux"))
+  assert_true(result.output.contains("platform-detail: linux"))
 }
 
 ///|

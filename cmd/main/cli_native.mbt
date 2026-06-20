@@ -187,9 +187,11 @@ fn render_signing_prerequisites(bundle : @lepusa.BundlePlan) -> String {
 fn render_native_backend_diagnostics() -> String {
   [
     render_native_backend_line("macos", @macos_backend.detect()),
+    render_native_preflight_line(@macos_backend.preflight()),
     render_native_backend_line("windows", @windows_backend.detect()),
-    render_windows_preflight_line(),
+    render_native_preflight_line(@windows_backend.preflight()),
     render_native_backend_line("linux", @linux_backend.detect()),
+    render_native_preflight_line(@linux_backend.preflight()),
   ].join("")
 }
 
@@ -206,15 +208,16 @@ fn render_native_backend_line(
 }
 
 ///|
-fn render_windows_preflight_line() -> String {
-  let preflight = @windows_backend.preflight()
+fn render_native_preflight_line(
+  preflight : @runtime.NativeBackendPreflight,
+) -> String {
   let status = if preflight.can_launch() { "ok" } else { "warn" }
   let reason = if preflight.problem() == "" {
     ""
   } else {
     " reason=\{preflight.problem()}"
   }
-  "[\{status}] platform-detail: windows webview2-loader=\{preflight.webview2_loader().to_string()} creation-loop=\{preflight.webview_creation_loop().to_string()} can-launch=\{preflight.can_launch().to_string()}\{reason}\n"
+  "[\{status}] platform-detail: \{preflight.platform()} \{preflight.dependency_name()}=\{preflight.dependency_available().to_string()} creation-loop=\{preflight.webview_creation_loop().to_string()} async-bridge=\{preflight.async_bridge_drain().to_string()} can-launch=\{preflight.can_launch().to_string()}\{reason}\n"
 }
 
 ///|

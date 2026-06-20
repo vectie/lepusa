@@ -770,6 +770,43 @@ test "native launch capability gates webview and async bridge loops" {
 }
 
 ///|
+test "native backend preflight reports dependency and launch readiness" {
+  let ready = NativeBackendPreflight::new(
+    platform="test",
+    webview_engine="SystemWebView",
+    dependency_name="system-webview",
+    dependency_available=true,
+    webview_creation_loop=true,
+    async_bridge_drain=false,
+  )
+  assert_eq(ready.platform(), "test")
+  assert_eq(ready.webview_engine(), "SystemWebView")
+  assert_eq(ready.dependency_name(), "system-webview")
+  assert_true(ready.dependency_available())
+  assert_true(ready.webview_creation_loop())
+  assert_false(ready.async_bridge_drain())
+  assert_true(ready.can_launch())
+  assert_eq(ready.problem(), "")
+  assert_true(ready.launch_capability().webview_creation())
+  assert_true(ready.to_json().contains("\"canLaunch\":true"))
+  let missing = NativeBackendPreflight::new(
+    platform="test",
+    webview_engine="SystemWebView",
+    dependency_name="system-webview",
+    dependency_available=false,
+    webview_creation_loop=true,
+    async_bridge_drain=false,
+    dependency_message="system webview missing",
+  )
+  assert_false(missing.can_launch())
+  assert_eq(missing.problem(), "system webview missing")
+  assert_false(missing.launch_capability().webview_creation())
+  assert_true(
+    missing.to_json().contains("\"problem\":\"system webview missing\""),
+  )
+}
+
+///|
 test "native asset load urls decode json envelopes" {
   let virtual_json =
     #|{

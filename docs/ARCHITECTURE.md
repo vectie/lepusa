@@ -557,8 +557,10 @@ package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows currently
 declares the WebView2 creation loop unavailable until the COM creation path
-lands, while `runtime/windows.preflight()` separates host WebView2 loader
-availability from that framework implementation blocker.
+lands. Each platform package exposes a shared
+`runtime.NativeBackendPreflight`, so diagnostics separate host dependency
+availability, WebView creation-loop support, and async bridge drain support
+without duplicating CLI-specific checks.
 
 ## Bundling
 
