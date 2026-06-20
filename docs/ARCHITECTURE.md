@@ -610,7 +610,7 @@ lepusa run macos --launch
   -> prepares and opens the first macOS WKWebView window
 
 lepusa bridge-task <window> <plugin.command> [payload]
-  -> emits source-project bridge task scheduling metadata for native handlers
+  -> emits source-project bridge task message plus scheduling metadata for native handlers
 
 lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a summary
@@ -631,7 +631,7 @@ lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
   -> selects bundled local services and actions for native lifecycle dispatch
 
 lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
-  -> emits bundled bridge task scheduling metadata for native message handlers
+  -> emits bundled bridge task message plus scheduling metadata for native message handlers
 
 lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> dispatches a packaged bridge command through registered official native handlers

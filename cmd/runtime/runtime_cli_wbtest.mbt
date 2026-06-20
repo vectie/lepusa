@@ -554,12 +554,15 @@ async test "runtime cli renders bridge dispatch tasks" {
   )
   assert_true(sync.output.contains("\"route\":\"log.write\""))
   assert_true(sync.output.contains("\"mode\":\"sync\""))
+  assert_true(sync.output.contains("\"requiresAsyncDispatch\":false"))
+  assert_true(sync.output.contains("\"message\":\"{\\\"id\\\":\\\"cli\\\","))
   let async_task = render_runtime_bridge_task_text(
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
   assert_eq(async_task.exit_code, 0)
   assert_true(async_task.output.contains("\"route\":\"fs.readText\""))
   assert_true(async_task.output.contains("\"mode\":\"async\""))
+  assert_true(async_task.output.contains("\"requiresAsyncDispatch\":true"))
   let invalid = render_runtime_cli_async(["bridge-task", "main", "log"])
   assert_eq(invalid.exit_code, 1)
   assert_true(

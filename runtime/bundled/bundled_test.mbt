@@ -674,6 +674,12 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(task.mode() == NativeBridgeDispatchSync)
           assert_false(task.requires_async_dispatch())
           assert_true(task.to_json().contains("\"mode\":\"sync\""))
+          assert_true(
+            task.to_json().contains("\"requiresAsyncDispatch\":false"),
+          )
+          assert_true(
+            task.to_json().contains("\"message\":\"{\\\"id\\\":\\\"log\\\","),
+          )
           let dispatch = task.dispatch(runtime)
           assert_true(dispatch.response_json().contains("\"id\":\"log\""))
         }
@@ -709,6 +715,7 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(task.requires_async_dispatch())
           assert_true(task.to_json().contains("\"mode\":\"async\""))
           assert_true(task.to_json().contains("\"route\":\"fs.writeText\""))
+          assert_true(task.to_json().contains("\"requiresAsyncDispatch\":true"))
         }
         Err(_) => abort("unexpected bundled async bridge task failure")
       }

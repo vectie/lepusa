@@ -546,6 +546,8 @@ async test "bridge task command reports source scheduling mode" {
   )
   assert_true(sync.output.contains("\"route\":\"core.invoke\""))
   assert_true(sync.output.contains("\"mode\":\"sync\""))
+  assert_true(sync.output.contains("\"requiresAsyncDispatch\":false"))
+  assert_true(sync.output.contains("\"message\":\"{\\\"id\\\":\\\"cli\\\","))
   let root = "/tmp/lepusa-project-bridge-task-\{@async.now().to_int()}"
   @fs.mkdir(root, recursive=true, permission=0o755)
   @fs.write_file(
@@ -585,6 +587,7 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(async_task.exit_code, 0)
   assert_true(async_task.output.contains("\"route\":\"fs.readText\""))
   assert_true(async_task.output.contains("\"mode\":\"async\""))
+  assert_true(async_task.output.contains("\"requiresAsyncDispatch\":true"))
   let invalid = render_cli_async(["bridge-task", "main", "log"])
   assert_eq(invalid.exit_code, 1)
   assert_true(

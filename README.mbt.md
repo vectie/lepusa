@@ -392,8 +392,10 @@ plugin handlers; sync handlers still run through the same permission checks.
 `NativeRuntime::bridge_dispatch_task(message)` wrap the same bridge request as a
 target-window response task with route metadata and a sync/async mode, so native
 loops can immediately answer sync commands or schedule async commands and later
-evaluate the generated response script. Bundled manifests expose the same
-contract through `BundledRuntime::bridge_dispatch_task(message)`.
+evaluate the generated response script. The task JSON includes the original
+bridge message and `requiresAsyncDispatch` flag so native handlers do not need
+to re-derive scheduling metadata. Bundled manifests expose the same contract
+through `BundledRuntime::bridge_dispatch_task(message)`.
 
 `lepusa bridge-task <window> <plugin.command> [payload] --project lepusa.json`
 prints that source-project scheduling task without starting a WebView.
@@ -503,9 +505,9 @@ same bundled manifest and returns the local services and portable actions a
 native loop should process for that lifecycle event.
 `lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <runtime.json>`
 returns the MoonBit-owned bridge scheduling task for a packaged command:
-target window, response hook, route, and sync/async dispatch mode. Native loops
-can use this as the packaged-manifest probe before wiring platform-specific
-message handlers.
+target window, response hook, original bridge message, route, and sync/async
+dispatch mode. Native loops can use this as the packaged-manifest probe before
+wiring platform-specific message handlers.
 `lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes a packaged bridge command against the manifest's registered official
 native handlers. It checks the requested window's `allowedRoutes` before

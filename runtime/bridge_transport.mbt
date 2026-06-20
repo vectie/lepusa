@@ -312,8 +312,10 @@ pub fn NativeBridgeDispatchTask::to_json(
     "{",
     "\"windowLabel\":\{self.window_label().json_string()},",
     "\"responseHook\":\{self.response_hook().json_string()},",
+    "\"message\":\{self.message.message().json_string()},",
     "\"route\":\{self.route.json_string()},",
-    "\"mode\":\{self.mode.name().json_string()}",
+    "\"mode\":\{self.mode.name().json_string()},",
+    "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()}",
     "}",
   ].join("")
 }

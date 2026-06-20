@@ -1616,6 +1616,10 @@ async test "native runtime owns bridge message transport" {
           assert_true(task.requires_async_dispatch())
           assert_true(task.to_json().contains("\"mode\":\"async\""))
           assert_true(task.to_json().contains("\"route\":\"core.invoke\""))
+          assert_true(task.to_json().contains("\"requiresAsyncDispatch\":true"))
+          assert_true(
+            task.to_json().contains("\"message\":\"{\\\"id\\\":\\\"9\\\","),
+          )
           let dispatch = task.dispatch(runtime)
           assert_true(dispatch.response_json().contains("\"id\":\"9\""))
           assert_true(
