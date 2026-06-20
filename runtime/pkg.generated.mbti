@@ -50,6 +50,7 @@ pub struct NativeBridgeMessage {
   message : String
 } derive(Eq, @debug.Debug)
 pub async fn NativeBridgeMessage::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
+pub fn NativeBridgeMessage::dispatch_sync(Self, NativeRuntime) -> NativeBridgeDispatch
 pub fn NativeBridgeMessage::message(Self) -> String
 pub fn NativeBridgeMessage::response_hook(Self) -> String
 pub fn NativeBridgeMessage::window_label(Self) -> String
@@ -116,6 +117,7 @@ pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
+pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_json(Self, String) -> String
 pub async fn NativeRuntime::dispatch_json_async(Self, String) -> String
 pub fn NativeRuntime::host(Self) -> RuntimeHost

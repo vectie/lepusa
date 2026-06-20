@@ -445,7 +445,7 @@ pub fn run(
       run_plan(
         plan,
         mode~,
-        dispatch=runtime_dispatch(runtime, plan),
+        dispatch=runtime_dispatch(runtime),
         resolve_asset=runtime_asset_resolver(runtime),
       )
   }
@@ -729,20 +729,13 @@ fn async_bridge_launch_message(plan : MacOSRunPlan) -> String {
 }
 
 ///|
-fn runtime_dispatch(
-  runtime : @runtime.NativeRuntime,
-  plan : MacOSRunPlan,
-) -> (Bytes) -> Bytes {
-  let response_hook = match plan.first_webview() {
-    Ok(webview) => "\{webview.native_hook()}Response"
-    Err(_) => "__lepusaInvokeResponse"
-  }
+fn runtime_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
-    let response_json = runtime.dispatch_json(input)
-    @utf8.encode(
-      @runtime.native_bridge_response_script(response_hook, response_json),
-    )
+    match runtime.dispatch_bridge_message_sync(input) {
+      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+      Err(_) => @utf8.encode("")
+    }
   }
 }
 

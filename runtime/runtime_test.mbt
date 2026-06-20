@@ -1147,6 +1147,22 @@ async test "native runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bridge prepare failure")
       }
+      match runtime.dispatch_bridge_message_sync(message) {
+        Ok(dispatch) => {
+          assert_true(dispatch.response_json().contains("\"id\":\"9\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("command requires async dispatch: core.invoke"),
+          )
+          assert_true(
+            dispatch
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+        }
+        Err(_) => abort("unexpected bridge sync dispatch failure")
+      }
       match
         runtime.dispatch_bridge_message(
           "{\"id\":\"10\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"false\"}",

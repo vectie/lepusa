@@ -560,7 +560,7 @@ fn windows_open_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    windows_dispatch(runtime, plan),
+    windows_dispatch(runtime),
     fn(resolve_asset, url) { resolve_asset(url) },
     windows_runtime_asset_resolver(runtime),
   )
@@ -607,20 +607,13 @@ fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
 }
 
 ///|
-fn windows_dispatch(
-  runtime : @runtime.NativeRuntime,
-  plan : WindowsRunPlan,
-) -> (Bytes) -> Bytes {
-  let response_hook = match plan.first_webview() {
-    Ok(webview) => "\{webview.native_hook()}Response"
-    Err(_) => "__lepusaInvokeResponse"
-  }
+fn windows_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
   fn(message : Bytes) -> Bytes {
     let input = @utf8.decode(message) catch { _ => "" }
-    let response_json = runtime.dispatch_json(input)
-    @utf8.encode(
-      @runtime.native_bridge_response_script(response_hook, response_json),
-    )
+    match runtime.dispatch_bridge_message_sync(input) {
+      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+      Err(_) => @utf8.encode("")
+    }
   }
 }
 

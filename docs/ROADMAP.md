@@ -61,7 +61,7 @@
   WKScriptMessageHandler wiring for sync command responses exists; macOS
   WKURLSchemeHandler wiring for Lepusa assets exists; macOS run plans now
   expose sync versus async bridge route metadata; runtime-owned bridge message
-  preparation separates native capture from async dispatch and shares hook
+  preparation separates native capture from sync/async dispatch and shares hook
   bootstrap plus callback script generation across macOS, Linux, and Windows;
   bundled runtime bridge transport now preserves packaged plugin registry state
   across repeated bridge calls; open-window macOS launches now report

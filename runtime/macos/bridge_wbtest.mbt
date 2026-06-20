@@ -31,7 +31,7 @@ test "macos bridge callback dispatches native runtime messages" {
             Err(problem) => abort(problem)
           }
           assert_eq(webview.native_hook(), "__lepusaInvoke")
-          let dispatch = runtime_dispatch(runtime, plan)
+          let dispatch = runtime_dispatch(runtime)
           let message = "{\"id\":\"42\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
           let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
             _ => abort("unexpected invalid utf8 response script")

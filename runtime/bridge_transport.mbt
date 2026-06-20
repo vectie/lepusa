@@ -44,6 +44,18 @@ pub async fn NativeRuntime::dispatch_bridge_message(
 }
 
 ///|
+pub fn NativeRuntime::dispatch_bridge_message_sync(
+  self : NativeRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeDispatch, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) => Ok(prepared.dispatch_sync(self))
+  }
+}
+
+///|
 pub fn NativeRuntime::bridge_response_hook(
   self : NativeRuntime,
   window_label? : String = "",
@@ -70,6 +82,23 @@ pub async fn NativeBridgeMessage::dispatch(
   runtime : NativeRuntime,
 ) -> NativeBridgeDispatch {
   let response_json = runtime.dispatch_json_async(self.message)
+  self.to_dispatch(response_json)
+}
+
+///|
+pub fn NativeBridgeMessage::dispatch_sync(
+  self : NativeBridgeMessage,
+  runtime : NativeRuntime,
+) -> NativeBridgeDispatch {
+  let response_json = runtime.dispatch_json(self.message)
+  self.to_dispatch(response_json)
+}
+
+///|
+fn NativeBridgeMessage::to_dispatch(
+  self : NativeBridgeMessage,
+  response_json : String,
+) -> NativeBridgeDispatch {
   {
     window_label: self.window_label,
     response_hook: self.response_hook,
