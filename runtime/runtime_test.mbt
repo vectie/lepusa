@@ -576,6 +576,16 @@ test "native runner plans expose async bridge blockers" {
       assert_true(
         async_capable.to_json().contains("\"mode\":\"async-capable\""),
       )
+      let executor = async_capable.async_executor()
+      assert_true(executor.required())
+      assert_true(executor.available())
+      assert_eq(
+        executor.callback(),
+        "NativeRuntime::bridge_async_dispatch_callback",
+      )
+      assert_eq(executor.input_encoding(), "utf8-json-bridge-message")
+      assert_eq(executor.output_encoding(), "utf8-javascript-callback-script")
+      assert_true(executor.to_json().contains("\"available\":true"))
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
           runtime.webview_plan(spec, initialization_script="")
@@ -585,6 +595,25 @@ test "native runner plans expose async bridge blockers" {
           assert_eq(plan.bridge_async_routes()[0], "core.invoke")
           assert_false(plan.bridge_scheduler().can_launch())
           assert_false(plan.launch_session().can_launch())
+          assert_false(
+            plan.launch_session().async_bridge_executor().available(),
+          )
+          let async_session = plan.launch_session(
+            bridge_mode=NativeBridgeAsyncCapable,
+          )
+          assert_true(async_session.can_launch())
+          assert_true(async_session.async_bridge_executor().required())
+          assert_true(async_session.async_bridge_executor().available())
+          assert_true(
+            async_session.to_json().contains("\"asyncBridgeExecutor\""),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",
+            ),
+          )
           assert_true(
             plan
             .async_bridge_launch_message("Test")

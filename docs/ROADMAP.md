@@ -81,8 +81,10 @@
   the final native launch ABI for source and packaged manifests, with that ABI
   reporting unsupported until the COM creation loop lands; source and bundled
   launch-session JSON can now advertise async-capable bridge scheduling for
-  native loops that wire deferred completion; native async bridge scheduling and
-  the Windows WebView creation loop remain.
+  native loops that wire deferred completion, including the reusable async
+  bridge executor descriptor over
+  `NativeRuntime::bridge_async_dispatch_callback`; native async bridge
+  scheduling and the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

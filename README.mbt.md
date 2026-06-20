@@ -170,9 +170,11 @@ WebView2 on Windows, and WebKitGTK on Linux.
 
 `lepusa launch-session` and `lepusa-runtime launch-session` emit native-loop
 handoff JSON for WebViews, protocol assets, lifecycle actions, service
-supervision, and bridge scheduling. Passing `--async-bridge` marks the bridge
-scheduler as async-capable for platform loops that wire deferred command
-completion; it does not change `run` or `launch` behavior.
+supervision, bridge scheduling, and the async bridge executor descriptor.
+Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
+the executor as available for platform loops that wire deferred command
+completion through `NativeRuntime::bridge_async_dispatch_callback`; it does not
+change `run` or `launch` behavior.
 
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
@@ -364,7 +366,7 @@ from registered bridge routes.
 `lepusa launch-session [macos|windows|linux]` prepares the selected backend and
 emits the same canonical `NativeLaunchSession` shape used by packaged runtime
 manifests: concrete WebView launch plans, executable operations, bridge
-scheduler policy, and service supervisor plan.
+scheduler policy, async bridge executor metadata, and service supervisor plan.
 
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,
@@ -565,9 +567,11 @@ WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
 responses. Native launch paths refuse async bridge routes with an explicit
 scheduler requirement until a backend event loop can dispatch them without
-blocking the WebView callback. The same `bridgeScheduler` field appears in
-source and bundled bootstrap JSON so platform loops and CLI diagnostics read
-one launch policy.
+blocking the WebView callback. Launch-session JSON also carries
+`asyncBridgeExecutor`, which names `NativeRuntime::bridge_async_dispatch_callback`
+and its UTF-8 bridge-message to JavaScript-callback-script byte contract. The
+same `bridgeScheduler` field appears in source and bundled bootstrap JSON so
+platform loops and CLI diagnostics read one launch policy.
 `NativeRuntime.prepare_bridge_message`, `bridge_dispatch_task`, and
 `dispatch_bridge_message` own the MoonBit side of that path by resolving the
 target window, response hook, route scheduling mode, sync/async dispatch, and

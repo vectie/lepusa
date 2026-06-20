@@ -12,6 +12,15 @@ pub struct NativeBridgeScheduler {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeAsyncExecutor {
+  required : Bool
+  available : Bool
+  callback : String
+  input_encoding : String
+  output_encoding : String
+} derive(Debug, Eq)
+
+///|
 pub fn NativeBridgeScheduler::new(
   sync_routes~ : Array[String],
   async_routes~ : Array[String],
@@ -61,6 +70,16 @@ pub fn NativeBridgeScheduler::can_launch(self : NativeBridgeScheduler) -> Bool {
 }
 
 ///|
+pub fn NativeBridgeScheduler::async_executor(
+  self : NativeBridgeScheduler,
+) -> NativeBridgeAsyncExecutor {
+  NativeBridgeAsyncExecutor::new(
+    required=self.requires_async_dispatch(),
+    available=self.supports_async_dispatch(),
+  )
+}
+
+///|
 pub fn NativeBridgeScheduler::launch_blocker(
   self : NativeBridgeScheduler,
   platform_name : String,
@@ -94,6 +113,70 @@ pub fn NativeBridgeScheduler::to_json(self : NativeBridgeScheduler) -> String {
     "\"asyncRoutes\":[\{self.async_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()},",
     "\"canLaunch\":\{self.can_launch().json_bool()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::new(
+  required~ : Bool,
+  available~ : Bool,
+) -> NativeBridgeAsyncExecutor {
+  {
+    required,
+    available,
+    callback: "NativeRuntime::bridge_async_dispatch_callback",
+    input_encoding: "utf8-json-bridge-message",
+    output_encoding: "utf8-javascript-callback-script",
+  }
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::required(
+  self : NativeBridgeAsyncExecutor,
+) -> Bool {
+  self.required
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::available(
+  self : NativeBridgeAsyncExecutor,
+) -> Bool {
+  self.available
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::callback(
+  self : NativeBridgeAsyncExecutor,
+) -> String {
+  self.callback
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::input_encoding(
+  self : NativeBridgeAsyncExecutor,
+) -> String {
+  self.input_encoding
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::output_encoding(
+  self : NativeBridgeAsyncExecutor,
+) -> String {
+  self.output_encoding
+}
+
+///|
+pub fn NativeBridgeAsyncExecutor::to_json(
+  self : NativeBridgeAsyncExecutor,
+) -> String {
+  [
+    "{",
+    "\"required\":\{self.required.json_bool()},",
+    "\"available\":\{self.available.json_bool()},",
+    "\"callback\":\{self.callback.json_string()},",
+    "\"inputEncoding\":\{self.input_encoding.json_string()},",
+    "\"outputEncoding\":\{self.output_encoding.json_string()}",
     "}",
   ].join("")
 }

@@ -151,7 +151,10 @@ can be used from Rabbita, React, Vue, Svelte, or plain JavaScript.
 Native launch-session JSON carries bridge scheduler metadata. Sync-only mode is
 the conservative default, while `--async-bridge` marks the session as
 async-capable for platform loops that schedule deferred command tasks and later
-run the generated callback script.
+run the generated callback script. The same launch-session payload carries an
+`asyncBridgeExecutor` descriptor naming
+`NativeRuntime::bridge_async_dispatch_callback` and the UTF-8 bridge-message to
+JavaScript-callback-script byte contract.
 
 Command rules:
 

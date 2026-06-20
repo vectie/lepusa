@@ -48,6 +48,13 @@ pub fn NativeLaunchSession::bridge_scheduler(
 }
 
 ///|
+pub fn NativeLaunchSession::async_bridge_executor(
+  self : NativeLaunchSession,
+) -> NativeBridgeAsyncExecutor {
+  self.bridge_scheduler.async_executor()
+}
+
+///|
 pub fn NativeLaunchSession::service_supervisor(
   self : NativeLaunchSession,
 ) -> NativeServiceSupervisorPlan {
@@ -74,6 +81,7 @@ pub fn NativeLaunchSession::to_json(self : NativeLaunchSession) -> String {
     "\"webviews\":[\{self.webviews.map(fn(webview) { webview.to_json() }).join(",")}],",
     "\"execution\":\{self.execution.to_json()},",
     "\"bridgeScheduler\":\{self.bridge_scheduler.to_json()},",
+    "\"asyncBridgeExecutor\":\{self.async_bridge_executor().to_json()},",
     "\"serviceSupervisor\":\{self.service_supervisor.to_json()}",
     "}",
   ].join("")

@@ -43,6 +43,21 @@ pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan,
 pub fn NativeBackend::service_executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeBackend::webview_engine(Self) -> String
 
+pub struct NativeBridgeAsyncExecutor {
+  required : Bool
+  available : Bool
+  callback : String
+  input_encoding : String
+  output_encoding : String
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeAsyncExecutor::available(Self) -> Bool
+pub fn NativeBridgeAsyncExecutor::callback(Self) -> String
+pub fn NativeBridgeAsyncExecutor::input_encoding(Self) -> String
+pub fn NativeBridgeAsyncExecutor::new(required~ : Bool, available~ : Bool) -> Self
+pub fn NativeBridgeAsyncExecutor::output_encoding(Self) -> String
+pub fn NativeBridgeAsyncExecutor::required(Self) -> Bool
+pub fn NativeBridgeAsyncExecutor::to_json(Self) -> String
+
 pub struct NativeBridgeDispatch {
   window_label : String
   response_hook : String
@@ -106,6 +121,7 @@ pub struct NativeBridgeScheduler {
   mode : NativeBridgeSchedulerMode
 } derive(Eq, @debug.Debug)
 pub fn NativeBridgeScheduler::async_bridge_launch_message(Self, String) -> String
+pub fn NativeBridgeScheduler::async_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeBridgeScheduler::async_routes(Self) -> Array[String]
 pub fn NativeBridgeScheduler::can_launch(Self) -> Bool
 pub fn NativeBridgeScheduler::launch_blocker(Self, String) -> String?
@@ -185,6 +201,7 @@ pub struct NativeLaunchSession {
   bridge_scheduler : NativeBridgeScheduler
   service_supervisor : NativeServiceSupervisorPlan
 } derive(Eq, @debug.Debug)
+pub fn NativeLaunchSession::async_bridge_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
 pub fn NativeLaunchSession::can_launch(Self) -> Bool
 pub fn NativeLaunchSession::execution(Self) -> NativeExecutionPlan
