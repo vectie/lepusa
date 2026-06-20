@@ -2,7 +2,9 @@
 
 `@lepusa/plugins/process` defines Lepusa's official process command contract.
 It declares platform-neutral routes for process metadata, environment access,
-and controlled process termination; native runtimes own the actual OS behavior.
+and controlled process termination. The portable registry implements
+`process.info`, `process.cwd`, `process.env`, and `process.setEnv`;
+`process.exit` remains reserved for backend-owned termination policy.
 
 ```moonbit nocheck
 ///|

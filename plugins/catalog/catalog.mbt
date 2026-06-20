@@ -86,6 +86,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       },
     },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },
+    {
+      name: "process",
+      register: fn(registry, _) { @process.register(registry) },
+    },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
   ]
 }

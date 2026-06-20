@@ -28,6 +28,9 @@ test "lookup official plugins" {
   let fs = @catalog.plugin("fs").unwrap()
   assert_true(fs.command_routes().contains("fs.readText"))
 
+  let process = @catalog.plugin("process").unwrap()
+  assert_true(process.command_routes().contains("process.info"))
+
   let registry = @catalog.register(@lepusa.CommandRegistry::new(), "log")
   assert_true(registry.contains("log.write"))
 }

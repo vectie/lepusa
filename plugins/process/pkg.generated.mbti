@@ -18,6 +18,8 @@ pub fn info_capability(name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods

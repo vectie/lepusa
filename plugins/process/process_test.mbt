@@ -34,3 +34,59 @@ test "process capabilities split info environment and control" {
   assert_true(all.allows(window_label="main", permission=ProcessControl))
   assert_false(all.allows(window_label="settings", permission=ProcessInfo))
 }
+
+///|
+async test "process plugin registers portable process handlers" {
+  let registry = register(@lepusa.CommandRegistry::new())
+  assert_true(registry.contains("process.info"))
+  assert_true(registry.contains("process.cwd"))
+  assert_true(registry.contains("process.env"))
+  assert_true(registry.contains("process.setEnv"))
+  assert_false(registry.contains("process.exit"))
+  let capability = capability_for_window("main")
+  let info = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="info",
+      window_label="main",
+      plugin="process",
+      command="info",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(info is InvokeOk("info", _))
+  assert_true(info.payload().unwrap_or("").contains("\"cwd\""))
+  let cwd = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="cwd",
+      window_label="main",
+      plugin="process",
+      command="cwd",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(cwd is InvokeOk("cwd", _))
+  let key = "LEPUSA_PROCESS_TEST"
+  let set = registry.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="set",
+      window_label="main",
+      plugin="process",
+      command="setEnv",
+      payload="{\"key\":\"\{key}\",\"value\":\"ready\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(set is InvokeOk("set", _))
+  let env = registry.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="env",
+      window_label="main",
+      plugin="process",
+      command="env",
+      payload="{\"key\":\"\{key}\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(env is InvokeOk("env", _))
+  assert_true(env.payload().unwrap_or("").contains("\"value\":\"ready\""))
+}

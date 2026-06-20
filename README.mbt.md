@@ -202,10 +202,13 @@ runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
-When a project declares official `log`, `store`, or `fs` plugins, the CLI binds
-their MoonBit-native handlers into the project `RuntimeHost` without adding
-moon-suite-specific behavior. `fs` handlers run through the async command
-registry and are constrained by named `filesystemScopes`.
+When a project declares official `log`, `store`, `fs`, or `process` plugins,
+the CLI binds their MoonBit-native handlers into the project `RuntimeHost`
+without adding moon-suite-specific behavior. `fs` handlers run through the
+async command registry and are constrained by named `filesystemScopes`.
+`process.info`, `process.cwd`, `process.env`, and `process.setEnv` are portable
+handlers; `process.exit` remains a declared route for backend-owned termination
+policy.
 
 The `examples/` directory contains checked project manifests for the three
 foundation app shapes: Rabbita-style MoonBit UI, packaged static assets, and a
@@ -319,7 +322,9 @@ restrictions.
 
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split `process.info`, `process.environment`, and
-`process.control` permissions. Native backends own the OS process behavior.
+`process.control` permissions. The portable registry implements process
+metadata, current-directory, and environment handlers; native backends own
+process termination policy.
 
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin

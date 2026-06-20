@@ -451,11 +451,11 @@ async test "runtime cli invokes bundled official plugins" {
     #|    "webviews": [
     #|      {
     #|        "label": "main",
-    #|        "allowedRoutes": ["log.write", "store.set", "store.get"]
+    #|        "allowedRoutes": ["log.write", "store.set", "store.get", "process.info"]
     #|      }
     #|    ],
     #|    "filesystemScopes": [],
-    #|    "registeredRoutes": ["log.write", "store.set", "store.get"]
+    #|    "registeredRoutes": ["log.write", "store.set", "store.get", "process.info"]
     #|  }
     #|}
   let log = render_runtime_invoke_text(
@@ -472,6 +472,11 @@ async test "runtime cli invokes bundled official plugins" {
     "lepusa/runtime.json", manifest, "main", "store.get", "{\"key\":\"theme\"}",
   )
   assert_true(store_get.output.contains("\\\"found\\\":false"))
+  let process_info = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "process.info", "{}",
+  )
+  assert_true(process_info.output.contains("\"id\":\"cli\""))
+  assert_true(process_info.output.contains("\\\"cwd\\\""))
 }
 
 ///|
