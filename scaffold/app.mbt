@@ -133,7 +133,7 @@ fn project_lepusa_json() -> String {
     #|  "identifier": "dev.local.lepusa-app",
     #|  "productName": "Lepusa App",
     #|  "version": "0.1.0",
-    #|  "rootHtml": "<main><h1>Lepusa App</h1><p>Count: 0</p><button data-route=\"core.invoke\">Increment</button></main>",
+    #|  "rootHtml": "<main><h1>Lepusa App</h1><p>Count: 0</p><button>Increment</button></main>",
     #|  "runtime": {
     #|    "backend": "system-webview",
     #|    "assetProtocol": "lepusa",
@@ -148,13 +148,6 @@ fn project_lepusa_json() -> String {
     #|  },
     #|  "plugins": [
     #|    {
-    #|      "name": "core",
-    #|      "commands": [
-    #|        { "name": "invoke", "mode": "sync" },
-    #|        { "name": "events", "mode": "stream" }
-    #|      ]
-    #|    },
-    #|    {
     #|      "name": "log"
     #|    },
     #|    {
@@ -166,8 +159,6 @@ fn project_lepusa_json() -> String {
     #|      "name": "main",
     #|      "windows": ["main"],
     #|      "commands": [
-    #|        "core.invoke",
-    #|        "core.events",
     #|        "log.write",
     #|        "store.get",
     #|        "store.set",
@@ -215,7 +206,7 @@ fn project_main_mbt() -> String {
     #|///|
     #|fn view(_dispatch : @lepusa.Dispatch[Msg], model : Model) -> @lepusa.Html {
     #|  @lepusa.Html::text(
-    #|    "<main><h1>Lepusa App</h1><p>Count: \{model.count}</p><button data-route=\"core.invoke\">Increment</button></main>",
+    #|    "<main><h1>Lepusa App</h1><p>Count: \{model.count}</p><button>Increment</button></main>",
     #|  )
     #|}
     #|

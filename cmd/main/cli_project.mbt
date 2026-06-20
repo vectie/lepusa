@@ -35,7 +35,8 @@ async fn project_runtime_host(
       }
     None =>
       match sample_runtime_plan() {
-        Ok(plan) => Ok(@runtime.RuntimeHost::new(plan))
+        Ok(plan) =>
+          Ok(@runtime.RuntimeHost::new(plan, registry=sample_registry()))
         Err(problems) => Err(problems)
       }
   }
@@ -62,7 +63,12 @@ async fn project_bundle_plan(
           )
         Err(problems) => Err(problems)
       }
-    None => sample_manifest().bundle_plan(sample_root(), target~)
+    None =>
+      sample_manifest().bundle_plan(
+        sample_root(),
+        target~,
+        registered_routes=sample_registry().routes(),
+      )
   }
 }
 
@@ -91,6 +97,13 @@ fn sample_manifest() -> @lepusa.ProjectManifest {
     .command("core.invoke")
     .command("core.events"),
   )
+}
+
+///|
+fn sample_registry() -> @lepusa.CommandRegistry {
+  @lepusa.CommandRegistry::new()
+  .register_fn("core.invoke", handler=fn(payload) { Ok(payload) })
+  .register_fn("core.events", handler=fn(_) { Ok("") })
 }
 
 ///|

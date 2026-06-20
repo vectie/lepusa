@@ -24,6 +24,15 @@ test "app scaffold wires official plugin handlers" {
 }
 
 ///|
+test "app scaffold config only advertises catalog registered routes" {
+  let config = project_lepusa_json()
+  assert_true(config.contains("\"log.write\""))
+  assert_true(config.contains("\"store.set\""))
+  assert_false(config.contains("core.invoke"))
+  assert_false(config.contains("core.events"))
+}
+
+///|
 test "app scaffold readme documents catalog usage" {
   let readme = project_readme()
   assert_true(readme.contains("@lepusa/plugins/catalog"))

@@ -71,6 +71,7 @@ fn render_doctor_host(
             "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
             "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
             "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
+            render_handler_coverage(host) +
             "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
             "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
             render_signing_prerequisites(bundle) +
@@ -79,6 +80,23 @@ fn render_doctor_host(
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
       }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
+fn render_handler_coverage(host : @runtime.RuntimeHost) -> String {
+  let declared = host.plan().command_routes()
+  let registered = host.registry().routes()
+  let missing : Array[String] = []
+  for route in declared {
+    if !registered.contains(route) {
+      missing.push(route)
+    }
+  }
+  if missing.is_empty() {
+    "[ok] handlers: registered=\{registered.length()} missing=0\n"
+  } else {
+    "[warn] handlers: registered=\{registered.length()} missing=\{missing.length()} routes=\{missing.join(",")}\n"
   }
 }
 

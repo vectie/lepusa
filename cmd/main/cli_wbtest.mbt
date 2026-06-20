@@ -27,6 +27,7 @@ async test "doctor renders framework boundary checks" {
   assert_true(result.output.contains("[ok] public-api"))
   assert_true(result.output.contains("backend=headless"))
   assert_true(result.output.contains("[ok] manifest: webviews=1 routes=2"))
+  assert_true(result.output.contains("[ok] handlers: registered=2 missing=0"))
   assert_true(result.output.contains("[ok] bundle: target=macos"))
   assert_true(result.output.contains("[ok] signing: prerequisites=3"))
   assert_true(result.output.contains("Developer ID Application certificate"))
@@ -179,6 +180,8 @@ async test "init writes standalone project skeleton" {
   assert_true(config_file.contains("\"name\": \"log\""))
   assert_true(config_file.contains("\"name\": \"store\""))
   assert_true(config_file.contains("Count: 0"))
+  assert_false(config_file.contains("core.invoke"))
+  assert_false(config_file.contains("core.events"))
   assert_true(config_file.contains("\"log.write\""))
   assert_true(config_file.contains("\"store.set\""))
   assert_true(config_file.contains("\"startup\": { \"effect\": \"boot\" }"))
@@ -253,9 +256,9 @@ async test "generated project config drives runtime plan" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
-  assert_true(result.output.contains("plugins: 3"))
+  assert_true(result.output.contains("plugins: 2"))
   assert_true(result.output.contains("capabilities: 1"))
-  assert_true(result.output.contains("core.invoke"))
+  assert_false(result.output.contains("core.invoke"))
   assert_true(result.output.contains("log.write"))
   assert_true(result.output.contains("store.clear"))
 }
@@ -273,7 +276,8 @@ async test "generated project config drives dev plan" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
-  assert_true(result.output.contains("routes: core.invoke,core.events"))
+  assert_false(result.output.contains("core.invoke"))
+  assert_false(result.output.contains("core.events"))
   assert_true(result.output.contains("registered-routes:"))
   assert_true(result.output.contains("log.write"))
   assert_true(result.output.contains("store.set"))
@@ -289,6 +293,7 @@ async test "generated project config drives doctor backend diagnostics" {
   let result = render_cli_async(["doctor", "--project", root + "/lepusa.json"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("backend=system-webview"))
+  assert_true(result.output.contains("[ok] handlers: registered=6 missing=0"))
   assert_true(result.output.contains("[ok] bundle: target=macos"))
   assert_true(result.output.contains("[ok] signing: prerequisites=3"))
   assert_true(result.output.contains("Developer ID Application certificate"))
