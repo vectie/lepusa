@@ -19,6 +19,9 @@ pub fn NativeRuntime::run_report(
     Some(webview) => webview.title()
     None => ""
   }
+  let execution = NativeOperationExecutor::new().execute_startup(
+    plan.execution_plan(),
+  )
   @lepusa.RunReport::new(
     target~,
     backend=plan.backend_name(),
@@ -34,6 +37,11 @@ pub fn NativeRuntime::run_report(
     service_start_order=services.startup_service_names(),
     startup_operations=plan.startup_operations().length(),
     lifecycle_steps=plan.lifecycle_steps().length(),
+    executable_operations=execution.operation_count(),
+    executed_operations=execution.executed_count(),
+    skipped_operations=execution.skipped_count(),
+    failed_operations=execution.failed_count(),
+    first_execution_failure=execution.first_failure_message().unwrap_or(""),
     bridge_sync_routes~,
     bridge_async_routes~,
     target_can_launch~,

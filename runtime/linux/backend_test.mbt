@@ -257,6 +257,9 @@ test "linux backend prepares bundled runtime contract" {
           assert_eq(result.report().backend(), "linux")
           assert_eq(result.report().engine(), "WebKitGTK")
           assert_eq(result.report().startup_operations(), 2)
+          assert_eq(result.report().executable_operations(), 2)
+          assert_eq(result.report().skipped_operations(), 2)
+          assert_eq(result.report().failed_operations(), 0)
           assert_eq(
             result.report().load_url(),
             "lepusa://rabbita/main/index.html",

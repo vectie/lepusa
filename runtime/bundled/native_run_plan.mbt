@@ -220,6 +220,62 @@ pub fn BundledNativeRunPlan::launch_session(
 }
 
 ///|
+pub fn BundledNativeRunPlan::operation_execution_report(
+  self : BundledNativeRunPlan,
+) -> Result[@runtime.NativeOperationExecutionReport, String] {
+  match self.native_execution_plan() {
+    Ok(execution) =>
+      Ok(@runtime.NativeOperationExecutor::new().execute_startup(execution))
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+pub fn BundledNativeRunPlan::report(
+  self : BundledNativeRunPlan,
+  status~ : @lepusa.RunStatus,
+  load_url? : String = "",
+  target_can_launch? : Bool = true,
+  target_launch_blocker? : String = "",
+) -> @lepusa.RunReport {
+  let execution = self.operation_execution_report()
+  let executable_operations = match execution {
+    Ok(report) => report.operation_count()
+    Err(_) => 0
+  }
+  let executed_operations = match execution {
+    Ok(report) => report.executed_count()
+    Err(_) => 0
+  }
+  let skipped_operations = match execution {
+    Ok(report) => report.skipped_count()
+    Err(_) => 0
+  }
+  let failed_operations = match execution {
+    Ok(report) => report.failed_count()
+    Err(_) => 1
+  }
+  let first_execution_failure = match execution {
+    Ok(report) => report.first_failure_message().unwrap_or("")
+    Err(problem) => problem
+  }
+  self
+  .bootstrap()
+  .run_plan()
+  .report(
+    status~,
+    load_url~,
+    executable_operations~,
+    executed_operations~,
+    skipped_operations~,
+    failed_operations~,
+    first_execution_failure~,
+    target_can_launch~,
+    target_launch_blocker~,
+  )
+}
+
+///|
 pub fn BundledNativeRunPlan::to_json(
   self : BundledNativeRunPlan,
 ) -> Result[String, String] {

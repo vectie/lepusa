@@ -401,6 +401,9 @@ facade instead of reassembling host, runner, protocol, command dispatch, and
 sidecar supervision paths themselves. Source and packaged runtime paths both
 lower launch summaries into root `@lepusa.RunReport` values so backends, CLI
 probes, and future supervisors share one status and counter contract.
+`RunReport` includes executable, executed, skipped, and failed operation counts
+plus the first execution failure, so target checks can tell whether a run plan
+only prepared work or whether a platform executor could actually handle it.
 `NativeExecutionPlan` exposes startup evaluation scripts and navigations as
 typed views; source and bundled prepared run plans append startup frontend
 event scripts to the matching `NativeWebViewPlan` initialization script before a

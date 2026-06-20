@@ -206,6 +206,8 @@ pub fn BundledNativeRunPlan::launch_session(Self, bridge_mode? : @runtime.Native
 pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
 pub fn BundledNativeRunPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledNativeRunPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
+pub fn BundledNativeRunPlan::operation_execution_report(Self) -> Result[@runtime.NativeOperationExecutionReport, String]
+pub fn BundledNativeRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn BundledNativeRunPlan::service_supervisor_plan(Self) -> @runtime.NativeServiceSupervisorPlan
 pub fn BundledNativeRunPlan::service_supervisor_report(Self) -> @runtime.NativeServiceSupervisorReport
@@ -239,7 +241,7 @@ pub fn BundledRunPlan::backend(Self) -> String
 pub fn BundledRunPlan::bridge_url(Self) -> String
 pub fn BundledRunPlan::first_webview(Self) -> BundledWebView?
 pub fn BundledRunPlan::lifecycle_step_count(Self) -> Int
-pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
+pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, executable_operations? : Int, executed_operations? : Int, skipped_operations? : Int, failed_operations? : Int, first_execution_failure? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn BundledRunPlan::service_plan(Self) -> BundledServicePlan
 pub fn BundledRunPlan::service_supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
 pub fn BundledRunPlan::startup_operation_count(Self) -> Int

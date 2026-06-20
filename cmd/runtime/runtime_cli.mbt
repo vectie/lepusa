@@ -303,6 +303,20 @@ fn render_runtime_run_report(
   } else {
     "target-launch-blocker: \{report.target_launch_blocker()}\n"
   }
+  let execution = if report.executable_operations() == 0 &&
+    report.failed_operations() == 0 {
+    ""
+  } else {
+    "executable-operations: \{report.executable_operations()}\n" +
+    "executed-operations: \{report.executed_operations()}\n" +
+    "skipped-operations: \{report.skipped_operations()}\n" +
+    "failed-operations: \{report.failed_operations()}\n" +
+    (if report.first_execution_failure() == "" {
+      ""
+    } else {
+      "first-execution-failure: \{report.first_execution_failure()}\n"
+    })
+  }
   [
     "Lepusa runtime run",
     "mode: \{if launch { "launch" } else { "dry-run" }}",
@@ -321,6 +335,7 @@ fn render_runtime_run_report(
     "service-start-order: \{report.service_start_order().join(",")}",
     "startup-operations: \{report.startup_operations()}",
     "lifecycle-steps: \{report.lifecycle_steps()}",
+    execution,
     bridge_routes,
     "",
   ].join("\n")

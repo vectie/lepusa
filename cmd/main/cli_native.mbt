@@ -524,6 +524,20 @@ fn render_native_run_report(
     "bridge-sync-routes: \{report.bridge_sync_routes()}\n" +
     "bridge-async-routes: \{report.bridge_async_routes()}\n"
   }
+  let execution = if report.executable_operations() == 0 &&
+    report.failed_operations() == 0 {
+    ""
+  } else {
+    "executable-operations: \{report.executable_operations()}\n" +
+    "executed-operations: \{report.executed_operations()}\n" +
+    "skipped-operations: \{report.skipped_operations()}\n" +
+    "failed-operations: \{report.failed_operations()}\n" +
+    (if report.first_execution_failure() == "" {
+      ""
+    } else {
+      "first-execution-failure: \{report.first_execution_failure()}\n"
+    })
+  }
   ok(
     title +
     "\n" +
@@ -545,6 +559,7 @@ fn render_native_run_report(
     services +
     "startup-operations: \{report.startup_operations()}\n" +
     "lifecycle-steps: \{report.lifecycle_steps()}\n" +
+    execution +
     bridge_routes,
   )
 }

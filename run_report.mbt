@@ -22,6 +22,11 @@ pub struct RunReport {
   service_start_order : Array[String]
   startup_operations : Int
   lifecycle_steps : Int
+  executable_operations : Int
+  executed_operations : Int
+  skipped_operations : Int
+  failed_operations : Int
+  first_execution_failure : String
   bridge_sync_routes : Int
   bridge_async_routes : Int
   target_can_launch : Bool
@@ -44,6 +49,11 @@ pub fn RunReport::new(
   service_start_order? : Array[String] = [],
   startup_operations? : Int = 0,
   lifecycle_steps? : Int = 0,
+  executable_operations? : Int = 0,
+  executed_operations? : Int = 0,
+  skipped_operations? : Int = 0,
+  failed_operations? : Int = 0,
+  first_execution_failure? : String = "",
   bridge_sync_routes? : Int = 0,
   bridge_async_routes? : Int = 0,
   target_can_launch? : Bool = true,
@@ -64,6 +74,11 @@ pub fn RunReport::new(
     service_start_order: service_start_order.copy(),
     startup_operations,
     lifecycle_steps,
+    executable_operations,
+    executed_operations,
+    skipped_operations,
+    failed_operations,
+    first_execution_failure,
     bridge_sync_routes,
     bridge_async_routes,
     target_can_launch,
@@ -170,6 +185,31 @@ pub fn RunReport::lifecycle_steps(self : RunReport) -> Int {
 }
 
 ///|
+pub fn RunReport::executable_operations(self : RunReport) -> Int {
+  self.executable_operations
+}
+
+///|
+pub fn RunReport::executed_operations(self : RunReport) -> Int {
+  self.executed_operations
+}
+
+///|
+pub fn RunReport::skipped_operations(self : RunReport) -> Int {
+  self.skipped_operations
+}
+
+///|
+pub fn RunReport::failed_operations(self : RunReport) -> Int {
+  self.failed_operations
+}
+
+///|
+pub fn RunReport::first_execution_failure(self : RunReport) -> String {
+  self.first_execution_failure
+}
+
+///|
 pub fn RunReport::bridge_sync_routes(self : RunReport) -> Int {
   self.bridge_sync_routes
 }
@@ -207,6 +247,11 @@ pub fn RunReport::to_json(self : RunReport) -> String {
     "\"serviceStartOrder\":[\{self.service_start_order.map(fn(name) { name.json_string() }).join(",")}],",
     "\"startupOperations\":\{self.startup_operations},",
     "\"lifecycleSteps\":\{self.lifecycle_steps},",
+    "\"executableOperations\":\{self.executable_operations},",
+    "\"executedOperations\":\{self.executed_operations},",
+    "\"skippedOperations\":\{self.skipped_operations},",
+    "\"failedOperations\":\{self.failed_operations},",
+    "\"firstExecutionFailure\":\{self.first_execution_failure.json_string()},",
     "\"bridgeSyncRoutes\":\{self.bridge_sync_routes},",
     "\"bridgeAsyncRoutes\":\{self.bridge_async_routes},",
     "\"targetCanLaunch\":\{self.target_can_launch.json_bool()},",

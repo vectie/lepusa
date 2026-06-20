@@ -118,9 +118,10 @@
   drain/evaluate support, and open-window runners pass the queue-backed handoff
   callback into native message handlers only after that gate passes;
   `NativeOperationExecutor` now gives platform loops one typed execution report
-  boundary for startup, lifecycle, and bridge-drain operations; native async
-  bridge drain/evaluate scheduling in the C/WebView loops and the Windows
-  WebView creation loop remain.
+  boundary for startup, lifecycle, and bridge-drain operations, and canonical
+  `RunReport` values expose those execution counts for source and packaged
+  native plans; native async bridge drain/evaluate scheduling in the C/WebView
+  loops and the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

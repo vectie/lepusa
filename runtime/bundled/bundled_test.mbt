@@ -458,6 +458,12 @@ test "bundled native run plans expose executable operation views" {
             }
             Err(problem) => abort(problem)
           }
+          let report = plan.report(status=RunPrepared)
+          assert_eq(report.executable_operations(), 3)
+          assert_eq(report.executed_operations(), 0)
+          assert_eq(report.skipped_operations(), 3)
+          assert_eq(report.failed_operations(), 0)
+          assert_true(report.to_json().contains("\"executableOperations\":3"))
           match plan.launch_session() {
             Ok(session) => {
               assert_eq(session.webviews().length(), 1)

@@ -649,6 +649,10 @@ packaged runtime adapters, so CLI output and future native loops use one status
 vocabulary for prepared, launched, failed, and unsupported runs. It also carries
 target launch readiness separately from run status, so tooling can distinguish a
 valid prepared plan from a target whose WebView loop is not implemented yet.
+The same report now carries executable, executed, skipped, and failed operation
+counts plus the first execution failure, giving CI and native-loop smoke tests a
+single place to compare planned startup work with what the platform executor
+can actually handle.
 Native runner plans also report bridge sync and async route sets, giving
 platform loops an explicit scheduling contract before they open a WebView.
 They also expose executable operation views for frontend event scripts and

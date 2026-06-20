@@ -172,10 +172,7 @@ pub fn WindowsBundledRunResult::report(
     Some(message) => message
     None => ""
   }
-  self.plan
-  .bootstrap()
-  .run_plan()
-  .report(
+  self.plan.report(
     status=self.status,
     load_url=self.plan.first_webview_load_url(),
     target_can_launch=blocker == "",

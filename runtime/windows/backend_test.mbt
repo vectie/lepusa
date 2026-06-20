@@ -291,6 +291,9 @@ test "windows backend prepares bundled runtime contract" {
           assert_eq(result.report().backend(), "windows")
           assert_eq(result.report().engine(), "WebView2")
           assert_eq(result.report().startup_operations(), 2)
+          assert_eq(result.report().executable_operations(), 2)
+          assert_eq(result.report().skipped_operations(), 2)
+          assert_eq(result.report().failed_operations(), 0)
           assert_eq(
             result.report().load_url(),
             "lepusa://rabbita/main/index.html",

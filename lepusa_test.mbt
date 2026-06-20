@@ -1457,6 +1457,10 @@ test "run report summarizes desktop launch state" {
     service_start_order=["api"],
     startup_operations=2,
     lifecycle_steps=1,
+    executable_operations=2,
+    executed_operations=1,
+    skipped_operations=1,
+    failed_operations=0,
     bridge_sync_routes=1,
     bridge_async_routes=0,
   )
@@ -1474,10 +1478,17 @@ test "run report summarizes desktop launch state" {
   assert_eq(report.service_start_order().length(), 1)
   assert_eq(report.startup_operations(), 2)
   assert_eq(report.lifecycle_steps(), 1)
+  assert_eq(report.executable_operations(), 2)
+  assert_eq(report.executed_operations(), 1)
+  assert_eq(report.skipped_operations(), 1)
+  assert_eq(report.failed_operations(), 0)
+  assert_eq(report.first_execution_failure(), "")
   assert_eq(report.bridge_sync_routes(), 1)
   let json = report.to_json()
   assert_true(json.contains("\"target\":\"linux\""))
   assert_true(json.contains("\"firstWindowTitle\":\"Main\""))
   assert_true(json.contains("\"bridgeUrl\":\"lepusa://runtime/bridge.js\""))
+  assert_true(json.contains("\"executableOperations\":2"))
+  assert_true(json.contains("\"executedOperations\":1"))
   assert_true(json.contains("\"serviceStartOrder\":[\"api\"]"))
 }
