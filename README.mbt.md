@@ -576,11 +576,13 @@ plan for the target window.
 captured by the message-handler handoff callback, which is the native loop path
 for post-callback WebView evaluation. The callback bundles also expose
 `drain_window_scripts`, a compact UTF-8 JavaScript payload for native loops that
-only need to evaluate the completed callback scripts.
+only need to evaluate the completed callback scripts, plus
+`drain_window_operation`, a `drain-bridge-window` executable operation naming
+the window and drain callback a platform loop must schedule.
 `NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
-platform packages provide handlers for `evaluate-script`, `navigate-window`,
-`run-effect`, and service operations, then receive a typed execution report
-instead of parsing operation JSON.
+platform packages provide handlers for `drain-bridge-window`,
+`evaluate-script`, `navigate-window`, `run-effect`, and service operations, then
+receive a typed execution report instead of parsing operation JSON.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

@@ -133,6 +133,15 @@ pub fn NativeBridgeDispatchTask::route(Self) -> String
 pub fn NativeBridgeDispatchTask::to_json(Self) -> String
 pub fn NativeBridgeDispatchTask::window_label(Self) -> String
 
+pub struct NativeBridgeDrain {
+  window_label : String
+  callback : String
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeDrain::callback(Self) -> String
+pub fn NativeBridgeDrain::new(window_label~ : String, callback~ : String) -> Self
+pub fn NativeBridgeDrain::to_json(Self) -> String
+pub fn NativeBridgeDrain::window_label(Self) -> String
+
 pub struct NativeBridgeHandoff {
   task : NativeBridgeDispatchTask
   immediate_dispatch : NativeBridgeDispatch?
@@ -174,6 +183,7 @@ pub struct NativeBridgeLoopCallbacks {
 }
 pub async fn NativeBridgeLoopCallbacks::drain_window(Self) -> NativeBridgeLoopDelivery
 pub async fn NativeBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
+pub fn NativeBridgeLoopCallbacks::drain_window_operation(Self) -> NativeExecutableOperation
 pub async fn NativeBridgeLoopCallbacks::drain_window_scripts(Self) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> Bytes
@@ -309,9 +319,12 @@ pub fn NativeEvaluationScript::window_label(Self) -> String
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
   NativeExecutableEvaluateScript(NativeEvaluationScript)
+  NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
   NativeExecutableNavigate(NativeNavigation)
 } derive(Eq, @debug.Debug)
+pub fn NativeExecutableOperation::bridge_drain(Self) -> NativeBridgeDrain?
+pub fn NativeExecutableOperation::drain_bridge(NativeBridgeDrain) -> Self
 pub fn NativeExecutableOperation::effect_name(Self) -> String?
 pub fn NativeExecutableOperation::evaluate_script(NativeEvaluationScript) -> Self
 pub fn NativeExecutableOperation::evaluation_script(Self) -> NativeEvaluationScript?
@@ -477,6 +490,7 @@ pub fn NativeOperationExecutionStatus::to_json(Self) -> String
 pub struct NativeOperationExecutor {
   start_service : (@lepusa.LocalService) -> NativeOperationExecutionStatus
   evaluate_script : (NativeEvaluationScript) -> NativeOperationExecutionStatus
+  drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
   navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
 }
@@ -485,7 +499,7 @@ pub fn NativeOperationExecutor::execute_all(Self, Array[NativeExecutableOperatio
 pub fn NativeOperationExecutor::execute_delivery(Self, NativeBridgeLoopDelivery) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
-pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus) -> Self
+pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus) -> Self
 
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan

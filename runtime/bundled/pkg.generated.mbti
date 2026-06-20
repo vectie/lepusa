@@ -107,6 +107,7 @@ pub struct BundledBridgeLoopCallbacks {
 }
 pub async fn BundledBridgeLoopCallbacks::drain_window(Self) -> BundledBridgeLoopDelivery
 pub async fn BundledBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
+pub fn BundledBridgeLoopCallbacks::drain_window_operation(Self) -> @runtime.NativeExecutableOperation
 pub async fn BundledBridgeLoopCallbacks::drain_window_scripts(Self) -> Bytes
 pub fn BundledBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> Bytes

@@ -233,9 +233,12 @@ evaluate in the WebView.
 runtime loops share one executable drain/evaluate model before platform code
 crosses into C, WebKit, or WebView2 APIs.
 `NativeOperationExecutor` is the shared MoonBit-side executor for those
-operation arrays. Platform packages supply handlers for WebView script
-evaluation, navigation, effects, and service work, then get back a typed report
-of executed, skipped, and failed operations.
+operation arrays. It also understands `drain-bridge-window`, the explicit
+operation a platform loop schedules when a queued bridge window should be
+drained through its callback before evaluating the returned scripts. Platform
+packages supply handlers for bridge drains, WebView script evaluation,
+navigation, effects, and service work, then get back a typed report of executed,
+skipped, and failed operations.
 `receive_window_message` is the per-WebView adapter entry point: it returns a
 `NativeBridgeLoopDelivery` or `BundledBridgeLoopDelivery` containing the raw
 loop result and executable evaluation plan for the target window.
@@ -245,10 +248,11 @@ into the same delivery envelope after leaving the synchronous WebView callback.
 For platform runners, `NativeBridgeLoopCallbacks` and
 `BundledBridgeLoopCallbacks` bind those operations to one window label so the
 native backend can keep one queue-backed handoff callback, one async drain
-delivery callback, and one executable drain-script payload callback for the
-WebView it launched. `NativeWebViewLaunchPacket` carries that window label with
-the rest of the C/WebView launch ABI; platform C loops still need an async pump
-before they can consume the async drain-script callback directly.
+delivery callback, one executable drain-script payload callback, and one
+`drain-bridge-window` operation descriptor for the WebView it launched.
+`NativeWebViewLaunchPacket` carries that window label with the rest of the
+C/WebView launch ABI; platform C loops still need an async pump before they can
+consume the async drain-script callback directly.
 
 Command rules:
 

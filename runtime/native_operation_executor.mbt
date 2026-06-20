@@ -20,6 +20,7 @@ pub struct NativeOperationExecutionReport {
 pub struct NativeOperationExecutor {
   start_service : (@lepusa.LocalService) -> NativeOperationExecutionStatus
   evaluate_script : (NativeEvaluationScript) -> NativeOperationExecutionStatus
+  drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
   navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
 }
@@ -38,6 +39,11 @@ pub fn NativeOperationExecutor::new(
   ) {
     NativeOperationSkipped("native script evaluation handler is unavailable")
   },
+  drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus = fn(
+    _,
+  ) {
+    NativeOperationSkipped("native bridge drain handler is unavailable")
+  },
   run_effect? : (String) -> NativeOperationExecutionStatus = fn(_) {
     NativeOperationSkipped("native effect handler is unavailable")
   },
@@ -47,7 +53,7 @@ pub fn NativeOperationExecutor::new(
     NativeOperationSkipped("native window navigation handler is unavailable")
   },
 ) -> NativeOperationExecutor {
-  { start_service, evaluate_script, run_effect, navigate_window }
+  { start_service, evaluate_script, drain_bridge, run_effect, navigate_window }
 }
 
 ///|
@@ -58,6 +64,7 @@ pub fn NativeOperationExecutor::execute(
   let status = match operation {
     NativeExecutableStartService(service) => (self.start_service)(service)
     NativeExecutableEvaluateScript(script) => (self.evaluate_script)(script)
+    NativeExecutableDrainBridge(drain) => (self.drain_bridge)(drain)
     NativeExecutableRunEffect(name) => (self.run_effect)(name)
     NativeExecutableNavigate(navigation) => (self.navigate_window)(navigation)
   }

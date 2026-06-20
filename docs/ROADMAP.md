@@ -121,6 +121,9 @@
   handlers; source and bundled bridge adapters now expose a structured
   handoff-packet callback, and macOS/Linux C handlers parse that packet so
   immediate scripts are evaluated while deferred async work remains explicit;
+  source and bundled bridge callback bundles now expose a first-class
+  `drain-bridge-window` executable operation, giving platform loops a typed
+  scheduler hook for queued async bridge windows;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, and bridge-drain operations, and canonical
   `RunReport` values expose those execution counts for source and packaged

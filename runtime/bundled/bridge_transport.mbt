@@ -842,6 +842,18 @@ pub async fn BundledBridgeLoopCallbacks::drain_window_scripts(
 }
 
 ///|
+pub fn BundledBridgeLoopCallbacks::drain_window_operation(
+  self : BundledBridgeLoopCallbacks,
+) -> @runtime.NativeExecutableOperation {
+  @runtime.NativeExecutableOperation::drain_bridge(
+    @runtime.NativeBridgeDrain::new(
+      window_label=self.window_label,
+      callback="bridge_loop_adapter().callbacks(\{self.window_label}).drain_window_scripts",
+    ),
+  )
+}
+
+///|
 pub fn BundledBridgeLoopCallbacks::to_json(
   self : BundledBridgeLoopCallbacks,
 ) -> String {
@@ -852,6 +864,7 @@ pub fn BundledBridgeLoopCallbacks::to_json(
     "\"handoffPacketCallback\":\"(Bytes)->utf8-handoff-packet\",",
     "\"drainWindow\":\"async()->BundledBridgeLoopDelivery\",",
     "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
+    "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
   ].join("")

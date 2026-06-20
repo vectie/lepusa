@@ -11,6 +11,12 @@ pub struct NativeNavigation {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeDrain {
+  window_label : String
+  callback : String
+} derive(Debug, Eq)
+
+///|
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String
   operations : Array[NativeExecutableOperation]
@@ -20,6 +26,7 @@ pub struct NativeBridgeLoopEvaluationPlan {
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
   NativeExecutableEvaluateScript(NativeEvaluationScript)
+  NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
   NativeExecutableNavigate(NativeNavigation)
 } derive(Debug, Eq)
@@ -38,6 +45,14 @@ pub fn NativeNavigation::new(
   url~ : String,
 ) -> NativeNavigation {
   { window_label, url }
+}
+
+///|
+pub fn NativeBridgeDrain::new(
+  window_label~ : String,
+  callback~ : String,
+) -> NativeBridgeDrain {
+  { window_label, callback }
 }
 
 ///|
@@ -106,6 +121,26 @@ pub fn NativeNavigation::to_json(self : NativeNavigation) -> String {
 }
 
 ///|
+pub fn NativeBridgeDrain::window_label(self : NativeBridgeDrain) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeBridgeDrain::callback(self : NativeBridgeDrain) -> String {
+  self.callback
+}
+
+///|
+pub fn NativeBridgeDrain::to_json(self : NativeBridgeDrain) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"callback\":\{self.callback.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn NativeBridgeLoopEvaluationPlan::window_label(
   self : NativeBridgeLoopEvaluationPlan,
 ) -> String {
@@ -167,6 +202,13 @@ pub fn NativeExecutableOperation::evaluate_script(
 }
 
 ///|
+pub fn NativeExecutableOperation::drain_bridge(
+  drain : NativeBridgeDrain,
+) -> NativeExecutableOperation {
+  NativeExecutableDrainBridge(drain)
+}
+
+///|
 pub fn NativeExecutableOperation::run_effect(
   name : String,
 ) -> NativeExecutableOperation {
@@ -187,6 +229,7 @@ pub fn NativeExecutableOperation::kind(
   match self {
     NativeExecutableStartService(_) => "start-service"
     NativeExecutableEvaluateScript(_) => "evaluate-script"
+    NativeExecutableDrainBridge(_) => "drain-bridge-window"
     NativeExecutableRunEffect(_) => "run-effect"
     NativeExecutableNavigate(_) => "navigate-window"
   }
@@ -208,6 +251,16 @@ pub fn NativeExecutableOperation::evaluation_script(
 ) -> NativeEvaluationScript? {
   match self {
     NativeExecutableEvaluateScript(script) => Some(script)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::bridge_drain(
+  self : NativeExecutableOperation,
+) -> NativeBridgeDrain? {
+  match self {
+    NativeExecutableDrainBridge(drain) => Some(drain)
     _ => None
   }
 }
@@ -239,9 +292,13 @@ pub fn NativeExecutableOperation::window_label(
   match self.evaluation_script() {
     Some(script) => Some(script.window_label())
     None =>
-      match self.navigation() {
-        Some(navigation) => Some(navigation.window_label())
-        None => None
+      match self.bridge_drain() {
+        Some(drain) => Some(drain.window_label())
+        None =>
+          match self.navigation() {
+            Some(navigation) => Some(navigation.window_label())
+            None => None
+          }
       }
   }
 }
@@ -264,6 +321,14 @@ pub fn NativeExecutableOperation::to_json(
         "\"kind\":\"evaluate-script\",",
         "\"windowLabel\":\{script.window_label().json_string()},",
         "\"script\":\{script.script().json_string()}",
+        "}",
+      ].join("")
+    NativeExecutableDrainBridge(drain) =>
+      [
+        "{",
+        "\"kind\":\"drain-bridge-window\",",
+        "\"windowLabel\":\{drain.window_label().json_string()},",
+        "\"callback\":\{drain.callback().json_string()}",
         "}",
       ].join("")
     NativeExecutableRunEffect(name) =>

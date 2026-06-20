@@ -2098,6 +2098,20 @@ async test "native runtime owns bridge message transport" {
               "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\"",
             ),
           )
+          assert_true(
+            callbacks
+            .to_json()
+            .contains(
+              "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge\"",
+            ),
+          )
+          let drain_operation = callbacks.drain_window_operation()
+          assert_eq(drain_operation.kind(), "drain-bridge-window")
+          assert_eq(drain_operation.window_label().unwrap(), "main")
+          assert_eq(
+            drain_operation.bridge_drain().unwrap().callback(),
+            "bridge_loop_adapter().callbacks(main).drain_window_scripts",
+          )
           let callback_script = @utf8.decode(
             callbacks.handoff_callback()(@utf8.encode(message)),
           ) catch {

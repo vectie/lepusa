@@ -2,6 +2,7 @@
 test "native operation executor runs executable operation batches" {
   let started : Array[String] = []
   let scripts : Array[String] = []
+  let drains : Array[String] = []
   let navigations : Array[String] = []
   let executor = NativeOperationExecutor::new(
     start_service=fn(service) {
@@ -10,6 +11,10 @@ test "native operation executor runs executable operation batches" {
     },
     evaluate_script=fn(script) {
       scripts.push(script.script())
+      NativeOperationExecuted
+    },
+    drain_bridge=fn(drain) {
+      drains.push(drain.callback())
       NativeOperationExecuted
     },
     run_effect=fn(name) { NativeOperationSkipped("effect delegated: \{name}") },
@@ -28,6 +33,12 @@ test "native operation executor runs executable operation batches" {
     NativeExecutableOperation::evaluate_script(
       NativeEvaluationScript::new(window_label="main", script="render()"),
     ),
+    NativeExecutableOperation::drain_bridge(
+      NativeBridgeDrain::new(
+        window_label="main",
+        callback="bridge_loop_adapter().callbacks(main).drain_window_scripts",
+      ),
+    ),
     NativeExecutableOperation::run_effect("boot"),
     NativeExecutableOperation::navigate(
       NativeNavigation::new(window_label="main", url="lepusa://inline/main"),
@@ -35,20 +46,25 @@ test "native operation executor runs executable operation batches" {
   ]
   let report = executor.execute_all(operations)
   assert_true(report.ok())
-  assert_eq(report.operation_count(), 4)
-  assert_eq(report.executed_count(), 3)
+  assert_eq(report.operation_count(), 5)
+  assert_eq(report.executed_count(), 4)
   assert_eq(report.skipped_count(), 1)
   assert_eq(report.failed_count(), 0)
   assert_true(report.first_failure_message() is None)
   assert_eq(started[0], "api")
   assert_eq(scripts[0], "render()")
+  assert_eq(
+    drains[0],
+    "bridge_loop_adapter().callbacks(main).drain_window_scripts",
+  )
   assert_eq(navigations[0], "lepusa://inline/main")
-  assert_eq(report.outcomes()[2].status().name(), "skipped")
-  assert_eq(report.outcomes()[2].status().message(), "effect delegated: boot")
+  assert_eq(report.outcomes()[3].status().name(), "skipped")
+  assert_eq(report.outcomes()[3].status().message(), "effect delegated: boot")
   let json = report.to_json()
-  assert_true(json.contains("\"operationCount\":4"))
-  assert_true(json.contains("\"executedCount\":3"))
+  assert_true(json.contains("\"operationCount\":5"))
+  assert_true(json.contains("\"executedCount\":4"))
   assert_true(json.contains("\"skippedCount\":1"))
+  assert_true(json.contains("\"kind\":\"drain-bridge-window\""))
   assert_true(json.contains("\"kind\":\"navigate-window\""))
 }
 
