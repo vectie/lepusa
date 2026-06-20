@@ -163,7 +163,7 @@ async fn project_runtime_plan(
   }
   match project_config_path(args) {
     Some(path) =>
-      match load_project_config(path) {
+      match @project.ProjectConfig::load(path) {
         Ok(project) => project.manifest().runtime_plan(project.root())
         Err(problems) => Err(problems)
       }
@@ -180,7 +180,7 @@ async fn project_runtime_host(
   }
   match project_config_path(args) {
     Some(path) =>
-      match load_project_config(path) {
+      match @project.ProjectConfig::load(path) {
         Ok(project) =>
           match project.manifest().runtime_plan(project.root()) {
             Ok(plan) =>
@@ -207,7 +207,7 @@ async fn project_bundle_plan(
   }
   match project_config_path(args) {
     Some(path) =>
-      match load_project_config(path) {
+      match @project.ProjectConfig::load(path) {
         Ok(project) =>
           project
           .manifest()

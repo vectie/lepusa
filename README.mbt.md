@@ -100,11 +100,12 @@ let runtime = manifest.runtime_plan(root)
 let bundle = manifest.bundle_plan(root, target=@lepusa.MacOS)
 ```
 
-For file-backed apps, `@lepusa/project` owns the reusable `lepusa.json` parser:
+For file-backed apps, `@lepusa/project` owns reusable `lepusa.json` loading and
+parsing:
 
 ```moonbit nocheck
 ///|
-match @project.ProjectConfig::parse(config_text, base_dir=project_dir) {
+match @project.ProjectConfig::load("lepusa.json") {
   Ok(project) =>
     project.manifest().runtime_plan(project.root())
   Err(problems) =>

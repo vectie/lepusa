@@ -390,8 +390,10 @@ resolver for native runners that consume only the launch manifest.
 `@lepusa/project` owns the standalone `lepusa.json` boundary: it parses app
 metadata, windows, sources, official plugins, capabilities, filesystem scopes,
 startup commands, and lifecycle hooks into a `ProjectConfig` carrying a
-`ProjectManifest`, root `Cell`, and `CommandRegistry`. The CLI only reads a
-file and passes its directory as `base_dir`.
+`ProjectManifest`, root `Cell`, and `CommandRegistry`. `ProjectConfig::load`
+is the file-backed entry point; it reads the manifest and resolves relative
+paths from the config file directory. The CLI delegates to that package API
+instead of carrying its own project loader.
 `@lepusa/runtime/bundled` is the runtime-executable companion for packaged
 apps: it parses `lepusa/runtime.json`, drives generated launcher stubs through
 target-aware bundled launch plans, emits bundled bootstrap JSON for native

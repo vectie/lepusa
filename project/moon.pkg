@@ -1,5 +1,12 @@
 import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
+  "moonbitlang/x/fs" @xfs,
   "vectie/lepusa",
   "vectie/lepusa/plugins/catalog",
 }
+
+options(
+  test_import: [ "moonbitlang/async", "moonbitlang/async/fs" ],
+)
