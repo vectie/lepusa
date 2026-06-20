@@ -33,6 +33,26 @@ pub fn BundledRuntimeManifest::bridge_dispatch_callback(
 }
 
 ///|
+pub fn BundledRuntimeManifest::bridge_async_dispatch_callback(
+  self : BundledRuntimeManifest,
+) -> async (Bytes) -> Bytes {
+  let runtime = BundledRuntime::new(self)
+  message => runtime.dispatch_bridge_script_bytes_async(message)
+}
+
+///|
+pub fn BundledRuntimeManifest::bridge_scheduler(
+  self : BundledRuntimeManifest,
+  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+) -> @runtime.NativeBridgeScheduler {
+  @runtime.NativeBridgeScheduler::new(
+    sync_routes=self.registered_sync_routes(),
+    async_routes=self.registered_async_routes(),
+    mode~,
+  )
+}
+
+///|
 pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(
   self : BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {

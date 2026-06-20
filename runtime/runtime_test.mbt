@@ -539,6 +539,22 @@ test "native runner plans expose async bridge blockers" {
       assert_eq(runner.bridge_async_routes().length(), 1)
       assert_eq(runner.bridge_async_routes()[0], "core.invoke")
       assert_true(runner.bootstrap_json().contains("\"bridgeRoutes\""))
+      let scheduler = runner.bridge_scheduler()
+      assert_true(scheduler.requires_async_dispatch())
+      assert_false(scheduler.supports_async_dispatch())
+      assert_false(scheduler.can_launch())
+      assert_true(
+        scheduler
+        .launch_blocker("Test")
+        .unwrap()
+        .contains("1 async command route"),
+      )
+      let async_capable = runner.bridge_scheduler(mode=NativeBridgeAsyncCapable)
+      assert_true(async_capable.supports_async_dispatch())
+      assert_true(async_capable.can_launch())
+      assert_true(
+        async_capable.to_json().contains("\"mode\":\"async-capable\""),
+      )
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
           runtime.webview_plan(spec, initialization_script="")
@@ -546,6 +562,7 @@ test "native runner plans expose async bridge blockers" {
         Ok(plan) => {
           assert_true(plan.requires_async_bridge_dispatch())
           assert_eq(plan.bridge_async_routes()[0], "core.invoke")
+          assert_false(plan.bridge_scheduler().can_launch())
           assert_true(
             plan
             .async_bridge_launch_message("Test")
@@ -1593,6 +1610,15 @@ async test "native runtime owns bridge message transport" {
         sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_script.contains("command requires async dispatch"))
+      let async_script = @utf8.decode(
+        runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid async bridge script bytes")
+      }
+      assert_true(
+        async_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(async_script.contains("\"payload\":\"{\\\"async\\\":true}\""))
       let asset_packet = @utf8.decode(
         runtime.resolve_asset_protocol_packet_bytes(
           @utf8.encode("lepusa://inline/main/index.html"),

@@ -261,7 +261,19 @@ pub fn MacOSBridgePlan::async_command_routes(
 
 ///|
 pub fn MacOSBridgePlan::requires_async_dispatch(self : MacOSBridgePlan) -> Bool {
-  !self.async_command_routes.is_empty()
+  self.scheduler().requires_async_dispatch()
+}
+
+///|
+pub fn MacOSBridgePlan::scheduler(
+  self : MacOSBridgePlan,
+  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+) -> @runtime.NativeBridgeScheduler {
+  @runtime.NativeBridgeScheduler::new(
+    sync_routes=self.sync_command_routes(),
+    async_routes=self.async_command_routes(),
+    mode~,
+  )
 }
 
 ///|
@@ -284,11 +296,9 @@ fn run_plan(
   match mode {
     MacOSDryRun => Ok({ plan, status: RunPrepared })
     MacOSOpenWindow => {
-      if plan.bridge().requires_async_dispatch() {
-        return Ok({
-          plan,
-          status: RunUnsupported(async_bridge_launch_message(plan)),
-        })
+      match plan.bridge().scheduler().launch_blocker("macOS") {
+        Some(message) => return Ok({ plan, status: RunUnsupported(message) })
+        None => ()
       }
       let webview = match plan.first_webview() {
         Ok(webview) => webview
@@ -316,12 +326,6 @@ fn run_plan(
       }
     }
   }
-}
-
-///|
-fn async_bridge_launch_message(plan : MacOSRunPlan) -> String {
-  let routes = plan.bridge().async_command_routes()
-  "macOS launch requires native async bridge scheduling for \{routes.length()} async command route(s)"
 }
 
 ///|

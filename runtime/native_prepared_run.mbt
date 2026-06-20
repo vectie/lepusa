@@ -134,6 +134,5 @@ pub fn NativePreparedRunPlan::async_bridge_launch_message(
   self : NativePreparedRunPlan,
   platform_name : String,
 ) -> String {
-  let count = self.bridge_async_routes().length()
-  "\{platform_name} launch requires native async bridge scheduling for \{count} async command route(s)"
+  self.bridge_scheduler().async_bridge_launch_message(platform_name)
 }

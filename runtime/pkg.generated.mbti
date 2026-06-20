@@ -65,6 +65,27 @@ pub fn NativeBridgeMessage::message(Self) -> String
 pub fn NativeBridgeMessage::response_hook(Self) -> String
 pub fn NativeBridgeMessage::window_label(Self) -> String
 
+pub struct NativeBridgeScheduler {
+  sync_routes : Array[String]
+  async_routes : Array[String]
+  mode : NativeBridgeSchedulerMode
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeScheduler::async_bridge_launch_message(Self, String) -> String
+pub fn NativeBridgeScheduler::async_routes(Self) -> Array[String]
+pub fn NativeBridgeScheduler::can_launch(Self) -> Bool
+pub fn NativeBridgeScheduler::launch_blocker(Self, String) -> String?
+pub fn NativeBridgeScheduler::mode(Self) -> NativeBridgeSchedulerMode
+pub fn NativeBridgeScheduler::new(sync_routes~ : Array[String], async_routes~ : Array[String], mode? : NativeBridgeSchedulerMode) -> Self
+pub fn NativeBridgeScheduler::requires_async_dispatch(Self) -> Bool
+pub fn NativeBridgeScheduler::supports_async_dispatch(Self) -> Bool
+pub fn NativeBridgeScheduler::sync_routes(Self) -> Array[String]
+pub fn NativeBridgeScheduler::to_json(Self) -> String
+
+pub(all) enum NativeBridgeSchedulerMode {
+  NativeBridgeSyncOnly
+  NativeBridgeAsyncCapable
+} derive(Eq, @debug.Debug)
+
 pub struct NativeEvaluationScript {
   window_label : String
   script : String
@@ -154,6 +175,7 @@ pub struct NativePreparedRunPlan {
 } derive(Eq, @debug.Debug)
 pub fn NativePreparedRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn NativePreparedRunPlan::bridge_async_routes(Self) -> Array[String]
+pub fn NativePreparedRunPlan::bridge_scheduler(Self, mode? : NativeBridgeSchedulerMode) -> NativeBridgeScheduler
 pub fn NativePreparedRunPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn NativePreparedRunPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
@@ -182,6 +204,7 @@ pub struct NativeRunnerPlan {
 pub fn NativeRunnerPlan::backend_name(Self) -> String
 pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
 pub fn NativeRunnerPlan::bridge_async_routes(Self) -> Array[String]
+pub fn NativeRunnerPlan::bridge_scheduler(Self, mode? : NativeBridgeSchedulerMode) -> NativeBridgeScheduler
 pub fn NativeRunnerPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn NativeRunnerPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
@@ -221,11 +244,13 @@ pub struct NativeRuntime {
 pub fn NativeRuntime::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
+pub fn NativeRuntime::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
+pub async fn NativeRuntime::dispatch_bridge_script_bytes_async(Self, Bytes) -> Bytes
 pub fn NativeRuntime::dispatch_json(Self, String) -> String
 pub async fn NativeRuntime::dispatch_json_async(Self, String) -> String
 pub fn NativeRuntime::host(Self) -> RuntimeHost

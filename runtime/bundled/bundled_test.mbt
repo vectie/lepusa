@@ -612,15 +612,25 @@ async test "bundled runtime owns bridge message transport" {
     #|        "label": "main",
     #|        "url": "lepusa://rabbita/main/index.html",
     #|        "nativeHook": "__lepusaInvoke",
-    #|        "allowedRoutes": ["store.set", "store.get", "log.write"]
+    #|        "allowedRoutes": ["store.set", "store.get", "log.write", "fs.writeText"]
     #|      }
     #|    ],
     #|    "filesystemScopes": [],
-    #|    "registeredRoutes": ["store.set", "store.get", "log.write"]
+    #|    "registeredRoutes": ["store.set", "store.get", "log.write", "fs.writeText"]
     #|  }
     #|}
   match BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
+      let scheduler = manifest.bridge_scheduler()
+      assert_true(scheduler.requires_async_dispatch())
+      assert_false(scheduler.can_launch())
+      assert_eq(scheduler.sync_routes().length(), 3)
+      assert_eq(scheduler.async_routes().length(), 1)
+      assert_eq(scheduler.async_routes()[0], "fs.writeText")
+      let async_capable = manifest.bridge_scheduler(
+        mode=NativeBridgeAsyncCapable,
+      )
+      assert_true(async_capable.can_launch())
       match manifest.bridge_response_hook(window_label="main") {
         Ok((window_label, hook)) => {
           assert_eq(window_label, "main")
@@ -654,6 +664,13 @@ async test "bundled runtime owns bridge message transport" {
       assert_true(sync_script.contains("\"id\":\"log\""))
       let set_message = "{\"id\":\"set\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"set\",\"payload\":\"{\\\"key\\\":\\\"theme\\\",\\\"value\\\":\\\"dark\\\"}\"}"
       let get_message = "{\"id\":\"get\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"get\",\"payload\":\"{\\\"key\\\":\\\"theme\\\"}\"}"
+      let set_script = @utf8.decode(
+        manifest.bridge_async_dispatch_callback()(@utf8.encode(set_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled async bridge script")
+      }
+      assert_true(set_script.contains("globalThis[\"__lepusaInvokeResponse\"]"))
+      assert_true(set_script.contains("\"id\":\"set\""))
       match runtime.dispatch_bridge_message(set_message) {
         Ok(dispatch) =>
           assert_true(dispatch.response_json().contains("\"id\":\"set\""))

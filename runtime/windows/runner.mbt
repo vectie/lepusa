@@ -190,8 +190,9 @@ fn windows_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
-  if plan.requires_async_bridge_dispatch() {
-    return RunUnsupported(plan.async_bridge_launch_message("Windows"))
+  match plan.bridge_scheduler().launch_blocker("Windows") {
+    Some(message) => return RunUnsupported(message)
+    None => ()
   }
   let webview = match plan.first_webview() {
     Ok(webview) => webview
@@ -220,8 +221,9 @@ fn windows_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
-  if plan.requires_async_bridge_dispatch() {
-    return RunUnsupported(plan.async_bridge_launch_message("Windows"))
+  match plan.bridge_scheduler().launch_blocker("Windows") {
+    Some(message) => return RunUnsupported(message)
+    None => ()
   }
   let webview = match plan.first_webview() {
     Ok(webview) => webview

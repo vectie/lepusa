@@ -90,6 +90,7 @@ pub fn BundledNativeRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn BundledNativeRunPlan::bootstrap(Self) -> BundledBootstrapPlan
 pub fn BundledNativeRunPlan::bootstrap_json(Self) -> String
 pub fn BundledNativeRunPlan::bridge_async_route_count(Self) -> Int
+pub fn BundledNativeRunPlan::bridge_scheduler(Self, mode? : @runtime.NativeBridgeSchedulerMode) -> @runtime.NativeBridgeScheduler
 pub fn BundledNativeRunPlan::bridge_sync_route_count(Self) -> Int
 pub fn BundledNativeRunPlan::bundled_webviews(Self) -> Array[BundledWebView]
 pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
@@ -154,6 +155,7 @@ pub struct BundledRuntime {
 pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
+pub async fn BundledRuntime::dispatch_bridge_script_bytes_async(Self, Bytes) -> Bytes
 pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
@@ -170,8 +172,10 @@ pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
+pub fn BundledRuntimeManifest::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
+pub fn BundledRuntimeManifest::bridge_scheduler(Self, mode? : @runtime.NativeBridgeSchedulerMode) -> @runtime.NativeBridgeScheduler
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub async fn BundledRuntimeManifest::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]

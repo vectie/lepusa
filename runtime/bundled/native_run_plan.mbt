@@ -165,10 +165,17 @@ pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(
 }
 
 ///|
+pub fn BundledNativeRunPlan::bridge_scheduler(
+  self : BundledNativeRunPlan,
+  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+) -> @runtime.NativeBridgeScheduler {
+  self.bootstrap.manifest.bridge_scheduler(mode~)
+}
+
+///|
 pub fn BundledNativeRunPlan::async_bridge_launch_message(
   self : BundledNativeRunPlan,
   platform_name : String,
 ) -> String {
-  let count = self.bridge_async_route_count()
-  "\{platform_name} launch requires native async bridge scheduling for \{count} async command route(s)"
+  self.bridge_scheduler().async_bridge_launch_message(platform_name)
 }
