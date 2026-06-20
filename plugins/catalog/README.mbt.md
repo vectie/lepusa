@@ -34,7 +34,10 @@ test "lookup official plugins" {
   let window_state = @catalog.plugin("windowState").unwrap()
   assert_true(window_state.command_routes().contains("windowState.restore"))
 
-  let registry = @catalog.register(@lepusa.CommandRegistry::new(), "log")
+  let registry = @catalog.register(@lepusa.CommandRegistry::new(), "opener")
+  assert_true(registry.contains("opener.openUrl"))
+
+  let registry = @catalog.register(registry, "log")
   assert_true(registry.contains("log.write"))
 }
 ```

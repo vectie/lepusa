@@ -12,6 +12,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry) -> @lepusa.CommandRegistry
+
+pub fn registry() -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods

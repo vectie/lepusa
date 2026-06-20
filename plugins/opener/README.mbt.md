@@ -1,8 +1,9 @@
 # @lepusa/plugins/opener
 
 `@lepusa/plugins/opener` defines Lepusa's official external opener command
-contract. It declares platform-neutral routes for URLs and paths; native
-runtimes own the actual platform open/reveal implementation.
+contract. It declares platform-neutral routes for URLs and paths, validates
+payloads in MoonBit, and registers native handlers backed by `open`, `xdg-open`,
+or ShellExecute/explorer.
 
 ```moonbit nocheck
 ///|
@@ -13,5 +14,8 @@ test "declare opener access" {
 
   let grant = @opener.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=@lepusa.Opener))
+
+  let registry = @opener.registry()
+  assert_true(registry.contains("opener.openUrl"))
 }
 ```

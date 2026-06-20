@@ -259,7 +259,7 @@ runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
-When a project declares official `log`, `store`, `fs`, `process`, or
+When a project declares official `log`, `store`, `fs`, `opener`, `process`, or
 `windowState` plugins, the CLI binds their MoonBit-native handlers into the
 project `RuntimeHost` without adding moon-suite-specific behavior. `fs`
 handlers run through the async command registry and are constrained by named
@@ -377,8 +377,10 @@ platform-neutral clipboard and notification routes. Native backends own system
 clipboard and OS notification integration.
 
 `@lepusa/plugins/opener` declares platform-neutral URL and path opener routes:
-`opener.openUrl`, `opener.openPath`, and `opener.revealPath`. Native backends
-own the platform-specific open/reveal implementation.
+`opener.openUrl`, `opener.openPath`, and `opener.revealPath`. Its portable
+registry validates payloads and calls the platform opener through native stubs
+(`open`, `xdg-open`, or ShellExecute/explorer), returning launch status without
+holding product-specific state.
 
 `@lepusa/plugins/shell` declares explicit shell execution and process lifecycle
 routes. Native backends own execution, process tracking, and platform-specific

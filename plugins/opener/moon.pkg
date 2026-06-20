@@ -1,3 +1,9 @@
 import {
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
   "vectie/lepusa",
 }
+
+options(
+  "native-stub": [ "opener_backend.c" ],
+)

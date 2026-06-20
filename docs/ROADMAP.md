@@ -181,7 +181,8 @@
 Stabilize the cross-platform core set first:
 
 - dialog: initial platform-neutral command contract exists
-- opener: initial platform-neutral command contract exists
+- opener: platform-neutral command contract plus native open/reveal handlers
+  exist for macOS, Linux, and Windows
 - fs: scoped permission contract, runtime scope manifest, and async scoped
   text/bytes/list/metadata/delete/exists/create-directory handlers exist
 - fileDialog: initial scoped default-directory contract exists
