@@ -135,6 +135,7 @@ moon run cmd/main --target native -- launch-session linux --project _build/lepus
 moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- lifecycle app-will-exit --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bridge-task main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -387,12 +388,15 @@ runtime plan, checks capabilities through the command registry, and returns the
 JSON response shape expected by `window.lepusa`.
 `RuntimeHost::dispatch_json_async(input)` is the native loop path for async
 plugin handlers; sync handlers still run through the same permission checks.
-`NativeRuntime::bridge_dispatch_task(message)` wraps the same bridge request as
-a target-window response task with route metadata and a sync/async mode, so
-native loops can immediately answer sync commands or schedule async commands
-and later evaluate the generated response script. Bundled manifests expose the
-same contract through `BundledRuntime::bridge_dispatch_task(message)`.
+`RuntimeHost::bridge_dispatch_task(message)` and
+`NativeRuntime::bridge_dispatch_task(message)` wrap the same bridge request as a
+target-window response task with route metadata and a sync/async mode, so native
+loops can immediately answer sync commands or schedule async commands and later
+evaluate the generated response script. Bundled manifests expose the same
+contract through `BundledRuntime::bridge_dispatch_task(message)`.
 
+`lepusa bridge-task <window> <plugin.command> [payload] --project lepusa.json`
+prints that source-project scheduling task without starting a WebView.
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability

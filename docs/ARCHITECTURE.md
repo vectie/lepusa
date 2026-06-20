@@ -609,6 +609,9 @@ lepusa run <target>
 lepusa run macos --launch
   -> prepares and opens the first macOS WKWebView window
 
+lepusa bridge-task <window> <plugin.command> [payload]
+  -> emits source-project bridge task scheduling metadata for native handlers
+
 lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a summary
 

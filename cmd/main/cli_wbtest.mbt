@@ -5,6 +5,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
+  assert_true(result.output.contains("lepusa bridge-task"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa asset"))
   assert_true(result.output.contains("lepusa lifecycle"))
@@ -533,6 +534,62 @@ async test "generated project config invokes official plugin commands" {
   assert_eq(store.exit_code, 0)
   assert_true(store.output.contains("\\\"key\\\":\\\"theme\\\""))
   assert_true(store.output.contains("\\\"value\\\":\\\"dark\\\""))
+}
+
+///|
+async test "bridge task command reports source scheduling mode" {
+  let sync = render_cli_async(["bridge-task", "main", "core.invoke", "true"])
+  assert_eq(sync.exit_code, 0)
+  assert_true(sync.output.contains("\"windowLabel\":\"main\""))
+  assert_true(
+    sync.output.contains("\"responseHook\":\"__lepusaInvokeResponse\""),
+  )
+  assert_true(sync.output.contains("\"route\":\"core.invoke\""))
+  assert_true(sync.output.contains("\"mode\":\"sync\""))
+  let root = "/tmp/lepusa-project-bridge-task-\{@async.now().to_int()}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/lepusa.json",
+    (
+      #|{
+      #|  "identifier": "dev.local.bridgeTask",
+      #|  "productName": "Bridge Task",
+      #|  "version": "0.1.0",
+      #|  "window": { "label": "main", "title": "Bridge Task" },
+      #|  "plugins": [
+      #|    { "name": "fs" }
+      #|  ],
+      #|  "capabilities": [
+      #|    {
+      #|      "name": "main-files",
+      #|      "windows": ["main"],
+      #|      "permissions": ["filesystem.read", "filesystem.write"]
+      #|    }
+      #|  ],
+      #|  "filesystemScopes": [
+      #|    { "name": "data", "root": "data", "writable": true }
+      #|  ]
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let async_task = render_cli_async([
+    "bridge-task",
+    "main",
+    "fs.readText",
+    "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(async_task.exit_code, 0)
+  assert_true(async_task.output.contains("\"route\":\"fs.readText\""))
+  assert_true(async_task.output.contains("\"mode\":\"async\""))
+  let invalid = render_cli_async(["bridge-task", "main", "log"])
+  assert_eq(invalid.exit_code, 1)
+  assert_true(
+    invalid.output.contains("bridge-task route must be <plugin.command>"),
+  )
 }
 
 ///|

@@ -28,6 +28,47 @@ pub struct NativeBridgeDispatchTask {
 } derive(Debug, Eq)
 
 ///|
+pub fn RuntimeHost::prepare_bridge_message(
+  self : RuntimeHost,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeMessage, Array[String]] {
+  let resolved_window_label = bridge_window_label_from_message(
+    message,
+    window_label~,
+  )
+  match self.bridge_response_hook(window_label=resolved_window_label) {
+    Ok((window_label, response_hook)) =>
+      Ok({ window_label, response_hook, message })
+    Err(problem) => Err([problem])
+  }
+}
+
+///|
+pub fn RuntimeHost::bridge_dispatch_task(
+  self : RuntimeHost,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeDispatchTask, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) =>
+      match decode_invoke_request_json(message) {
+        Err(problem) => Err([problem])
+        Ok(request) => {
+          let route = request.route()
+          let mode = if self.async_command_routes().contains(route) {
+            NativeBridgeDispatchAsync
+          } else {
+            NativeBridgeDispatchSync
+          }
+          Ok({ message: prepared, route, mode })
+        }
+      }
+  }
+}
+
+///|
 pub fn NativeRuntime::prepare_bridge_message(
   self : NativeRuntime,
   message : String,
@@ -123,6 +164,31 @@ pub fn NativeRuntime::bridge_response_hook(
   }
   let spec = specs[0]
   Ok((spec.label(), "\{spec.native_hook()}Response"))
+}
+
+///|
+pub fn RuntimeHost::bridge_response_hook(
+  self : RuntimeHost,
+  window_label? : String = "",
+) -> Result[(String, String), String] {
+  match self.webviews() {
+    Err(problems) => Err(problems.join("; "))
+    Ok(specs) => {
+      if specs.is_empty() {
+        return Err("runtime bridge dispatch requires at least one webview")
+      }
+      if window_label != "" {
+        for spec in specs {
+          if spec.label() == window_label {
+            return Ok((spec.label(), "\{spec.native_hook()}Response"))
+          }
+        }
+        return Err("runtime bridge window not found: \{window_label}")
+      }
+      let spec = specs[0]
+      Ok((spec.label(), "\{spec.native_hook()}Response"))
+    }
+  }
 }
 
 ///|

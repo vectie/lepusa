@@ -462,6 +462,8 @@ pub struct RuntimeHost {
   registry : @lepusa.CommandRegistry
 }
 pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
+pub fn RuntimeHost::bridge_dispatch_task(Self, String, window_label? : String) -> Result[NativeBridgeDispatchTask, Array[String]]
+pub fn RuntimeHost::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub async fn RuntimeHost::dispatch_async(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
@@ -473,6 +475,7 @@ pub fn RuntimeHost::lifecycle_hooks(Self) -> Result[Array[@lepusa.RuntimeLifecyc
 pub fn RuntimeHost::lifecycle_step(Self, RuntimeSession, @lepusa.LifecycleEvent) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeHost::new(@lepusa.RuntimePlan, registry? : @lepusa.CommandRegistry) -> Self
 pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
+pub fn RuntimeHost::prepare_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeMessage, Array[String]]
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::resolve_asset_json(Self, String) -> String
 pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]]

@@ -102,6 +102,7 @@
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa asset`: prints the runtime asset protocol JSON envelope.
   - `lepusa lifecycle`: prints runtime lifecycle step JSON.
+  - `lepusa bridge-task`: reports source bridge task scheduling metadata.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton.

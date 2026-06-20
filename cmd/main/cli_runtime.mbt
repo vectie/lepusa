@@ -97,6 +97,39 @@ async fn render_asset_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bridge_task_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let window_label = values.get(0).unwrap_or("")
+  let route = values.get(1).unwrap_or("")
+  let payload = values.get(2).unwrap_or("")
+  if window_label == "" {
+    return fail("bridge-task window is required\n")
+  }
+  match parse_command_route(route, command_name="bridge-task") {
+    Ok((plugin, command)) =>
+      match project_runtime_host(args) {
+        Ok(host) => {
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          let message = @runtime.encode_invoke_request_json(request)
+          match host.bridge_dispatch_task(message) {
+            Ok(task) => ok(task.to_json() + "\n")
+            Err(problems) =>
+              fail(render_problems("Lepusa bridge task", problems))
+          }
+        }
+        Err(problems) => fail(render_problems("Lepusa bridge task", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 async fn render_invoke_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let window_label = values.get(0).unwrap_or("")
@@ -129,6 +162,14 @@ async fn render_invoke_async(args : Array[String]) -> CliResult {
 
 ///|
 fn parse_invoke_route(route : String) -> Result[(String, String), String] {
+  parse_command_route(route, command_name="invoke")
+}
+
+///|
+fn parse_command_route(
+  route : String,
+  command_name~ : String,
+) -> Result[(String, String), String] {
   let mut plugin = ""
   let mut command = ""
   let mut found_separator = false
@@ -142,7 +183,7 @@ fn parse_invoke_route(route : String) -> Result[(String, String), String] {
     }
   }
   if plugin == "" || command == "" {
-    return Err("invoke route must be <plugin.command>")
+    return Err("\{command_name} route must be <plugin.command>")
   }
   Ok((plugin, command))
 }
