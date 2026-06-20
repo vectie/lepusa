@@ -1,12 +1,13 @@
 ///|
 async fn render_doctor_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
+  let json = has_flag(args, "--json")
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
           match project_bundle_plan(args, target) {
-            Ok(bundle) => render_doctor_host(host, bundle)
+            Ok(bundle) => render_doctor_host(host, bundle, json~)
             Err(problems) => fail(render_problems("Lepusa doctor", problems))
           }
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
@@ -84,29 +85,58 @@ async fn render_launch_session_async(args : Array[String]) -> CliResult {
 fn render_doctor_host(
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
+  json~ : Bool,
 ) -> CliResult {
   let plan = host.plan()
   match host.launch_manifest() {
     Ok(manifest) =>
       match bundle.files() {
         Ok(files) =>
-          ok(
-            "Lepusa doctor\n" +
-            "[ok] public-api: root package can build launch/runtime plans\n" +
-            "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
-            "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
-            "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
-            render_handler_coverage(host) +
-            "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
-            render_doctor_native_launch_gate(bundle.target(), host) +
-            "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
-            render_signing_prerequisites(bundle) +
-            render_native_backend_diagnostics(),
-          )
+          if json {
+            ok(render_doctor_json(host, bundle, manifest, files) + "\n")
+          } else {
+            ok(
+              "Lepusa doctor\n" +
+              "[ok] public-api: root package can build launch/runtime plans\n" +
+              "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
+              "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
+              "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
+              render_handler_coverage(host) +
+              "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+              render_doctor_native_launch_gate(bundle.target(), host) +
+              "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
+              render_signing_prerequisites(bundle) +
+              render_native_backend_diagnostics(),
+            )
+          }
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
       }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
   }
+}
+
+///|
+fn render_doctor_json(
+  host : @runtime.RuntimeHost,
+  bundle : @lepusa.BundlePlan,
+  manifest : @lepusa.RuntimeLaunchManifest,
+  files : Array[@lepusa.BundleFile],
+) -> String {
+  let plan = host.plan()
+  [
+    "{",
+    "\"target\":\{cli_json_string(bundle.target().name())},",
+    "\"publicApi\":true,",
+    "\"runtime\":{\"backend\":\{cli_json_string(plan.backend().name())},\"protocol\":\{cli_json_string(plan.asset_protocol())}},",
+    "\"manifest\":{\"webviews\":\{manifest.webviews().length()},\"routes\":\{manifest.command_routes().length()}},",
+    "\"ipc\":{\"routes\":\{plan.command_routes().length()}},",
+    "\"handlers\":\{render_handler_coverage_json(host)},",
+    "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()}},",
+    "\"nativeLaunch\":\{render_doctor_native_launch_json(bundle.target(), host)},",
+    "\"signing\":{\"prerequisites\":[\{bundle.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}]},",
+    "\"platforms\":[\{render_native_backend_diagnostics_json()}]",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -131,6 +161,57 @@ fn render_doctor_native_launch_gate(
     Err(problems) =>
       "[warn] native-launch: target=\{target.name()} can-launch=false reason=\{problems.join("; ")}\n"
   }
+}
+
+///|
+fn render_doctor_native_launch_json(
+  target : @lepusa.BundleTarget,
+  host : @runtime.RuntimeHost,
+) -> String {
+  match native_runtime_for_target(target, host) {
+    Ok(runtime) =>
+      match verify_native_dry_run(target, runtime) {
+        Ok(session) => {
+          let blocker = doctor_native_launch_blocker(target, session)
+          let blocker_json = match blocker {
+            Some(problem) => cli_json_string(problem)
+            None => "null"
+          }
+          [
+            "{",
+            "\"ok\":true,",
+            "\"target\":\{cli_json_string(target.name())},",
+            "\"webviews\":\{session.webviews().length()},",
+            "\"startup\":\{session.execution().startup_operations().length()},",
+            "\"lifecycle\":\{session.execution().lifecycle_steps().length()},",
+            "\"canLaunch\":\{cli_json_bool(blocker is None)},",
+            "\"blocker\":\{blocker_json}",
+            "}",
+          ].join("")
+        }
+        Err(problems) =>
+          render_doctor_native_launch_error_json(target, problems)
+      }
+    Err(problems) => render_doctor_native_launch_error_json(target, problems)
+  }
+}
+
+///|
+fn render_doctor_native_launch_error_json(
+  target : @lepusa.BundleTarget,
+  problems : Array[String],
+) -> String {
+  [
+    "{",
+    "\"ok\":false,",
+    "\"target\":\{cli_json_string(target.name())},",
+    "\"webviews\":0,",
+    "\"startup\":0,",
+    "\"lifecycle\":0,",
+    "\"canLaunch\":false,",
+    "\"blocker\":\{cli_json_string(problems.join("; "))}",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -159,6 +240,21 @@ fn render_handler_coverage(host : @runtime.RuntimeHost) -> String {
   } else {
     "[warn] handlers: registered=\{registered.length()} missing=\{missing.length()} routes=\{missing.join(",")}\n"
   }
+}
+
+///|
+fn render_handler_coverage_json(host : @runtime.RuntimeHost) -> String {
+  let declared = handler_required_routes(host)
+  let registered = host.registry().routes()
+  let missing = missing_handler_routes(host)
+  [
+    "{",
+    "\"registered\":\{registered.length()},",
+    "\"required\":\{declared.length()},",
+    "\"missing\":\{missing.length()},",
+    "\"missingRoutes\":[\{missing.map(fn(route) { cli_json_string(route) }).join(",")}]",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -193,6 +289,48 @@ fn render_native_backend_diagnostics() -> String {
     render_native_preflight_line(@windows_backend.preflight()),
     render_native_backend_line("linux", @linux_backend.detect()),
     render_native_preflight_line(@linux_backend.preflight()),
+  ].join("")
+}
+
+///|
+fn render_native_backend_diagnostics_json() -> String {
+  [
+    render_native_backend_json(
+      "macos",
+      @macos_backend.detect(),
+      @macos_backend.preflight(),
+    ),
+    render_native_backend_json(
+      "windows",
+      @windows_backend.detect(),
+      @windows_backend.preflight(),
+    ),
+    render_native_backend_json(
+      "linux",
+      @linux_backend.detect(),
+      @linux_backend.preflight(),
+    ),
+  ].join(",")
+}
+
+///|
+fn render_native_backend_json(
+  platform : String,
+  backend : Result[@runtime.NativeBackend, String],
+  preflight : @runtime.NativeBackendPreflight,
+) -> String {
+  let (available, engine, problem) = match backend {
+    Ok(backend) => (true, backend.webview_engine(), "")
+    Err(problem) => (false, "", problem)
+  }
+  [
+    "{",
+    "\"platform\":\{cli_json_string(platform)},",
+    "\"available\":\{cli_json_bool(available)},",
+    "\"engine\":\{cli_json_string(engine)},",
+    "\"problem\":\{cli_json_string(problem)},",
+    "\"preflight\":\{preflight.to_json()}",
+    "}",
   ].join("")
 }
 

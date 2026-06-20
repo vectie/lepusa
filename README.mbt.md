@@ -215,6 +215,9 @@ availability, WebView creation loops, and async bridge drain support.
 The underlying `NativeBackendPreflight` JSON classifies the active blocker as
 `dependency`, `webview-creation`, or `none`, and carries separate dependency,
 WebView creation, and async bridge drain problem fields for tooling.
+Passing `--json` emits one machine-readable health report with runtime,
+manifest, handler coverage, bundle, native launch, signing, and platform
+preflight sections.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.

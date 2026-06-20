@@ -2,7 +2,9 @@
 test "help text names available commands" {
   let result = render_cli([])
   assert_eq(result.exit_code, 0)
-  assert_true(result.output.contains("lepusa doctor"))
+  assert_true(
+    result.output.contains("lepusa doctor [macos|windows|linux] [--json]"),
+  )
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa dev [--json]"))
@@ -53,6 +55,19 @@ async test "doctor renders framework boundary checks" {
   assert_true(result.output.contains("engine=WKWebView"))
   assert_true(result.output.contains("platform: windows"))
   assert_true(result.output.contains("platform: linux"))
+  let json_result = render_cli_async(["doctor", "--json"])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"macos\""))
+  assert_true(json_result.output.contains("\"publicApi\":true"))
+  assert_true(json_result.output.contains("\"runtime\":{"))
+  assert_true(json_result.output.contains("\"manifest\":{"))
+  assert_true(json_result.output.contains("\"handlers\":{"))
+  assert_true(json_result.output.contains("\"nativeLaunch\":{"))
+  assert_true(json_result.output.contains("\"signing\":{"))
+  assert_true(json_result.output.contains("\"platforms\":["))
+  assert_true(json_result.output.contains("\"platform\":\"windows\""))
+  assert_true(json_result.output.contains("\"preflight\":{"))
+  assert_true(json_result.output.contains("\"problemKind\":"))
 }
 
 ///|
@@ -487,6 +502,20 @@ async test "generated project config drives doctor backend diagnostics" {
   assert_true(result.output.contains("creation-loop=false"))
   assert_true(result.output.contains("platform: linux"))
   assert_true(result.output.contains("platform-detail: linux"))
+  let json_result = render_cli_async([
+    "doctor",
+    "linux",
+    "--json",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(json_result.output.contains("\"backend\":\"system-webview\""))
+  assert_true(json_result.output.contains("\"registered\":6"))
+  assert_true(json_result.output.contains("\"missing\":0"))
+  assert_true(json_result.output.contains("\"canLaunch\":true"))
+  assert_true(json_result.output.contains("\"prerequisites\":["))
 }
 
 ///|
