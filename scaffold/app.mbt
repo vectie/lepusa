@@ -144,6 +144,7 @@ fn project_moon_pkg() -> String {
   (
     #|import {
     #|  "vectie/lepusa",
+    #|  "vectie/lepusa/ui",
     #|  "vectie/lepusa/plugins/catalog"
     #|}
     #|
@@ -233,9 +234,11 @@ fn project_main_mbt() -> String {
     #|
     #|///|
     #|fn view(_dispatch : @lepusa.Dispatch[Msg], model : Model) -> @lepusa.Html {
-    #|  @lepusa.Html::text(
-    #|    "<main><h1>Lepusa App</h1><p>Count: \{model.count}</p><button>Increment</button></main>",
-    #|  )
+    #|  @ui.main_([
+    #|    @ui.h1([@ui.text("Lepusa App")]),
+    #|    @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
+    #|    @ui.button("Increment", attrs=[@ui.on_click("log.write", payload="{\"message\":\"increment\"}")]),
+    #|  ])
     #|}
     #|
     #|///|
@@ -289,7 +292,8 @@ fn project_readme() -> String {
     #|A standalone MoonBit desktop app scaffolded by `lepusa init`.
     #|
     #|The generated app uses `@lepusa/plugins/catalog` to declare official
-    #|plugins and register their MoonBit-native handlers.
+    #|plugins and register their MoonBit-native handlers. Its view uses
+    #|`@lepusa/ui` helpers that still return root `@lepusa.Html` values.
     #|
     #|```bash
     #|moon run src --target native

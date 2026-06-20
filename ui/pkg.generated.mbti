@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/ui"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn aria(String, String) -> Attr
+
+pub fn attr(String, String) -> Attr
+
+pub fn button(String, attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn class_name(String) -> Attr
+
+pub fn concat(Array[@lepusa.Html]) -> @lepusa.Html
+
+pub fn data(String, String) -> Attr
+
+pub fn div(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn element(String, Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn h1(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn h2(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn id(String) -> Attr
+
+pub fn input(attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn main_(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn on_click(String, payload? : String) -> Attr
+
+pub fn p(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn raw(String) -> @lepusa.Html
+
+pub fn section(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn span(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
+
+pub fn style(String) -> Attr
+
+pub fn text(String) -> @lepusa.Html
+
+pub fn void_element(String, attrs? : Array[Attr]) -> @lepusa.Html
+
+// Errors
+
+// Types and methods
+pub struct Attr {
+  name : String
+  value : String
+} derive(Eq, @debug.Debug)
+pub fn Attr::name(Self) -> String
+pub fn Attr::new(String, String) -> Self
+pub fn Attr::render(Self) -> String
+pub fn Attr::value(Self) -> String
+
+// Type aliases
+
+// Traits

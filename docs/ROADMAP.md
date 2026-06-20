@@ -16,6 +16,8 @@
 
 - Add `cell_with_dispatch`, `new`, `with_startup`, `window`, validation, and
   `launch_plan` APIs with syntax close to Rabbita.
+- Add `@lepusa/ui` HTML node and attribute helpers for compact
+  MoonBit-authored desktop views.
 - Lower source-less `App` windows into generated Rabbita-style HTML from the
   root `Cell`.
 - Add native `run` once the first runtime backend is wired: macOS now has an

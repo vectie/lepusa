@@ -2,6 +2,7 @@
 test "app scaffold imports official plugin catalog" {
   let moon_pkg = project_moon_pkg()
   assert_true(moon_pkg.contains("\"vectie/lepusa/plugins/catalog\""))
+  assert_true(moon_pkg.contains("\"vectie/lepusa/ui\""))
   assert_true(moon_pkg.contains("\"vectie/lepusa\","))
 }
 
@@ -32,6 +33,8 @@ test "app scaffold can include local workspace manifest" {
 test "app scaffold wires official plugin handlers" {
   let main = project_main_mbt()
   assert_true(main.contains("@catalog.register"))
+  assert_true(main.contains("@ui.main_"))
+  assert_true(main.contains("@ui.on_click(\"log.write\""))
   assert_true(main.contains("ignore([Increment, Reset])"))
   assert_true(main.contains("@catalog.plugin(\"log\").unwrap()"))
   assert_true(main.contains("@catalog.plugin(\"store\").unwrap()"))
@@ -51,6 +54,7 @@ test "app scaffold config only advertises catalog registered routes" {
 test "app scaffold readme documents catalog usage" {
   let readme = project_readme()
   assert_true(readme.contains("@lepusa/plugins/catalog"))
+  assert_true(readme.contains("@lepusa/ui"))
   assert_true(readme.contains("moon run src --target native"))
   assert_true(readme.contains("MoonBit-native handlers"))
 }

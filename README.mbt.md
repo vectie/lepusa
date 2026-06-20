@@ -26,6 +26,8 @@ MoonBit app code
 The first implementation slice already owns the public MoonBit foundation:
 
 - Rabbita-style `cell_with_dispatch` and `new(cell)` app construction
+- `@lepusa/ui` HTML node and attribute helpers for compact MoonBit-authored
+  desktop views
 - `WindowConfig`, `Source`, `Plugin`, `Capability`, `Cmd`, `Event`, and typed
   IPC request/response contracts
 - `ProjectManifest` validation plus `LaunchPlan`, `RuntimePlan`, and
@@ -60,6 +62,20 @@ fn main {
     Ok(plan) => boot_native_runtime(plan)
     Err(problems) => fail_fast(problems)
   }
+}
+```
+
+The optional `@lepusa/ui` package supplies concise view helpers while still
+returning root `@lepusa.Html` values:
+
+```moonbit nocheck
+///|
+fn render_app(dispatch, model) {
+  @ui.main_([
+    @ui.h1([@ui.text("Counter")]),
+    @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
+    @ui.button("Increment", attrs=[@ui.on_click("counter.increment")]),
+  ])
 }
 ```
 
