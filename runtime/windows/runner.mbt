@@ -194,9 +194,9 @@ fn windows_open_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    windows_dispatch(runtime),
+    runtime.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    windows_runtime_asset_resolver(runtime),
+    runtime.asset_protocol_resolver_callback(),
   )
   windows_status_from_exit_code(exit_code)
 }
@@ -224,9 +224,9 @@ fn windows_open_bundled_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    windows_bundled_dispatch(manifest),
+    manifest.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    windows_bundled_asset_resolver(manifest),
+    manifest.asset_protocol_resolver_callback(),
   )
   windows_status_from_exit_code(exit_code)
 }
@@ -238,33 +238,6 @@ fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
     2 => RunUnsupported("Windows WebView2 launch loop is unavailable")
     code => RunFailed("Windows WebView2 launch failed: code \{code}")
   }
-}
-
-///|
-fn windows_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn windows_bundled_dispatch(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  let runtime = @bundled.BundledRuntime::new(manifest)
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn windows_runtime_asset_resolver(
-  runtime : @runtime.NativeRuntime,
-) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { runtime.resolve_asset_protocol_packet_bytes(url) }
-}
-
-///|
-fn windows_bundled_asset_resolver(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { manifest.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|

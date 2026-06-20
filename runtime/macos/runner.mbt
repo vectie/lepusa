@@ -371,8 +371,8 @@ pub fn run(
       run_plan(
         plan,
         mode~,
-        dispatch=runtime_dispatch(runtime),
-        resolve_asset=runtime_asset_resolver(runtime),
+        dispatch=runtime.bridge_dispatch_callback(),
+        resolve_asset=runtime.asset_protocol_resolver_callback(),
       )
   }
 }
@@ -388,8 +388,8 @@ pub fn run_bundled(
       run_plan(
         plan,
         mode~,
-        dispatch=bundled_dispatch(manifest),
-        resolve_asset=bundled_asset_resolver(manifest),
+        dispatch=manifest.bridge_dispatch_callback(),
+        resolve_asset=manifest.asset_protocol_resolver_callback(),
       )
   }
 }
@@ -557,31 +557,6 @@ fn run_plan(
 fn async_bridge_launch_message(plan : MacOSRunPlan) -> String {
   let routes = plan.bridge().async_command_routes()
   "macOS launch requires native async bridge scheduling for \{routes.length()} async command route(s)"
-}
-
-///|
-fn runtime_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn runtime_asset_resolver(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { runtime.resolve_asset_protocol_packet_bytes(url) }
-}
-
-///|
-fn bundled_dispatch(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  let runtime = @bundled.BundledRuntime::new(manifest)
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn bundled_asset_resolver(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { manifest.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|

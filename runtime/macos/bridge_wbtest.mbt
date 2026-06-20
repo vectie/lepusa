@@ -31,7 +31,7 @@ test "macos bridge callback dispatches native runtime messages" {
             Err(problem) => abort(problem)
           }
           assert_eq(webview.native_hook(), "__lepusaInvoke")
-          let dispatch = runtime_dispatch(runtime)
+          let dispatch = runtime.bridge_dispatch_callback()
           let message = "{\"id\":\"42\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
           let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
             _ => abort("unexpected invalid utf8 response script")
@@ -56,7 +56,7 @@ test "macos bridge callback dispatches bundled sync messages" {
     Ok(manifest) =>
       match prepare_bundled_run(manifest) {
         Ok(_) => {
-          let dispatch = bundled_dispatch(manifest)
+          let dispatch = manifest.bridge_dispatch_callback()
           let message = "{\"id\":\"43\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
           let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
             _ => abort("unexpected invalid utf8 response script")

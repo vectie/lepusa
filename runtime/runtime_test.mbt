@@ -200,6 +200,36 @@ test "native asset protocol packet encodes runtime responses" {
 }
 
 ///|
+test "native runtime owns bridge and asset callbacks" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok(payload)
+  })
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, RuntimeHost::new(test_plan(), registry~)) {
+    Ok(runtime) => {
+      let dispatch = runtime.bridge_dispatch_callback()
+      let message = "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
+      let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
+        _ => abort("unexpected invalid callback response")
+      }
+      assert_true(script.contains("__lepusaInvokeResponse"))
+      assert_true(script.contains("\"id\":\"1\""))
+      assert_true(script.contains("\"payload\":\"true\""))
+      let resolve_asset = runtime.asset_protocol_resolver_callback()
+      let packet = @utf8.decode(
+        resolve_asset(@utf8.encode("lepusa://inline/main/index.html")),
+      ) catch {
+        _ => abort("unexpected invalid asset callback response")
+      }
+      assert_eq(packet, "ok\nvirtual\ntext/html\n<main>runtime</main>")
+    }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
 test "native asset protocol packet encodes json envelopes" {
   let virtual_json =
     #|{

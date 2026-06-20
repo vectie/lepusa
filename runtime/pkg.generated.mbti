@@ -136,8 +136,10 @@ pub struct NativeRuntime {
   host : RuntimeHost
   runner : NativeRunnerPlan
 }
+pub fn NativeRuntime::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
+pub fn NativeRuntime::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]

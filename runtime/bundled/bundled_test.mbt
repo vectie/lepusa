@@ -303,6 +303,34 @@ test "bundled runtime manifest resolves protocol assets" {
 }
 
 ///|
+test "bundled runtime manifest owns bridge and asset callbacks" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) => {
+      let dispatch = runtime.bridge_dispatch_callback()
+      let message = "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
+      let script = @utf8.decode(dispatch(@utf8.encode(message))) catch {
+        _ => abort("unexpected invalid bundled callback response")
+      }
+      assert_true(script.contains("__lepusaInvokeResponse"))
+      assert_true(script.contains("\"id\":\"1\""))
+      assert_true(script.contains("\\\"message\\\":\\\"ready\\\""))
+      let resolve_asset = runtime.asset_protocol_resolver_callback()
+      let packet = @utf8.decode(
+        resolve_asset(@utf8.encode("lepusa://rabbita/main/index.html")),
+      ) catch {
+        _ => abort("unexpected invalid bundled asset callback response")
+      }
+      assert_eq(packet, "ok\nvirtual\ntext/html\n<main></main>")
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime manifest prepares shared native run plans" {
   match
     BundledRuntimeManifest::parse(

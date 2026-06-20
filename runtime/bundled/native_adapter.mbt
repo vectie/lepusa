@@ -25,6 +25,21 @@ pub fn BundledRuntimeManifest::resolve_asset_protocol_packet_bytes(
 }
 
 ///|
+pub fn BundledRuntimeManifest::bridge_dispatch_callback(
+  self : BundledRuntimeManifest,
+) -> (Bytes) -> Bytes {
+  let runtime = BundledRuntime::new(self)
+  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
+}
+
+///|
+pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(
+  self : BundledRuntimeManifest,
+) -> (Bytes) -> Bytes {
+  fn(url : Bytes) { self.resolve_asset_protocol_packet_bytes(url) }
+}
+
+///|
 pub fn BundledRuntimeManifest::webview_plan(
   self : BundledRuntimeManifest,
   webview : BundledWebView,

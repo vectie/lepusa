@@ -142,8 +142,10 @@ pub struct BundledRuntimeManifest {
 } derive(@debug.Debug)
 pub fn BundledRuntimeManifest::artifact_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
+pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
+pub fn BundledRuntimeManifest::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String

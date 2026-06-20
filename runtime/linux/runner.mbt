@@ -180,9 +180,9 @@ fn linux_open_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    linux_dispatch(runtime),
+    runtime.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    linux_runtime_asset_resolver(runtime),
+    runtime.asset_protocol_resolver_callback(),
   )
   match exit_code {
     0 => RunLaunched
@@ -214,42 +214,15 @@ fn linux_open_bundled_window(
       0
     },
     fn(dispatch, message) { dispatch(message) },
-    linux_bundled_dispatch(manifest),
+    manifest.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    linux_bundled_asset_resolver(manifest),
+    manifest.asset_protocol_resolver_callback(),
   )
   match exit_code {
     0 => RunLaunched
     2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
     code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
   }
-}
-
-///|
-fn linux_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn linux_bundled_dispatch(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  let runtime = @bundled.BundledRuntime::new(manifest)
-  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
-}
-
-///|
-fn linux_runtime_asset_resolver(
-  runtime : @runtime.NativeRuntime,
-) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { runtime.resolve_asset_protocol_packet_bytes(url) }
-}
-
-///|
-fn linux_bundled_asset_resolver(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> (Bytes) -> Bytes {
-  fn(url : Bytes) { manifest.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|
