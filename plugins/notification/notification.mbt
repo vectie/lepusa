@@ -1,9 +1,9 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("notification")
-  .command_async("show", permission=Notification)
-  .command_async("permissionState", permission=Notification)
-  .command_async("requestPermission", permission=Notification)
+  .command_sync("show", permission=Notification)
+  .command_sync("permissionState", permission=Notification)
+  .command_sync("requestPermission", permission=Notification)
 }
 
 ///|
@@ -74,25 +74,22 @@ pub fn register(
   center? : NotificationCenter = NotificationCenter::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("notification.show", permission=Notification, handler=payload => {
+  .register_fn("notification.show", permission=Notification, handler=payload => {
     handle_show(center, payload)
   })
-  .register_async_fn("notification.permissionState", permission=Notification, handler=_ => {
+  .register_fn("notification.permissionState", permission=Notification, handler=_ => {
     handle_permission_state(center)
   })
-  .register_async_fn(
-    "notification.requestPermission",
-    permission=Notification,
-    handler=_ => handle_request_permission(center),
-  )
+  .register_fn("notification.requestPermission", permission=Notification, handler=_ => {
+    handle_request_permission(center)
+  })
 }
 
 ///|
-async fn handle_show(
+fn handle_show(
   center : NotificationCenter,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_notification_payload(payload) {
     Ok((title, body)) => {
       if center.permission() is Denied {
@@ -114,18 +111,16 @@ async fn handle_show(
 }
 
 ///|
-async fn handle_permission_state(
+fn handle_permission_state(
   center : NotificationCenter,
 ) -> Result[String, String] {
-  @async.sleep(0)
   Ok(permission_json(center.permission()).stringify())
 }
 
 ///|
-async fn handle_request_permission(
+fn handle_request_permission(
   center : NotificationCenter,
 ) -> Result[String, String] {
-  @async.sleep(0)
   if center.permission() is Default {
     center.set_permission(Granted)
   }

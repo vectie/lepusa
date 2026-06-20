@@ -688,7 +688,7 @@ portable deterministic async handlers for runtime-owned dialogs.
 `@lepusa/plugins/clipboard` declares clipboard routes and provides native
 system clipboard handlers for desktop runtimes plus an in-process handler for
 tests. `@lepusa/plugins/notification` declares notification routes and provides
-in-process async handlers for permission and show requests.
+in-process sync handlers for permission and show requests.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes
 and provides delegated process-table handlers with optional command allow-list
 validation.

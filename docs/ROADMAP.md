@@ -208,8 +208,8 @@ Stabilize the cross-platform core set first:
   handlers exist
 - process: initial explicit process permission contract exists
 - clipboard: platform-neutral command contract, native system clipboard stubs,
-  and in-process async text handlers for deterministic tests exist
-- notification: initial platform-neutral command contract and in-process async
+  and in-process sync text handlers for deterministic tests exist
+- notification: initial platform-neutral command contract and in-process sync
   permission/show handlers exist
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists

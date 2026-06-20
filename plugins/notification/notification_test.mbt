@@ -1,5 +1,5 @@
 ///|
-test "notification plugin declares async notification commands" {
+test "notification plugin declares sync notification commands" {
   let declared = plugin()
   assert_eq(declared.name(), "notification")
   assert_eq(declared.command_routes().length(), 3)
@@ -11,7 +11,7 @@ test "notification plugin declares async notification commands" {
     declared.command_routes().contains("notification.requestPermission"),
   )
   let commands = declared.commands()
-  assert_true(commands[0].mode() is Async)
+  assert_true(commands[0].mode() is Sync)
   assert_true(commands[0].permission() is Notification)
   assert_true(commands[1].permission() is Notification)
 }
@@ -25,13 +25,13 @@ test "notification capabilities grant notification permission by window" {
 }
 
 ///|
-async test "notification registry tracks permission and delivered titles" {
+test "notification registry tracks permission and delivered titles" {
   let center = NotificationCenter::new()
   let registry = registry(center~)
   assert_true(registry.contains("notification.show"))
   assert_true(registry.contains("notification.permissionState"))
   assert_true(registry.contains("notification.requestPermission"))
-  assert_eq(registry.async_routes().length(), 3)
+  assert_eq(registry.sync_routes().length(), 3)
   let grant = capability_for_window("main")
   let initial_request = @lepusa.InvokeRequest::new(
     id="1",
@@ -39,7 +39,7 @@ async test "notification registry tracks permission and delivered titles" {
     plugin="notification",
     command="permissionState",
   )
-  let initial = registry.dispatch_async(initial_request, capabilities=[grant])
+  let initial = registry.dispatch(initial_request, capabilities=[grant])
   assert_true(
     initial.payload().unwrap_or("").contains("\"permission\":\"default\""),
   )
@@ -49,7 +49,7 @@ async test "notification registry tracks permission and delivered titles" {
     plugin="notification",
     command="requestPermission",
   )
-  let granted = registry.dispatch_async(granted_request, capabilities=[grant])
+  let granted = registry.dispatch(granted_request, capabilities=[grant])
   assert_true(
     granted.payload().unwrap_or("").contains("\"permission\":\"granted\""),
   )
@@ -60,7 +60,7 @@ async test "notification registry tracks permission and delivered titles" {
     command="show",
     payload="{\"title\":\"Build done\",\"body\":\"All checks passed\"}",
   )
-  let shown = registry.dispatch_async(shown_request, capabilities=[grant])
+  let shown = registry.dispatch(shown_request, capabilities=[grant])
   assert_true(shown.payload().unwrap_or("").contains("\"shown\":true"))
   assert_eq(center.delivered()[0], "Build done")
 }

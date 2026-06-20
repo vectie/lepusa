@@ -1,7 +1,7 @@
 # @lepusa/plugins/notification
 
 `@lepusa/plugins/notification` defines Lepusa's official notification command
-contract. It includes async permission/show handlers backed by an in-process
+contract. It includes sync permission/show handlers backed by an in-process
 `NotificationCenter`. Native runtimes can replace that registry with OS
 notification integration.
 

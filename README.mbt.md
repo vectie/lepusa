@@ -412,7 +412,7 @@ backends own the actual OS dialog implementation.
 `@lepusa/plugins/clipboard` provides sync text clipboard handlers backed by
 native system clipboard stubs for desktop runtimes, plus an in-process
 `ClipboardStore` for deterministic tests. `@lepusa/plugins/notification`
-provides async permission and show handlers backed by an in-process
+provides sync permission and show handlers backed by an in-process
 `NotificationCenter`; native backends own OS notification integration.
 
 `@lepusa/plugins/opener` declares platform-neutral URL and path opener routes:
