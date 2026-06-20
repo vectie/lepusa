@@ -37,6 +37,12 @@ typedef void (*LepusaGtkWindowSetDefaultSize)(void *, int, int);
 typedef void (*LepusaGtkWindowSetResizable)(void *, int);
 typedef void (*LepusaGtkContainerAdd)(void *, void *);
 typedef void (*LepusaGtkWidgetShowAll)(void *);
+typedef void (*LepusaGtkWidgetHide)(void *);
+typedef void (*LepusaGtkWidgetDestroy)(void *);
+typedef void (*LepusaGtkWindowPresent)(void *);
+typedef void (*LepusaGtkWindowIconify)(void *);
+typedef void (*LepusaGtkWindowMaximize)(void *);
+typedef void (*LepusaGtkWindowUnmaximize)(void *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
@@ -108,6 +114,12 @@ typedef struct {
   LepusaGtkWindowSetResizable gtk_window_set_resizable;
   LepusaGtkContainerAdd gtk_container_add;
   LepusaGtkWidgetShowAll gtk_widget_show_all;
+  LepusaGtkWidgetHide gtk_widget_hide;
+  LepusaGtkWidgetDestroy gtk_widget_destroy;
+  LepusaGtkWindowPresent gtk_window_present;
+  LepusaGtkWindowIconify gtk_window_iconify;
+  LepusaGtkWindowMaximize gtk_window_maximize;
+  LepusaGtkWindowUnmaximize gtk_window_unmaximize;
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
@@ -130,6 +142,7 @@ typedef struct {
 } LepusaLinuxWebKit;
 
 typedef struct {
+  void *window;
   void *webview;
   LepusaLinuxWebKit *api;
   LepusaLinuxBytesCallback call_dispatch;
@@ -208,6 +221,12 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_resizable", (void **)&api->gtk_window_set_resizable);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_container_add", (void **)&api->gtk_container_add);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_show_all", (void **)&api->gtk_widget_show_all);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_hide", (void **)&api->gtk_widget_hide);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_destroy", (void **)&api->gtk_widget_destroy);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_present", (void **)&api->gtk_window_present);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_iconify", (void **)&api->gtk_window_iconify);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_maximize", (void **)&api->gtk_window_maximize);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_unmaximize", (void **)&api->gtk_window_unmaximize);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
@@ -400,6 +419,199 @@ static moonbit_bytes_t lepusa_linux_immediate_script_from_handoff_packet(
   return script;
 }
 
+static const char *lepusa_linux_find_newline_range(
+  const char *start,
+  const char *end
+) {
+  const char *cursor = start;
+  while (cursor < end) {
+    if (*cursor == '\n') {
+      return cursor;
+    }
+    cursor++;
+  }
+  return NULL;
+}
+
+static const char *lepusa_linux_find_range(
+  const char *start,
+  const char *end,
+  const char *needle
+) {
+  size_t needle_len = strlen(needle);
+  if (needle_len == 0 || start == NULL || end == NULL) {
+    return NULL;
+  }
+  for (const char *cursor = start; cursor + needle_len <= end; cursor++) {
+    if (memcmp(cursor, needle, needle_len) == 0) {
+      return cursor;
+    }
+  }
+  return NULL;
+}
+
+static int lepusa_linux_handoff_operations_range(
+  moonbit_bytes_t packet,
+  const char **operations_out,
+  int32_t *operations_len_out
+) {
+  if (packet == NULL || operations_out == NULL || operations_len_out == NULL) {
+    return 0;
+  }
+  const char *start = (const char *)packet;
+  const char *end = start + Moonbit_array_length(packet);
+  const char *first = lepusa_linux_find_newline_range(start, end);
+  if (first == NULL ||
+      (first - start) != 9 ||
+      memcmp(start, "immediate", 9) != 0) {
+    return 0;
+  }
+  const char *second = lepusa_linux_find_newline_range(first + 1, end);
+  if (second == NULL) {
+    return 0;
+  }
+  const char *third = lepusa_linux_find_newline_range(second + 1, end);
+  if (third == NULL) {
+    return 0;
+  }
+  int64_t body_len64 = 0;
+  for (const char *p = second + 1; p < third; p++) {
+    if (*p < '0' || *p > '9') {
+      return 0;
+    }
+    body_len64 = body_len64 * 10 + (*p - '0');
+    if (body_len64 > INT32_MAX) {
+      return 0;
+    }
+  }
+  const char *operations = third + 1 + (int32_t)body_len64;
+  if (operations > end) {
+    return 0;
+  }
+  if (operations < end && *operations == '\n') {
+    operations++;
+  }
+  *operations_out = operations;
+  *operations_len_out = (int32_t)(end - operations);
+  return 1;
+}
+
+static int lepusa_linux_handoff_has_window_action(
+  moonbit_bytes_t packet,
+  const char *action
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
+    return 0;
+  }
+  const char *end = operations + operations_len;
+  char action_token[128];
+  snprintf(
+    action_token,
+    sizeof(action_token),
+    "\"action\":\"%s\"",
+    action == NULL ? "" : action
+  );
+  return lepusa_linux_find_range(
+      operations,
+      end,
+      "\"kind\":\"window-control\""
+    ) != NULL &&
+    lepusa_linux_find_range(operations, end, action_token) != NULL;
+}
+
+static int lepusa_linux_extract_handoff_title(
+  moonbit_bytes_t packet,
+  char *title,
+  size_t title_len
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (title == NULL ||
+      title_len == 0 ||
+      !lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
+    return 0;
+  }
+  const char *end = operations + operations_len;
+  const char *key = lepusa_linux_find_range(operations, end, "\\\"title\\\"");
+  if (key == NULL) {
+    return 0;
+  }
+  const char *cursor = key + strlen("\\\"title\\\"");
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor >= end || *cursor != ':') {
+    return 0;
+  }
+  cursor++;
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor + 2 > end || cursor[0] != '\\' || cursor[1] != '"') {
+    return 0;
+  }
+  cursor += 2;
+  size_t written = 0;
+  while (cursor < end) {
+    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '"') {
+      title[written] = '\0';
+      return 1;
+    }
+    if (written + 1 >= title_len) {
+      return 0;
+    }
+    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '\\') {
+      title[written++] = '\\';
+      cursor += 2;
+    } else {
+      title[written++] = *cursor;
+      cursor++;
+    }
+  }
+  return 0;
+}
+
+static void lepusa_linux_apply_window_controls_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->window == NULL ||
+      packet == NULL) {
+    return;
+  }
+  char title[1024];
+  if (lepusa_linux_handoff_has_window_action(packet, "setTitle") &&
+      lepusa_linux_extract_handoff_title(packet, title, sizeof(title))) {
+    context->api->gtk_window_set_title(context->window, title);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "show")) {
+    context->api->gtk_widget_show_all(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "focus")) {
+    context->api->gtk_window_present(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "hide")) {
+    context->api->gtk_widget_hide(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "minimize")) {
+    context->api->gtk_window_iconify(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "maximize")) {
+    context->api->gtk_window_maximize(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "unmaximize")) {
+    context->api->gtk_window_unmaximize(context->window);
+  } else if (lepusa_linux_handoff_has_window_action(packet, "close")) {
+    context->api->gtk_widget_destroy(context->window);
+  }
+}
+
 static void lepusa_linux_uri_scheme_request(
   void *request,
   void *user_data
@@ -508,6 +720,7 @@ static void lepusa_linux_script_message_received(
     );
     free(script_text);
   }
+  lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   if (message != NULL) {
     context->api->g_free(message);
   }
@@ -896,6 +1109,7 @@ int32_t lepusa_linux_run_webview(
     return 5;
   }
   LepusaLinuxBridgeContext bridge_context = {
+    window,
     webview,
     &api,
     call_dispatch,

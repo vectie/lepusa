@@ -587,7 +587,11 @@ first `lepusa://` WebView through `launch_bundled(manifest)`.
 Bridge dispatches that return the official `window-control` response contract
 now expose a typed `NativeWindowControl` executable operation beside the
 response evaluation script; platform loops should execute that operation only
-after the MoonBit dispatch succeeds, preserving capability enforcement. The
+after the MoonBit dispatch succeeds, preserving capability enforcement.
+The macOS WKWebView and Linux WebKitGTK loops consume the first native window
+control set directly from the bridge handoff packet: title, show, hide, focus,
+minimize, maximize, unmaximize, and close. Geometry and fullscreen operations
+remain modeled executable operations until the native geometry layer lands. The
 Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and

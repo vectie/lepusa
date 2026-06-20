@@ -56,6 +56,7 @@ typedef void (*LepusaMsgSendVoid)(void *, void *);
 typedef void (*LepusaMsgSendVoidId)(void *, void *, void *);
 typedef void (*LepusaMsgSendVoidIdId)(void *, void *, void *, void *);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
+typedef int (*LepusaMsgSendInt)(void *, void *);
 typedef int (*LepusaMsgSendIntInt)(void *, void *, int);
 typedef void *(*LepusaObjcGetClass)(const char *);
 typedef void *(*LepusaSelRegisterName)(const char *);
@@ -66,6 +67,7 @@ typedef void *LepusaObjcMsgSend;
 typedef moonbit_bytes_t (*LepusaBytesCallback)(void *, moonbit_bytes_t);
 
 typedef struct {
+  void *window;
   void *webview;
   LepusaBytesCallback call_dispatch;
   void *dispatch;
@@ -511,6 +513,185 @@ static moonbit_bytes_t lepusa_immediate_script_from_handoff_packet(
   return script;
 }
 
+static const char *lepusa_find_range(
+  const char *start,
+  const char *end,
+  const char *needle
+) {
+  size_t needle_len = strlen(needle);
+  if (needle_len == 0 || start == NULL || end == NULL) {
+    return NULL;
+  }
+  for (const char *cursor = start; cursor + needle_len <= end; cursor++) {
+    if (memcmp(cursor, needle, needle_len) == 0) {
+      return cursor;
+    }
+  }
+  return NULL;
+}
+
+static int lepusa_handoff_operations_range(
+  moonbit_bytes_t packet,
+  const char **operations_out,
+  int32_t *operations_len_out
+) {
+  if (packet == NULL || operations_out == NULL || operations_len_out == NULL) {
+    return 0;
+  }
+  const char *start = (const char *)packet;
+  const char *end = start + Moonbit_array_length(packet);
+  const char *first = lepusa_find_newline(start, end);
+  if (first == NULL ||
+      (first - start) != 9 ||
+      memcmp(start, "immediate", 9) != 0) {
+    return 0;
+  }
+  const char *second = lepusa_find_newline(first + 1, end);
+  if (second == NULL) {
+    return 0;
+  }
+  const char *third = lepusa_find_newline(second + 1, end);
+  if (third == NULL) {
+    return 0;
+  }
+  int64_t body_len64 = 0;
+  for (const char *p = second + 1; p < third; p++) {
+    if (*p < '0' || *p > '9') {
+      return 0;
+    }
+    body_len64 = body_len64 * 10 + (*p - '0');
+    if (body_len64 > INT32_MAX) {
+      return 0;
+    }
+  }
+  const char *operations = third + 1 + (int32_t)body_len64;
+  if (operations > end) {
+    return 0;
+  }
+  if (operations < end && *operations == '\n') {
+    operations++;
+  }
+  *operations_out = operations;
+  *operations_len_out = (int32_t)(end - operations);
+  return 1;
+}
+
+static int lepusa_handoff_has_window_action(
+  moonbit_bytes_t packet,
+  const char *action
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_handoff_operations_range(packet, &operations, &operations_len)) {
+    return 0;
+  }
+  const char *end = operations + operations_len;
+  char action_token[128];
+  snprintf(
+    action_token,
+    sizeof(action_token),
+    "\"action\":\"%s\"",
+    action == NULL ? "" : action
+  );
+  return lepusa_find_range(operations, end, "\"kind\":\"window-control\"") != NULL &&
+    lepusa_find_range(operations, end, action_token) != NULL;
+}
+
+static int lepusa_extract_handoff_title(
+  moonbit_bytes_t packet,
+  char *title,
+  size_t title_len
+) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (title == NULL ||
+      title_len == 0 ||
+      !lepusa_handoff_operations_range(packet, &operations, &operations_len)) {
+    return 0;
+  }
+  const char *end = operations + operations_len;
+  const char *key = lepusa_find_range(operations, end, "\\\"title\\\"");
+  if (key == NULL) {
+    return 0;
+  }
+  const char *cursor = key + strlen("\\\"title\\\"");
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor >= end || *cursor != ':') {
+    return 0;
+  }
+  cursor++;
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  if (cursor + 2 > end || cursor[0] != '\\' || cursor[1] != '"') {
+    return 0;
+  }
+  cursor += 2;
+  size_t written = 0;
+  while (cursor < end) {
+    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '"') {
+      title[written] = '\0';
+      return 1;
+    }
+    if (written + 1 >= title_len) {
+      return 0;
+    }
+    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '\\') {
+      title[written++] = '\\';
+      cursor += 2;
+    } else {
+      title[written++] = *cursor;
+      cursor++;
+    }
+  }
+  return 0;
+}
+
+static void lepusa_apply_window_controls_from_handoff_packet(
+  void *window,
+  moonbit_bytes_t packet
+) {
+  if (window == NULL || packet == NULL) {
+    return;
+  }
+  char title[1024];
+  if (lepusa_handoff_has_window_action(packet, "setTitle") &&
+      lepusa_extract_handoff_title(packet, title, sizeof(title))) {
+    lepusa_msg_void_id(
+      window,
+      "setTitle:",
+      lepusa_ns_string_from_range(title, (int32_t)strlen(title))
+    );
+  } else if (lepusa_handoff_has_window_action(packet, "show") ||
+             lepusa_handoff_has_window_action(packet, "focus")) {
+    lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
+  } else if (lepusa_handoff_has_window_action(packet, "hide")) {
+    lepusa_msg_void_id(window, "orderOut:", NULL);
+  } else if (lepusa_handoff_has_window_action(packet, "minimize")) {
+    lepusa_msg_void_id(window, "miniaturize:", NULL);
+  } else if (lepusa_handoff_has_window_action(packet, "maximize")) {
+    int zoomed = ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+      window,
+      lepusa_sel("isZoomed")
+    );
+    if (!zoomed) {
+      lepusa_msg_void_id(window, "zoom:", NULL);
+    }
+  } else if (lepusa_handoff_has_window_action(packet, "unmaximize")) {
+    int zoomed = ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+      window,
+      lepusa_sel("isZoomed")
+    );
+    if (zoomed) {
+      lepusa_msg_void_id(window, "zoom:", NULL);
+    }
+  } else if (lepusa_handoff_has_window_action(packet, "close")) {
+    ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("close"));
+  }
+}
+
 static void lepusa_send_scheme_data(
   void *task,
   void *url,
@@ -661,6 +842,7 @@ static void lepusa_script_message_handler(
     ),
     NULL
   );
+  lepusa_apply_window_controls_from_handoff_packet(context->window, packet);
 }
 
 static void lepusa_url_scheme_start_task(
@@ -981,6 +1163,7 @@ static int32_t lepusa_macos_run_webview_impl(
 
   LepusaBridgeContext bridge_context = {
     NULL,
+    NULL,
     call_dispatch,
     dispatch,
     call_resolve_asset,
@@ -1028,6 +1211,7 @@ static int32_t lepusa_macos_run_webview_impl(
   if (webview == NULL) {
     return 6;
   }
+  bridge_context.window = window;
   bridge_context.webview = webview;
 
   void *ns_url = lepusa_ns_url(url);
