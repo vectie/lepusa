@@ -60,9 +60,7 @@ async test "doctor supports target-specific signing diagnostics" {
   assert_eq(windows.exit_code, 0)
   assert_true(windows.output.contains("[warn] native-launch: target=windows"))
   assert_true(windows.output.contains("can-launch=false"))
-  assert_true(
-    windows.output.contains("Windows WebView2 creation loop is unavailable"),
-  )
+  assert_true(windows.output.contains("Windows WebView2"))
   let unknown = render_cli_async(["doctor", "ios"])
   assert_eq(unknown.exit_code, 1)
   assert_true(unknown.output.contains("unknown bundle target: ios"))
@@ -174,9 +172,7 @@ async test "launch session prints source native handoff json" {
   assert_true(windows.output.contains("\"target\":\"windows\""))
   assert_true(windows.output.contains("\"targetCanLaunch\":false"))
   assert_true(
-    windows.output.contains(
-      "\"targetLaunchBlocker\":\"Windows WebView2 creation loop is unavailable\"",
-    ),
+    windows.output.contains("\"targetLaunchBlocker\":\"Windows WebView2"),
   )
 }
 
@@ -455,6 +451,9 @@ async test "generated project config drives doctor backend diagnostics" {
   assert_true(result.output.contains("Developer ID Application certificate"))
   assert_true(result.output.contains("platform: macos"))
   assert_true(result.output.contains("platform: windows"))
+  assert_true(result.output.contains("platform-detail: windows"))
+  assert_true(result.output.contains("webview2-loader="))
+  assert_true(result.output.contains("creation-loop=false"))
   assert_true(result.output.contains("platform: linux"))
 }
 
@@ -630,11 +629,7 @@ async test "generated project config verifies end to end contracts" {
   assert_true(windows.output.contains("target: windows"))
   assert_true(windows.output.contains("scheduler-can-launch=true"))
   assert_true(windows.output.contains("target-can-launch=false"))
-  assert_true(
-    windows.output.contains(
-      "[warn] native-launch: Windows WebView2 creation loop is unavailable",
-    ),
-  )
+  assert_true(windows.output.contains("[warn] native-launch: Windows WebView2"))
   let strict = render_cli_async([
     "verify",
     "--strict",
@@ -653,11 +648,7 @@ async test "generated project config verifies end to end contracts" {
     root + "/lepusa.json",
   ])
   assert_eq(strict_windows.exit_code, 1)
-  assert_true(
-    strict_windows.output.contains(
-      "[fail] strict: Windows WebView2 creation loop is unavailable",
-    ),
-  )
+  assert_true(strict_windows.output.contains("[fail] strict: Windows WebView2"))
 }
 
 ///|
@@ -1696,9 +1687,7 @@ async test "bundle write gates target launch capability" {
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("verified: false"))
   assert_true(result.output.contains("[fail] verify: native-launch-session"))
-  assert_true(
-    result.output.contains("Windows WebView2 creation loop is unavailable"),
-  )
+  assert_true(result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
 }

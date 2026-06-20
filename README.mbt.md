@@ -210,6 +210,8 @@ runtime and bundler work concrete outputs to consume.
 plans, reports the selected target's native launch gate and signing
 prerequisites, and reports host WebView availability for the platform backend
 descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
+For Windows it also prints a WebView2 preflight line that separates host loader
+availability from Lepusa's still-missing WebView2 creation loop.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.

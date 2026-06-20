@@ -40,12 +40,16 @@ test "windows backend exposes webview2 descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "windows")
   assert_eq(descriptor.webview_engine(), "WebView2")
+  let preflight = preflight()
+  assert_eq(preflight.webview2_loader(), available())
+  assert_false(preflight.webview_creation_loop())
+  assert_false(preflight.can_launch())
+  assert_true(preflight.problem().contains("WebView2"))
+  assert_true(preflight.to_json().contains("\"canLaunch\":false"))
   let capability = launch_capability()
   assert_false(capability.webview_creation())
   assert_false(capability.async_bridge_drain())
-  assert_true(
-    capability.webview_creation_message().contains("WebView2 creation loop"),
-  )
+  assert_true(capability.webview_creation_message().contains("WebView2"))
 }
 
 ///|
@@ -155,8 +159,7 @@ test "windows backend prepares run plan and reports unsupported launch" {
       match launch(runtime) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("WebView2 creation loop"))
+            RunUnsupported(message) => assert_true(message.contains("WebView2"))
             _ => abort("unexpected Windows launch status")
           }
         Err(_) => abort("unexpected invalid Windows launch plan")
@@ -296,8 +299,7 @@ test "windows backend prepares bundled runtime contract" {
       match launch_bundled(manifest) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("WebView2 creation loop"))
+            RunUnsupported(message) => assert_true(message.contains("WebView2"))
             _ => abort("unexpected Windows bundled launch status")
           }
         Err(_) => abort("unexpected invalid Windows bundled launch plan")

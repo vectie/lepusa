@@ -188,6 +188,7 @@ fn render_native_backend_diagnostics() -> String {
   [
     render_native_backend_line("macos", @macos_backend.detect()),
     render_native_backend_line("windows", @windows_backend.detect()),
+    render_windows_preflight_line(),
     render_native_backend_line("linux", @linux_backend.detect()),
   ].join("")
 }
@@ -202,6 +203,18 @@ fn render_native_backend_line(
       "[ok] platform: \{platform} engine=\{backend.webview_engine()}\n"
     Err(problem) => "[warn] platform: \{platform} \{problem}\n"
   }
+}
+
+///|
+fn render_windows_preflight_line() -> String {
+  let preflight = @windows_backend.preflight()
+  let status = if preflight.can_launch() { "ok" } else { "warn" }
+  let reason = if preflight.problem() == "" {
+    ""
+  } else {
+    " reason=\{preflight.problem()}"
+  }
+  "[\{status}] platform-detail: windows webview2-loader=\{preflight.webview2_loader().to_string()} creation-loop=\{preflight.webview_creation_loop().to_string()} can-launch=\{preflight.can_launch().to_string()}\{reason}\n"
 }
 
 ///|

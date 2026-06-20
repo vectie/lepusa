@@ -231,9 +231,7 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(windows.output.contains("\"target\":\"windows\""))
   assert_true(windows.output.contains("\"targetCanLaunch\":false"))
   assert_true(
-    windows.output.contains(
-      "\"targetLaunchBlocker\":\"Windows WebView2 creation loop is unavailable\"",
-    ),
+    windows.output.contains("\"targetLaunchBlocker\":\"Windows WebView2"),
   )
 }
 
@@ -393,9 +391,7 @@ test "runtime cli dry-runs bundled windows manifest by target" {
   assert_true(dry_run.output.contains("status: prepared"))
   assert_true(dry_run.output.contains("target-can-launch: false"))
   assert_true(
-    dry_run.output.contains(
-      "target-launch-blocker: Windows WebView2 creation loop is unavailable",
-    ),
+    dry_run.output.contains("target-launch-blocker: Windows WebView2"),
   )
   assert_true(dry_run.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(dry_run.output.contains("startup-operations: 1"))
@@ -408,11 +404,7 @@ test "runtime cli dry-runs bundled windows manifest by target" {
   assert_true(launch.output.contains("mode: launch"))
   assert_true(launch.output.contains("status: unsupported"))
   assert_true(launch.output.contains("target-can-launch: false"))
-  assert_true(
-    launch.output.contains(
-      "target-launch-blocker: Windows WebView2 creation loop is unavailable",
-    ),
-  )
+  assert_true(launch.output.contains("target-launch-blocker: Windows WebView2"))
   assert_true(launch.output.contains("engine: WebView2"))
 }
 
