@@ -607,11 +607,23 @@ test "native runner plans expose async bridge blockers" {
         "bridge_loop_adapter().receive_message",
       )
       assert_eq(
+        bridge_loop.receive_window_message(),
+        "bridge_loop_adapter().receive_window_message",
+      )
+      assert_eq(
+        bridge_loop.drain_window(),
+        "bridge_loop_adapter().drain_window",
+      )
+      assert_eq(
         bridge_loop.result_type(),
         "NativeBridgeLoopResult|BundledBridgeLoopResult",
       )
+      assert_eq(
+        bridge_loop.delivery_type(),
+        "NativeBridgeLoopDelivery|BundledBridgeLoopDelivery",
+      )
       assert_eq(bridge_loop.input_encoding(), "utf8-json-bridge-message")
-      assert_eq(bridge_loop.output_encoding(), "json-bridge-loop-result")
+      assert_eq(bridge_loop.output_encoding(), "json-bridge-loop-delivery")
       assert_true(bridge_loop.to_json().contains("\"available\":true"))
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
@@ -643,6 +655,25 @@ test "native runner plans expose async bridge blockers" {
             .to_json()
             .contains(
               "\"receiveMessage\":\"bridge_loop_adapter().receive_message\"",
+            ),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"receiveWindowMessage\":\"bridge_loop_adapter().receive_window_message\"",
+            ),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains("\"drainWindow\":\"bridge_loop_adapter().drain_window\""),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"deliveryType\":\"NativeBridgeLoopDelivery|BundledBridgeLoopDelivery\"",
             ),
           )
           assert_true(

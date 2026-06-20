@@ -27,7 +27,10 @@ pub struct NativeBridgeLoopContract {
   adapter : String
   handoff_callback : String
   receive_message : String
+  receive_window_message : String
+  drain_window : String
   result_type : String
+  delivery_type : String
   input_encoding : String
   output_encoding : String
 } derive(Debug, Eq)
@@ -214,9 +217,12 @@ pub fn NativeBridgeLoopContract::new(
     adapter: "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
     handoff_callback: "bridge_loop_adapter().handoff_callback",
     receive_message: "bridge_loop_adapter().receive_message",
+    receive_window_message: "bridge_loop_adapter().receive_window_message",
+    drain_window: "bridge_loop_adapter().drain_window",
     result_type: "NativeBridgeLoopResult|BundledBridgeLoopResult",
+    delivery_type: "NativeBridgeLoopDelivery|BundledBridgeLoopDelivery",
     input_encoding: "utf8-json-bridge-message",
-    output_encoding: "json-bridge-loop-result",
+    output_encoding: "json-bridge-loop-delivery",
   }
 }
 
@@ -256,10 +262,31 @@ pub fn NativeBridgeLoopContract::receive_message(
 }
 
 ///|
+pub fn NativeBridgeLoopContract::receive_window_message(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.receive_window_message
+}
+
+///|
+pub fn NativeBridgeLoopContract::drain_window(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.drain_window
+}
+
+///|
 pub fn NativeBridgeLoopContract::result_type(
   self : NativeBridgeLoopContract,
 ) -> String {
   self.result_type
+}
+
+///|
+pub fn NativeBridgeLoopContract::delivery_type(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.delivery_type
 }
 
 ///|
@@ -287,7 +314,10 @@ pub fn NativeBridgeLoopContract::to_json(
     "\"adapter\":\{self.adapter.json_string()},",
     "\"handoffCallback\":\{self.handoff_callback.json_string()},",
     "\"receiveMessage\":\{self.receive_message.json_string()},",
+    "\"receiveWindowMessage\":\{self.receive_window_message.json_string()},",
+    "\"drainWindow\":\{self.drain_window.json_string()},",
     "\"resultType\":\{self.result_type.json_string()},",
+    "\"deliveryType\":\{self.delivery_type.json_string()},",
     "\"inputEncoding\":\{self.input_encoding.json_string()},",
     "\"outputEncoding\":\{self.output_encoding.json_string()}",
     "}",

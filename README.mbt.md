@@ -175,7 +175,7 @@ WebView2 on Windows, and WebKitGTK on Linux.
 `lepusa launch-session` and `lepusa-runtime launch-session` emit native-loop
 handoff JSON for WebViews, protocol assets, lifecycle actions, service
 supervision, bridge scheduling, the async bridge executor descriptor, and the
-`bridgeLoop` adapter/result contract.
+`bridgeLoop` adapter, delivery, and drain contract.
 Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
 the executor and bridge-loop contract as available for platform loops that wire
 deferred command completion through the queue-backed adapter APIs; it does not

@@ -133,6 +133,21 @@ async test "launch session prints source native handoff json" {
       "\"receiveMessage\":\"bridge_loop_adapter().receive_message\"",
     ),
   )
+  assert_true(
+    async_bridge.output.contains(
+      "\"receiveWindowMessage\":\"bridge_loop_adapter().receive_window_message\"",
+    ),
+  )
+  assert_true(
+    async_bridge.output.contains(
+      "\"drainWindow\":\"bridge_loop_adapter().drain_window\"",
+    ),
+  )
+  assert_true(
+    async_bridge.output.contains(
+      "\"deliveryType\":\"NativeBridgeLoopDelivery|BundledBridgeLoopDelivery\"",
+    ),
+  )
 }
 
 ///|

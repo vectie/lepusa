@@ -157,8 +157,8 @@ run the generated callback script. The same launch-session payload carries an
 JavaScript-callback-script byte contract.
 It also carries a `bridgeLoop` contract naming the shared
 `bridge_loop_adapter().handoff_callback` and async
-`bridge_loop_adapter().receive_message` result boundary for source and packaged
-runtime loops.
+`bridge_loop_adapter().receive_window_message` / `drain_window` delivery
+boundary for source and packaged runtime loops.
 `NativeWebViewLaunchContext` is the runner-side handoff for a single WebView:
 it keeps the byte-level native launch packet together with the same scheduler,
 async executor, and `bridgeLoop` contract from the launch session before a

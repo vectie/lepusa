@@ -90,7 +90,8 @@
   loop adapters now package the runtime, queue, callback, pending diagnostics,
   and drain operation for platform event loops, with async message-turn results
   that normalize immediate scripts and drained completions; launch-session JSON
-  now advertises that adapter/result boundary as a `bridgeLoop` contract;
+  now advertises that adapter/delivery/drain boundary as a `bridgeLoop`
+  contract;
   WebView launch contexts now carry the byte packet plus scheduler, executor,
   and bridge-loop contracts into platform runner code; open-window runners now
   pass the queue-backed handoff callback into native message handlers; native
