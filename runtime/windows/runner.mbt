@@ -672,40 +672,7 @@ fn windows_initialization_script(
 
 ///|
 fn windows_native_hook_script(hook : String) -> String {
-  let native_hook = hook.js_string_literal()
-  let response_hook = "\{hook}Response".js_string_literal()
-  [
-    "(() => {",
-    "  const nativeHook = \{native_hook};",
-    "  const responseHook = \{response_hook};",
-    "  const pending = new Map();",
-    "  Object.defineProperty(globalThis, responseHook, {",
-    "    value: (response) => {",
-    "      const id = response && String(response.id || \"\");",
-    "      const callbacks = pending.get(id);",
-    "      if (!callbacks) { return false; }",
-    "      pending.delete(id);",
-    "      if (response && response.error) { callbacks.reject(new Error(response.error)); }",
-    "      else { callbacks.resolve(response || null); }",
-    "      return true;",
-    "    },",
-    "    configurable: true,",
-    "  });",
-    "  Object.defineProperty(globalThis, nativeHook, {",
-    "    value: (request) => new Promise((resolve, reject) => {",
-    "      const chrome = globalThis.chrome;",
-    "      const webview = chrome && chrome.webview;",
-    "      if (!webview || typeof webview.postMessage !== \"function\") {",
-    "        reject(new Error(`Missing Lepusa Windows WebView2 bridge: ${nativeHook}`));",
-    "        return;",
-    "      }",
-    "      pending.set(String(request.id || \"\"), { resolve, reject });",
-    "      webview.postMessage(JSON.stringify({ hook: nativeHook, request }));",
-    "    }),",
-    "    configurable: true,",
-    "  });",
-    "})();",
-  ].join("\n")
+  @runtime.native_webview2_bridge_hook_script(hook)
 }
 
 ///|
@@ -762,16 +729,4 @@ fn windows_optional_response_bool(
     Some(False) => Some(false)
     _ => None
   }
-}
-
-///|
-fn String::js_string_literal(self : String) -> String {
-  "\"" +
-  self
-  .replace_all(old="\\", new="\\\\")
-  .replace_all(old="\"", new="\\\"")
-  .replace_all(old="\n", new="\\n")
-  .replace_all(old="\r", new="\\r")
-  .replace_all(old="\t", new="\\t") +
-  "\""
 }

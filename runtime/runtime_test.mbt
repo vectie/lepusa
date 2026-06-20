@@ -1195,3 +1195,26 @@ test "native bridge transport validates target window" {
     Err(_) => abort("unexpected invalid native runtime")
   }
 }
+
+///|
+test "native bridge hook scripts cover webkit and webview2 transports" {
+  let webkit = native_webkit_bridge_hook_script(
+    "__lepusaInvoke",
+    platform_name="macOS",
+  )
+  assert_true(webkit.contains("globalThis.webkit"))
+  assert_true(webkit.contains("messageHandlers"))
+  assert_true(webkit.contains("__lepusaInvokeResponse"))
+  assert_true(webkit.contains("Missing Lepusa macOS native message handler"))
+  assert_false(webkit.contains("chrome.webview"))
+  let webview2 = native_webview2_bridge_hook_script("__lepusaInvoke")
+  assert_true(webview2.contains("chrome.webview"))
+  assert_true(
+    webview2.contains(
+      "postMessage(JSON.stringify({ hook: nativeHook, request }))",
+    ),
+  )
+  assert_true(webview2.contains("__lepusaInvokeResponse"))
+  assert_true(webview2.contains("Missing Lepusa Windows WebView2 bridge"))
+  assert_false(webview2.contains("messageHandlers"))
+}

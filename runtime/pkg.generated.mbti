@@ -13,6 +13,10 @@ pub fn encode_invoke_response_json(@lepusa.InvokeResponse) -> String
 
 pub fn native_bridge_response_script(String, String) -> String
 
+pub fn native_webkit_bridge_hook_script(String, platform_name~ : String) -> String
+
+pub fn native_webview2_bridge_hook_script(String) -> String
+
 // Errors
 
 // Types and methods

@@ -139,6 +139,77 @@ pub fn native_bridge_response_script(
 }
 
 ///|
+pub fn native_webkit_bridge_hook_script(
+  hook : String,
+  platform_name~ : String,
+) -> String {
+  native_bridge_hook_script(hook, post_message_lines=[
+    "      const handler = globalThis.webkit && globalThis.webkit.messageHandlers && globalThis.webkit.messageHandlers[nativeHook];",
+    "      if (!handler || typeof handler.postMessage !== \"function\") {",
+    "        reject(new Error(`\{missing_bridge_message("Missing Lepusa \{platform_name} native message handler")}: ${nativeHook}`));",
+    "        return;",
+    "      }",
+    "      pending.set(String(request.id || \"\"), { resolve, reject });",
+    "      handler.postMessage(JSON.stringify(request));",
+  ])
+}
+
+///|
+pub fn native_webview2_bridge_hook_script(hook : String) -> String {
+  native_bridge_hook_script(hook, post_message_lines=[
+    "      const chrome = globalThis.chrome;",
+    "      const webview = chrome && chrome.webview;",
+    "      if (!webview || typeof webview.postMessage !== \"function\") {",
+    "        reject(new Error(`\{missing_bridge_message("Missing Lepusa Windows WebView2 bridge")}: ${nativeHook}`));",
+    "        return;",
+    "      }",
+    "      pending.set(String(request.id || \"\"), { resolve, reject });",
+    "      webview.postMessage(JSON.stringify({ hook: nativeHook, request }));",
+  ])
+}
+
+///|
+fn native_bridge_hook_script(
+  hook : String,
+  post_message_lines~ : Array[String],
+) -> String {
+  let native_hook = hook.js_string_literal()
+  let response_hook = "\{hook}Response".js_string_literal()
+  let lines = [
+    "(() => {",
+    "  const nativeHook = \{native_hook};",
+    "  const responseHook = \{response_hook};",
+    "  const pending = new Map();",
+    "  Object.defineProperty(globalThis, responseHook, {",
+    "    value: (response) => {",
+    "      const id = response && String(response.id || \"\");",
+    "      const callbacks = pending.get(id);",
+    "      if (!callbacks) { return false; }",
+    "      pending.delete(id);",
+    "      if (response && response.error) { callbacks.reject(new Error(response.error)); }",
+    "      else { callbacks.resolve(response || null); }",
+    "      return true;",
+    "    },",
+    "    configurable: true,",
+    "  });",
+    "  Object.defineProperty(globalThis, nativeHook, {",
+    "    value: (request) => new Promise((resolve, reject) => {",
+  ]
+  for line in post_message_lines {
+    lines.push(line)
+  }
+  for line in ["    }),", "    configurable: true,", "  });", "})();"] {
+    lines.push(line)
+  }
+  lines.join("\n")
+}
+
+///|
+fn missing_bridge_message(message : String) -> String {
+  message.replace_all(old="`", new="'")
+}
+
+///|
 fn bridge_window_label_from_message(
   message : String,
   window_label~ : String,

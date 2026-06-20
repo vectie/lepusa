@@ -61,11 +61,12 @@
   WKScriptMessageHandler wiring for sync command responses exists; macOS
   WKURLSchemeHandler wiring for Lepusa assets exists; macOS run plans now
   expose sync versus async bridge route metadata; runtime-owned bridge message
-  preparation separates native capture from async dispatch and shares callback
-  script generation across macOS, Linux, and Windows; bundled runtime bridge
-  transport now preserves packaged plugin registry state across repeated bridge
-  calls; open-window macOS launches now report unsupported when async routes
-  require native scheduling; Linux now has a first WebKitGTK source-window loop
+  preparation separates native capture from async dispatch and shares hook
+  bootstrap plus callback script generation across macOS, Linux, and Windows;
+  bundled runtime bridge transport now preserves packaged plugin registry state
+  across repeated bridge calls; open-window macOS launches now report
+  unsupported when async routes require native scheduling; Linux now has a
+  first WebKitGTK source-window loop
   for resolved HTML/file/remote URLs plus sync WebKitGTK script-message bridge
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and

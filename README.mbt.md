@@ -481,8 +481,8 @@ responses. Async bridge scheduling is still a separate runtime-loop step.
 `NativeRuntime.prepare_bridge_message` and `dispatch_bridge_message` own the
 MoonBit side of that path by resolving the target window, response hook, async
 dispatch, and response-callback script. macOS, Linux, and Windows share the
-same runtime response-script helper instead of duplicating bridge callback
-semantics in each backend.
+same runtime hook-bootstrap and response-script helpers instead of duplicating
+bridge callback semantics in each backend.
 The same runner registers a `WKURLSchemeHandler` for the Lepusa asset protocol.
 MoonBit still owns asset resolution; the Objective-C stub only turns the
 runtime asset packet into WebKit response/data/finish calls.
