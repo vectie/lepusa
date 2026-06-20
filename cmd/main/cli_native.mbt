@@ -428,6 +428,9 @@ fn macos_launch_report(
     target=target.name(),
     status=result.status(),
     load_url~,
+    execution_report=Some(
+      native_operation_execution_report(target, plan.execution()),
+    ),
     bridge_sync_routes=plan.bridge().sync_command_routes().length(),
     bridge_async_routes=plan.bridge().async_command_routes().length(),
     target_can_launch=native_status_target_can_launch(result.status()),
@@ -445,9 +448,27 @@ fn native_run_report(
   runtime.run_report(
     target=target.name(),
     status~,
+    execution_report=Some(
+      native_operation_execution_report(
+        target,
+        runtime.runner_plan().execution_plan(),
+      ),
+    ),
     target_can_launch=can_launch,
     target_launch_blocker=blocker,
   )
+}
+
+///|
+fn native_operation_execution_report(
+  target : @lepusa.BundleTarget,
+  execution : @runtime.NativeExecutionPlan,
+) -> @runtime.NativeOperationExecutionReport {
+  match target {
+    MacOS => @macos_backend.operation_executor().execute_startup(execution)
+    Windows => @windows_backend.operation_executor().execute_startup(execution)
+    Linux => @linux_backend.operation_executor().execute_startup(execution)
+  }
 }
 
 ///|

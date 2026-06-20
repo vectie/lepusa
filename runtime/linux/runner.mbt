@@ -172,9 +172,14 @@ pub fn LinuxBundledRunResult::report(
     Some(message) => message
     None => ""
   }
+  let execution_report = match self.plan.native_execution_plan() {
+    Ok(execution) => Some(operation_executor().execute_startup(execution))
+    Err(_) => None
+  }
   self.plan.report(
     status=self.status,
     load_url=self.plan.first_webview_load_url(),
+    execution_report~,
     target_can_launch=blocker == "",
     target_launch_blocker=blocker,
   )

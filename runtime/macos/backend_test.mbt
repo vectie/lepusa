@@ -177,6 +177,13 @@ test "macos backend prepares startup operations for native runner" {
       assert_true(json.contains("\"kind\":\"navigate-window\""))
       assert_true(json.contains("\"lifecycleOperations\""))
       assert_true(json.contains("\"name\":\"flush\""))
+      let execution = operation_executor().execute_startup(
+        plan.execution_plan(),
+      )
+      assert_eq(execution.operation_count(), 3)
+      assert_eq(execution.executed_count(), 1)
+      assert_eq(execution.skipped_count(), 2)
+      assert_eq(execution.failed_count(), 0)
     }
     Err(_) => abort("unexpected invalid macOS runner plan")
   }

@@ -404,6 +404,9 @@ probes, and future supervisors share one status and counter contract.
 `RunReport` includes executable, executed, skipped, and failed operation counts
 plus the first execution failure, so target checks can tell whether a run plan
 only prepared work or whether a platform executor could actually handle it.
+The macOS and Linux platform packages provide executors that mark WebView
+script evaluation as executable today; Windows keeps script evaluation skipped
+until the WebView2 creation loop lands.
 `NativeExecutionPlan` exposes startup evaluation scripts and navigations as
 typed views; source and bundled prepared run plans append startup frontend
 event scripts to the matching `NativeWebViewPlan` initialization script before a

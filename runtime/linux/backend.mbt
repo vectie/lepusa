@@ -55,6 +55,21 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
 }
 
 ///|
+pub fn operation_executor() -> @runtime.NativeOperationExecutor {
+  @runtime.NativeOperationExecutor::new(
+    evaluate_script=fn(_) { NativeOperationExecuted },
+    navigate_window=fn(_) {
+      NativeOperationSkipped(
+        "Linux native navigation after launch is not wired yet",
+      )
+    },
+    run_effect=fn(name) {
+      NativeOperationSkipped("Linux native effect is not registered: \{name}")
+    },
+  )
+}
+
+///|
 pub fn runtime(
   host : @runtime.RuntimeHost,
 ) -> Result[@runtime.NativeRuntime, Array[String]] {

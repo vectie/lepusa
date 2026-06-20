@@ -4,6 +4,7 @@ pub fn NativeRuntime::run_report(
   target~ : String,
   status~ : @lepusa.RunStatus,
   load_url? : String = "",
+  execution_report? : NativeOperationExecutionReport? = None,
   bridge_sync_routes? : Int = 0,
   bridge_async_routes? : Int = 0,
   target_can_launch? : Bool = true,
@@ -19,9 +20,11 @@ pub fn NativeRuntime::run_report(
     Some(webview) => webview.title()
     None => ""
   }
-  let execution = NativeOperationExecutor::new().execute_startup(
-    plan.execution_plan(),
-  )
+  let execution = match execution_report {
+    Some(report) => report
+    None =>
+      NativeOperationExecutor::new().execute_startup(plan.execution_plan())
+  }
   @lepusa.RunReport::new(
     target~,
     backend=plan.backend_name(),

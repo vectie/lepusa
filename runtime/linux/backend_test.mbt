@@ -38,6 +38,16 @@ test "linux backend exposes webkitgtk descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  let execution = operation_executor().execute_all([
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
+        window_label="main",
+        script="resolve()",
+      ),
+    ),
+  ])
+  assert_eq(execution.executed_count(), 1)
+  assert_eq(execution.skipped_count(), 0)
 }
 
 ///|

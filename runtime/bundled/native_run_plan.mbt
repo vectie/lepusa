@@ -235,10 +235,14 @@ pub fn BundledNativeRunPlan::report(
   self : BundledNativeRunPlan,
   status~ : @lepusa.RunStatus,
   load_url? : String = "",
+  execution_report? : @runtime.NativeOperationExecutionReport? = None,
   target_can_launch? : Bool = true,
   target_launch_blocker? : String = "",
 ) -> @lepusa.RunReport {
-  let execution = self.operation_execution_report()
+  let execution = match execution_report {
+    Some(report) => Ok(report)
+    None => self.operation_execution_report()
+  }
   let executable_operations = match execution {
     Ok(report) => report.operation_count()
     Err(_) => 0

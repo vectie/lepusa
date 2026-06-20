@@ -665,6 +665,9 @@ so launchers consume the same operation boundary they report.
 `NativeOperationExecutor` executes those operation arrays through platform
 handlers and reports executed, skipped, and failed outcomes, giving WebView
 loops one reusable path for startup, lifecycle, and bridge-drain work.
+Platform packages now expose `operation_executor()` so source and packaged run
+reports use the backend's actual script-evaluation policy instead of the
+generic skipped-operation fallback.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

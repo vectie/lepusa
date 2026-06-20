@@ -82,6 +82,17 @@ test "windows backend exposes webview2 descriptor" {
   assert_false(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
   assert_true(capability.webview_creation_message().contains("WebView2"))
+  let execution = operation_executor().execute_all([
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
+        window_label="main",
+        script="resolve()",
+      ),
+    ),
+  ])
+  assert_eq(execution.executed_count(), 0)
+  assert_eq(execution.skipped_count(), 1)
+  assert_true(execution.outcomes()[0].status().message().contains("WebView2"))
 }
 
 ///|

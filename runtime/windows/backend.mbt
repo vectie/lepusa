@@ -49,6 +49,25 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
 }
 
 ///|
+pub fn operation_executor() -> @runtime.NativeOperationExecutor {
+  @runtime.NativeOperationExecutor::new(
+    evaluate_script=fn(_) {
+      NativeOperationSkipped(
+        "Windows WebView2 script evaluation is unavailable until the creation loop lands",
+      )
+    },
+    navigate_window=fn(_) {
+      NativeOperationSkipped(
+        "Windows native navigation is unavailable until the WebView2 creation loop lands",
+      )
+    },
+    run_effect=fn(name) {
+      NativeOperationSkipped("Windows native effect is not registered: \{name}")
+    },
+  )
+}
+
+///|
 pub fn runtime(
   host : @runtime.RuntimeHost,
 ) -> Result[@runtime.NativeRuntime, Array[String]] {

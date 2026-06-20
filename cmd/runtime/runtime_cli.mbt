@@ -227,6 +227,7 @@ fn macos_runtime_run_report(
     Ok(webview) => webview.load_url()
     Err(_) => ""
   }
+  let execution = @macos.operation_executor().execute_startup(plan.execution())
   @lepusa.RunReport::new(
     target="macos",
     backend="macos",
@@ -241,6 +242,11 @@ fn macos_runtime_run_report(
     service_start_order=services.startup_service_names(),
     startup_operations=plan.execution().startup_operations().length(),
     lifecycle_steps=plan.execution().lifecycle_steps().length(),
+    executable_operations=execution.operation_count(),
+    executed_operations=execution.executed_count(),
+    skipped_operations=execution.skipped_count(),
+    failed_operations=execution.failed_count(),
+    first_execution_failure=execution.first_failure_message().unwrap_or(""),
     bridge_sync_routes=plan.bridge().sync_command_routes().length(),
     bridge_async_routes=plan.bridge().async_command_routes().length(),
     target_can_launch=blocker == "",
