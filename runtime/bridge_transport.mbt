@@ -835,6 +835,13 @@ pub async fn NativeBridgeLoopCallbacks::drain_window_json(
 }
 
 ///|
+pub async fn NativeBridgeLoopCallbacks::drain_window_scripts(
+  self : NativeBridgeLoopCallbacks,
+) -> Bytes {
+  @utf8.encode(self.drain_window().result().evaluation_scripts().join("\n"))
+}
+
+///|
 pub fn NativeBridgeLoopCallbacks::to_json(
   self : NativeBridgeLoopCallbacks,
 ) -> String {
@@ -843,6 +850,7 @@ pub fn NativeBridgeLoopCallbacks::to_json(
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"handoffCallback\":\"(Bytes)->Bytes\",",
     "\"drainWindow\":\"async()->NativeBridgeLoopDelivery\",",
+    "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
   ].join("")

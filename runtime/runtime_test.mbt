@@ -650,6 +650,10 @@ test "native runner plans expose async bridge blockers" {
         "bridge_loop_adapter().drain_window",
       )
       assert_eq(
+        bridge_loop.drain_window_scripts(),
+        "bridge_loop_adapter().callbacks(window).drain_window_scripts",
+      )
+      assert_eq(
         bridge_loop.result_type(),
         "NativeBridgeLoopResult|BundledBridgeLoopResult",
       )
@@ -703,6 +707,13 @@ test "native runner plans expose async bridge blockers" {
             async_session
             .to_json()
             .contains("\"drainWindow\":\"bridge_loop_adapter().drain_window\""),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"drainWindowScripts\":\"bridge_loop_adapter().callbacks(window).drain_window_scripts\"",
+            ),
           )
           assert_true(
             async_session
@@ -1962,6 +1973,13 @@ async test "native runtime owns bridge message transport" {
           let callbacks = callback_adapter.callbacks(window_label="main")
           assert_eq(callbacks.window_label(), "main")
           assert_true(callbacks.to_json().contains("\"windowLabel\":\"main\""))
+          assert_true(
+            callbacks
+            .to_json()
+            .contains(
+              "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\"",
+            ),
+          )
           let callback_script = @utf8.decode(
             callbacks.handoff_callback()(@utf8.encode(message)),
           ) catch {
@@ -1975,6 +1993,19 @@ async test "native runtime owns bridge message transport" {
           assert_true(callback_json.contains("\"windowLabel\":\"main\""))
           assert_true(callback_json.contains("\"route\":\"core.invoke\""))
           assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          let script_adapter = runtime.bridge_loop_adapter()
+          let script_callbacks = script_adapter.callbacks(window_label="main")
+          ignore(script_callbacks.handoff_callback()(@utf8.encode(message)))
+          let callback_scripts = @utf8.decode(
+            script_callbacks.drain_window_scripts(),
+          ) catch {
+            _ => abort("unexpected invalid bridge callback drain script bytes")
+          }
+          assert_true(
+            callback_scripts.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(callback_scripts.contains("\"id\":\"9\""))
+          assert_true(script_adapter.is_empty())
           assert_true(callback_adapter.is_empty())
           let adapter_delivery = adapter.drain_window(window_label="main")
           assert_eq(adapter_delivery.window_label(), "main")

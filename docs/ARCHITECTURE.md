@@ -233,9 +233,11 @@ enqueue async work through `handoff_callback`, then later drain pending work
 into the same delivery envelope after leaving the synchronous WebView callback.
 For platform runners, `NativeBridgeLoopCallbacks` and
 `BundledBridgeLoopCallbacks` bind those operations to one window label so the
-native backend can keep one queue-backed handoff callback and one async drain
-callback for the WebView it launched. `NativeWebViewLaunchPacket` carries that
-window label with the rest of the C/WebView launch ABI.
+native backend can keep one queue-backed handoff callback, one async drain
+delivery callback, and one executable drain-script payload callback for the
+WebView it launched. `NativeWebViewLaunchPacket` carries that window label with
+the rest of the C/WebView launch ABI; platform C loops still need an async pump
+before they can consume the async drain-script callback directly.
 
 Command rules:
 

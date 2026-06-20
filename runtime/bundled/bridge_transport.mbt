@@ -782,6 +782,13 @@ pub async fn BundledBridgeLoopCallbacks::drain_window_json(
 }
 
 ///|
+pub async fn BundledBridgeLoopCallbacks::drain_window_scripts(
+  self : BundledBridgeLoopCallbacks,
+) -> Bytes {
+  @utf8.encode(self.drain_window().result().evaluation_scripts().join("\n"))
+}
+
+///|
 pub fn BundledBridgeLoopCallbacks::to_json(
   self : BundledBridgeLoopCallbacks,
 ) -> String {
@@ -790,6 +797,7 @@ pub fn BundledBridgeLoopCallbacks::to_json(
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"handoffCallback\":\"(Bytes)->Bytes\",",
     "\"drainWindow\":\"async()->BundledBridgeLoopDelivery\",",
+    "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
   ].join("")

@@ -109,8 +109,9 @@
   that normalize immediate scripts and drained completions; launch-session JSON
   now advertises that adapter/delivery/drain boundary as a `bridgeLoop`
   contract; native launch packets now carry the target window label, and source
-  plus bundled bridge-loop callback bundles bind queue-backed handoff and async
-  drain callbacks to that launched window for platform runners;
+  plus bundled bridge-loop callback bundles bind queue-backed handoff, async
+  drain delivery, and executable drain-script payloads to that launched window
+  for platform runners;
   WebView launch contexts now carry the byte packet plus scheduler, executor,
   and bridge-loop contracts into platform runner code; platform packages now
   declare `NativeLaunchCapability` for WebView creation and async bridge

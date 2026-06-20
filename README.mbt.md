@@ -546,7 +546,9 @@ shape for its drain/evaluate step.
 plan for the target window.
 `drain_window` returns the same delivery shape for async tasks previously
 captured by the message-handler handoff callback, which is the native loop path
-for post-callback WebView evaluation.
+for post-callback WebView evaluation. The callback bundles also expose
+`drain_window_scripts`, a compact UTF-8 JavaScript payload for native loops that
+only need to evaluate the completed callback scripts.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

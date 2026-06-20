@@ -162,6 +162,7 @@ pub struct NativeBridgeLoopCallbacks {
 }
 pub async fn NativeBridgeLoopCallbacks::drain_window(Self) -> NativeBridgeLoopDelivery
 pub async fn NativeBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
+pub async fn NativeBridgeLoopCallbacks::drain_window_scripts(Self) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopCallbacks::to_json(Self) -> String
 pub fn NativeBridgeLoopCallbacks::window_label(Self) -> String
@@ -174,6 +175,7 @@ pub struct NativeBridgeLoopContract {
   receive_message : String
   receive_window_message : String
   drain_window : String
+  drain_window_scripts : String
   result_type : String
   delivery_type : String
   input_encoding : String
@@ -183,6 +185,7 @@ pub fn NativeBridgeLoopContract::adapter(Self) -> String
 pub fn NativeBridgeLoopContract::available(Self) -> Bool
 pub fn NativeBridgeLoopContract::delivery_type(Self) -> String
 pub fn NativeBridgeLoopContract::drain_window(Self) -> String
+pub fn NativeBridgeLoopContract::drain_window_scripts(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_callback(Self) -> String
 pub fn NativeBridgeLoopContract::input_encoding(Self) -> String
 pub fn NativeBridgeLoopContract::new(required~ : Bool, available~ : Bool) -> Self

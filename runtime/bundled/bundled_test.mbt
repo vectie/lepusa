@@ -843,6 +843,13 @@ async test "bundled runtime owns bridge message transport" {
           let callbacks = callback_adapter.callbacks(window_label="main")
           assert_eq(callbacks.window_label(), "main")
           assert_true(callbacks.to_json().contains("\"windowLabel\":\"main\""))
+          assert_true(
+            callbacks
+            .to_json()
+            .contains(
+              "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\"",
+            ),
+          )
           let callback_script = @utf8.decode(
             callbacks.handoff_callback()(@utf8.encode(async_message)),
           ) catch {
@@ -857,6 +864,21 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(callback_json.contains("\"windowLabel\":\"main\""))
           assert_true(callback_json.contains("\"route\":\"fs.writeText\""))
           assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          let script_adapter = runtime.bridge_loop_adapter()
+          let script_callbacks = script_adapter.callbacks(window_label="main")
+          ignore(
+            script_callbacks.handoff_callback()(@utf8.encode(async_message)),
+          )
+          let callback_scripts = @utf8.decode(
+            script_callbacks.drain_window_scripts(),
+          ) catch {
+            _ => abort("unexpected invalid bundled callback drain script bytes")
+          }
+          assert_true(
+            callback_scripts.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(callback_scripts.contains("\"id\":\"write\""))
+          assert_true(script_adapter.is_empty())
           assert_true(callback_adapter.is_empty())
           let adapter_delivery = adapter.drain_window(window_label="main")
           assert_eq(adapter_delivery.window_label(), "main")

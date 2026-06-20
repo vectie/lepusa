@@ -207,6 +207,11 @@ test "runtime cli renders bundled launch-session json" {
   )
   assert_true(
     async_bridge.output.contains(
+      "\"drainWindowScripts\":\"bridge_loop_adapter().callbacks(window).drain_window_scripts\"",
+    ),
+  )
+  assert_true(
+    async_bridge.output.contains(
       "\"deliveryType\":\"NativeBridgeLoopDelivery|BundledBridgeLoopDelivery\"",
     ),
   )
