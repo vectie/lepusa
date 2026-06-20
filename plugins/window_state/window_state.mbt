@@ -112,11 +112,11 @@ pub fn WindowStatePolicy::validate(self : WindowStatePolicy) -> Array[String] {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("windowState")
-  .command_async("save", permission=WindowState)
-  .command_async("restore", permission=WindowState)
-  .command_async("clear", permission=WindowState)
-  .command_async("get", permission=WindowState)
-  .command_async("set", permission=WindowState)
+  .command_sync("save", permission=WindowState)
+  .command_sync("restore", permission=WindowState)
+  .command_sync("clear", permission=WindowState)
+  .command_sync("get", permission=WindowState)
+  .command_sync("set", permission=WindowState)
 }
 
 ///|
@@ -192,29 +192,28 @@ pub fn register(
   store? : WindowStateStore = WindowStateStore::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("windowState.save", permission=WindowState, handler=payload => {
+  .register_fn("windowState.save", permission=WindowState, handler=payload => {
     handle_set(store, payload, status="saved")
   })
-  .register_async_fn("windowState.restore", permission=WindowState, handler=payload => {
+  .register_fn("windowState.restore", permission=WindowState, handler=payload => {
     handle_get(store, payload)
   })
-  .register_async_fn("windowState.clear", permission=WindowState, handler=payload => {
+  .register_fn("windowState.clear", permission=WindowState, handler=payload => {
     handle_clear(store, payload)
   })
-  .register_async_fn("windowState.get", permission=WindowState, handler=payload => {
+  .register_fn("windowState.get", permission=WindowState, handler=payload => {
     handle_get(store, payload)
   })
-  .register_async_fn("windowState.set", permission=WindowState, handler=payload => {
+  .register_fn("windowState.set", permission=WindowState, handler=payload => {
     handle_set(store, payload, status="set")
   })
 }
 
 ///|
-async fn handle_get(
+fn handle_get(
   store : WindowStateStore,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_window_payload(payload, context="window state get") {
     Ok(label) =>
       match store.get(label) {
@@ -240,12 +239,11 @@ async fn handle_get(
 }
 
 ///|
-async fn handle_set(
+fn handle_set(
   store : WindowStateStore,
   payload : String,
   status~ : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_window_payload(payload, context="window state set") {
     Ok(label) => {
       store.set(label, payload)
@@ -261,11 +259,10 @@ async fn handle_set(
 }
 
 ///|
-async fn handle_clear(
+fn handle_clear(
   store : WindowStateStore,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   let label = if payload == "" {
     ""
   } else {

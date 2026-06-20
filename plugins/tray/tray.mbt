@@ -207,12 +207,12 @@ pub fn TrayState::destroyed(self : TrayState) -> Bool {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("tray")
-  .command_async("setIcon", permission=Tray)
-  .command_async("setTooltip", permission=Tray)
-  .command_async("setMenu", permission=Tray)
-  .command_async("showMenu", permission=Tray)
-  .command_async("setVisible", permission=Tray)
-  .command_async("destroy", permission=Tray)
+  .command_sync("setIcon", permission=Tray)
+  .command_sync("setTooltip", permission=Tray)
+  .command_sync("setMenu", permission=Tray)
+  .command_sync("showMenu", permission=Tray)
+  .command_sync("setVisible", permission=Tray)
+  .command_sync("destroy", permission=Tray)
   .command_event("onMenuItemClick", permission=Tray)
 }
 
@@ -245,32 +245,31 @@ pub fn register(
 ) -> @lepusa.CommandRegistry {
   let state = state.unwrap_or(TrayState::new(policy~))
   registry
-  .register_async_fn("tray.setIcon", permission=Tray, handler=payload => {
+  .register_fn("tray.setIcon", permission=Tray, handler=payload => {
     handle_set_icon(state, payload)
   })
-  .register_async_fn("tray.setTooltip", permission=Tray, handler=payload => {
+  .register_fn("tray.setTooltip", permission=Tray, handler=payload => {
     handle_set_tooltip(state, payload)
   })
-  .register_async_fn("tray.setMenu", permission=Tray, handler=payload => {
+  .register_fn("tray.setMenu", permission=Tray, handler=payload => {
     handle_set_menu(state, payload)
   })
-  .register_async_fn("tray.showMenu", permission=Tray, handler=_ => {
+  .register_fn("tray.showMenu", permission=Tray, handler=_ => {
     handle_show_menu(state)
   })
-  .register_async_fn("tray.setVisible", permission=Tray, handler=payload => {
+  .register_fn("tray.setVisible", permission=Tray, handler=payload => {
     handle_set_visible(state, payload)
   })
-  .register_async_fn("tray.destroy", permission=Tray, handler=_ => {
+  .register_fn("tray.destroy", permission=Tray, handler=_ => {
     handle_destroy(state)
   })
 }
 
 ///|
-async fn handle_set_icon(
+fn handle_set_icon(
   state : TrayState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match
     decode_string_payload(payload, field="iconPath", context="tray setIcon") {
     Ok(icon_path) =>
@@ -289,11 +288,10 @@ async fn handle_set_icon(
 }
 
 ///|
-async fn handle_set_tooltip(
+fn handle_set_tooltip(
   state : TrayState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match
     decode_string_payload(payload, field="tooltip", context="tray setTooltip") {
     Ok(tooltip) =>
@@ -312,11 +310,10 @@ async fn handle_set_tooltip(
 }
 
 ///|
-async fn handle_set_menu(
+fn handle_set_menu(
   state : TrayState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_menu_payload(payload) {
     Ok(menu) =>
       match
@@ -334,17 +331,15 @@ async fn handle_set_menu(
 }
 
 ///|
-async fn handle_show_menu(state : TrayState) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_show_menu(state : TrayState) -> Result[String, String] {
   Ok(tray_state_json(state, status="delegated").stringify())
 }
 
 ///|
-async fn handle_set_visible(
+fn handle_set_visible(
   state : TrayState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_visible_payload(payload) {
     Ok(visible) => {
       state.visible = visible
@@ -355,8 +350,7 @@ async fn handle_set_visible(
 }
 
 ///|
-async fn handle_destroy(state : TrayState) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_destroy(state : TrayState) -> Result[String, String] {
   state.destroyed = true
   state.visible = false
   Ok(tray_state_json(state, status="delegated").stringify())

@@ -1,7 +1,7 @@
 # @lepusa/plugins/window_state
 
 `@lepusa/plugins/window_state` defines Lepusa's official window persistence
-command contract. The portable registry keeps state in the current runtime
+command contract. The portable sync registry keeps state in the current runtime
 process for tests and lightweight runtimes. Native backends own platform window
 state capture, restoration, and durable persistence storage.
 

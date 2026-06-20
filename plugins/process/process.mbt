@@ -3,8 +3,8 @@ pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("process")
   .command_sync("info", permission=ProcessInfo)
   .command_sync("cwd", permission=ProcessInfo)
-  .command_async("env", permission=ProcessEnvironment)
-  .command_async("setEnv", permission=ProcessEnvironment)
+  .command_sync("env", permission=ProcessEnvironment)
+  .command_sync("setEnv", permission=ProcessEnvironment)
   .command_async("exit", permission=ProcessControl)
 }
 
@@ -48,12 +48,8 @@ pub fn register(registry : @lepusa.CommandRegistry) -> @lepusa.CommandRegistry {
   registry
   .register_fn("process.info", permission=ProcessInfo, handler=handle_info)
   .register_fn("process.cwd", permission=ProcessInfo, handler=handle_cwd)
-  .register_async_fn(
-    "process.env",
-    permission=ProcessEnvironment,
-    handler=handle_env,
-  )
-  .register_async_fn(
+  .register_fn("process.env", permission=ProcessEnvironment, handler=handle_env)
+  .register_fn(
     "process.setEnv",
     permission=ProcessEnvironment,
     handler=handle_set_env,
@@ -83,8 +79,7 @@ fn handle_cwd(_payload : String) -> Result[String, String] {
 }
 
 ///|
-async fn handle_env(payload : String) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_env(payload : String) -> Result[String, String] {
   match decode_key_payload(payload, context="process env") {
     Ok(key) =>
       match @env.get_env_var(key) {
@@ -110,8 +105,7 @@ async fn handle_env(payload : String) -> Result[String, String] {
 }
 
 ///|
-async fn handle_set_env(payload : String) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_set_env(payload : String) -> Result[String, String] {
   match decode_set_env_payload(payload) {
     Ok((key, value)) => {
       @env.set_env_var(key, value)

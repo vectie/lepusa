@@ -674,9 +674,9 @@ routes, plus portable metadata handlers for configured local services.
 routes.
 `@lepusa/plugins/single_instance` declares app lock, focus, and second-launch
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
-menu-click routes, plus delegated tray state handlers.
+menu-click routes, plus delegated sync tray state handlers.
 `@lepusa/plugins/auto_launch` declares launch-at-login
-status and enablement routes, plus delegated enablement handlers.
+status and enablement routes, plus delegated sync enablement handlers.
 `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes, plus delegated update lifecycle handlers.
@@ -693,10 +693,11 @@ in-process sync handlers for permission and show requests.
 and provides delegated process-table handlers with optional command allow-list
 validation.
 `@lepusa/plugins/deep_link` and `@lepusa/plugins/single_instance` declare app
-launch handoff routes and provide portable state handlers for initial URLs,
-delegated URL opens, primary-instance acquisition, and focus requests.
+launch handoff routes and provide portable sync state handlers for initial
+URLs, delegated URL opens, primary-instance acquisition, and focus requests.
 `@lepusa/plugins/process` declares process metadata, environment, and control
-routes behind split process permissions.
+routes behind split process permissions, with sync portable metadata and
+environment handlers.
 Native platform effects should be implemented by runtime backends behind those
 contracts, not by widening core access.
 `@lepusa/plugins/catalog` is the aggregate lookup package for tools that need

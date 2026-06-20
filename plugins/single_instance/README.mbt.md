@@ -1,7 +1,7 @@
 # @lepusa/plugins/single_instance
 
 `@lepusa/plugins/single_instance` defines Lepusa's official single-instance
-command contract. It includes portable async handlers for primary-instance
+command contract. It includes portable sync handlers for primary-instance
 state, second-launch metadata, release, and focus requests. Native backends own
 cross-process lock acquisition, second-launch handoff, and platform-specific
 window focusing.

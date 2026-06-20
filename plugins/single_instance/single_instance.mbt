@@ -61,10 +61,10 @@ pub fn SingleInstancePolicy::validate(
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("singleInstance")
-  .command_async("status", permission=SingleInstance)
-  .command_async("acquire", permission=SingleInstance)
-  .command_async("release", permission=SingleInstance)
-  .command_async("focus", permission=SingleInstance)
+  .command_sync("status", permission=SingleInstance)
+  .command_sync("acquire", permission=SingleInstance)
+  .command_sync("release", permission=SingleInstance)
+  .command_sync("focus", permission=SingleInstance)
   .command_event("onSecondLaunch", permission=SingleInstance)
 }
 
@@ -127,36 +127,34 @@ pub fn register(
   state? : SingleInstanceState = SingleInstanceState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("singleInstance.status", permission=SingleInstance, handler=_ => {
+  .register_fn("singleInstance.status", permission=SingleInstance, handler=_ => {
     handle_status(policy, state)
   })
-  .register_async_fn("singleInstance.acquire", permission=SingleInstance, handler=payload => {
+  .register_fn("singleInstance.acquire", permission=SingleInstance, handler=payload => {
     handle_acquire(policy, state, payload)
   })
-  .register_async_fn("singleInstance.release", permission=SingleInstance, handler=_ => {
+  .register_fn("singleInstance.release", permission=SingleInstance, handler=_ => {
     handle_release(policy, state)
   })
-  .register_async_fn("singleInstance.focus", permission=SingleInstance, handler=_ => {
+  .register_fn("singleInstance.focus", permission=SingleInstance, handler=_ => {
     handle_focus(policy, state)
   })
 }
 
 ///|
-async fn handle_status(
+fn handle_status(
   policy : SingleInstancePolicy,
   state : SingleInstanceState,
 ) -> Result[String, String] {
-  @async.sleep(0)
   Ok(single_instance_json(policy, state, status="ready").stringify())
 }
 
 ///|
-async fn handle_acquire(
+fn handle_acquire(
   policy : SingleInstancePolicy,
   state : SingleInstanceState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   let launch = match decode_launch_payload(payload) {
     Ok(value) => value
     Err(problem) => return Err(problem)
@@ -173,21 +171,19 @@ async fn handle_acquire(
 }
 
 ///|
-async fn handle_release(
+fn handle_release(
   policy : SingleInstancePolicy,
   state : SingleInstanceState,
 ) -> Result[String, String] {
-  @async.sleep(0)
   state.acquired = false
   Ok(single_instance_json(policy, state, status="released").stringify())
 }
 
 ///|
-async fn handle_focus(
+fn handle_focus(
   policy : SingleInstancePolicy,
   state : SingleInstanceState,
 ) -> Result[String, String] {
-  @async.sleep(0)
   state.focused_count += 1
   Ok(single_instance_json(policy, state, status="focused").stringify())
 }

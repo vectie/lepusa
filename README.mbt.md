@@ -361,26 +361,26 @@ lifecycle actions; native backends own process execution and HTTP probing.
 
 `@lepusa/plugins/deep_link` defines app URL scheme routes such as
 `deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus
-scheme/host policy metadata. Its portable registry reports initial URLs,
+scheme/host policy metadata. Its portable sync registry reports initial URLs,
 records delegated registration/open requests, and validates scheme/host policy;
 native backends own OS registration and dispatch.
 
 `@lepusa/plugins/single_instance` defines app lock and launch handoff routes
 such as `singleInstance.acquire`, `singleInstance.focus`, and
 `singleInstance.onSecondLaunch`, plus instance-key policy metadata. Its
-portable registry tracks primary/secondary launch state and focus requests;
+portable sync registry tracks primary/secondary launch state and focus requests;
 native backends own cross-process locking and platform window activation.
 
 `@lepusa/plugins/tray` defines system tray routes such as `tray.setIcon`,
 `tray.setMenu`, `tray.setVisible`, and `tray.onMenuItemClick`, plus menu item
 policy metadata. Its portable registry validates and tracks icon, tooltip,
-menu, visibility, and destroy state, then delegates status icon creation and OS
-menu behavior to native backends.
+menu, visibility, and destroy state through sync handlers, then delegates status
+icon creation and OS menu behavior to native backends.
 
 `@lepusa/plugins/auto_launch` defines launch-at-login routes such as
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
 `autoLaunch.setEnabled`, plus startup registration policy metadata. Its
-portable registry validates startup metadata and tracks desired enablement
+portable sync registry validates startup metadata and tracks desired enablement
 state, then delegates platform login item, registry, service, or desktop-entry
 behavior to native backends.
 
@@ -428,15 +428,15 @@ native backends own actual OS execution and platform-specific restrictions.
 
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split `process.info`, `process.environment`, and
-`process.control` permissions. The portable registry implements process
+`process.control` permissions. The portable sync registry implements process
 metadata, current-directory, and environment handlers; native backends own
 process termination policy.
 
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin
 declarations and bind MoonBit handlers where they exist, including scoped async
-filesystem handlers and portable process, localhost, service-discovery, and
-window-state handlers.
+filesystem handlers and portable sync process, localhost, service-discovery,
+deep-link, single-instance, tray, auto-launch, and window-state handlers.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,

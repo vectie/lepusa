@@ -9,7 +9,7 @@ test "window state plugin declares persistence commands" {
   assert_true(declared.command_routes().contains("windowState.get"))
   assert_true(declared.command_routes().contains("windowState.set"))
   let commands = declared.commands()
-  assert_true(commands[0].mode() is Async)
+  assert_true(commands[0].mode() is Sync)
   assert_true(commands[0].permission() is WindowState)
 }
 
@@ -57,7 +57,7 @@ test "window state policy rejects invalid metadata" {
 }
 
 ///|
-async test "window state plugin registers portable state handlers" {
+test "window state plugin registers portable state handlers" {
   let store = WindowStateStore::new()
   let registry = register(@lepusa.CommandRegistry::new(), store~)
   assert_true(registry.contains("windowState.save"))
@@ -66,7 +66,7 @@ async test "window state plugin registers portable state handlers" {
   assert_true(registry.contains("windowState.get"))
   assert_true(registry.contains("windowState.set"))
   let capability = capability_for_window("main")
-  let set = registry.dispatch_async(
+  let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="set",
       window_label="main",
@@ -78,7 +78,7 @@ async test "window state plugin registers portable state handlers" {
   )
   assert_true(set is InvokeOk("set", _))
   assert_true(set.payload().unwrap_or("").contains("\"status\":\"set\""))
-  let get = registry.dispatch_async(
+  let get = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="get",
       window_label="main",
@@ -91,7 +91,7 @@ async test "window state plugin registers portable state handlers" {
   assert_true(get is InvokeOk("get", _))
   assert_true(get.payload().unwrap_or("").contains("\"found\":true"))
   assert_true(get.payload().unwrap_or("").contains("\\\"width\\\":900"))
-  let clear = registry.dispatch_async(
+  let clear = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="clear",
       window_label="main",

@@ -11,7 +11,7 @@ test "tray plugin declares status icon commands" {
   assert_true(declared.command_routes().contains("tray.destroy"))
   assert_true(declared.command_routes().contains("tray.onMenuItemClick"))
   let commands = declared.commands()
-  assert_true(commands[0].mode() is Async)
+  assert_true(commands[0].mode() is Sync)
   assert_true(commands[6].mode() is Event)
   assert_true(commands[0].permission() is Tray)
 }
@@ -51,7 +51,7 @@ test "tray policy rejects invalid menu metadata" {
 }
 
 ///|
-async test "tray registry tracks delegated tray state" {
+test "tray registry tracks delegated tray state" {
   let state = TrayState::new()
   let registry = registry(state~)
   let grant = capability_for_window("main")
@@ -62,7 +62,7 @@ async test "tray registry tracks delegated tray state" {
     command="setIcon",
     payload="{\"iconPath\":\"assets/tray.png\"}",
   )
-  let icon = registry.dispatch_async(icon_request, capabilities=[grant])
+  let icon = registry.dispatch(icon_request, capabilities=[grant])
   assert_true(icon.payload().unwrap_or("").contains("\"status\":\"delegated\""))
   assert_true(state.icon_path() is Some("assets/tray.png"))
   let tooltip_request = @lepusa.InvokeRequest::new(
@@ -72,7 +72,7 @@ async test "tray registry tracks delegated tray state" {
     command="setTooltip",
     payload="\"Lepusa\"",
   )
-  let tooltip = registry.dispatch_async(tooltip_request, capabilities=[grant])
+  let tooltip = registry.dispatch(tooltip_request, capabilities=[grant])
   assert_true(
     tooltip.payload().unwrap_or("").contains("\"tooltip\":\"Lepusa\""),
   )
@@ -84,7 +84,7 @@ async test "tray registry tracks delegated tray state" {
     command="setMenu",
     payload="{ \"items\": [ { \"id\": \"open\", \"label\": \"Open\" }, { \"kind\": \"separator\" }, { \"kind\": \"check\", \"id\": \"launch\", \"label\": \"Launch at login\", \"checked\": true } ] }",
   )
-  let menu = registry.dispatch_async(menu_request, capabilities=[grant])
+  let menu = registry.dispatch(menu_request, capabilities=[grant])
   assert_true(menu.payload().unwrap_or("").contains("\"kind\":\"check\""))
   assert_eq(state.menu().length(), 3)
   assert_true(state.menu()[2].kind() is Check)
@@ -96,7 +96,7 @@ async test "tray registry tracks delegated tray state" {
     command="setVisible",
     payload="false",
   )
-  let visible = registry.dispatch_async(visible_request, capabilities=[grant])
+  let visible = registry.dispatch(visible_request, capabilities=[grant])
   assert_true(visible.payload().unwrap_or("").contains("\"visible\":false"))
   assert_false(state.visible())
   let destroy_request = @lepusa.InvokeRequest::new(
@@ -105,14 +105,14 @@ async test "tray registry tracks delegated tray state" {
     plugin="tray",
     command="destroy",
   )
-  let destroyed = registry.dispatch_async(destroy_request, capabilities=[grant])
+  let destroyed = registry.dispatch(destroy_request, capabilities=[grant])
   assert_true(destroyed.payload().unwrap_or("").contains("\"destroyed\":true"))
   assert_true(state.destroyed())
   assert_false(state.visible())
 }
 
 ///|
-async test "tray registry rejects invalid delegated state" {
+test "tray registry rejects invalid delegated state" {
   let registry = registry()
   let grant = capability_for_window("main")
   let bad_icon_request = @lepusa.InvokeRequest::new(
@@ -122,7 +122,7 @@ async test "tray registry rejects invalid delegated state" {
     command="setIcon",
     payload="{\"iconPath\":\"assets\\\\tray.png\"}",
   )
-  let bad_icon = registry.dispatch_async(bad_icon_request, capabilities=[grant])
+  let bad_icon = registry.dispatch(bad_icon_request, capabilities=[grant])
   assert_true(
     bad_icon is InvokeError("1", "tray icon path must use forward slashes"),
   )
@@ -133,7 +133,7 @@ async test "tray registry rejects invalid delegated state" {
     command="setMenu",
     payload="[ { \"id\": \"open\", \"label\": \"Open\" }, { \"id\": \"open\", \"label\": \"Open again\" } ]",
   )
-  let duplicate_menu = registry.dispatch_async(duplicate_menu_request, capabilities=[
+  let duplicate_menu = registry.dispatch(duplicate_menu_request, capabilities=[
     grant,
   ])
   assert_true(

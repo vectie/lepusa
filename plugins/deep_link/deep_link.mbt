@@ -97,11 +97,11 @@ pub fn DeepLinkPolicy::validate(self : DeepLinkPolicy) -> Array[String] {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("deepLink")
-  .command_async("getInitialUrls", permission=DeepLink)
+  .command_sync("getInitialUrls", permission=DeepLink)
   .command_event("onOpenUrl", permission=DeepLink)
-  .command_async("register", permission=DeepLink)
-  .command_async("unregister", permission=DeepLink)
-  .command_async("openUrl", permission=DeepLink)
+  .command_sync("register", permission=DeepLink)
+  .command_sync("unregister", permission=DeepLink)
+  .command_sync("openUrl", permission=DeepLink)
 }
 
 ///|
@@ -167,37 +167,33 @@ pub fn register(
   state? : DeepLinkState = DeepLinkState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("deepLink.getInitialUrls", permission=DeepLink, handler=_ => {
+  .register_fn("deepLink.getInitialUrls", permission=DeepLink, handler=_ => {
     handle_get_initial_urls(state)
   })
-  .register_async_fn("deepLink.register", permission=DeepLink, handler=payload => {
+  .register_fn("deepLink.register", permission=DeepLink, handler=payload => {
     handle_register(policy, state, payload)
   })
-  .register_async_fn("deepLink.unregister", permission=DeepLink, handler=payload => {
+  .register_fn("deepLink.unregister", permission=DeepLink, handler=payload => {
     handle_unregister(policy, state, payload)
   })
-  .register_async_fn("deepLink.openUrl", permission=DeepLink, handler=payload => {
+  .register_fn("deepLink.openUrl", permission=DeepLink, handler=payload => {
     handle_open_url(policy, state, payload)
   })
 }
 
 ///|
-async fn handle_get_initial_urls(
-  state : DeepLinkState,
-) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_get_initial_urls(state : DeepLinkState) -> Result[String, String] {
   Ok(
     Json::object({ "urls": string_array_json(state.initial_urls()) }).stringify(),
   )
 }
 
 ///|
-async fn handle_register(
+fn handle_register(
   policy : DeepLinkPolicy,
   state : DeepLinkState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_scheme_payload(payload, context="deep link register") {
     Ok(scheme) =>
       if !policy.allows_scheme(scheme) {
@@ -219,12 +215,11 @@ async fn handle_register(
 }
 
 ///|
-async fn handle_unregister(
+fn handle_unregister(
   policy : DeepLinkPolicy,
   state : DeepLinkState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_scheme_payload(payload, context="deep link unregister") {
     Ok(scheme) =>
       if !policy.allows_scheme(scheme) {
@@ -249,12 +244,11 @@ async fn handle_unregister(
 }
 
 ///|
-async fn handle_open_url(
+fn handle_open_url(
   policy : DeepLinkPolicy,
   state : DeepLinkState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_url_payload(payload, context="deep link openUrl") {
     Ok(url) =>
       match parse_deep_link_url(url) {

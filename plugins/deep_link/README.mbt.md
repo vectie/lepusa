@@ -1,7 +1,7 @@
 # @lepusa/plugins/deep_link
 
 `@lepusa/plugins/deep_link` defines Lepusa's official deep-link command
-contract. It includes portable async handlers for initial URL state, delegated
+contract. It includes portable sync handlers for initial URL state, delegated
 scheme registration, and URL open validation. Native backends own OS URL scheme
 registration, launch URL capture, and platform-specific dispatch.
 

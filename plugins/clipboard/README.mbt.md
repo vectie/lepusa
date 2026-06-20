@@ -2,7 +2,7 @@
 
 `@lepusa/plugins/clipboard` defines Lepusa's official clipboard command
 contract. It declares platform-neutral routes, exposes native system clipboard
-handlers for desktop runtimes, and keeps an async `ClipboardStore` registry for
+handlers for desktop runtimes, and keeps a sync `ClipboardStore` registry for
 deterministic tests or in-process previews.
 
 ```moonbit nocheck

@@ -11,8 +11,9 @@ test "process plugin declares explicit process commands" {
   let commands = declared.commands()
   assert_true(commands[0].mode() is Sync)
   assert_true(commands[0].permission() is ProcessInfo)
-  assert_true(commands[2].mode() is Async)
+  assert_true(commands[2].mode() is Sync)
   assert_true(commands[2].permission() is ProcessEnvironment)
+  assert_true(commands[4].mode() is Async)
   assert_true(commands[4].permission() is ProcessControl)
 }
 
@@ -36,7 +37,7 @@ test "process capabilities split info environment and control" {
 }
 
 ///|
-async test "process plugin registers portable process handlers" {
+test "process plugin registers portable process handlers" {
   let registry = register(@lepusa.CommandRegistry::new())
   assert_true(registry.contains("process.info"))
   assert_true(registry.contains("process.cwd"))
@@ -66,7 +67,7 @@ async test "process plugin registers portable process handlers" {
   )
   assert_true(cwd is InvokeOk("cwd", _))
   let key = "LEPUSA_PROCESS_TEST"
-  let set = registry.dispatch_async(
+  let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="set",
       window_label="main",
@@ -77,7 +78,7 @@ async test "process plugin registers portable process handlers" {
     capabilities=[capability],
   )
   assert_true(set is InvokeOk("set", _))
-  let env = registry.dispatch_async(
+  let env = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="env",
       window_label="main",

@@ -94,10 +94,10 @@ pub fn AutoLaunchState::last_action(self : AutoLaunchState) -> String {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("autoLaunch")
-  .command_async("status", permission=AutoLaunch)
-  .command_async("enable", permission=AutoLaunch)
-  .command_async("disable", permission=AutoLaunch)
-  .command_async("setEnabled", permission=AutoLaunch)
+  .command_sync("status", permission=AutoLaunch)
+  .command_sync("enable", permission=AutoLaunch)
+  .command_sync("disable", permission=AutoLaunch)
+  .command_sync("setEnabled", permission=AutoLaunch)
 }
 
 ///|
@@ -128,26 +128,25 @@ pub fn register(
   state? : AutoLaunchState = AutoLaunchState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("autoLaunch.status", permission=AutoLaunch, handler=_ => {
+  .register_fn("autoLaunch.status", permission=AutoLaunch, handler=_ => {
     handle_status(policy, state)
   })
-  .register_async_fn("autoLaunch.enable", permission=AutoLaunch, handler=_ => {
+  .register_fn("autoLaunch.enable", permission=AutoLaunch, handler=_ => {
     handle_set(policy, state, enabled=true, action="enable")
   })
-  .register_async_fn("autoLaunch.disable", permission=AutoLaunch, handler=_ => {
+  .register_fn("autoLaunch.disable", permission=AutoLaunch, handler=_ => {
     handle_set(policy, state, enabled=false, action="disable")
   })
-  .register_async_fn("autoLaunch.setEnabled", permission=AutoLaunch, handler=payload => {
+  .register_fn("autoLaunch.setEnabled", permission=AutoLaunch, handler=payload => {
     handle_set_enabled(policy, state, payload)
   })
 }
 
 ///|
-async fn handle_status(
+fn handle_status(
   policy : AutoLaunchPolicy,
   state : AutoLaunchState,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match first_problem(policy.validate()) {
     Some(problem) => Err(problem)
     None => Ok(auto_launch_json(policy, state, status="ready").stringify())
@@ -155,13 +154,12 @@ async fn handle_status(
 }
 
 ///|
-async fn handle_set(
+fn handle_set(
   policy : AutoLaunchPolicy,
   state : AutoLaunchState,
   enabled~ : Bool,
   action~ : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match first_problem(policy.validate()) {
     Some(problem) => Err(problem)
     None => {
@@ -173,12 +171,11 @@ async fn handle_set(
 }
 
 ///|
-async fn handle_set_enabled(
+fn handle_set_enabled(
   policy : AutoLaunchPolicy,
   state : AutoLaunchState,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_enabled_payload(payload) {
     Ok(enabled) =>
       match first_problem(policy.validate()) {

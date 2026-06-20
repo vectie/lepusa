@@ -8,7 +8,7 @@ test "auto launch plugin declares startup registration commands" {
   assert_true(declared.command_routes().contains("autoLaunch.disable"))
   assert_true(declared.command_routes().contains("autoLaunch.setEnabled"))
   let commands = declared.commands()
-  assert_true(commands[0].mode() is Async)
+  assert_true(commands[0].mode() is Sync)
   assert_true(commands[0].permission() is AutoLaunch)
 }
 
@@ -48,7 +48,7 @@ test "auto launch policy rejects invalid metadata" {
 }
 
 ///|
-async test "auto launch registry tracks delegated enablement state" {
+test "auto launch registry tracks delegated enablement state" {
   let policy = AutoLaunchPolicy::new(
     name="dev.local.lepusa",
     executable="Contents/MacOS/lepusa",
@@ -62,14 +62,14 @@ async test "auto launch registry tracks delegated enablement state" {
   assert_true(registry.contains("autoLaunch.enable"))
   assert_true(registry.contains("autoLaunch.disable"))
   assert_true(registry.contains("autoLaunch.setEnabled"))
-  assert_eq(registry.async_routes().length(), 4)
+  assert_eq(registry.sync_routes().length(), 4)
   let status_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
     plugin="autoLaunch",
     command="status",
   )
-  let status = registry.dispatch_async(status_request, capabilities=[grant])
+  let status = registry.dispatch(status_request, capabilities=[grant])
   assert_true(status.payload().unwrap_or("").contains("\"status\":\"ready\""))
   assert_false(state.enabled())
   let enable_request = @lepusa.InvokeRequest::new(
@@ -78,7 +78,7 @@ async test "auto launch registry tracks delegated enablement state" {
     plugin="autoLaunch",
     command="enable",
   )
-  let enabled = registry.dispatch_async(enable_request, capabilities=[grant])
+  let enabled = registry.dispatch(enable_request, capabilities=[grant])
   assert_true(
     enabled.payload().unwrap_or("").contains("\"status\":\"delegated\""),
   )
@@ -92,7 +92,7 @@ async test "auto launch registry tracks delegated enablement state" {
     command="setEnabled",
     payload="{\"enabled\":false}",
   )
-  let set = registry.dispatch_async(set_request, capabilities=[grant])
+  let set = registry.dispatch(set_request, capabilities=[grant])
   assert_true(set.payload().unwrap_or("").contains("\"enabled\":false"))
   assert_false(state.enabled())
   assert_eq(state.last_action(), "setEnabled")
@@ -102,13 +102,13 @@ async test "auto launch registry tracks delegated enablement state" {
     plugin="autoLaunch",
     command="disable",
   )
-  let disabled = registry.dispatch_async(disable_request, capabilities=[grant])
+  let disabled = registry.dispatch(disable_request, capabilities=[grant])
   assert_true(disabled.payload().unwrap_or("").contains("\"enabled\":false"))
   assert_eq(state.last_action(), "disable")
 }
 
 ///|
-async test "auto launch registry validates policy and payloads" {
+test "auto launch registry validates policy and payloads" {
   let bad_policy = AutoLaunchPolicy::new(name="bad/name")
   let bad_registry = registry(policy=bad_policy)
   let grant = capability_for_window("main")
@@ -118,7 +118,7 @@ async test "auto launch registry validates policy and payloads" {
     plugin="autoLaunch",
     command="status",
   )
-  let status = bad_registry.dispatch_async(status_request, capabilities=[grant])
+  let status = bad_registry.dispatch(status_request, capabilities=[grant])
   assert_true(
     status is InvokeError("1", "auto launch name is invalid: bad/name"),
   )
@@ -130,7 +130,7 @@ async test "auto launch registry validates policy and payloads" {
     command="setEnabled",
     payload="{\"enabled\":\"yes\"}",
   )
-  let set = valid.dispatch_async(set_request, capabilities=[grant])
+  let set = valid.dispatch(set_request, capabilities=[grant])
   assert_true(
     set is InvokeError("2", "auto launch setEnabled enabled is required"),
   )

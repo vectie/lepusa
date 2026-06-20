@@ -1,5 +1,4 @@
 import {
-  "moonbitlang/async",
   "moonbitlang/core/env",
   "moonbitlang/core/json",
   "vectie/lepusa",
