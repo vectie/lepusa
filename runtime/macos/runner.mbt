@@ -161,13 +161,17 @@ pub fn run(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
-    Ok(plan) =>
+    Ok(plan) => {
+      let adapter = runtime.bridge_loop_adapter()
       run_plan(
         plan,
         mode~,
-        dispatch=runtime.bridge_loop_adapter().handoff_callback(),
+        dispatch_for_window=fn(window_label) {
+          adapter.callbacks(window_label~).handoff_callback()
+        },
         resolve_asset=runtime.asset_protocol_resolver_callback(),
       )
+    }
   }
 }
 
@@ -178,13 +182,17 @@ pub fn run_bundled(
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_bundled_run(manifest) {
     Err(problems) => Err(problems)
-    Ok(plan) =>
+    Ok(plan) => {
+      let adapter = manifest.bridge_loop_adapter()
       run_plan(
         plan,
         mode~,
-        dispatch=manifest.bridge_loop_adapter().handoff_callback(),
+        dispatch_for_window=fn(window_label) {
+          adapter.callbacks(window_label~).handoff_callback()
+        },
         resolve_asset=manifest.asset_protocol_resolver_callback(),
       )
+    }
   }
 }
 
@@ -303,7 +311,7 @@ pub fn MacOSRunResult::status(self : MacOSRunResult) -> @lepusa.RunStatus {
 fn run_plan(
   plan : MacOSRunPlan,
   mode~ : MacOSRunMode,
-  dispatch~ : (Bytes) -> Bytes,
+  dispatch_for_window~ : (String) -> (Bytes) -> Bytes,
   resolve_asset~ : (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
@@ -319,6 +327,7 @@ fn run_plan(
         Err(problem) => return Err([problem])
       }
       let packet = context.packet()
+      let dispatch = dispatch_for_window(packet.label_text())
       let exit_code = run_webview_with_bridge(
         packet.title(),
         packet.load_url(),

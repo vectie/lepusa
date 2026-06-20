@@ -51,6 +51,13 @@ pub struct NativeBridgeLoopAdapter {
 }
 
 ///|
+pub struct NativeBridgeLoopCallbacks {
+  window_label : String
+  handoff_callback : (Bytes) -> Bytes
+  drain_window_callback : async () -> NativeBridgeLoopDelivery
+}
+
+///|
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
@@ -740,6 +747,18 @@ pub fn NativeBridgeLoopAdapter::handoff_callback(
 }
 
 ///|
+pub fn NativeBridgeLoopAdapter::callbacks(
+  self : NativeBridgeLoopAdapter,
+  window_label~ : String,
+) -> NativeBridgeLoopCallbacks {
+  {
+    window_label,
+    handoff_callback: self.handoff_callback(),
+    drain_window_callback: () => self.drain_window(window_label~),
+  }
+}
+
+///|
 pub async fn NativeBridgeLoopAdapter::drain(
   self : NativeBridgeLoopAdapter,
 ) -> Array[NativeBridgeCompletion] {
@@ -785,6 +804,48 @@ pub fn NativeBridgeLoopAdapter::to_json(
   self : NativeBridgeLoopAdapter,
 ) -> String {
   self.queue.to_json()
+}
+
+///|
+pub fn NativeBridgeLoopCallbacks::window_label(
+  self : NativeBridgeLoopCallbacks,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeBridgeLoopCallbacks::handoff_callback(
+  self : NativeBridgeLoopCallbacks,
+) -> (Bytes) -> Bytes {
+  self.handoff_callback
+}
+
+///|
+pub async fn NativeBridgeLoopCallbacks::drain_window(
+  self : NativeBridgeLoopCallbacks,
+) -> NativeBridgeLoopDelivery {
+  (self.drain_window_callback)()
+}
+
+///|
+pub async fn NativeBridgeLoopCallbacks::drain_window_json(
+  self : NativeBridgeLoopCallbacks,
+) -> Bytes {
+  @utf8.encode(self.drain_window().to_json())
+}
+
+///|
+pub fn NativeBridgeLoopCallbacks::to_json(
+  self : NativeBridgeLoopCallbacks,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"handoffCallback\":\"(Bytes)->Bytes\",",
+    "\"drainWindow\":\"async()->NativeBridgeLoopDelivery\",",
+    "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
+    "}",
+  ].join("")
 }
 
 ///|

@@ -824,6 +824,25 @@ async test "bundled runtime owns bridge message transport" {
           assert_eq(adapter.pending_count(), 1)
           assert_true(adapter.to_json().contains("\"pendingCount\":1"))
           assert_true(adapter.to_json().contains("\"route\":\"fs.writeText\""))
+          let callback_adapter = runtime.bridge_loop_adapter()
+          let callbacks = callback_adapter.callbacks(window_label="main")
+          assert_eq(callbacks.window_label(), "main")
+          assert_true(callbacks.to_json().contains("\"windowLabel\":\"main\""))
+          let callback_script = @utf8.decode(
+            callbacks.handoff_callback()(@utf8.encode(async_message)),
+          ) catch {
+            _ =>
+              abort("unexpected invalid bundled bridge callback bundle bytes")
+          }
+          assert_eq(callback_script, "")
+          assert_eq(callback_adapter.pending_count(), 1)
+          let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
+            _ => abort("unexpected invalid bundled callback drain json bytes")
+          }
+          assert_true(callback_json.contains("\"windowLabel\":\"main\""))
+          assert_true(callback_json.contains("\"route\":\"fs.writeText\""))
+          assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          assert_true(callback_adapter.is_empty())
           let adapter_delivery = adapter.drain_window(window_label="main")
           assert_eq(adapter_delivery.window_label(), "main")
           assert_false(adapter_delivery.result().has_immediate_script())

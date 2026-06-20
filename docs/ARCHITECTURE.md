@@ -195,6 +195,11 @@ loop result and executable evaluation plan for the target window.
 `drain_window` exposes the split native-loop path: the message handler can
 enqueue async work through `handoff_callback`, then later drain pending work
 into the same delivery envelope after leaving the synchronous WebView callback.
+For platform runners, `NativeBridgeLoopCallbacks` and
+`BundledBridgeLoopCallbacks` bind those operations to one window label so the
+native backend can keep one queue-backed handoff callback and one async drain
+callback for the WebView it launched. `NativeWebViewLaunchPacket` carries that
+window label with the rest of the C/WebView launch ABI.
 
 Command rules:
 

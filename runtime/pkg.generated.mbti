@@ -119,6 +119,7 @@ pub struct NativeBridgeLoopAdapter {
   runtime : NativeRuntime
   queue : NativeBridgeWorkQueue
 }
+pub fn NativeBridgeLoopAdapter::callbacks(Self, window_label~ : String) -> NativeBridgeLoopCallbacks
 pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
@@ -131,6 +132,17 @@ pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBrid
 pub async fn NativeBridgeLoopAdapter::receive_window_message(Self, window_label~ : String, Bytes) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::runtime(Self) -> NativeRuntime
 pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
+
+pub struct NativeBridgeLoopCallbacks {
+  window_label : String
+  handoff_callback : (Bytes) -> Bytes
+  drain_window_callback : async () -> NativeBridgeLoopDelivery
+}
+pub async fn NativeBridgeLoopCallbacks::drain_window(Self) -> NativeBridgeLoopDelivery
+pub async fn NativeBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
+pub fn NativeBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeBridgeLoopCallbacks::to_json(Self) -> String
+pub fn NativeBridgeLoopCallbacks::window_label(Self) -> String
 
 pub struct NativeBridgeLoopContract {
   required : Bool
@@ -538,6 +550,7 @@ pub fn NativeWebViewLaunchContext::packet(Self) -> NativeWebViewLaunchPacket
 pub fn NativeWebViewLaunchContext::to_json(Self) -> String
 
 pub struct NativeWebViewLaunchPacket {
+  label : Bytes
   title : Bytes
   load_url : Bytes
   initialization_script : Bytes
@@ -552,6 +565,8 @@ pub fn NativeWebViewLaunchPacket::asset_protocol_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::height(Self) -> Int
 pub fn NativeWebViewLaunchPacket::initialization_script(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::initialization_script_text(Self) -> String
+pub fn NativeWebViewLaunchPacket::label(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::label_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::load_url(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::load_url_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::native_hook(Self) -> Bytes

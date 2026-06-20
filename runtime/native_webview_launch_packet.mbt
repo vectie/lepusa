@@ -1,5 +1,6 @@
 ///|
 pub struct NativeWebViewLaunchPacket {
+  label : Bytes
   title : Bytes
   load_url : Bytes
   initialization_script : Bytes
@@ -23,6 +24,7 @@ pub fn NativeWebViewPlan::launch_packet(
   self : NativeWebViewPlan,
 ) -> NativeWebViewLaunchPacket {
   {
+    label: @utf8.encode(self.label()),
     title: @utf8.encode(self.title()),
     load_url: @utf8.encode(self.load_url()),
     initialization_script: @utf8.encode(self.initialization_script()),
@@ -125,6 +127,7 @@ pub fn NativeWebViewLaunchPacket::to_json(
 ) -> String {
   [
     "{",
+    "\"label\":\{self.label_text().json_string()},",
     "\"title\":\{self.title_text().json_string()},",
     "\"loadUrl\":\{self.load_url_text().json_string()},",
     "\"initializationScript\":\{self.initialization_script_text().json_string()},",
@@ -135,6 +138,22 @@ pub fn NativeWebViewLaunchPacket::to_json(
     "\"resizable\":\{self.resizable}",
     "}",
   ].join("")
+}
+
+///|
+pub fn NativeWebViewLaunchPacket::label(
+  self : NativeWebViewLaunchPacket,
+) -> Bytes {
+  self.label
+}
+
+///|
+pub fn NativeWebViewLaunchPacket::label_text(
+  self : NativeWebViewLaunchPacket,
+) -> String {
+  @utf8.decode(self.label) catch {
+    _ => ""
+  }
 }
 
 ///|

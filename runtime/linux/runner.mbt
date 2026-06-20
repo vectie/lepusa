@@ -202,6 +202,8 @@ fn linux_open_window(
     Err(problem) => return RunFailed(problem)
   }
   let packet = context.packet()
+  let adapter = runtime.bridge_loop_adapter()
+  let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
     packet.title(),
     packet.load_url(),
@@ -212,7 +214,7 @@ fn linux_open_window(
     packet.height(),
     packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
-    runtime.bridge_loop_adapter().handoff_callback(),
+    callbacks.handoff_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
     runtime.asset_protocol_resolver_callback(),
   )
@@ -241,6 +243,8 @@ fn linux_open_bundled_window(
     Err(problem) => return RunFailed(problem)
   }
   let packet = context.packet()
+  let adapter = manifest.bridge_loop_adapter()
+  let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
     packet.title(),
     packet.load_url(),
@@ -251,7 +255,7 @@ fn linux_open_bundled_window(
     packet.height(),
     packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
-    manifest.bridge_loop_adapter().handoff_callback(),
+    callbacks.handoff_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
     manifest.asset_protocol_resolver_callback(),
   )

@@ -45,6 +45,13 @@ pub struct BundledBridgeLoopAdapter {
 }
 
 ///|
+pub struct BundledBridgeLoopCallbacks {
+  window_label : String
+  handoff_callback : (Bytes) -> Bytes
+  drain_window_callback : async () -> BundledBridgeLoopDelivery
+}
+
+///|
 pub struct BundledBridgeLoopResult {
   immediate_script : String
   completions : Array[BundledBridgeCompletion]
@@ -687,6 +694,18 @@ pub fn BundledBridgeLoopAdapter::handoff_callback(
 }
 
 ///|
+pub fn BundledBridgeLoopAdapter::callbacks(
+  self : BundledBridgeLoopAdapter,
+  window_label~ : String,
+) -> BundledBridgeLoopCallbacks {
+  {
+    window_label,
+    handoff_callback: self.handoff_callback(),
+    drain_window_callback: () => self.drain_window(window_label~),
+  }
+}
+
+///|
 pub async fn BundledBridgeLoopAdapter::drain(
   self : BundledBridgeLoopAdapter,
 ) -> Array[BundledBridgeCompletion] {
@@ -732,6 +751,48 @@ pub fn BundledBridgeLoopAdapter::to_json(
   self : BundledBridgeLoopAdapter,
 ) -> String {
   self.queue.to_json()
+}
+
+///|
+pub fn BundledBridgeLoopCallbacks::window_label(
+  self : BundledBridgeLoopCallbacks,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn BundledBridgeLoopCallbacks::handoff_callback(
+  self : BundledBridgeLoopCallbacks,
+) -> (Bytes) -> Bytes {
+  self.handoff_callback
+}
+
+///|
+pub async fn BundledBridgeLoopCallbacks::drain_window(
+  self : BundledBridgeLoopCallbacks,
+) -> BundledBridgeLoopDelivery {
+  (self.drain_window_callback)()
+}
+
+///|
+pub async fn BundledBridgeLoopCallbacks::drain_window_json(
+  self : BundledBridgeLoopCallbacks,
+) -> Bytes {
+  @utf8.encode(self.drain_window().to_json())
+}
+
+///|
+pub fn BundledBridgeLoopCallbacks::to_json(
+  self : BundledBridgeLoopCallbacks,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"handoffCallback\":\"(Bytes)->Bytes\",",
+    "\"drainWindow\":\"async()->BundledBridgeLoopDelivery\",",
+    "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
+    "}",
+  ].join("")
 }
 
 ///|

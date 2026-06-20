@@ -463,6 +463,7 @@ test "native webview launch packet owns abi lowering" {
         ) {
         Ok(webview) => {
           let packet = webview.launch_packet()
+          assert_eq(packet.label_text(), "main")
           assert_eq(packet.title_text(), "Runtime")
           assert_eq(packet.load_url_text(), "lepusa://inline/main/index.html")
           assert_eq(packet.native_hook_text(), "__lepusaInvoke")
@@ -471,10 +472,12 @@ test "native webview launch packet owns abi lowering" {
           assert_eq(packet.width(), 900)
           assert_eq(packet.height(), 640)
           assert_eq(packet.resizable(), 1)
+          assert_true(packet.to_json().contains("\"label\":\"main\""))
           assert_true(packet.to_json().contains("\"title\":\"Runtime\""))
           let context = webview.launch_context(
             bridge_scheduler=runtime.runner_plan().bridge_scheduler(),
           )
+          assert_eq(context.packet().label_text(), "main")
           assert_eq(context.packet().native_hook_text(), "__lepusaInvoke")
           assert_false(context.bridge_scheduler().requires_async_dispatch())
           assert_false(context.async_bridge_executor().required())
@@ -1777,6 +1780,24 @@ async test "native runtime owns bridge message transport" {
           assert_eq(adapter.pending_count(), 1)
           assert_true(adapter.to_json().contains("\"pendingCount\":1"))
           assert_true(adapter.to_json().contains("\"route\":\"core.invoke\""))
+          let callback_adapter = runtime.bridge_loop_adapter()
+          let callbacks = callback_adapter.callbacks(window_label="main")
+          assert_eq(callbacks.window_label(), "main")
+          assert_true(callbacks.to_json().contains("\"windowLabel\":\"main\""))
+          let callback_script = @utf8.decode(
+            callbacks.handoff_callback()(@utf8.encode(message)),
+          ) catch {
+            _ => abort("unexpected invalid bridge callback bundle bytes")
+          }
+          assert_eq(callback_script, "")
+          assert_eq(callback_adapter.pending_count(), 1)
+          let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
+            _ => abort("unexpected invalid bridge callback drain json bytes")
+          }
+          assert_true(callback_json.contains("\"windowLabel\":\"main\""))
+          assert_true(callback_json.contains("\"route\":\"core.invoke\""))
+          assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          assert_true(callback_adapter.is_empty())
           let adapter_delivery = adapter.drain_window(window_label="main")
           assert_eq(adapter_delivery.window_label(), "main")
           assert_false(adapter_delivery.result().has_immediate_script())
