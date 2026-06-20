@@ -678,6 +678,9 @@ by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 Bundle verification records target runtime dependencies too: system WebViews
 are reported as declared external dependencies, while file-backed dependencies
 such as Windows `WebView2Loader.dll` are checked at their planned bundle path.
+When a file-backed dependency declares a source path, `bundle-write` copies it
+before verification; the Windows loader source defaults to
+`_build/native/debug/build/cmd/runtime/WebView2Loader.dll`.
 When the selected bundle target matches an available host runtime backend and
 the local `cmd/runtime` native binary exists, `bundle-write` also embeds a
 target-named `lepusa-runtime` executable beside the launcher and verifies it

@@ -164,15 +164,17 @@ pub struct BundleRuntimeDependency {
   kind : BundleRuntimeDependencyKind
   name : String
   path : String?
+  source_path : String?
   required : Bool
   description : String
 } derive(Eq, @debug.Debug)
 pub fn BundleRuntimeDependency::description(Self) -> String
 pub fn BundleRuntimeDependency::kind(Self) -> BundleRuntimeDependencyKind
 pub fn BundleRuntimeDependency::name(Self) -> String
-pub fn BundleRuntimeDependency::new(kind~ : BundleRuntimeDependencyKind, name~ : String, path? : String, required? : Bool, description~ : String) -> Self
+pub fn BundleRuntimeDependency::new(kind~ : BundleRuntimeDependencyKind, name~ : String, path? : String, source_path? : String, required? : Bool, description~ : String) -> Self
 pub fn BundleRuntimeDependency::path(Self) -> String?
 pub fn BundleRuntimeDependency::required(Self) -> Bool
+pub fn BundleRuntimeDependency::source_path(Self) -> String?
 pub fn BundleRuntimeDependency::to_json(Self) -> String
 
 pub(all) enum BundleRuntimeDependencyKind {

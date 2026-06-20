@@ -1205,9 +1205,14 @@ test "windows bundle artifacts match generated command launcher" {
             dependencies[1].path().unwrap(),
             "windows-app/WebView2Loader.dll",
           )
+          assert_eq(
+            dependencies[1].source_path().unwrap(),
+            "_build/native/debug/build/cmd/runtime/WebView2Loader.dll",
+          )
           assert_true(
             dependencies[1].to_json().contains("\"native-loader-library\""),
           )
+          assert_true(dependencies[1].to_json().contains("\"sourcePath\""))
           match plan.files() {
             Ok(files) => {
               assert_eq(files.length(), 3)

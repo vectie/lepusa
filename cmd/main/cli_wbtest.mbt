@@ -325,6 +325,11 @@ async test "bundle plan supports target selection" {
       "\"path\":\"lepusa-example/WebView2Loader.dll\"",
     ),
   )
+  assert_true(
+    json_result.output.contains(
+      "\"sourcePath\":\"_build/native/debug/build/cmd/runtime/WebView2Loader.dll\"",
+    ),
+  )
   assert_true(json_result.output.contains("\"signingPrerequisites\":["))
   assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("\"signingSteps\":[]"))
@@ -1892,6 +1897,11 @@ async test "bundle write gates target launch capability" {
   assert_true(result.output.contains("[fail] verify: native-launch-session"))
   assert_true(result.output.contains("[fail] verify: runtime-dependency"))
   assert_true(result.output.contains("WebView2Loader.dll"))
+  assert_true(
+    result.output.contains(
+      "from _build/native/debug/build/cmd/runtime/WebView2Loader.dll",
+    ),
+  )
   assert_true(result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
@@ -1906,6 +1916,11 @@ async test "bundle write gates target launch capability" {
   assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("\"ok\":false"))
   assert_true(json_result.output.contains("WebView2Loader.dll"))
+  assert_true(
+    json_result.output.contains(
+      "_build/native/debug/build/cmd/runtime/WebView2Loader.dll",
+    ),
+  )
   assert_true(json_result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(json_root + "/lepusa-example/lepusa/runtime.json"))
 }

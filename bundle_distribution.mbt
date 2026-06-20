@@ -26,6 +26,7 @@ pub struct BundleRuntimeDependency {
   kind : BundleRuntimeDependencyKind
   name : String
   path : String?
+  source_path : String?
   required : Bool
   description : String
 } derive(Debug, Eq)
@@ -207,10 +208,11 @@ pub fn BundleRuntimeDependency::new(
   kind~ : BundleRuntimeDependencyKind,
   name~ : String,
   path? : String,
+  source_path? : String,
   required? : Bool = true,
   description~ : String,
 ) -> BundleRuntimeDependency {
-  { kind, name, path, required, description }
+  { kind, name, path, source_path, required, description }
 }
 
 ///|
@@ -228,6 +230,13 @@ pub fn BundleRuntimeDependency::name(self : BundleRuntimeDependency) -> String {
 ///|
 pub fn BundleRuntimeDependency::path(self : BundleRuntimeDependency) -> String? {
   self.path
+}
+
+///|
+pub fn BundleRuntimeDependency::source_path(
+  self : BundleRuntimeDependency,
+) -> String? {
+  self.source_path
 }
 
 ///|
@@ -264,6 +273,7 @@ pub fn BundleRuntimeDependency::to_json(
     "\"name\":\{self.name.json_string()},",
     "\"required\":\{self.required.json_bool()},",
     "\"path\":\{optional_bundle_json_string(self.path)},",
+    "\"sourcePath\":\{optional_bundle_json_string(self.source_path)},",
     "\"description\":\{self.description.json_string()}",
     "}",
   ].join("")
@@ -442,6 +452,7 @@ pub fn BundlePlan::runtime_dependencies(
           kind=NativeLoaderLibrary,
           name="WebView2Loader.dll",
           path="\{self.executable_name()}/WebView2Loader.dll",
+          source_path="_build/native/debug/build/cmd/runtime/WebView2Loader.dll",
           description="Required beside the Windows Lepusa runtime so it can load the WebView2 API without a wrapper layer",
         ),
       ]

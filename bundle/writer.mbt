@@ -172,9 +172,17 @@ pub async fn write_plan(
           }
         }
       }
+      let copied_runtime_dependencies = copy_bundle_runtime_dependencies(
+        plan.runtime_dependencies(),
+        root,
+        problems,
+      )
       let runtime_executable = copy_bundle_runtime_executable(
         plan, root, problems,
       )
+      for path in copied_runtime_dependencies {
+        written.push(path)
+      }
       match runtime_executable {
         Some(path) => written.push(path)
         None => ()
@@ -400,6 +408,32 @@ async fn copy_bundle_runtime_executable(
 }
 
 ///|
+async fn copy_bundle_runtime_dependencies(
+  dependencies : Array[@lepusa.BundleRuntimeDependency],
+  root : String,
+  problems : Array[String],
+) -> Array[String] {
+  let copied : Array[String] = []
+  for dependency in dependencies {
+    match (dependency.source_path(), dependency.path()) {
+      (Some(source), Some(destination)) => {
+        let source_exists = @xfs.is_file(source) catch { _ => false }
+        if source_exists {
+          let path = join_path(root, destination)
+          let problem_count = problems.length()
+          copy_bundle_file(source, path, problems)
+          if problems.length() == problem_count {
+            copied.push(path)
+          }
+        }
+      }
+      _ => ()
+    }
+  }
+  copied
+}
+
+///|
 fn bundled_runtime_destination_path(plan : @lepusa.BundlePlan) -> String? {
   if !bundle_target_matches_host_runtime(plan.target()) {
     return None
@@ -452,7 +486,11 @@ fn verify_runtime_dependency(
         message=if ok {
           "runtime dependency is bundled: \{dependency.name()}"
         } else {
-          "runtime dependency is missing: \{dependency.name()}"
+          match dependency.source_path() {
+            Some(source) =>
+              "runtime dependency is missing: \{dependency.name()} from \{source}"
+            None => "runtime dependency is missing: \{dependency.name()}"
+          }
         },
       )
     }
