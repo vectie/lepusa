@@ -95,6 +95,8 @@ async test "native plan prints backend bootstrap json" {
   assert_true(result.output.contains("\"webviewSpecs\""))
   assert_true(result.output.contains("\"startupOperations\""))
   assert_true(result.output.contains("\"lifecycleOperations\""))
+  assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"mode\":\"sync-only\""))
   assert_true(result.output.contains("\"nativeHook\":\"__lepusaInvoke\""))
 }
 

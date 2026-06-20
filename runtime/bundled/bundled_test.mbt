@@ -227,6 +227,9 @@ test "bundled runtime manifest emits bootstrap json" {
       assert_true(bootstrap.contains("\"lifecycleOperations\""))
       assert_true(bootstrap.contains("\"kind\":\"app-will-exit\""))
       assert_true(bootstrap.contains("\"bridgeRoutes\""))
+      assert_true(bootstrap.contains("\"bridgeScheduler\""))
+      assert_true(bootstrap.contains("\"mode\":\"sync-only\""))
+      assert_true(bootstrap.contains("\"canLaunch\""))
     }
     Err(problem) => abort(problem)
   }

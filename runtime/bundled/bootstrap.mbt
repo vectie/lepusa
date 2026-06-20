@@ -65,7 +65,8 @@ pub fn BundledBootstrapPlan::to_json(self : BundledBootstrapPlan) -> String {
     "\"bridgeRoutes\":{",
     "\"sync\":[\{manifest.registered_sync_routes().map(fn(route) { route.json_string() }).join(",")}],",
     "\"async\":[\{manifest.registered_async_routes().map(fn(route) { route.json_string() }).join(",")}]",
-    "}",
+    "},",
+    "\"bridgeScheduler\":\{manifest.bridge_scheduler().to_json()}",
     "}",
   ].join("")
 }

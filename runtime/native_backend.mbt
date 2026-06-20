@@ -333,6 +333,7 @@ pub fn NativeRunnerPlan::bootstrap_json(self : NativeRunnerPlan) -> String {
     "\"sync\":[\{self.bridge_sync_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"async\":[\{self.bridge_async_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "},",
+    "\"bridgeScheduler\":\{self.bridge_scheduler().to_json()},",
     "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"lifecycleOperations\":[\{self.lifecycle_steps.map(fn(step) { step.to_json() }).join(",")}]",
     "}",

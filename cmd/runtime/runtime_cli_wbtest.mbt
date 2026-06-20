@@ -116,6 +116,8 @@ test "runtime cli renders bundled bootstrap json" {
   assert_true(result.output.contains("\"capabilities\""))
   assert_true(result.output.contains("\"permissions\":[\"custom:log.write\"]"))
   assert_true(result.output.contains("\"bridgeRoutes\""))
+  assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"mode\":\"sync-only\""))
   assert_true(result.output.contains("\"registeredRoutes\":[\"log.write\"]"))
 }
 

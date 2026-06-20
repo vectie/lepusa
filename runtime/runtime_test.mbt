@@ -136,6 +136,9 @@ test "native backend lowers host runner plan with portable operations" {
       assert_true(json.contains("\"nativeHook\":\"__lepusaInvoke\""))
       assert_true(json.contains("\"startupOperations\""))
       assert_true(json.contains("\"lifecycleOperations\""))
+      assert_true(json.contains("\"bridgeScheduler\""))
+      assert_true(json.contains("\"mode\":\"sync-only\""))
+      assert_true(json.contains("\"canLaunch\""))
       assert_true(json.contains("\"kind\":\"app-will-exit\""))
       assert_true(json.contains("\"session\""))
     }

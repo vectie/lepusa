@@ -341,7 +341,9 @@ types, declared command routes, and registered native routes.
 `lepusa native-plan [macos|windows|linux]` emits the selected backend's
 `NativeRunnerPlan::bootstrap_json()`, including the portable runtime manifest,
 per-window WebView specs, startup operations, and prelowered lifecycle
-operations that a platform runner needs.
+operations that a platform runner needs. The bootstrap also includes
+`bridgeScheduler`, the shared sync-only/async-capable launch policy derived
+from registered bridge routes.
 
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,
@@ -465,8 +467,8 @@ without opening a window, so bundles have a cheap validation probe.
 --manifest <runtime.json>` emits the target-aware packaged runtime bootstrap
 for platform loops: manifest path, bundle root, app metadata, native backend,
 WebView engine, WebView specs, service supervisor plan, startup operations,
-lifecycle operations, bridge routes, and the canonical runtime object that a
-backend consumes.
+lifecycle operations, bridge routes, bridge scheduler policy, and the canonical
+runtime object that a backend consumes.
 `lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe and
 reports the bundled service supervisor requirement plus sidecar start order.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
@@ -495,7 +497,9 @@ WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
 responses. Native launch paths refuse async bridge routes with an explicit
 scheduler requirement until a backend event loop can dispatch them without
-blocking the WebView callback.
+blocking the WebView callback. The same `bridgeScheduler` field appears in
+source and bundled bootstrap JSON so platform loops and CLI diagnostics read
+one launch policy.
 `NativeRuntime.prepare_bridge_message` and `dispatch_bridge_message` own the
 MoonBit side of that path by resolving the target window, response hook,
 sync/async dispatch, and response-callback script. macOS, Linux, and Windows
