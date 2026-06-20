@@ -192,7 +192,7 @@ async test "bundle plan supports target selection" {
   let result = render_cli_async(["bundle-plan", "windows"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
-  assert_true(result.output.contains("bundle: lepusa-example.exe"))
+  assert_true(result.output.contains("bundle: lepusa-example.cmd"))
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 3"))
@@ -1670,6 +1670,9 @@ async test "build and bundle aliases materialize planned files" {
     bundle_root + "/lepusa-example/lepusa/runtime.json",
   ).text()
   assert_true(windows_runtime_json.contains("\"kind\":\"executable\""))
+  assert_true(
+    windows_runtime_json.contains("lepusa-example/lepusa-example.cmd"),
+  )
   assert_true(windows_runtime_json.contains("\"kind\":\"installer\""))
   assert_true(windows_runtime_json.contains("lepusa-example-0.1.0-setup.exe"))
 }

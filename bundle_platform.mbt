@@ -20,7 +20,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
           content=self.windows_manifest(),
         ),
         BundleFile::new(
-          path="\{self.executable_name}/\{self.executable_name}.cmd",
+          path="\{self.executable_name}/\{self.bundle_name()}",
           content=windows_launcher(),
         ),
       ]

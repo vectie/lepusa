@@ -583,7 +583,7 @@ signing configuration. They should not need to maintain native launcher code.
 metadata plus shared runtime assets:
 
 - macOS: `Contents/Info.plist`, launcher stub, runtime manifest
-- Windows: app manifest, command launcher, runtime manifest
+- Windows: app manifest, `.cmd` command launcher, runtime manifest
 - Linux: `.desktop` entry, executable launcher, runtime manifest
 
 The next bundler step should write these files and add platform signing or

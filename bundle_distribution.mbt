@@ -312,7 +312,7 @@ pub fn BundlePlan::artifacts(self : BundlePlan) -> Array[BundleArtifact] {
         BundleArtifact::new(
           kind=ExecutableArtifact,
           path="\{self.executable_name}/\{self.bundle_name()}",
-          description="Windows application executable",
+          description="Windows command launcher executable",
         ),
         BundleArtifact::new(
           kind=InstallerArtifact,
@@ -474,7 +474,7 @@ fn BundlePlan::windows_signing_steps(self : BundlePlan) -> Array[SigningStep] {
           name="sign-executable",
           tool="signtool",
           arguments~,
-          description="Apply an Authenticode signature to the Windows executable",
+          description="Apply an Authenticode signature to the Windows launcher artifact",
         ),
       )
     }

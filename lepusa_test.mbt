@@ -1138,6 +1138,51 @@ test "bundle files include platform metadata" {
 }
 
 ///|
+test "windows bundle artifacts match generated command launcher" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    source=@lepusa.Source::html("<main></main>"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(runtime) => {
+      let metadata = @lepusa.AppMetadata::new(
+        identifier="dev.vectie.windows",
+        product_name="Windows App",
+        version="1.2.0",
+      )
+      match @lepusa.BundleConfig::new(metadata, target=Windows).plan(runtime) {
+        Ok(plan) => {
+          assert_eq(plan.executable_name(), "windows-app")
+          assert_eq(plan.bundle_name(), "windows-app.cmd")
+          let artifacts = plan.artifacts()
+          assert_eq(artifacts.length(), 2)
+          assert_true(artifacts[0].kind() is ExecutableArtifact)
+          assert_eq(artifacts[0].path(), "windows-app/windows-app.cmd")
+          assert_true(artifacts[1].kind() is InstallerArtifact)
+          assert_eq(artifacts[1].path(), "windows-app-1.2.0-setup.exe")
+          match plan.files() {
+            Ok(files) => {
+              assert_eq(files.length(), 3)
+              assert_eq(files[0].path(), "windows-app/app.manifest.xml")
+              assert_eq(files[1].path(), "windows-app/windows-app.cmd")
+              assert_true(
+                files[1].content().contains("lepusa-runtime.exe launch"),
+              )
+              assert_true(
+                files[2].content().contains("windows-app/windows-app.cmd"),
+              )
+            }
+            Err(_) => abort("unexpected invalid windows bundle files")
+          }
+        }
+        Err(_) => abort("unexpected invalid windows bundle plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "project manifests validate reusable app configuration" {
   let manifest = @lepusa.ProjectManifest::new(
     @lepusa.AppMetadata::new(
