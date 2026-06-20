@@ -115,6 +115,20 @@ pub fn NativeBridgeHandoff::requires_async_dispatch(Self) -> Bool
 pub fn NativeBridgeHandoff::task(Self) -> NativeBridgeDispatchTask
 pub fn NativeBridgeHandoff::to_json(Self) -> String
 
+pub struct NativeBridgeLoopAdapter {
+  runtime : NativeRuntime
+  queue : NativeBridgeWorkQueue
+}
+pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
+pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
+pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool
+pub fn NativeBridgeLoopAdapter::new(NativeRuntime) -> Self
+pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int
+pub fn NativeBridgeLoopAdapter::queue(Self) -> NativeBridgeWorkQueue
+pub fn NativeBridgeLoopAdapter::runtime(Self) -> NativeRuntime
+pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
+
 pub struct NativeBridgeMessage {
   window_label : String
   response_hook : String
@@ -345,6 +359,7 @@ pub fn NativeRuntime::bridge_dispatch_task(Self, String, window_label? : String)
 pub fn NativeRuntime::bridge_handoff(Self, String, window_label? : String) -> Result[NativeBridgeHandoff, Array[String]]
 pub fn NativeRuntime::bridge_handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_handoff_script_bytes(Self, Bytes) -> Bytes
+pub fn NativeRuntime::bridge_loop_adapter(Self) -> NativeBridgeLoopAdapter
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]

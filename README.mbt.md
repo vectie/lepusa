@@ -426,6 +426,9 @@ code cannot accidentally run a sync command twice.
 deferred async routes, and lets the loop drain completions later before
 evaluating each callback script in the target WebView. Packaged runtimes expose
 the same shape as `BundledBridgeWorkQueue`.
+`NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
+queue, native message callback, pending-state diagnostics, and drain operation
+into the object platform event loops should keep beside each WebView host.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

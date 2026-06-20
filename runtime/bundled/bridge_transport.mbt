@@ -39,6 +39,12 @@ pub struct BundledBridgeWorkQueue {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeLoopAdapter {
+  runtime : BundledRuntime
+  queue : BundledBridgeWorkQueue
+}
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -601,6 +607,84 @@ pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String 
     "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::new(
+  runtime : BundledRuntime,
+) -> BundledBridgeLoopAdapter {
+  { runtime, queue: BundledBridgeWorkQueue::new() }
+}
+
+///|
+pub fn BundledRuntime::bridge_loop_adapter(
+  self : BundledRuntime,
+) -> BundledBridgeLoopAdapter {
+  BundledBridgeLoopAdapter::new(self)
+}
+
+///|
+pub fn BundledRuntimeManifest::bridge_loop_adapter(
+  self : BundledRuntimeManifest,
+) -> BundledBridgeLoopAdapter {
+  BundledRuntime::new(self).bridge_loop_adapter()
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::runtime(
+  self : BundledBridgeLoopAdapter,
+) -> BundledRuntime {
+  self.runtime
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::queue(
+  self : BundledBridgeLoopAdapter,
+) -> BundledBridgeWorkQueue {
+  self.queue
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::pending_count(
+  self : BundledBridgeLoopAdapter,
+) -> Int {
+  self.queue.pending_count()
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::is_empty(
+  self : BundledBridgeLoopAdapter,
+) -> Bool {
+  self.queue.is_empty()
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::handoff_script_bytes(
+  self : BundledBridgeLoopAdapter,
+  message : Bytes,
+) -> Bytes {
+  self.queue.handoff_script_bytes(self.runtime, message)
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::handoff_callback(
+  self : BundledBridgeLoopAdapter,
+) -> (Bytes) -> Bytes {
+  self.queue.handoff_callback(self.runtime)
+}
+
+///|
+pub async fn BundledBridgeLoopAdapter::drain(
+  self : BundledBridgeLoopAdapter,
+) -> Array[BundledBridgeCompletion] {
+  self.queue.drain(self.runtime)
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::to_json(
+  self : BundledBridgeLoopAdapter,
+) -> String {
+  self.queue.to_json()
 }
 
 ///|

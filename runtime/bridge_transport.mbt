@@ -45,6 +45,12 @@ pub struct NativeBridgeWorkQueue {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeLoopAdapter {
+  runtime : NativeRuntime
+  queue : NativeBridgeWorkQueue
+}
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -661,6 +667,77 @@ pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
     "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::new(
+  runtime : NativeRuntime,
+) -> NativeBridgeLoopAdapter {
+  { runtime, queue: NativeBridgeWorkQueue::new() }
+}
+
+///|
+pub fn NativeRuntime::bridge_loop_adapter(
+  self : NativeRuntime,
+) -> NativeBridgeLoopAdapter {
+  NativeBridgeLoopAdapter::new(self)
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::runtime(
+  self : NativeBridgeLoopAdapter,
+) -> NativeRuntime {
+  self.runtime
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::queue(
+  self : NativeBridgeLoopAdapter,
+) -> NativeBridgeWorkQueue {
+  self.queue
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::pending_count(
+  self : NativeBridgeLoopAdapter,
+) -> Int {
+  self.queue.pending_count()
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::is_empty(
+  self : NativeBridgeLoopAdapter,
+) -> Bool {
+  self.queue.is_empty()
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::handoff_script_bytes(
+  self : NativeBridgeLoopAdapter,
+  message : Bytes,
+) -> Bytes {
+  self.queue.handoff_script_bytes(self.runtime, message)
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::handoff_callback(
+  self : NativeBridgeLoopAdapter,
+) -> (Bytes) -> Bytes {
+  self.queue.handoff_callback(self.runtime)
+}
+
+///|
+pub async fn NativeBridgeLoopAdapter::drain(
+  self : NativeBridgeLoopAdapter,
+) -> Array[NativeBridgeCompletion] {
+  self.queue.drain(self.runtime)
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::to_json(
+  self : NativeBridgeLoopAdapter,
+) -> String {
+  self.queue.to_json()
 }
 
 ///|

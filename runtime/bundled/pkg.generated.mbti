@@ -79,6 +79,20 @@ pub fn BundledBridgeHandoff::requires_async_dispatch(Self) -> Bool
 pub fn BundledBridgeHandoff::task(Self) -> BundledBridgeDispatchTask
 pub fn BundledBridgeHandoff::to_json(Self) -> String
 
+pub struct BundledBridgeLoopAdapter {
+  runtime : BundledRuntime
+  queue : BundledBridgeWorkQueue
+}
+pub async fn BundledBridgeLoopAdapter::drain(Self) -> Array[BundledBridgeCompletion]
+pub fn BundledBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn BundledBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
+pub fn BundledBridgeLoopAdapter::is_empty(Self) -> Bool
+pub fn BundledBridgeLoopAdapter::new(BundledRuntime) -> Self
+pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int
+pub fn BundledBridgeLoopAdapter::queue(Self) -> BundledBridgeWorkQueue
+pub fn BundledBridgeLoopAdapter::runtime(Self) -> BundledRuntime
+pub fn BundledBridgeLoopAdapter::to_json(Self) -> String
+
 pub struct BundledBridgeMessage {
   window_label : String
   response_hook : String
@@ -209,12 +223,14 @@ pub struct BundledRuntime {
 pub fn BundledRuntime::bridge_dispatch_task(Self, String, window_label? : String) -> Result[BundledBridgeDispatchTask, Array[String]]
 pub fn BundledRuntime::bridge_handoff(Self, String, window_label? : String) -> Result[BundledBridgeHandoff, Array[String]]
 pub fn BundledRuntime::bridge_handoff_script_bytes(Self, Bytes) -> Bytes
+pub fn BundledRuntime::bridge_loop_adapter(Self) -> BundledBridgeLoopAdapter
 pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
 pub async fn BundledRuntime::dispatch_bridge_script_bytes_async(Self, Bytes) -> Bytes
 pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
+pub fn BundledRuntime::manifest(Self) -> BundledRuntimeManifest
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
 pub fn BundledRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
 
@@ -234,6 +250,7 @@ pub fn BundledRuntimeManifest::bridge_dispatch_callback(Self) -> (Bytes) -> Byte
 pub fn BundledRuntimeManifest::bridge_dispatch_task(Self, String, window_label? : String) -> Result[BundledBridgeDispatchTask, Array[String]]
 pub fn BundledRuntimeManifest::bridge_handoff(Self, String, window_label? : String) -> Result[BundledBridgeHandoff, Array[String]]
 pub fn BundledRuntimeManifest::bridge_handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn BundledRuntimeManifest::bridge_loop_adapter(Self) -> BundledBridgeLoopAdapter
 pub fn BundledRuntimeManifest::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn BundledRuntimeManifest::bridge_scheduler(Self, mode? : @runtime.NativeBridgeSchedulerMode) -> @runtime.NativeBridgeScheduler
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String

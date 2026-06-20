@@ -758,6 +758,17 @@ async test "bundled runtime owns bridge message transport" {
         sync_queue_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_queue.is_empty())
+      let sync_adapter = manifest.bridge_loop_adapter()
+      let sync_adapter_script = @utf8.decode(
+        sync_adapter.handoff_script_bytes(@utf8.encode(sync_message)),
+      ) catch {
+        _ =>
+          abort("unexpected invalid bundled immediate adapter callback bytes")
+      }
+      assert_true(
+        sync_adapter_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(sync_adapter.is_empty())
       let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
       match runtime.bridge_dispatch_task(async_message) {
         Ok(task) => {
@@ -789,6 +800,27 @@ async test "bundled runtime owns bridge message transport" {
           let queued_completions = queue.drain(runtime)
           assert_eq(queued_completions.length(), 1)
           assert_true(queue.is_empty())
+          let adapter = runtime.bridge_loop_adapter()
+          assert_true(adapter.is_empty())
+          let adapter_script = @utf8.decode(
+            adapter.handoff_callback()(@utf8.encode(async_message)),
+          ) catch {
+            _ => abort("unexpected invalid bundled bridge loop adapter bytes")
+          }
+          assert_eq(adapter_script, "")
+          assert_eq(adapter.pending_count(), 1)
+          assert_true(adapter.to_json().contains("\"pendingCount\":1"))
+          assert_true(adapter.to_json().contains("\"route\":\"fs.writeText\""))
+          let adapter_completions = adapter.drain()
+          assert_eq(adapter_completions.length(), 1)
+          assert_true(adapter.is_empty())
+          assert_true(adapter.queue().is_empty())
+          assert_eq(adapter.runtime().manifest().path(), "runtime.json")
+          assert_true(
+            adapter_completions[0]
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)
             Err(_) => abort("unexpected bundled bridge queue enqueue failure")

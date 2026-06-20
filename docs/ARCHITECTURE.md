@@ -166,6 +166,9 @@ Its `handoff_callback(runtime)` method is the sync native message-handler
 callback: immediate routes return a script immediately, while async routes are
 queued for later drain. `BundledBridgeWorkQueue` mirrors the same contract for
 packaged runtimes.
+`NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` wrap that queue with
+its owning runtime, callback, diagnostics, and drain operation so platform
+backends do not need to reassemble scheduling state around every WebView.
 
 Command rules:
 

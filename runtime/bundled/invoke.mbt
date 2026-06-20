@@ -11,6 +11,13 @@ pub fn BundledRuntime::new(manifest : BundledRuntimeManifest) -> BundledRuntime 
 }
 
 ///|
+pub fn BundledRuntime::manifest(
+  self : BundledRuntime,
+) -> BundledRuntimeManifest {
+  self.manifest
+}
+
+///|
 pub fn BundledRuntimeManifest::dispatch_json(
   self : BundledRuntimeManifest,
   id~ : String,
