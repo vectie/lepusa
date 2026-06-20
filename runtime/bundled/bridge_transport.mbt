@@ -28,6 +28,12 @@ pub struct BundledBridgeHandoff {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeCompletion {
+  task : BundledBridgeDispatchTask
+  dispatch : BundledBridgeDispatch
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -353,6 +359,14 @@ pub async fn BundledBridgeDispatchTask::dispatch(
 }
 
 ///|
+pub async fn BundledBridgeDispatchTask::complete(
+  self : BundledBridgeDispatchTask,
+  runtime : BundledRuntime,
+) -> BundledBridgeCompletion {
+  { task: self, dispatch: self.dispatch(runtime) }
+}
+
+///|
 fn BundledBridgeDispatchTask::dispatch_sync(
   self : BundledBridgeDispatchTask,
   runtime : BundledRuntime,
@@ -433,6 +447,52 @@ pub fn BundledBridgeHandoff::to_json(self : BundledBridgeHandoff) -> String {
     "\"kind\":\{self.kind().json_string()},",
     "\"task\":\{self.task.to_json()},",
     "\"immediateDispatch\":\{immediate}",
+    "}",
+  ].join("")
+}
+
+///|
+pub async fn BundledBridgeHandoff::complete_deferred(
+  self : BundledBridgeHandoff,
+  runtime : BundledRuntime,
+) -> Result[BundledBridgeCompletion, String] {
+  if self.requires_async_dispatch() {
+    Ok(self.task.complete(runtime))
+  } else {
+    Err("bundled bridge handoff is immediate")
+  }
+}
+
+///|
+pub fn BundledBridgeCompletion::task(
+  self : BundledBridgeCompletion,
+) -> BundledBridgeDispatchTask {
+  self.task
+}
+
+///|
+pub fn BundledBridgeCompletion::dispatch(
+  self : BundledBridgeCompletion,
+) -> BundledBridgeDispatch {
+  self.dispatch
+}
+
+///|
+pub fn BundledBridgeCompletion::evaluation_script(
+  self : BundledBridgeCompletion,
+) -> String {
+  self.dispatch.evaluation_script()
+}
+
+///|
+pub fn BundledBridgeCompletion::to_json(
+  self : BundledBridgeCompletion,
+) -> String {
+  [
+    "{",
+    "\"task\":\{self.task.to_json()},",
+    "\"dispatch\":\{self.dispatch.to_json()},",
+    "\"evaluationScript\":\{self.evaluation_script().json_string()}",
     "}",
   ].join("")
 }

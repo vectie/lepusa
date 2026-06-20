@@ -414,6 +414,11 @@ through `BundledRuntime::bridge_dispatch_task(message)`.
 combine that task with an immediate dispatch result for sync routes, or a
 deferred handoff for async routes. This is the narrow callback shape native
 event loops use before they schedule async work.
+`NativeBridgeHandoff::complete_deferred(runtime)` turns that deferred task into
+a `NativeBridgeCompletion`, preserving the original task metadata together with
+the response JSON and JavaScript callback script the platform loop should
+evaluate. Immediate handoffs intentionally reject deferred completion so backend
+code cannot accidentally run a sync command twice.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

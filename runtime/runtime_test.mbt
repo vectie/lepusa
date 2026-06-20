@@ -1685,6 +1685,25 @@ async test "native runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+          match handoff.complete_deferred(runtime) {
+            Ok(completion) => {
+              assert_eq(completion.task().route(), "core.invoke")
+              assert_true(
+                completion
+                .dispatch()
+                .response_json()
+                .contains("\"payload\":\"{\\\"async\\\":true}\""),
+              )
+              assert_true(
+                completion
+                .evaluation_script()
+                .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+              )
+              assert_true(completion.to_json().contains("\"task\":{"))
+              assert_true(completion.to_json().contains("\"dispatch\":{"))
+            }
+            Err(_) => abort("unexpected bridge completion failure")
+          }
         }
         Err(_) => abort("unexpected bridge handoff failure")
       }
@@ -1719,6 +1738,16 @@ async test "native runtime owns bridge message transport" {
         sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_script.contains("command requires async dispatch"))
+      let sync_handoff_message = "{\"id\":\"12\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"missing\",\"payload\":\"true\"}"
+      match runtime.bridge_handoff(sync_handoff_message) {
+        Ok(handoff) =>
+          match handoff.complete_deferred(runtime) {
+            Err(problem) =>
+              assert_eq(problem, "native bridge handoff is immediate")
+            Ok(_) => abort("expected immediate handoff completion failure")
+          }
+        Err(_) => abort("unexpected immediate bridge handoff failure")
+      }
       let async_script = @utf8.decode(
         runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),
       ) catch {

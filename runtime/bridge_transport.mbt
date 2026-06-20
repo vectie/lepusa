@@ -34,6 +34,12 @@ pub struct NativeBridgeHandoff {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeCompletion {
+  task : NativeBridgeDispatchTask
+  dispatch : NativeBridgeDispatch
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -407,6 +413,14 @@ pub async fn NativeBridgeDispatchTask::dispatch(
 }
 
 ///|
+pub async fn NativeBridgeDispatchTask::complete(
+  self : NativeBridgeDispatchTask,
+  runtime : NativeRuntime,
+) -> NativeBridgeCompletion {
+  { task: self, dispatch: self.dispatch(runtime) }
+}
+
+///|
 fn NativeBridgeDispatchTask::dispatch_sync(
   self : NativeBridgeDispatchTask,
   runtime : NativeRuntime,
@@ -495,6 +509,50 @@ pub fn NativeBridgeHandoff::to_json(self : NativeBridgeHandoff) -> String {
     "\"kind\":\{self.kind().json_string()},",
     "\"task\":\{self.task.to_json()},",
     "\"immediateDispatch\":\{immediate}",
+    "}",
+  ].join("")
+}
+
+///|
+pub async fn NativeBridgeHandoff::complete_deferred(
+  self : NativeBridgeHandoff,
+  runtime : NativeRuntime,
+) -> Result[NativeBridgeCompletion, String] {
+  if self.requires_async_dispatch() {
+    Ok(self.task.complete(runtime))
+  } else {
+    Err("native bridge handoff is immediate")
+  }
+}
+
+///|
+pub fn NativeBridgeCompletion::task(
+  self : NativeBridgeCompletion,
+) -> NativeBridgeDispatchTask {
+  self.task
+}
+
+///|
+pub fn NativeBridgeCompletion::dispatch(
+  self : NativeBridgeCompletion,
+) -> NativeBridgeDispatch {
+  self.dispatch
+}
+
+///|
+pub fn NativeBridgeCompletion::evaluation_script(
+  self : NativeBridgeCompletion,
+) -> String {
+  self.dispatch.evaluation_script()
+}
+
+///|
+pub fn NativeBridgeCompletion::to_json(self : NativeBridgeCompletion) -> String {
+  [
+    "{",
+    "\"task\":\{self.task.to_json()},",
+    "\"dispatch\":\{self.dispatch.to_json()},",
+    "\"evaluationScript\":\{self.evaluation_script().json_string()}",
     "}",
   ].join("")
 }

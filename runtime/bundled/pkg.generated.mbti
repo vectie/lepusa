@@ -28,6 +28,15 @@ pub fn BundledBootstrapPlan::startup_navigations(Self) -> Array[@runtime.NativeN
 pub fn BundledBootstrapPlan::startup_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::to_json(Self) -> String
 
+pub struct BundledBridgeCompletion {
+  task : BundledBridgeDispatchTask
+  dispatch : BundledBridgeDispatch
+} derive(Eq, @debug.Debug)
+pub fn BundledBridgeCompletion::dispatch(Self) -> BundledBridgeDispatch
+pub fn BundledBridgeCompletion::evaluation_script(Self) -> String
+pub fn BundledBridgeCompletion::task(Self) -> BundledBridgeDispatchTask
+pub fn BundledBridgeCompletion::to_json(Self) -> String
+
 pub struct BundledBridgeDispatch {
   window_label : String
   response_hook : String
@@ -47,6 +56,7 @@ pub struct BundledBridgeDispatchTask {
   route : String
   mode : @runtime.NativeBridgeDispatchMode
 } derive(Eq, @debug.Debug)
+pub async fn BundledBridgeDispatchTask::complete(Self, BundledRuntime) -> BundledBridgeCompletion
 pub async fn BundledBridgeDispatchTask::dispatch(Self, BundledRuntime) -> BundledBridgeDispatch
 pub fn BundledBridgeDispatchTask::message(Self) -> BundledBridgeMessage
 pub fn BundledBridgeDispatchTask::mode(Self) -> @runtime.NativeBridgeDispatchMode
@@ -60,6 +70,7 @@ pub struct BundledBridgeHandoff {
   task : BundledBridgeDispatchTask
   immediate_dispatch : BundledBridgeDispatch?
 } derive(Eq, @debug.Debug)
+pub async fn BundledBridgeHandoff::complete_deferred(Self, BundledRuntime) -> Result[BundledBridgeCompletion, String]
 pub fn BundledBridgeHandoff::immediate_dispatch(Self) -> BundledBridgeDispatch?
 pub fn BundledBridgeHandoff::immediate_script(Self) -> String?
 pub fn BundledBridgeHandoff::kind(Self) -> String

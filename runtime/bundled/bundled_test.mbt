@@ -728,6 +728,15 @@ async test "bundled runtime owns bridge message transport" {
         sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_script.contains("\"id\":\"log\""))
+      match runtime.bridge_handoff(sync_message) {
+        Ok(handoff) =>
+          match handoff.complete_deferred(runtime) {
+            Err(problem) =>
+              assert_eq(problem, "bundled bridge handoff is immediate")
+            Ok(_) => abort("expected bundled immediate completion failure")
+          }
+        Err(_) => abort("unexpected bundled immediate bridge handoff failure")
+      }
       let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
       match runtime.bridge_dispatch_task(async_message) {
         Ok(task) => {
@@ -746,6 +755,25 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+          match handoff.complete_deferred(runtime) {
+            Ok(completion) => {
+              assert_eq(completion.task().route(), "fs.writeText")
+              assert_true(
+                completion
+                .dispatch()
+                .response_json()
+                .contains("\"id\":\"write\""),
+              )
+              assert_true(
+                completion
+                .evaluation_script()
+                .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+              )
+              assert_true(completion.to_json().contains("\"task\":{"))
+              assert_true(completion.to_json().contains("\"dispatch\":{"))
+            }
+            Err(_) => abort("unexpected bundled bridge completion failure")
+          }
         }
         Err(_) => abort("unexpected bundled async bridge handoff failure")
       }

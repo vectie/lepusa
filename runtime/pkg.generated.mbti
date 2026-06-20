@@ -58,6 +58,15 @@ pub fn NativeBridgeAsyncExecutor::output_encoding(Self) -> String
 pub fn NativeBridgeAsyncExecutor::required(Self) -> Bool
 pub fn NativeBridgeAsyncExecutor::to_json(Self) -> String
 
+pub struct NativeBridgeCompletion {
+  task : NativeBridgeDispatchTask
+  dispatch : NativeBridgeDispatch
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeCompletion::dispatch(Self) -> NativeBridgeDispatch
+pub fn NativeBridgeCompletion::evaluation_script(Self) -> String
+pub fn NativeBridgeCompletion::task(Self) -> NativeBridgeDispatchTask
+pub fn NativeBridgeCompletion::to_json(Self) -> String
+
 pub struct NativeBridgeDispatch {
   window_label : String
   response_hook : String
@@ -83,6 +92,7 @@ pub struct NativeBridgeDispatchTask {
   route : String
   mode : NativeBridgeDispatchMode
 } derive(Eq, @debug.Debug)
+pub async fn NativeBridgeDispatchTask::complete(Self, NativeRuntime) -> NativeBridgeCompletion
 pub async fn NativeBridgeDispatchTask::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
 pub fn NativeBridgeDispatchTask::message(Self) -> NativeBridgeMessage
 pub fn NativeBridgeDispatchTask::mode(Self) -> NativeBridgeDispatchMode
@@ -96,6 +106,7 @@ pub struct NativeBridgeHandoff {
   task : NativeBridgeDispatchTask
   immediate_dispatch : NativeBridgeDispatch?
 } derive(Eq, @debug.Debug)
+pub async fn NativeBridgeHandoff::complete_deferred(Self, NativeRuntime) -> Result[NativeBridgeCompletion, String]
 pub fn NativeBridgeHandoff::immediate_dispatch(Self) -> NativeBridgeDispatch?
 pub fn NativeBridgeHandoff::immediate_script(Self) -> String?
 pub fn NativeBridgeHandoff::kind(Self) -> String

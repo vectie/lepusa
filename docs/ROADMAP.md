@@ -83,7 +83,8 @@
   launch-session JSON can now advertise async-capable bridge scheduling for
   native loops that wire deferred completion, including the reusable async
   bridge executor descriptor over
-  `NativeRuntime::bridge_async_dispatch_callback`; native async bridge
+  `NativeRuntime::bridge_async_dispatch_callback`; source and bundled bridge
+  handoffs now expose typed deferred completion envelopes; native async bridge
   scheduling and the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
