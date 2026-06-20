@@ -682,6 +682,8 @@ async test "bundled runtime owns bridge message transport" {
           )
           let dispatch = task.dispatch(runtime)
           assert_true(dispatch.response_json().contains("\"id\":\"log\""))
+          assert_true(dispatch.to_json().contains("\"responseJson\":\"{"))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
         }
         Err(_) => abort("unexpected bundled sync bridge task failure")
       }
@@ -695,6 +697,8 @@ async test "bundled runtime owns bridge message transport" {
             .evaluation_script()
             .contains("globalThis[\"__lepusaInvokeResponse\"]"),
           )
+          assert_true(dispatch.to_json().contains("\"responseJson\":\"{"))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
         }
         Err(_) => abort("unexpected bundled sync bridge failure")
       }
@@ -729,8 +733,10 @@ async test "bundled runtime owns bridge message transport" {
       assert_true(set_script.contains("globalThis[\"__lepusaInvokeResponse\"]"))
       assert_true(set_script.contains("\"id\":\"set\""))
       match runtime.dispatch_bridge_message(set_message) {
-        Ok(dispatch) =>
+        Ok(dispatch) => {
           assert_true(dispatch.response_json().contains("\"id\":\"set\""))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
+        }
         Err(_) => abort("unexpected bundled async set failure")
       }
       match runtime.dispatch_bridge_message(get_message) {

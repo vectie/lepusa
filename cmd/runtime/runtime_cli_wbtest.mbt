@@ -571,6 +571,51 @@ async test "runtime cli renders bridge dispatch tasks" {
 }
 
 ///|
+async test "runtime cli renders bridge dispatch callback scripts" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-runtime-bridge-dispatch-\{stamp}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/note.txt",
+    "hello bundled bridge",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let manifest = [
+    "{", "\"runtime\":{", "\"webviews\":[{\"label\":\"main\",\"url\":\"lepusa://rabbita/main/index.html\",\"nativeHook\":\"__lepusaInvoke\",\"allowedRoutes\":[\"log.write\",\"fs.readText\"]}],",
+    "\"filesystemScopes\":[{\"name\":\"data\",\"root\":\"", root, "\",\"writable\":false}],",
+    "\"registeredRoutes\":[\"log.write\",\"fs.readText\"]", "}", "}",
+  ].join("")
+  let sync = render_runtime_bridge_dispatch_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(sync.exit_code, 0)
+  assert_true(sync.output.contains("\"windowLabel\":\"main\""))
+  assert_true(
+    sync.output.contains("\"responseHook\":\"__lepusaInvokeResponse\""),
+  )
+  assert_true(
+    sync.output.contains("\"responseJson\":\"{\\\"id\\\":\\\"cli\\\""),
+  )
+  assert_true(sync.output.contains("hello"))
+  assert_true(
+    sync.output.contains(
+      "\"evaluationScript\":\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
+  let async_dispatch = render_runtime_bridge_dispatch_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_eq(async_dispatch.exit_code, 0)
+  assert_true(async_dispatch.output.contains("hello bundled bridge"))
+  let invalid = render_runtime_cli_async(["bridge-dispatch", "main", "log"])
+  assert_eq(invalid.exit_code, 1)
+  assert_true(
+    invalid.output.contains("bridge-dispatch route must be <plugin.command>"),
+  )
+}
+
+///|
 async test "runtime cli enforces bundled route grants" {
   let manifest =
     #|{

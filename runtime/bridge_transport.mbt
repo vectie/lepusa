@@ -69,6 +69,30 @@ pub fn RuntimeHost::bridge_dispatch_task(
 }
 
 ///|
+pub async fn RuntimeHost::dispatch_bridge_message(
+  self : RuntimeHost,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeDispatch, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) => Ok(prepared.dispatch_host(self))
+  }
+}
+
+///|
+pub fn RuntimeHost::dispatch_bridge_message_sync(
+  self : RuntimeHost,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeDispatch, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) => Ok(prepared.dispatch_host_sync(self))
+  }
+}
+
+///|
 pub fn NativeRuntime::prepare_bridge_message(
   self : NativeRuntime,
   message : String,
@@ -201,11 +225,29 @@ pub async fn NativeBridgeMessage::dispatch(
 }
 
 ///|
+async fn NativeBridgeMessage::dispatch_host(
+  self : NativeBridgeMessage,
+  host : RuntimeHost,
+) -> NativeBridgeDispatch {
+  let response_json = host.dispatch_json_async(self.message)
+  self.to_dispatch(response_json)
+}
+
+///|
 pub fn NativeBridgeMessage::dispatch_sync(
   self : NativeBridgeMessage,
   runtime : NativeRuntime,
 ) -> NativeBridgeDispatch {
   let response_json = runtime.dispatch_json(self.message)
+  self.to_dispatch(response_json)
+}
+
+///|
+fn NativeBridgeMessage::dispatch_host_sync(
+  self : NativeBridgeMessage,
+  host : RuntimeHost,
+) -> NativeBridgeDispatch {
+  let response_json = host.dispatch_json(self.message)
   self.to_dispatch(response_json)
 }
 
@@ -351,6 +393,19 @@ pub fn NativeBridgeDispatch::evaluation_script(
   self : NativeBridgeDispatch,
 ) -> String {
   self.evaluation_script
+}
+
+///|
+pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"responseHook\":\{self.response_hook.json_string()},",
+    "\"message\":\{self.message.json_string()},",
+    "\"responseJson\":\{self.response_json.json_string()},",
+    "\"evaluationScript\":\{self.evaluation_script.json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|

@@ -39,6 +39,7 @@ pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
 pub fn BundledBridgeDispatch::message(Self) -> String
 pub fn BundledBridgeDispatch::response_hook(Self) -> String
 pub fn BundledBridgeDispatch::response_json(Self) -> String
+pub fn BundledBridgeDispatch::to_json(Self) -> String
 pub fn BundledBridgeDispatch::window_label(Self) -> String
 
 pub struct BundledBridgeDispatchTask {

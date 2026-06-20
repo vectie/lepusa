@@ -596,6 +596,83 @@ async test "bridge task command reports source scheduling mode" {
 }
 
 ///|
+async test "bridge dispatch command renders source callback script" {
+  let app_root = "/tmp/lepusa-project-bridge-dispatch-log-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", app_root])
+  assert_eq(init.exit_code, 0)
+  let log = render_cli_async([
+    "bridge-dispatch",
+    "main",
+    "log.write",
+    "{\"message\":\"hello\"}",
+    "--project",
+    app_root + "/lepusa.json",
+  ])
+  assert_eq(log.exit_code, 0)
+  assert_true(log.output.contains("\"windowLabel\":\"main\""))
+  assert_true(
+    log.output.contains("\"responseHook\":\"__lepusaInvokeResponse\""),
+  )
+  assert_true(log.output.contains("\"responseJson\":\"{\\\"id\\\":\\\"cli\\\""))
+  assert_true(log.output.contains("hello"))
+  assert_true(
+    log.output.contains(
+      "\"evaluationScript\":\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-project-bridge-dispatch-\{stamp}"
+  @fs.mkdir(root + "/data", recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/data/note.txt",
+    "hello async bridge",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  @fs.write_file(
+    root + "/lepusa.json",
+    (
+      #|{
+      #|  "identifier": "dev.local.bridgeDispatch",
+      #|  "productName": "Bridge Dispatch",
+      #|  "version": "0.1.0",
+      #|  "window": { "label": "main", "title": "Bridge Dispatch" },
+      #|  "plugins": [
+      #|    { "name": "fs" }
+      #|  ],
+      #|  "capabilities": [
+      #|    {
+      #|      "name": "main-files",
+      #|      "windows": ["main"],
+      #|      "permissions": ["filesystem.read"]
+      #|    }
+      #|  ],
+      #|  "filesystemScopes": [
+      #|    { "name": "data", "root": "data", "writable": false }
+      #|  ]
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let read = render_cli_async([
+    "bridge-dispatch",
+    "main",
+    "fs.readText",
+    "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(read.exit_code, 0)
+  assert_true(read.output.contains("hello async bridge"))
+  let invalid = render_cli_async(["bridge-dispatch", "main", "log"])
+  assert_eq(invalid.exit_code, 1)
+  assert_true(
+    invalid.output.contains("bridge-dispatch route must be <plugin.command>"),
+  )
+}
+
+///|
 async test "invoke enforces project capabilities" {
   let root = "/tmp/lepusa-project-invoke-denied-\{@async.now().to_int()}"
   let init = render_cli_async(["init", root])

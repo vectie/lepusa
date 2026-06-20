@@ -1604,6 +1604,8 @@ async test "native runtime owns bridge message transport" {
             .evaluation_script()
             .contains("globalThis[\"__lepusaInvokeResponse\"]"),
           )
+          assert_true(dispatch.to_json().contains("\"responseJson\":\"{"))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
         }
         Err(_) => abort("unexpected bridge prepare failure")
       }
@@ -1627,6 +1629,8 @@ async test "native runtime owns bridge message transport" {
             .response_json()
             .contains("\"payload\":\"{\\\"async\\\":true}\""),
           )
+          assert_true(dispatch.to_json().contains("\"responseJson\":\"{"))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
         }
         Err(_) => abort("unexpected bridge task failure")
       }
@@ -1672,6 +1676,18 @@ async test "native runtime owns bridge message transport" {
         _ => abort("unexpected invalid asset packet bytes")
       }
       assert_eq(asset_packet, "ok\nvirtual\ntext/html\n<main>runtime</main>")
+      match
+        runtime
+        .host()
+        .dispatch_bridge_message(
+          "{\"id\":\"11\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
+        ) {
+        Ok(dispatch) => {
+          assert_true(dispatch.response_json().contains("\"id\":\"11\""))
+          assert_true(dispatch.to_json().contains("\"evaluationScript\":"))
+        }
+        Err(_) => abort("unexpected host bridge dispatch failure")
+      }
       match
         runtime.dispatch_bridge_message(
           "{\"id\":\"10\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"false\"}",

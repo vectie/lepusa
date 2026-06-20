@@ -136,6 +136,7 @@ moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- lifecycle app-will-exit --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-task main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bridge-dispatch main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -146,6 +147,7 @@ moon run cmd/runtime --target native -- bootstrap --manifest _build/lepusa-bundl
 moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-task main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- bridge-dispatch main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- invoke main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
@@ -396,9 +398,16 @@ evaluate the generated response script. The task JSON includes the original
 bridge message and `requiresAsyncDispatch` flag so native handlers do not need
 to re-derive scheduling metadata. Bundled manifests expose the same contract
 through `BundledRuntime::bridge_dispatch_task(message)`.
+`RuntimeHost::dispatch_bridge_message(message)` and
+`BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
+message and return the response JSON plus the callback script a native WebView
+loop evaluates after sync or async command completion.
 
 `lepusa bridge-task <window> <plugin.command> [payload] --project lepusa.json`
 prints that source-project scheduling task without starting a WebView.
+`lepusa bridge-dispatch <window> <plugin.command> [payload] --project lepusa.json`
+executes the same bridge message and prints the native callback envelope without
+starting a WebView.
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability
@@ -508,6 +517,9 @@ returns the MoonBit-owned bridge scheduling task for a packaged command:
 target window, response hook, original bridge message, route, and sync/async
 dispatch mode. Native loops can use this as the packaged-manifest probe before
 wiring platform-specific message handlers.
+`lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <runtime.json>`
+executes the packaged bridge message and returns the response JSON plus
+callback script that a native event loop evaluates back into the target WebView.
 `lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes a packaged bridge command against the manifest's registered official
 native handlers. It checks the requested window's `allowedRoutes` before

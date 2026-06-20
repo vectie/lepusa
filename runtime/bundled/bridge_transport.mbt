@@ -352,6 +352,19 @@ pub fn BundledBridgeDispatch::evaluation_script(
 }
 
 ///|
+pub fn BundledBridgeDispatch::to_json(self : BundledBridgeDispatch) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"responseHook\":\{self.response_hook.json_string()},",
+    "\"message\":\{self.message.json_string()},",
+    "\"responseJson\":\{self.response_json.json_string()},",
+    "\"evaluationScript\":\{self.evaluation_script.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 fn bundled_bridge_window_label_from_message(
   message : String,
   window_label~ : String,

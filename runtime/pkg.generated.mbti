@@ -54,6 +54,7 @@ pub fn NativeBridgeDispatch::evaluation_script(Self) -> String
 pub fn NativeBridgeDispatch::message(Self) -> String
 pub fn NativeBridgeDispatch::response_hook(Self) -> String
 pub fn NativeBridgeDispatch::response_json(Self) -> String
+pub fn NativeBridgeDispatch::to_json(Self) -> String
 pub fn NativeBridgeDispatch::window_label(Self) -> String
 
 pub(all) enum NativeBridgeDispatchMode {
@@ -467,6 +468,8 @@ pub fn RuntimeHost::bridge_response_hook(Self, window_label? : String) -> Result
 pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
 pub async fn RuntimeHost::dispatch_async(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse
+pub async fn RuntimeHost::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
+pub fn RuntimeHost::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub async fn RuntimeHost::dispatch_json_async(Self, String) -> String
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
