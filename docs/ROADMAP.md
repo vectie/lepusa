@@ -227,8 +227,8 @@ Stabilize the cross-platform core set first:
   exist
 - autoLaunch: initial launch-at-login contract and delegated enablement
   sync handlers exist
-- windowState: initial window geometry persistence contract and sync runtime
-  state handlers exist
+- windowState: initial window geometry persistence contract, sync runtime state
+  handlers, and durable file-backed storage exist
 - updater: initial update lifecycle contract and delegated lifecycle handlers
   exist
 - serviceDiscovery: initial service lookup/status contract and portable

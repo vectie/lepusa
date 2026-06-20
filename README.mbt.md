@@ -399,7 +399,8 @@ behavior to native backends.
 `windowState.save`, `windowState.restore`, and `windowState.clear`, plus
 window-label policy metadata. The portable registry stores state in the current
 runtime process for `windowState.save`/`set`, `windowState.restore`/`get`, and
-`windowState.clear`; native backends own geometry capture and durable storage.
+`windowState.clear`; `WindowStateFileStore` gives native runtimes a durable
+file-backed registry once platform loops capture geometry and visibility.
 
 `@lepusa/plugins/updater` defines update lifecycle routes such as
 `updater.check`, `updater.download`, `updater.install`, and

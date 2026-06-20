@@ -104,3 +104,68 @@ test "window state plugin registers portable state handlers" {
   assert_true(clear is InvokeOk("clear", _))
   assert_true(clear.payload().unwrap_or("").contains("\"cleared\":1"))
 }
+
+///|
+test "window state file registry persists across registry instances" {
+  let root = "/tmp/lepusa-window-state-test"
+  let store = WindowStateFileStore::new(root~, store_name="lepusa-test")
+  let capability = capability_for_window("main")
+  ignore(
+    file_registry(store).dispatch(
+      @lepusa.InvokeRequest::new(
+        id="reset",
+        window_label="main",
+        plugin="windowState",
+        command="clear",
+      ),
+      capabilities=[capability],
+    ),
+  )
+  let registry = file_registry(store)
+  let set = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="set",
+      window_label="main",
+      plugin="windowState",
+      command="set",
+      payload="{\"window\":\"main\",\"width\":1200,\"height\":800}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(set is InvokeOk("set", _))
+  let restored = file_registry(store).dispatch(
+    @lepusa.InvokeRequest::new(
+      id="restore",
+      window_label="main",
+      plugin="windowState",
+      command="restore",
+      payload="{\"window\":\"main\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(restored is InvokeOk("restore", _))
+  assert_true(restored.payload().unwrap_or("").contains("\"found\":true"))
+  assert_true(restored.payload().unwrap_or("").contains("\\\"width\\\":1200"))
+  let clear = file_registry(store).dispatch(
+    @lepusa.InvokeRequest::new(
+      id="clear",
+      window_label="main",
+      plugin="windowState",
+      command="clear",
+      payload="{\"window\":\"main\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(clear.payload().unwrap_or("").contains("\"cleared\":1"))
+  let missing = file_registry(store).dispatch(
+    @lepusa.InvokeRequest::new(
+      id="missing",
+      window_label="main",
+      plugin="windowState",
+      command="get",
+      payload="{\"window\":\"main\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(missing.payload().unwrap_or("").contains("\"found\":false"))
+}
