@@ -2,7 +2,9 @@
 
 `@lepusa/plugins/file_dialog` defines Lepusa's official file dialog command
 contract. It declares platform-neutral open/save routes and scoped default
-directories; native runtimes own the actual OS picker implementation.
+directories. Its portable registry validates picker payloads against named
+filesystem scopes and returns delegated picker contracts; native runtimes own
+the actual OS picker implementation.
 
 ```moonbit nocheck
 ///|
@@ -13,5 +15,8 @@ test "declare file dialog access" {
 
   let grant = @file_dialog.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=@lepusa.FileDialog))
+
+  let registry = @file_dialog.registry()
+  assert_true(registry.contains("fileDialog.openDirectory"))
 }
 ```

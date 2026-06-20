@@ -325,7 +325,8 @@ Core `FileSystemScope` values carry named roots through `ProjectManifest`,
 `@lepusa/plugins/file_dialog` defines file picker routes such as
 `fileDialog.openFile` and `fileDialog.saveFile`, plus scoped default-directory
 policy that points dialogs at declared filesystem scopes without widening core
-filesystem access.
+filesystem access. Its portable registry validates picker payloads and returns
+delegated open/save contracts for native OS pickers.
 
 `@lepusa/plugins/localhost` defines local service lifecycle routes such as
 `localhost.status`, `localhost.start`, `localhost.stop`, and

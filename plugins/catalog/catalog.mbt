@@ -141,6 +141,12 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       register: fn(registry, _) { @deep_link.register(registry) },
     },
     { name: "dialog", register: fn(registry, _) { @dialog.register(registry) } },
+    {
+      name: "fileDialog",
+      register: fn(registry, context) {
+        @file_dialog.register(registry, scopes=context.filesystem_scopes())
+      },
+    },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },
     {
       name: "localhost",
