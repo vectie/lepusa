@@ -21,8 +21,8 @@ test "help text names available commands" {
 }
 
 ///|
-test "doctor renders framework boundary checks" {
-  let result = render_cli(["doctor"])
+async test "doctor renders framework boundary checks" {
+  let result = render_cli_async(["doctor"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("[ok] public-api"))
   assert_true(result.output.contains("backend=headless"))
@@ -37,21 +37,21 @@ test "doctor renders framework boundary checks" {
 }
 
 ///|
-test "doctor supports target-specific signing diagnostics" {
-  let result = render_cli(["doctor", "linux"])
+async test "doctor supports target-specific signing diagnostics" {
+  let result = render_cli_async(["doctor", "linux"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("[ok] bundle: target=linux"))
   assert_true(result.output.contains("[ok] signing: prerequisites=2"))
   assert_false(result.output.contains("package-signing-key"))
   assert_true(result.output.contains("package signing key"))
-  let unknown = render_cli(["doctor", "ios"])
+  let unknown = render_cli_async(["doctor", "ios"])
   assert_eq(unknown.exit_code, 1)
   assert_true(unknown.output.contains("unknown bundle target: ios"))
 }
 
 ///|
-test "runtime plan prints command routes" {
-  let result = render_cli(["plan"])
+async test "runtime plan prints command routes" {
+  let result = render_cli_async(["plan"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("windows: 1"))
   assert_true(
@@ -61,8 +61,8 @@ test "runtime plan prints command routes" {
 }
 
 ///|
-test "manifest prints native runner json" {
-  let result = render_cli(["manifest"])
+async test "manifest prints native runner json" {
+  let result = render_cli_async(["manifest"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("\"backend\":\"headless\""))
   assert_true(
@@ -86,8 +86,8 @@ test "manifest prints native runner json" {
 }
 
 ///|
-test "native plan prints backend bootstrap json" {
-  let result = render_cli(["native-plan", "macos"])
+async test "native plan prints backend bootstrap json" {
+  let result = render_cli_async(["native-plan", "macos"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("\"nativeBackend\":\"macos\""))
   assert_true(result.output.contains("\"webviewEngine\":\"WKWebView\""))
@@ -98,8 +98,8 @@ test "native plan prints backend bootstrap json" {
 }
 
 ///|
-test "run prints native runner smoke summary" {
-  let result = render_cli(["run", "linux"])
+async test "run prints native runner smoke summary" {
+  let result = render_cli_async(["run", "linux"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("Lepusa run"))
   assert_true(result.output.contains("target: linux"))
@@ -115,8 +115,8 @@ test "run prints native runner smoke summary" {
 }
 
 ///|
-test "run launch rejects unwired native targets" {
-  let result = render_cli(["run", "linux", "--launch"])
+async test "run launch rejects unwired native targets" {
+  let result = render_cli_async(["run", "linux", "--launch"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("Lepusa launch"))
   assert_true(result.output.contains("target: linux"))
@@ -131,8 +131,8 @@ test "run launch rejects unwired native targets" {
 }
 
 ///|
-test "bundle plan supports target selection" {
-  let result = render_cli(["bundle-plan", "windows"])
+async test "bundle plan supports target selection" {
+  let result = render_cli_async(["bundle-plan", "windows"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.exe"))
@@ -1160,8 +1160,8 @@ async test "build and bundle aliases materialize planned files" {
 }
 
 ///|
-test "bridge prints generated javascript" {
-  let result = render_cli(["bridge"])
+async test "bridge prints generated javascript" {
+  let result = render_cli_async(["bridge"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("globalThis"))
   assert_true(result.output.contains("core.invoke"))

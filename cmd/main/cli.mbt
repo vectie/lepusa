@@ -88,21 +88,6 @@ fn render_cli(args : Array[String]) -> CliResult {
   match args.get(0) {
     None => ok(help_text())
     Some("help") | Some("--help") | Some("-h") => ok(help_text())
-    Some("doctor") => render_doctor(args)
-    Some("plan") => render_plan()
-    Some("manifest") => render_manifest()
-    Some("native-plan") => render_native_plan(args)
-    Some("run") => render_run(args)
-    Some("bridge") => render_bridge()
-    Some("bundle-plan") => render_bundle_plan(args)
-    Some("dev") => fail("dev requires the native async runner\n")
-    Some("init") => fail("init requires the native async runner\n")
-    Some("plugin") => fail("plugin commands require the native async runner\n")
-    Some("invoke") => fail("invoke requires the native async runner\n")
-    Some("asset") => fail("asset requires the native async runner\n")
-    Some("lifecycle") => fail("lifecycle requires the native async runner\n")
-    Some("bundle-write") =>
-      fail("bundle-write requires the native async runner\n")
     Some(command) => fail("unknown command: \{command}\n\n" + help_text())
   }
 }
@@ -484,24 +469,6 @@ fn parse_invoke_route(route : String) -> Result[(String, String), String] {
 }
 
 ///|
-fn render_doctor(args : Array[String]) -> CliResult {
-  let values = positional_args(args)
-  match parse_bundle_target(values.get(0)) {
-    Ok(target) =>
-      match sample_runtime_plan() {
-        Ok(plan) =>
-          match sample_manifest().bundle_plan(sample_root(), target~) {
-            Ok(bundle) =>
-              render_doctor_host(@runtime.RuntimeHost::new(plan), bundle)
-            Err(problems) => fail(render_problems("Lepusa doctor", problems))
-          }
-        Err(problems) => fail(render_problems("Lepusa doctor", problems))
-      }
-    Err(problem) => fail(problem + "\n")
-  }
-}
-
-///|
 fn render_doctor_host(
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
@@ -555,59 +522,6 @@ fn render_native_backend_line(
     Ok(backend) =>
       "[ok] platform: \{platform} engine=\{backend.webview_engine()}\n"
     Err(problem) => "[warn] platform: \{platform} \{problem}\n"
-  }
-}
-
-///|
-fn render_manifest() -> CliResult {
-  match sample_runtime_plan() {
-    Ok(plan) =>
-      match plan.launch_manifest() {
-        Ok(manifest) => ok(manifest.to_json() + "\n")
-        Err(problems) => fail(render_problems("Lepusa manifest", problems))
-      }
-    Err(problems) => fail(render_problems("Lepusa manifest", problems))
-  }
-}
-
-///|
-fn render_native_plan(args : Array[String]) -> CliResult {
-  match parse_bundle_target(args.get(1)) {
-    Ok(target) =>
-      match sample_runtime_plan() {
-        Ok(plan) =>
-          match
-            native_runtime_for_target(target, @runtime.RuntimeHost::new(plan)) {
-            Ok(runtime) => render_native_runner_plan(runtime)
-            Err(problems) =>
-              fail(render_problems("Lepusa native plan", problems))
-          }
-        Err(problems) => fail(render_problems("Lepusa native plan", problems))
-      }
-    Err(problem) => fail(problem + "\n")
-  }
-}
-
-///|
-fn render_run(args : Array[String]) -> CliResult {
-  let values = positional_args(args)
-  match parse_bundle_target(values.get(0)) {
-    Ok(target) =>
-      match sample_runtime_plan() {
-        Ok(plan) =>
-          match
-            native_runtime_for_target(target, @runtime.RuntimeHost::new(plan)) {
-            Ok(runtime) =>
-              if has_flag(args, "--launch") {
-                render_native_launch(target, runtime)
-              } else {
-                render_native_run_summary(target, runtime)
-              }
-            Err(problems) => fail(render_problems("Lepusa run", problems))
-          }
-        Err(problems) => fail(render_problems("Lepusa run", problems))
-      }
-    Err(problem) => fail(problem + "\n")
   }
 }
 
@@ -754,14 +668,6 @@ fn render_native_runner_plan(runtime : @runtime.NativeRuntime) -> CliResult {
 }
 
 ///|
-fn render_plan() -> CliResult {
-  match sample_runtime_plan() {
-    Ok(plan) => render_runtime_plan(plan)
-    Err(problems) => fail(render_problems("Lepusa runtime plan", problems))
-  }
-}
-
-///|
 fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
   let routes = plan.command_routes().join(",")
   let first_window = match plan.windows().get(0) {
@@ -804,35 +710,6 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "filesystem-scopes: \{session.file_system_scopes().length()}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n",
   )
-}
-
-///|
-fn render_bridge() -> CliResult {
-  match sample_runtime_plan() {
-    Ok(plan) =>
-      match plan.bridge_script() {
-        Ok(script) => ok(script.source())
-        Err(problems) => fail(render_problems("Lepusa bridge", problems))
-      }
-    Err(problems) => fail(render_problems("Lepusa bridge", problems))
-  }
-}
-
-///|
-fn render_bundle_plan(args : Array[String]) -> CliResult {
-  match parse_bundle_target(args.get(1)) {
-    Ok(target) =>
-      match sample_runtime_plan() {
-        Ok(_) =>
-          match sample_manifest().bundle_plan(sample_root(), target~) {
-            Ok(plan) => render_bundle_plan_summary(plan)
-            Err(problems) =>
-              fail(render_problems("Lepusa bundle plan", problems))
-          }
-        Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
-      }
-    Err(problem) => fail(problem + "\n")
-  }
 }
 
 ///|
