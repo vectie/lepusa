@@ -37,6 +37,13 @@ pub fn execute_service_shutdown(
 }
 
 ///|
+pub fn execute_app_will_exit(
+  plan : @runtime.NativePreparedRunPlan,
+) -> @runtime.NativeOperationExecutionReport {
+  operation_executor().execute_app_will_exit(plan.execution_plan())
+}
+
+///|
 pub fn execute_bundled_service_startup(
   plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
@@ -48,6 +55,16 @@ pub fn execute_bundled_service_shutdown(
   plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
   service_executor().execute_shutdown(plan.service_supervisor_plan())
+}
+
+///|
+pub fn execute_bundled_app_will_exit(
+  plan : @bundled.BundledNativeRunPlan,
+) -> Result[@runtime.NativeOperationExecutionReport, String] {
+  match plan.native_execution_plan() {
+    Ok(execution) => Ok(operation_executor().execute_app_will_exit(execution))
+    Err(problem) => Err(problem)
+  }
 }
 
 ///|

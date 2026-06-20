@@ -263,6 +263,14 @@ test "linux backend prepares bundled runtime contract" {
           assert_eq(report.backend_name(), "linux")
           assert_true(report.ok())
           assert_eq(report.action_count(), 3)
+          match execute_bundled_app_will_exit(plan) {
+            Ok(lifecycle) => {
+              assert_true(lifecycle.ok())
+              assert_eq(lifecycle.operation_count(), 1)
+              assert_eq(lifecycle.skipped_count(), 1)
+            }
+            Err(problem) => abort(problem)
+          }
           match plan.first_webview() {
             Ok(webview) => {
               assert_eq(webview.asset_protocol(), "lepusa")

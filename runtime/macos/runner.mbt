@@ -370,11 +370,23 @@ fn run_plan(
         fn(resolve_asset, url) { resolve_asset(url) },
         resolve_asset,
       )
+      let lifecycle = plan.execute_app_will_exit()
       let shutdown = plan.execute_service_shutdown()
       if exit_code == 0 {
-        match shutdown.first_failure_message(context="macOS service shutdown") {
-          Some(message) => Ok({ plan, status: RunFailed(message) })
-          None => Ok({ plan, status: RunLaunched })
+        match lifecycle.first_failure_message() {
+          Some(message) =>
+            Ok({
+              plan,
+              status: RunFailed(
+                "macOS app-will-exit lifecycle failed: \{message}",
+              ),
+            })
+          None =>
+            match
+              shutdown.first_failure_message(context="macOS service shutdown") {
+              Some(message) => Ok({ plan, status: RunFailed(message) })
+              None => Ok({ plan, status: RunLaunched })
+            }
         }
       } else {
         Ok({ plan, status: RunFailed("macOS WebView launch failed") })

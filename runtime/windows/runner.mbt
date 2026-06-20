@@ -254,8 +254,9 @@ fn windows_open_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     runtime.asset_protocol_resolver_callback(),
   )
-  windows_status_with_shutdown(
+  windows_status_with_lifecycle_and_shutdown(
     windows_status_from_exit_code(exit_code),
+    lifecycle=Ok(execute_app_will_exit(plan)),
     shutdown=execute_service_shutdown(plan),
   )
 }
@@ -304,8 +305,9 @@ fn windows_open_bundled_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     manifest.asset_protocol_resolver_callback(),
   )
-  windows_status_with_shutdown(
+  windows_status_with_lifecycle_and_shutdown(
     windows_status_from_exit_code(exit_code),
+    lifecycle=execute_bundled_app_will_exit(plan),
     shutdown=execute_bundled_service_shutdown(plan),
   )
 }
@@ -320,15 +322,29 @@ fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
 }
 
 ///|
-fn windows_status_with_shutdown(
+fn windows_status_with_lifecycle_and_shutdown(
   status : @lepusa.RunStatus,
+  lifecycle~ : Result[@runtime.NativeOperationExecutionReport, String],
   shutdown~ : @runtime.NativeServiceSupervisorReport,
 ) -> @lepusa.RunStatus {
   match status {
     RunLaunched =>
-      match shutdown.first_failure_message(context="Windows service shutdown") {
-        Some(message) => RunFailed(message)
-        None => RunLaunched
+      match lifecycle {
+        Err(problem) =>
+          RunFailed("Windows app-will-exit lifecycle failed: \{problem}")
+        Ok(report) =>
+          match report.first_failure_message() {
+            Some(message) =>
+              RunFailed("Windows app-will-exit lifecycle failed: \{message}")
+            None =>
+              match
+                shutdown.first_failure_message(
+                  context="Windows service shutdown",
+                ) {
+                Some(message) => RunFailed(message)
+                None => RunLaunched
+              }
+          }
       }
     _ => status
   }

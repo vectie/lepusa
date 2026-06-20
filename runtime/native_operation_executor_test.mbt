@@ -112,3 +112,36 @@ test "native operation executor runs bridge drain deliveries" {
   assert_true(delivery_report.ok())
   assert_eq(delivery_report.executed_count(), 1)
 }
+
+///|
+test "native operation executor runs app-will-exit lifecycle operations" {
+  let effects : Array[String] = []
+  let executor = NativeOperationExecutor::new(run_effect=fn(name) {
+    effects.push(name)
+    NativeOperationExecuted
+  })
+  let execution = NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[
+    NativeExecutionStep::new(
+      event_json=@lepusa.LifecycleEvent::app_will_exit().to_json(),
+      operations=[NativeExecutableOperation::run_effect("flush")],
+    ),
+  ])
+  match execution.app_will_exit_step() {
+    Some(step) => assert_eq(step.operations()[0].kind(), "run-effect")
+    None => fail("expected app-will-exit lifecycle step")
+  }
+  let report = executor.execute_app_will_exit(execution)
+  assert_true(report.ok())
+  assert_eq(report.operation_count(), 1)
+  assert_eq(report.executed_count(), 1)
+  assert_eq(effects[0], "flush")
+}
+
+///|
+test "native operation executor treats missing app-will-exit as empty" {
+  let execution = NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[])
+  let report = NativeOperationExecutor::new().execute_app_will_exit(execution)
+  assert_true(report.ok())
+  assert_eq(report.operation_count(), 0)
+  assert_true(execution.app_will_exit_step() is None)
+}

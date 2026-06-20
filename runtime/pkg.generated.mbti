@@ -352,6 +352,8 @@ pub struct NativeExecutionPlan {
   startup_operations : Array[NativeExecutableOperation]
   lifecycle_steps : Array[NativeExecutionStep]
 } derive(Eq, @debug.Debug)
+pub fn NativeExecutionPlan::app_will_exit_step(Self) -> NativeExecutionStep?
+pub fn NativeExecutionPlan::lifecycle_step_by_event_json(Self, String) -> NativeExecutionStep?
 pub fn NativeExecutionPlan::lifecycle_steps(Self) -> Array[NativeExecutionStep]
 pub fn NativeExecutionPlan::new(startup_operations~ : Array[NativeExecutableOperation], lifecycle_steps~ : Array[NativeExecutionStep]) -> Self
 pub fn NativeExecutionPlan::startup_evaluation_scripts(Self) -> Array[NativeEvaluationScript]
@@ -508,7 +510,9 @@ pub struct NativeOperationExecutor {
 }
 pub fn NativeOperationExecutor::execute(Self, NativeExecutableOperation) -> NativeOperationExecutionOutcome
 pub fn NativeOperationExecutor::execute_all(Self, Array[NativeExecutableOperation]) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::execute_app_will_exit(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_delivery(Self, NativeBridgeLoopDelivery) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::execute_lifecycle_step(Self, NativeExecutionStep) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus, control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus) -> Self

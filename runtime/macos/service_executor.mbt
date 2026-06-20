@@ -37,6 +37,13 @@ pub fn MacOSRunPlan::execute_service_shutdown(
 }
 
 ///|
+pub fn MacOSRunPlan::execute_app_will_exit(
+  self : MacOSRunPlan,
+) -> @runtime.NativeOperationExecutionReport {
+  operation_executor().execute_app_will_exit(self.execution())
+}
+
+///|
 fn macos_start_service(
   service : @lepusa.LocalService,
 ) -> @runtime.NativeServiceActionStatus {

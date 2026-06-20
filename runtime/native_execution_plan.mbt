@@ -77,6 +77,28 @@ pub fn NativeExecutionPlan::lifecycle_steps(
 }
 
 ///|
+pub fn NativeExecutionPlan::lifecycle_step_by_event_json(
+  self : NativeExecutionPlan,
+  event_json : String,
+) -> NativeExecutionStep? {
+  for step in self.lifecycle_steps {
+    if step.event_json() == event_json {
+      return Some(step)
+    }
+  }
+  None
+}
+
+///|
+pub fn NativeExecutionPlan::app_will_exit_step(
+  self : NativeExecutionPlan,
+) -> NativeExecutionStep? {
+  self.lifecycle_step_by_event_json(
+    @lepusa.LifecycleEvent::app_will_exit().to_json(),
+  )
+}
+
+///|
 pub fn NativeExecutionPlan::to_json(self : NativeExecutionPlan) -> String {
   [
     "{",

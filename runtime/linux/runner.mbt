@@ -240,26 +240,39 @@ fn linux_open_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     runtime.asset_protocol_resolver_callback(),
   )
-  linux_status_with_shutdown(
+  linux_status_with_lifecycle_and_shutdown(
     match exit_code {
       0 => RunLaunched
       2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
       code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
     },
+    lifecycle=Ok(execute_app_will_exit(plan)),
     shutdown=execute_service_shutdown(plan),
   )
 }
 
 ///|
-fn linux_status_with_shutdown(
+fn linux_status_with_lifecycle_and_shutdown(
   status : @lepusa.RunStatus,
+  lifecycle~ : Result[@runtime.NativeOperationExecutionReport, String],
   shutdown~ : @runtime.NativeServiceSupervisorReport,
 ) -> @lepusa.RunStatus {
   match status {
     RunLaunched =>
-      match shutdown.first_failure_message(context="Linux service shutdown") {
-        Some(message) => RunFailed(message)
-        None => RunLaunched
+      match lifecycle {
+        Err(problem) =>
+          RunFailed("Linux app-will-exit lifecycle failed: \{problem}")
+        Ok(report) =>
+          match report.first_failure_message() {
+            Some(message) =>
+              RunFailed("Linux app-will-exit lifecycle failed: \{message}")
+            None =>
+              match
+                shutdown.first_failure_message(context="Linux service shutdown") {
+                Some(message) => RunFailed(message)
+                None => RunLaunched
+              }
+          }
       }
     _ => status
   }
@@ -317,8 +330,9 @@ fn linux_open_bundled_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     manifest.asset_protocol_resolver_callback(),
   )
-  linux_status_with_shutdown(
+  linux_status_with_lifecycle_and_shutdown(
     linux_status_from_exit_code(exit_code),
+    lifecycle=execute_bundled_app_will_exit(plan),
     shutdown=execute_bundled_service_shutdown(plan),
   )
 }

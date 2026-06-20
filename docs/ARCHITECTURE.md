@@ -439,12 +439,14 @@ same `RuntimeHost` boundary and must not re-read app manifests, capabilities,
 or source configuration.
 Open-window launch paths execute the shared service supervisor startup actions
 before native WebView creation, fail the run if startup cannot complete, and
-execute service shutdown after the window loop returns.
+execute the shared `app-will-exit` lifecycle operation batch after the window
+loop returns before service shutdown runs.
 
 Lifecycle hooks use the same lowering path. App authors attach commands to
 `AppStarted`, `AppWillExit`, `WindowCloseRequested(label)`, or
-`WindowClosed(label)`, and platform backends call
-`RuntimeHost::lifecycle_actions(event)` from their event loop.
+`WindowClosed(label)`. Platform backends consume the prelowered
+`NativeExecutionPlan` lifecycle steps from their event loop instead of
+rebuilding lifecycle actions from app configuration.
 `startupActions` is the immediate boot queue; `lifecycleHooks` is the event-loop
 view of the same model for native runners that dispatch lifecycle events.
 `RuntimeSession::apply_actions(actions)` is the portable execution step: it

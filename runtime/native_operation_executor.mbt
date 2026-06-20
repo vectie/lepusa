@@ -118,6 +118,25 @@ pub fn NativeOperationExecutor::execute_startup(
 }
 
 ///|
+pub fn NativeOperationExecutor::execute_lifecycle_step(
+  self : NativeOperationExecutor,
+  step : NativeExecutionStep,
+) -> NativeOperationExecutionReport {
+  self.execute_all(step.operations())
+}
+
+///|
+pub fn NativeOperationExecutor::execute_app_will_exit(
+  self : NativeOperationExecutor,
+  execution : NativeExecutionPlan,
+) -> NativeOperationExecutionReport {
+  match execution.app_will_exit_step() {
+    Some(step) => self.execute_lifecycle_step(step)
+    None => self.execute_all([])
+  }
+}
+
+///|
 pub fn NativeOperationExecutionStatus::name(
   self : NativeOperationExecutionStatus,
 ) -> String {

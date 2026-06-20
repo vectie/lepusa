@@ -702,7 +702,8 @@ the same `NativeRuntime` facade, plus `launch_capability()` declarations for
 WebView creation and async bridge drain support. Platform packages also expose
 service executor helpers, and native run plans build launch sessions from the
 selected backend capability before running service startup, opening a WebView,
-and running service shutdown after the window loop returns.
+running the `app-will-exit` lifecycle operation batch after the window loop
+returns, and then running service shutdown.
 macOS, Linux, and Windows start tracked sidecar processes, poll HTTP readiness
 URLs, stop tracked processes through platform-owned native hooks, and install
 exit/interruption cleanup so supervised sidecars do not outlive the native
