@@ -57,7 +57,7 @@ fn linux_start_service(
   match
     native_start_service(
       @utf8.encode(service.name()),
-      linux_command_packet(service.command()),
+      @runtime.native_service_command_packet(service.command()),
     ) {
     0 => NativeServiceActionStarted
     code =>
@@ -95,13 +95,4 @@ fn linux_stop_service(
         "Linux service stop failed for \{service.name()}: code \{code}",
       )
   }
-}
-
-///|
-fn linux_command_packet(command : Array[String]) -> Bytes {
-  let chunks : Array[String] = []
-  for part in command {
-    chunks.push("\{@utf8.encode(part).length()}\n\{part}")
-  }
-  @utf8.encode(chunks.join(""))
 }

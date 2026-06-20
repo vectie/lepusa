@@ -32,6 +32,15 @@ pub struct NativeServiceSupervisorReport {
 pub type NativeServiceActionHandler = (@lepusa.LocalService) -> NativeServiceActionStatus
 
 ///|
+pub fn native_service_command_packet(command : Array[String]) -> Bytes {
+  let chunks : Array[String] = []
+  for part in command {
+    chunks.push("\{@utf8.encode(part).length()}\n\{part}")
+  }
+  @utf8.encode(chunks.join(""))
+}
+
+///|
 pub struct NativeServiceExecutor {
   backend_name : String
   webview_engine : String

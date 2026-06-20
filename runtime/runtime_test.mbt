@@ -1186,6 +1186,16 @@ test "native backend creates service executor with backend metadata" {
 }
 
 ///|
+test "native service command packet is length-prefixed" {
+  let packet = @utf8.decode(
+    native_service_command_packet(["moon", "run", "cmd/main", "--flag"]),
+  ) catch {
+    _ => abort("unexpected invalid service command packet")
+  }
+  assert_eq(packet, "4\nmoon3\nrun8\ncmd/main6\n--flag")
+}
+
+///|
 test "runtime host applies lifecycle actions to an existing session" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
