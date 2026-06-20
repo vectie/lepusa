@@ -4,7 +4,12 @@ async fn render_bundle_plan_async(args : Array[String]) -> CliResult {
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_bundle_plan(args, target) {
-        Ok(plan) => render_bundle_plan_summary(plan)
+        Ok(plan) =>
+          if has_flag(args, "--json") {
+            render_bundle_plan_json(plan)
+          } else {
+            render_bundle_plan_summary(plan)
+          }
         Err(problems) => fail(render_problems("Lepusa bundle plan", problems))
       }
     Err(problem) => fail(problem + "\n")
@@ -39,6 +44,50 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
     }
     Err(problems) => fail(render_problems("Lepusa bundle files", problems))
   }
+}
+
+///|
+fn render_bundle_plan_json(plan : @lepusa.BundlePlan) -> CliResult {
+  match plan.files() {
+    Ok(files) => {
+      let local_service_count = match plan.runtime_manifest() {
+        Ok(manifest) => manifest.local_services().length()
+        Err(_) => 0
+      }
+      let filesystem_scope_count = match plan.runtime_manifest() {
+        Ok(manifest) => manifest.file_system_scopes().length()
+        Err(_) => 0
+      }
+      ok(
+        [
+          "{",
+          "\"target\":\{cli_json_string(plan.target().name())},",
+          "\"identifier\":\{cli_json_string(plan.identifier())},",
+          "\"executable\":\{cli_json_string(plan.executable_name())},",
+          "\"bundle\":\{cli_json_string(plan.bundle_name())},",
+          "\"runtimeExecutable\":\{cli_json_string(plan.runtime_executable_path())},",
+          "\"localServices\":\{local_service_count},",
+          "\"filesystemScopes\":\{filesystem_scope_count},",
+          "\"resources\":[\{plan.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
+          "\"signingPrerequisites\":[\{plan.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
+          "\"signingSteps\":[\{plan.signing_steps().map(fn(step) { step.to_json() }).join(",")}],",
+          "\"files\":[\{files.map(fn(file) { render_bundle_file_json(file) }).join(",")}]",
+          "}\n",
+        ].join(""),
+      )
+    }
+    Err(problems) => fail(render_problems("Lepusa bundle files", problems))
+  }
+}
+
+///|
+fn render_bundle_file_json(file : @lepusa.BundleFile) -> String {
+  [
+    "{",
+    "\"path\":\{cli_json_string(file.path())},",
+    "\"executable\":\{cli_json_bool(file.executable())}",
+    "}",
+  ].join("")
 }
 
 ///|

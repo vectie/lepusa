@@ -157,7 +157,7 @@
   - `lepusa bridge-drain`: probes the source split native path by running the handoff callback before draining pending async bridge work into a window delivery envelope.
   - `lepusa launch-session [--async-bridge]`: emits a target-aware source launch readiness envelope with session JSON, backend preflight, launch capability, requested versus effective bridge mode, and optional async-capable bridge scheduler metadata.
   - `lepusa verify [macos|windows|linux] [--json]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, and bundle contracts, with machine-readable output for CI.
-  - `lepusa bundle-plan`: prints a target bundle plan.
+  - `lepusa bundle-plan [--json]`: prints a target bundle plan, with a machine-readable artifact/resource/signing/file report for tooling.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.

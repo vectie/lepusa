@@ -185,6 +185,7 @@ moon run cmd/main --target native -- bridge-drain main fs.readText '{"scope":"da
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog --workspace /Users/kq/Workspace/lepusa
 moon run cmd/main --target native -- bundle-plan macos
+moon run cmd/main --target native -- bundle-plan macos --json
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -660,7 +661,9 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
 `BundlePlan::files()`: platform metadata, manifest-aware launcher stubs, and
 `lepusa/runtime.json`, with per-window bridge initialization scripts embedded
-in the runtime manifest.
+in the runtime manifest. Passing `--json` emits target metadata, planned
+resources, signing prerequisites and steps, and planned bundle files for CI and
+native runner tooling.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

@@ -32,7 +32,9 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
   assert_true(result.output.contains("lepusa plugin new"))
-  assert_true(result.output.contains("lepusa bundle-plan"))
+  assert_true(
+    result.output.contains("lepusa bundle-plan [macos|windows|linux] [--json]"),
+  )
   assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
@@ -299,6 +301,31 @@ async test "bundle plan supports target selection" {
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 3"))
+  let json_result = render_cli_async(["bundle-plan", "windows", "--json"])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"windows\""))
+  assert_true(
+    json_result.output.contains("\"identifier\":\"dev.vectie.lepusa.example\""),
+  )
+  assert_true(json_result.output.contains("\"bundle\":\"lepusa-example.cmd\""))
+  assert_true(
+    json_result.output.contains(
+      "\"runtimeExecutable\":\"lepusa-example/lepusa-runtime.exe\"",
+    ),
+  )
+  assert_true(json_result.output.contains("\"localServices\":0"))
+  assert_true(json_result.output.contains("\"filesystemScopes\":0"))
+  assert_true(json_result.output.contains("\"resources\":[]"))
+  assert_true(json_result.output.contains("\"signingPrerequisites\":["))
+  assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
+  assert_true(json_result.output.contains("\"signingSteps\":[]"))
+  assert_true(json_result.output.contains("\"files\":["))
+  assert_true(
+    json_result.output.contains(
+      "\"path\":\"lepusa-example/lepusa-example.cmd\"",
+    ),
+  )
+  assert_true(json_result.output.contains("\"executable\":false"))
 }
 
 ///|
