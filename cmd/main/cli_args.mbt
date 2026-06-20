@@ -1,0 +1,78 @@
+///|
+fn drop_program(argv : Array[String]) -> Array[String] {
+  let args : Array[String] = []
+  for i in 1..<argv.length() {
+    args.push(argv[i])
+  }
+  args
+}
+
+///|
+fn Array::with_first(self : Array[String], value : String) -> Array[String] {
+  let args : Array[String] = [value]
+  for i in 1..<self.length() {
+    args.push(self[i])
+  }
+  args
+}
+
+///|
+fn project_path_arg(args : Array[String]) -> String? {
+  for i in 0..<args.length() {
+    if args[i] == "--project" {
+      return args.get(i + 1)
+    }
+  }
+  None
+}
+
+///|
+fn project_flag_missing_value(args : Array[String]) -> Bool {
+  for i in 0..<args.length() {
+    if args[i] == "--project" && args.get(i + 1) is None {
+      return true
+    }
+  }
+  false
+}
+
+///|
+async fn project_config_path(args : Array[String]) -> String? {
+  match project_path_arg(args) {
+    Some(path) => Some(path)
+    None => {
+      let found = @fs.exists("lepusa.json") catch { _ => false }
+      if found {
+        Some("lepusa.json")
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
+fn positional_args(args : Array[String]) -> Array[String] {
+  let values : Array[String] = []
+  let mut skip_next = false
+  for i in 1..<args.length() {
+    if skip_next {
+      skip_next = false
+    } else if args[i] == "--project" {
+      skip_next = true
+    } else {
+      values.push(args[i])
+    }
+  }
+  values
+}
+
+///|
+fn has_flag(args : Array[String], flag : String) -> Bool {
+  for arg in args {
+    if arg == flag {
+      return true
+    }
+  }
+  false
+}
