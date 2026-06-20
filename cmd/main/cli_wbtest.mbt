@@ -1786,7 +1786,8 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
-  assert_true(result.output.contains("verification-checks: 6"))
+  assert_true(result.output.contains("runtime-dependencies: 1"))
+  assert_true(result.output.contains("verification-checks: 7"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-file"))
   assert_true(result.output.contains("planned file content matches"))
@@ -1799,6 +1800,10 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("initial content checked=1 skipped=0"))
   assert_true(result.output.contains("[ok] verify: native-launch-session"))
   assert_true(result.output.contains("native launch session prepares"))
+  assert_true(result.output.contains("[ok] verify: runtime-dependency"))
+  assert_true(
+    result.output.contains("external runtime dependency declared: WebKitGTK"),
+  )
   assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 3"))
   let bundle_root = root + "/lepusa-example"
@@ -1838,6 +1843,8 @@ async test "bundle write materializes planned files" {
   assert_true(json_result.output.contains("\"kind\":\"runtime-manifest\""))
   assert_true(json_result.output.contains("\"kind\":\"initial-content\""))
   assert_true(json_result.output.contains("\"kind\":\"native-launch-session\""))
+  assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
+  assert_true(json_result.output.contains("WebKitGTK 4.1 or 4.0"))
   assert_true(
     json_result.output.contains(
       "\"message\":\"native launch session prepares\"",
@@ -1858,7 +1865,7 @@ async test "bundle write embeds host runtime executable when compatible" {
     _ => false
   }
   if @macos_backend.available() && source_exists {
-    assert_true(result.output.contains("verification-checks: 7"))
+    assert_true(result.output.contains("verification-checks: 8"))
     assert_true(result.output.contains("files: 4"))
     assert_true(result.output.contains("[ok] verify: runtime-executable"))
     assert_true(result.output.contains("runtime executable is bundled"))
@@ -1866,6 +1873,11 @@ async test "bundle write embeds host runtime executable when compatible" {
       @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
     )
   } else {
+    assert_true(result.output.contains("verification-checks: 7"))
+    assert_true(result.output.contains("[ok] verify: runtime-dependency"))
+    assert_true(
+      result.output.contains("external runtime dependency declared: WKWebView"),
+    )
     assert_false(result.output.contains("runtime-executable"))
   }
 }
@@ -1878,6 +1890,8 @@ async test "bundle write gates target launch capability" {
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("verified: false"))
   assert_true(result.output.contains("[fail] verify: native-launch-session"))
+  assert_true(result.output.contains("[fail] verify: runtime-dependency"))
+  assert_true(result.output.contains("WebView2Loader.dll"))
   assert_true(result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
@@ -1889,7 +1903,9 @@ async test "bundle write gates target launch capability" {
   assert_true(json_result.output.contains("\"target\":\"windows\""))
   assert_true(json_result.output.contains("\"verified\":false"))
   assert_true(json_result.output.contains("\"kind\":\"native-launch-session\""))
+  assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("\"ok\":false"))
+  assert_true(json_result.output.contains("WebView2Loader.dll"))
   assert_true(json_result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(json_root + "/lepusa-example/lepusa/runtime.json"))
 }
@@ -2001,10 +2017,12 @@ async test "bundle write materializes planned resources" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
-  assert_true(result.output.contains("verification-checks: 7"))
+  assert_true(result.output.contains("runtime-dependencies: 1"))
+  assert_true(result.output.contains("verification-checks: 8"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: initial-content"))
   assert_true(result.output.contains("[ok] verify: planned-resource"))
+  assert_true(result.output.contains("[ok] verify: runtime-dependency"))
   assert_true(result.output.contains("resource exists"))
   let icon_path = bundle_root + "/resource-app/resource-app.png"
   assert_true(@fs.exists(icon_path))

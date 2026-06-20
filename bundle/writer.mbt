@@ -11,6 +11,7 @@ pub(all) enum BundleWriteCheckKind {
   PlannedFileCheck
   PlannedResourceCheck
   RuntimeExecutableCheck
+  RuntimeDependencyCheck
   RuntimeManifestCheck
   InitialContentCheck
   NativeLaunchSessionCheck
@@ -117,6 +118,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
     PlannedFileCheck => "planned-file"
     PlannedResourceCheck => "planned-resource"
     RuntimeExecutableCheck => "runtime-executable"
+    RuntimeDependencyCheck => "runtime-dependency"
     RuntimeManifestCheck => "runtime-manifest"
     InitialContentCheck => "initial-content"
     NativeLaunchSessionCheck => "native-launch-session"
@@ -178,7 +180,12 @@ pub async fn write_plan(
         None => ()
       }
       if problems.is_empty() {
-        let checks = verify_written_plan(root, files, plan.resources())
+        let checks = verify_written_plan(
+          root,
+          files,
+          plan.resources(),
+          plan.runtime_dependencies(),
+        )
         match runtime_executable {
           Some(path) => checks.push(verify_runtime_executable(path))
           None => ()
@@ -197,6 +204,7 @@ async fn verify_written_plan(
   root : String,
   files : Array[@lepusa.BundleFile],
   resources : Array[@lepusa.BundleResource],
+  runtime_dependencies : Array[@lepusa.BundleRuntimeDependency],
 ) -> Array[BundleWriteCheck] {
   let checks : Array[BundleWriteCheck] = []
   for file in files {
@@ -211,6 +219,9 @@ async fn verify_written_plan(
   for resource in resources {
     let path = join_path(root, resource.path())
     checks.push(verify_resource(path, resource))
+  }
+  for dependency in runtime_dependencies {
+    checks.push(verify_runtime_dependency(root, dependency))
   }
   checks
 }
@@ -423,6 +434,36 @@ fn verify_runtime_executable(path : String) -> BundleWriteCheck {
       "runtime executable is missing"
     },
   )
+}
+
+///|
+fn verify_runtime_dependency(
+  root : String,
+  dependency : @lepusa.BundleRuntimeDependency,
+) -> BundleWriteCheck {
+  match dependency.path() {
+    Some(relative_path) => {
+      let path = join_path(root, relative_path)
+      let ok = @xfs.is_file(path) catch { _ => false }
+      BundleWriteCheck::new(
+        kind=RuntimeDependencyCheck,
+        path~,
+        ok~,
+        message=if ok {
+          "runtime dependency is bundled: \{dependency.name()}"
+        } else {
+          "runtime dependency is missing: \{dependency.name()}"
+        },
+      )
+    }
+    None =>
+      BundleWriteCheck::new(
+        kind=RuntimeDependencyCheck,
+        path=dependency.name(),
+        ok=true,
+        message="external runtime dependency declared: \{dependency.name()}",
+      )
+  }
 }
 
 ///|

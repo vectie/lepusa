@@ -675,6 +675,9 @@ directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
 registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
+Bundle verification records target runtime dependencies too: system WebViews
+are reported as declared external dependencies, while file-backed dependencies
+such as Windows `WebView2Loader.dll` are checked at their planned bundle path.
 When the selected bundle target matches an available host runtime backend and
 the local `cmd/runtime` native binary exists, `bundle-write` also embeds a
 target-named `lepusa-runtime` executable beside the launcher and verifies it
@@ -688,8 +691,8 @@ capability, and that resolvable initial WebView content is present and
 nonblank. Windows bundles and bundles with async bridge routes stay unverified
 until the backend advertises WebView creation and async bridge drain/evaluate
 support. Passing `--json` emits target, identifier, signing prerequisites, and
-the reusable `BundleWriteResult` payload with written files, resources, and
-verification checks for CI tooling.
+the reusable `BundleWriteResult` payload with written files, resources, runtime
+dependency checks, and verification checks for CI tooling.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
 macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
