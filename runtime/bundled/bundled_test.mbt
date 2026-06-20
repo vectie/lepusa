@@ -950,7 +950,7 @@ async test "bundled runtime owns bridge message transport" {
           ) catch {
             _ => abort("unexpected invalid bundled bridge handoff packet bytes")
           }
-          assert_eq(deferred_packet, "deferred\nmain\n1")
+          assert_eq(deferred_packet, "deferred\nmain\n1\n1\n[]")
           assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bundled callback drain json bytes")

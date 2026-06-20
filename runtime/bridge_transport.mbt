@@ -762,13 +762,14 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(
   let input = @utf8.decode(message) catch { _ => "" }
   match self.runtime.bridge_handoff(input) {
     Ok(handoff) =>
-      match handoff.immediate_script() {
-        Some(script) =>
+      match handoff.immediate_dispatch() {
+        Some(dispatch) =>
           @utf8.encode(
             native_bridge_handoff_packet(
               "immediate",
               handoff.task().window_label(),
-              script,
+              dispatch.evaluation_script(),
+              operations=dispatch.operations(),
             ),
           )
         None => {
@@ -780,13 +781,14 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(
               "deferred",
               handoff.task().window_label(),
               "\{count}",
+              operations=[],
             ),
           )
         }
       }
     Err(problems) =>
       @utf8.encode(
-        native_bridge_handoff_packet("error", "", problems.join("; ")),
+        native_bridge_handoff_packet("error", "", problems.join("; "), operations=[]),
       )
   }
 }
@@ -935,8 +937,10 @@ fn native_bridge_handoff_packet(
   status : String,
   window_label : String,
   body : String,
+  operations~ : Array[NativeExecutableOperation],
 ) -> String {
-  "\{status}\n\{window_label}\n\{body}"
+  let operations_json = "[\{operations.map(fn(operation) { operation.to_json() }).join(",")}]"
+  "\{status}\n\{window_label}\n\{@utf8.encode(body).length()}\n\{body}\n\{operations_json}"
 }
 
 ///|
@@ -1122,7 +1126,7 @@ pub fn NativeBridgeDispatch::evaluation_script(
 pub fn NativeBridgeDispatch::native_window_control(
   self : NativeBridgeDispatch,
 ) -> NativeWindowControl? {
-  native_window_control_from_dispatch(self.message, self.response_json)
+  native_window_control_from_bridge_response(self.message, self.response_json)
 }
 
 ///|
@@ -1165,7 +1169,7 @@ pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
 }
 
 ///|
-fn native_window_control_from_dispatch(
+pub fn native_window_control_from_bridge_response(
   message : String,
   response_json : String,
 ) -> NativeWindowControl? {

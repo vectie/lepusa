@@ -34,6 +34,7 @@ pub struct BundledBridgeCompletion {
 } derive(Eq, @debug.Debug)
 pub fn BundledBridgeCompletion::dispatch(Self) -> BundledBridgeDispatch
 pub fn BundledBridgeCompletion::evaluation_script(Self) -> String
+pub fn BundledBridgeCompletion::operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeCompletion::task(Self) -> BundledBridgeDispatchTask
 pub fn BundledBridgeCompletion::to_json(Self) -> String
 
@@ -46,6 +47,8 @@ pub struct BundledBridgeDispatch {
 } derive(Eq, @debug.Debug)
 pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
 pub fn BundledBridgeDispatch::message(Self) -> String
+pub fn BundledBridgeDispatch::native_window_control(Self) -> @runtime.NativeWindowControl?
+pub fn BundledBridgeDispatch::operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeDispatch::response_hook(Self) -> String
 pub fn BundledBridgeDispatch::response_json(Self) -> String
 pub fn BundledBridgeDispatch::to_json(Self) -> String
@@ -136,6 +139,7 @@ pub fn BundledBridgeLoopResult::evaluation_plan(Self, window_label~ : String) ->
 pub fn BundledBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
 pub fn BundledBridgeLoopResult::has_immediate_script(Self) -> Bool
 pub fn BundledBridgeLoopResult::immediate_script(Self) -> String
+pub fn BundledBridgeLoopResult::operations(Self, window_label~ : String) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeLoopResult::to_json(Self) -> String
 
 pub struct BundledBridgeMessage {

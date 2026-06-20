@@ -29,6 +29,8 @@ pub fn native_webkit_bridge_hook_script(String, platform_name~ : String) -> Stri
 
 pub fn native_webview2_bridge_hook_script(String) -> String
 
+pub fn native_window_control_from_bridge_response(String, String) -> NativeWindowControl?
+
 // Errors
 
 // Types and methods

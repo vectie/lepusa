@@ -517,6 +517,13 @@ pub fn BundledBridgeCompletion::evaluation_script(
 }
 
 ///|
+pub fn BundledBridgeCompletion::operations(
+  self : BundledBridgeCompletion,
+) -> Array[@runtime.NativeExecutableOperation] {
+  self.dispatch.operations()
+}
+
+///|
 pub fn BundledBridgeCompletion::to_json(
   self : BundledBridgeCompletion,
 ) -> String {
@@ -702,13 +709,14 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(
   let input = @utf8.decode(message) catch { _ => "" }
   match self.runtime.bridge_handoff(input) {
     Ok(handoff) =>
-      match handoff.immediate_script() {
-        Some(script) =>
+      match handoff.immediate_dispatch() {
+        Some(dispatch) =>
           @utf8.encode(
             bundled_bridge_handoff_packet(
               "immediate",
               handoff.task().window_label(),
-              script,
+              dispatch.evaluation_script(),
+              operations=dispatch.operations(),
             ),
           )
         None => {
@@ -720,13 +728,14 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(
               "deferred",
               handoff.task().window_label(),
               "\{count}",
+              operations=[],
             ),
           )
         }
       }
     Err(problems) =>
       @utf8.encode(
-        bundled_bridge_handoff_packet("error", "", problems.join("; ")),
+        bundled_bridge_handoff_packet("error", "", problems.join("; "), operations=[]),
       )
   }
 }
@@ -875,8 +884,10 @@ fn bundled_bridge_handoff_packet(
   status : String,
   window_label : String,
   body : String,
+  operations~ : Array[@runtime.NativeExecutableOperation],
 ) -> String {
-  "\{status}\n\{window_label}\n\{body}"
+  let operations_json = "[\{operations.map(fn(operation) { operation.to_json() }).join(",")}]"
+  "\{status}\n\{window_label}\n\{@utf8.encode(body).length()}\n\{body}\n\{operations_json}"
 }
 
 ///|
@@ -915,13 +926,37 @@ pub fn BundledBridgeLoopResult::evaluation_scripts(
 }
 
 ///|
+pub fn BundledBridgeLoopResult::operations(
+  self : BundledBridgeLoopResult,
+  window_label~ : String,
+) -> Array[@runtime.NativeExecutableOperation] {
+  let operations : Array[@runtime.NativeExecutableOperation] = []
+  if self.has_immediate_script() {
+    operations.push(
+      @runtime.NativeExecutableOperation::evaluate_script(
+        @runtime.NativeEvaluationScript::new(
+          window_label~,
+          script=self.immediate_script,
+        ),
+      ),
+    )
+  }
+  for completion in self.completions {
+    for operation in completion.operations() {
+      operations.push(operation)
+    }
+  }
+  operations
+}
+
+///|
 pub fn BundledBridgeLoopResult::evaluation_plan(
   self : BundledBridgeLoopResult,
   window_label~ : String,
 ) -> @runtime.NativeBridgeLoopEvaluationPlan {
-  @runtime.NativeBridgeLoopEvaluationPlan::from_scripts(
+  @runtime.NativeBridgeLoopEvaluationPlan::new(
     window_label~,
-    scripts=self.evaluation_scripts(),
+    operations=self.operations(window_label~),
   )
 }
 
@@ -1032,14 +1067,52 @@ pub fn BundledBridgeDispatch::evaluation_script(
 }
 
 ///|
+pub fn BundledBridgeDispatch::native_window_control(
+  self : BundledBridgeDispatch,
+) -> @runtime.NativeWindowControl? {
+  @runtime.native_window_control_from_bridge_response(
+    self.message,
+    self.response_json,
+  )
+}
+
+///|
+pub fn BundledBridgeDispatch::operations(
+  self : BundledBridgeDispatch,
+) -> Array[@runtime.NativeExecutableOperation] {
+  let operations : Array[@runtime.NativeExecutableOperation] = [
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
+        window_label=self.window_label,
+        script=self.evaluation_script,
+      ),
+    ),
+  ]
+  match self.native_window_control() {
+    Some(control) =>
+      operations.push(
+        @runtime.NativeExecutableOperation::window_control(control),
+      )
+    None => ()
+  }
+  operations
+}
+
+///|
 pub fn BundledBridgeDispatch::to_json(self : BundledBridgeDispatch) -> String {
+  let control_json = match self.native_window_control() {
+    Some(control) => control.to_json()
+    None => "null"
+  }
   [
     "{",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"responseHook\":\{self.response_hook.json_string()},",
     "\"message\":\{self.message.json_string()},",
     "\"responseJson\":\{self.response_json.json_string()},",
-    "\"evaluationScript\":\{self.evaluation_script.json_string()}",
+    "\"evaluationScript\":\{self.evaluation_script.json_string()},",
+    "\"nativeWindowControl\":\{control_json},",
+    "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")
 }

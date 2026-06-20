@@ -376,7 +376,26 @@ static moonbit_bytes_t lepusa_linux_immediate_script_from_handoff_packet(
     free(packet_text);
     return NULL;
   }
-  moonbit_bytes_t script = lepusa_linux_bytes_from_cstr(cursor);
+  char *body_len_text = lepusa_linux_next_packet_line(&cursor);
+  if (body_len_text == NULL || cursor == NULL) {
+    free(packet_text);
+    return NULL;
+  }
+  char *endptr = NULL;
+  long body_len = strtol(body_len_text, &endptr, 10);
+  if (endptr == body_len_text || *endptr != '\0' || body_len < 0) {
+    free(packet_text);
+    return NULL;
+  }
+  if (body_len > INT32_MAX || (size_t)body_len > strlen(cursor)) {
+    free(packet_text);
+    return NULL;
+  }
+  int32_t script_len = (int32_t)body_len;
+  moonbit_bytes_t script = moonbit_make_bytes(script_len, 0);
+  if (script_len > 0) {
+    memcpy(script, cursor, (size_t)script_len);
+  }
   free(packet_text);
   return script;
 }

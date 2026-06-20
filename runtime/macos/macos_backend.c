@@ -485,8 +485,25 @@ static moonbit_bytes_t lepusa_immediate_script_from_handoff_packet(
   if (second == NULL) {
     return NULL;
   }
-  const char *body = second + 1;
-  int32_t body_len = (int32_t)(end - body);
+  const char *third = lepusa_find_newline(second + 1, end);
+  if (third == NULL) {
+    return NULL;
+  }
+  int64_t body_len64 = 0;
+  for (const char *p = second + 1; p < third; p++) {
+    if (*p < '0' || *p > '9') {
+      return NULL;
+    }
+    body_len64 = body_len64 * 10 + (*p - '0');
+    if (body_len64 > INT32_MAX) {
+      return NULL;
+    }
+  }
+  const char *body = third + 1;
+  int32_t body_len = (int32_t)body_len64;
+  if (body_len < 0 || body + body_len > end) {
+    return NULL;
+  }
   moonbit_bytes_t script = moonbit_make_bytes(body_len, 0);
   if (body_len > 0) {
     memcpy(script, body, (size_t)body_len);

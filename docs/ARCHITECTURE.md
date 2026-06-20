@@ -205,11 +205,14 @@ Open-window runners pass the queue-backed
 `bridge_loop_adapter().handoff_callback` into native message handlers, so sync
 commands still return callback scripts immediately while async commands are
 captured for the backend drain/evaluate step.
-The C-facing callback now uses `handoff_packet_callback`: `immediate` packets
-carry the JavaScript callback script, while `deferred` packets carry the target
-window and queued task count. macOS and Linux WebView handlers parse that packet
-and only evaluate immediate scripts, so deferred async work is explicit instead
-of being indistinguishable from an empty callback.
+The C-facing callback now uses `handoff_packet_callback`: packets are encoded as
+`status\n<window>\n<body-byte-length>\n<body>\n<operations-json>`. Immediate
+packets carry the JavaScript callback script plus executable operations,
+deferred packets carry the target window and queued task count, and error
+packets carry a diagnostic body. macOS and Linux WebView handlers parse that
+packet and only evaluate immediate scripts today, so deferred async work is
+explicit instead of being indistinguishable from an empty callback, while native
+operations such as `window-control` have a stable packet slot.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a

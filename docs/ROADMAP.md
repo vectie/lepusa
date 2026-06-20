@@ -121,8 +121,9 @@
   plans now build capability-aware launch sessions for open-window runners
   before they pass the queue-backed handoff callback into native message
   handlers; source and bundled bridge adapters now expose a structured
-  handoff-packet callback, and macOS/Linux C handlers parse that packet so
-  immediate scripts are evaluated while deferred async work remains explicit;
+  length-prefixed handoff-packet callback with executable-operation JSON, and
+  macOS/Linux C handlers parse that packet so immediate scripts are evaluated
+  while deferred async work remains explicit;
   source and bundled bridge callback bundles now expose a first-class
   `drain-bridge-window` executable operation, giving platform loops a typed
   scheduler hook for queued async bridge windows; approved `window.*` dispatches

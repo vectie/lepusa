@@ -2015,6 +2015,17 @@ test "bridge dispatch lowers approved window responses to native operations" {
       assert_eq(operations[1].window_label().unwrap(), "main")
       assert_true(dispatch.to_json().contains("\"nativeWindowControl\":{"))
       assert_true(dispatch.to_json().contains("\"kind\":\"window-control\""))
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid window control packet bytes")
+      }
+      assert_true(packet.has_prefix("immediate\nmain\n"))
+      assert_true(packet.contains("globalThis[\"__lepusaInvokeResponse\"]"))
+      assert_true(packet.contains("\"kind\":\"window-control\""))
+      assert_true(packet.contains("\"action\":\"setTitle\""))
     }
     Err(_) => abort("unexpected bridge prepare failure")
   }
@@ -2196,7 +2207,7 @@ async test "native runtime owns bridge message transport" {
           ) catch {
             _ => abort("unexpected invalid bridge handoff packet bytes")
           }
-          assert_eq(deferred_packet, "deferred\nmain\n1")
+          assert_eq(deferred_packet, "deferred\nmain\n1\n1\n[]")
           assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bridge callback drain json bytes")
