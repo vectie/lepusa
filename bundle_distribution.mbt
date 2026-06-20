@@ -452,7 +452,10 @@ pub fn BundlePlan::runtime_dependencies(
           kind=NativeLoaderLibrary,
           name="WebView2Loader.dll",
           path="\{self.executable_name()}/WebView2Loader.dll",
-          source_path="_build/native/debug/build/cmd/runtime/WebView2Loader.dll",
+          source_path=self.runtime_dependency_source_path(
+            "WebView2Loader.dll",
+            default="_build/native/debug/build/cmd/runtime/WebView2Loader.dll",
+          ),
           description="Required beside the Windows Lepusa runtime so it can load the WebView2 API without a wrapper layer",
         ),
       ]
@@ -465,6 +468,20 @@ pub fn BundlePlan::runtime_dependencies(
         ),
       ]
   }
+}
+
+///|
+fn BundlePlan::runtime_dependency_source_path(
+  self : BundlePlan,
+  name : String,
+  default~ : String,
+) -> String {
+  for source in self.runtime_dependency_sources {
+    if source.name() == name {
+      return source.source_path()
+    }
+  }
+  default
 }
 
 ///|

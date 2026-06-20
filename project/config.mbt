@@ -54,6 +54,11 @@ fn loaded_project_from_object(
       signing_config_from_object(signing_object, base_dir~, problems)
     None => @lepusa.SigningConfig::new()
   }
+  let runtime_dependency_sources = project_runtime_dependency_sources_from_object(
+    object,
+    base_dir~,
+    problems,
+  )
   let root = @lepusa.simple_cell(@lepusa.Html::text(root_html))
   let runtime = match optional_config_object(object, "runtime") {
     Some(runtime_object) => runtime_config_from_object(runtime_object, problems)
@@ -77,6 +82,7 @@ fn loaded_project_from_object(
     let mut manifest = @lepusa.ProjectManifest::new(
       @lepusa.AppMetadata::new(identifier~, product_name~, version~),
       runtime~,
+      runtime_dependency_sources~,
     )
     manifest = manifest.with_startup(startup)
     for window in windows {

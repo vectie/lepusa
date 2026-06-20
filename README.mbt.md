@@ -669,6 +669,8 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 in the runtime manifest. Passing `--json` emits target metadata, planned
 resources, runtime dependencies, signing prerequisites and steps, and planned
 bundle files for CI and native runner tooling.
+The generated bundle metadata also records those runtime dependencies beside
+artifacts, resources, signing data, and the portable runtime manifest.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
@@ -681,6 +683,16 @@ such as Windows `WebView2Loader.dll` are checked at their planned bundle path.
 When a file-backed dependency declares a source path, `bundle-write` copies it
 before verification; the Windows loader source defaults to
 `_build/native/debug/build/cmd/runtime/WebView2Loader.dll`.
+Projects can override that path in `lepusa.json`:
+
+```json
+{
+  "runtimeDependencies": [
+    { "name": "WebView2Loader.dll", "source": "vendor/WebView2Loader.dll" }
+  ]
+}
+```
+
 When the selected bundle target matches an available host runtime backend and
 the local `cmd/runtime` native binary exists, `bundle-write` also embeds a
 target-named `lepusa-runtime` executable beside the launcher and verifies it

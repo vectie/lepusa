@@ -175,6 +175,12 @@ test "desktop project builds runtime host and bundle plan from one boundary" {
     )
     .window(source=@lepusa.Source::html("<main>project</main>"))
     .with_official_plugins(["log", "clipboard"])
+    .with_runtime_dependency_source(
+      @lepusa.BundleRuntimeDependencySource::new(
+        name="WebView2Loader.dll",
+        source_path="vendor/WebView2Loader.dll",
+      ),
+    )
     .with_startup(@lepusa.Cmd::effect("boot"))
     .on_shutdown(@lepusa.Cmd::effect("flush"))
   match project.runtime_host() {
@@ -198,6 +204,10 @@ test "desktop project builds runtime host and bundle plan from one boundary" {
     Ok(bundle) => {
       assert_true(bundle.registered_routes().contains("log.write"))
       assert_true(bundle.registered_routes().contains("clipboard.readText"))
+      assert_eq(
+        bundle.runtime_dependency_sources()[0].source_path(),
+        "vendor/WebView2Loader.dll",
+      )
       match bundle.runtime_manifest() {
         Ok(manifest) => {
           assert_true(manifest.registered_routes().contains("log.write"))

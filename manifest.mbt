@@ -9,6 +9,7 @@ pub struct ProjectManifest {
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
   icon_path : String?
+  runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
 
@@ -23,6 +24,7 @@ pub fn ProjectManifest::new(
   lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
   icon_path? : String,
+  runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
   signing? : SigningConfig = SigningConfig::new(),
 ) -> ProjectManifest {
   {
@@ -35,6 +37,7 @@ pub fn ProjectManifest::new(
     lifecycle_hooks,
     runtime,
     icon_path,
+    runtime_dependency_sources,
     signing,
   }
 }
@@ -76,6 +79,13 @@ pub fn ProjectManifest::runtime(self : ProjectManifest) -> RuntimeConfig {
 ///|
 pub fn ProjectManifest::icon_path(self : ProjectManifest) -> String? {
   self.icon_path
+}
+
+///|
+pub fn ProjectManifest::runtime_dependency_sources(
+  self : ProjectManifest,
+) -> Array[BundleRuntimeDependencySource] {
+  self.runtime_dependency_sources.copy()
 }
 
 ///|
@@ -174,6 +184,16 @@ pub fn ProjectManifest::with_signing(
 }
 
 ///|
+pub fn ProjectManifest::with_runtime_dependency_source(
+  self : ProjectManifest,
+  source : BundleRuntimeDependencySource,
+) -> ProjectManifest {
+  let runtime_dependency_sources = self.runtime_dependency_sources.copy()
+  runtime_dependency_sources.push(source)
+  { ..self, runtime_dependency_sources, }
+}
+
+///|
 pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   let problems = self.metadata.validate()
   for problem in self.runtime.validate() {
@@ -225,6 +245,7 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
     Some("") => problems.push("app icon path must not be empty")
     _ => ()
   }
+  validate_runtime_dependency_sources(self.runtime_dependency_sources, problems)
   for problem in self.signing.validate() {
     problems.push(problem)
   }
@@ -294,9 +315,16 @@ pub fn ProjectManifest::bundle_plan(
             self.metadata,
             target~,
             icon_path~,
+            runtime_dependency_sources=self.runtime_dependency_sources,
             signing=self.signing,
           )
-        None => BundleConfig::new(self.metadata, target~, signing=self.signing)
+        None =>
+          BundleConfig::new(
+            self.metadata,
+            target~,
+            runtime_dependency_sources=self.runtime_dependency_sources,
+            signing=self.signing,
+          )
       }
       config.plan(runtime, registered_routes~)
     }

@@ -216,6 +216,14 @@ pub fn DesktopProject::with_signing(
 }
 
 ///|
+pub fn DesktopProject::with_runtime_dependency_source(
+  self : DesktopProject,
+  source : @lepusa.BundleRuntimeDependencySource,
+) -> DesktopProject {
+  { ..self, manifest: self.manifest.with_runtime_dependency_source(source) }
+}
+
+///|
 pub fn DesktopProject::validate(self : DesktopProject) -> Array[String] {
   let problems = self.kit.validate()
   for problem in self.effective_manifest().validate() {

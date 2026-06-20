@@ -1926,6 +1926,48 @@ async test "bundle write gates target launch capability" {
 }
 
 ///|
+async test "bundle write copies configured runtime dependency files" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-windows-loader-\{stamp}"
+  let out = "/tmp/lepusa-windows-loader-out-\{stamp}"
+  @fs.mkdir(root + "/vendor", recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/vendor/WebView2Loader.dll",
+    b"fake-loader",
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let config = [
+    "{", "\"identifier\":\"dev.local.loader\",", "\"productName\":\"Loader App\",",
+    "\"version\":\"0.1.0\",", "\"window\":{\"label\":\"main\",\"title\":\"Loader App\"},",
+    "\"runtimeDependencies\":[{", "\"name\":\"WebView2Loader.dll\",", "\"source\":\"vendor/WebView2Loader.dll\"",
+    "}]", "}",
+  ].join("")
+  @fs.write_file(
+    root + "/lepusa.json",
+    @utf8.encode(config),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "bundle-write",
+    "windows",
+    out,
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("[fail] verify: native-launch-session"))
+  assert_true(result.output.contains("[ok] verify: runtime-dependency"))
+  assert_true(
+    result.output.contains("runtime dependency is bundled: WebView2Loader.dll"),
+  )
+  let loader_path = out + "/loader-app/WebView2Loader.dll"
+  assert_true(@fs.exists(loader_path))
+  assert_eq(@fs.read_file(loader_path).text(), "fake-loader")
+}
+
+///|
 async test "bundle write fails when native launch session is blocked" {
   let stamp = @async.now().to_int()
   let root = "/tmp/lepusa-async-bundle-\{stamp}"

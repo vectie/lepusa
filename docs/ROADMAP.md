@@ -251,7 +251,9 @@ desktop core is reliable.
 - `BundlePlan::runtime_dependencies()` emits target WebView/runtime loader
   requirements, including Windows WebView2 Runtime plus `WebView2Loader.dll`
   placement beside the packaged Lepusa runtime; file-backed dependencies can
-  declare source paths that `bundle-write` copies before verification.
+  declare source paths that `bundle-write` copies before verification, and
+  standalone `lepusa.json` projects can override those sources through
+  `runtimeDependencies`.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and
   package validation requirements.
 - App metadata manifest: id, product name, version, icons, capabilities,

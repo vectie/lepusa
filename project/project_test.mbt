@@ -32,6 +32,7 @@ test "project config parses app manifest boundary" {
 async test "project config loads file relative resources" {
   let root = "/tmp/lepusa-project-load-\{@async.now().to_int()}"
   @fs.mkdir(root + "/dist", recursive=true, permission=0o755)
+  @fs.mkdir(root + "/vendor", recursive=true, permission=0o755)
   @fs.write_file(
     root + "/dist/index.html",
     b"<main>loaded</main>",
@@ -47,7 +48,11 @@ async test "project config loads file relative resources" {
     #|    "label": "main",
     #|    "title": "Loaded",
     #|    "source": { "packaged": "dist" }
-    #|  }
+    #|  },
+    #|  "runtimeDependencies": [{
+    #|    "name": "WebView2Loader.dll",
+    #|    "source": "vendor/WebView2Loader.dll"
+    #|  }]
     #|}
     #|
   @fs.write_file(
@@ -63,6 +68,26 @@ async test "project config loads file relative resources" {
           assert_eq(plan.resources().length(), 1)
           assert_eq(plan.resources()[0].source_path(), root + "/dist")
           assert_eq(plan.resources()[0].path(), "loaded/lepusa/assets/main")
+        }
+        Err(problems) => abort(problems.join(", "))
+      }
+    Err(problems) => abort(problems.join(", "))
+  }
+  match ProjectConfig::load(root + "/lepusa.json") {
+    Ok(project) =>
+      match project.manifest().bundle_plan(project.root(), target=Windows) {
+        Ok(plan) => {
+          let sources = plan.runtime_dependency_sources()
+          assert_eq(sources.length(), 1)
+          assert_eq(sources[0].name(), "WebView2Loader.dll")
+          assert_eq(
+            sources[0].source_path(),
+            root + "/vendor/WebView2Loader.dll",
+          )
+          assert_eq(
+            plan.runtime_dependencies()[1].source_path().unwrap(),
+            root + "/vendor/WebView2Loader.dll",
+          )
         }
         Err(problems) => abort(problems.join(", "))
       }

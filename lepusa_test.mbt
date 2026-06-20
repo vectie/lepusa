@@ -1109,6 +1109,30 @@ test "signing config validates empty configured fields" {
 }
 
 ///|
+test "runtime dependency sources validate names paths and duplicates" {
+  let metadata = @lepusa.AppMetadata::new(
+    identifier="dev.vectie.sources",
+    product_name="Sources",
+    version="0.1.0",
+  )
+  let config = @lepusa.BundleConfig::new(metadata, runtime_dependency_sources=[
+    @lepusa.BundleRuntimeDependencySource::new(name="", source_path=""),
+    @lepusa.BundleRuntimeDependencySource::new(name="loader", source_path="a"),
+    @lepusa.BundleRuntimeDependencySource::new(name="loader", source_path="b"),
+  ])
+  let problems = config.validate()
+  assert_true(
+    problems.contains("runtime dependency source name must not be empty"),
+  )
+  assert_true(
+    problems.contains("runtime dependency source path must not be empty"),
+  )
+  assert_true(
+    problems.contains("runtime dependency source must be unique: loader"),
+  )
+}
+
+///|
 test "bundle files include platform metadata" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(
@@ -1227,8 +1251,31 @@ test "windows bundle artifacts match generated command launcher" {
               assert_true(
                 files[2].content().contains("windows-app/windows-app.cmd"),
               )
+              assert_true(
+                files[2].content().contains("\"runtimeDependencies\""),
+              )
+              assert_true(files[2].content().contains("WebView2Loader.dll"))
             }
             Err(_) => abort("unexpected invalid windows bundle files")
+          }
+          match
+            @lepusa.BundleConfig::new(metadata, target=Windows, runtime_dependency_sources=[
+              @lepusa.BundleRuntimeDependencySource::new(
+                name="WebView2Loader.dll",
+                source_path="vendor/WebView2Loader.dll",
+              ),
+            ]).plan(runtime) {
+            Ok(custom_plan) => {
+              assert_eq(
+                custom_plan.runtime_dependency_sources()[0].source_path(),
+                "vendor/WebView2Loader.dll",
+              )
+              assert_eq(
+                custom_plan.runtime_dependencies()[1].source_path().unwrap(),
+                "vendor/WebView2Loader.dll",
+              )
+            }
+            Err(_) => abort("unexpected invalid custom windows bundle plan")
           }
         }
         Err(_) => abort("unexpected invalid windows bundle plan")

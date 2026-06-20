@@ -61,6 +61,7 @@ pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
   icon_path : String?
+  runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
 
@@ -69,18 +70,70 @@ pub fn BundleConfig::new(
   metadata : AppMetadata,
   target? : BundleTarget = MacOS,
   icon_path? : String,
+  runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
   signing? : SigningConfig = SigningConfig::new(),
 ) -> BundleConfig {
-  { metadata, target, icon_path, signing }
+  { metadata, target, icon_path, runtime_dependency_sources, signing }
 }
 
 ///|
 pub fn BundleConfig::validate(self : BundleConfig) -> Array[String] {
   let problems = self.metadata.validate()
+  validate_runtime_dependency_sources(self.runtime_dependency_sources, problems)
   for problem in self.signing.validate() {
     problems.push(problem)
   }
   problems
+}
+
+///|
+pub struct BundleRuntimeDependencySource {
+  name : String
+  source_path : String
+} derive(Debug, Eq)
+
+///|
+pub fn BundleRuntimeDependencySource::new(
+  name~ : String,
+  source_path~ : String,
+) -> BundleRuntimeDependencySource {
+  { name, source_path }
+}
+
+///|
+pub fn BundleRuntimeDependencySource::name(
+  self : BundleRuntimeDependencySource,
+) -> String {
+  self.name
+}
+
+///|
+pub fn BundleRuntimeDependencySource::source_path(
+  self : BundleRuntimeDependencySource,
+) -> String {
+  self.source_path
+}
+
+///|
+fn validate_runtime_dependency_sources(
+  sources : Array[BundleRuntimeDependencySource],
+  problems : Array[String],
+) -> Unit {
+  let names : Array[String] = []
+  for source in sources {
+    if source.name() == "" {
+      problems.push("runtime dependency source name must not be empty")
+    } else if names.contains(source.name()) {
+      problems.push(
+        "runtime dependency source must be unique: \{source.name()}",
+      )
+    } else {
+      names.push(source.name())
+    }
+    if source.source_path() == "" {
+      problems.push("runtime dependency source path must not be empty")
+    }
+  }
 }
 
 ///|
@@ -92,6 +145,7 @@ pub struct BundlePlan {
   executable_name : String
   bundle_name : String
   icon_path : String?
+  runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
 
@@ -240,6 +294,13 @@ pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
 }
 
 ///|
+pub fn BundlePlan::runtime_dependency_sources(
+  self : BundlePlan,
+) -> Array[BundleRuntimeDependencySource] {
+  self.runtime_dependency_sources.copy()
+}
+
+///|
 pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
   let resources = self.asset_resources()
   match self.icon_path {
@@ -381,6 +442,7 @@ fn BundlePlan::runtime_manifest_file_json(
           "\"target\":\{self.target.name().json_string()},",
           "\"artifacts\":[\{self.artifacts().map(fn(artifact) { artifact.to_json() }).join(",")}],",
           "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
+          "\"runtimeDependencies\":[\{self.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}],",
           "\"signing\":\{self.signing.to_json()},",
           "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
           "\"signingSteps\":[\{self.signing_steps().map(fn(step) { step.to_json() }).join(",")}],",
@@ -414,6 +476,7 @@ pub fn BundleConfig::plan(
       executable_name,
       bundle_name: executable_name + extension,
       icon_path: self.icon_path,
+      runtime_dependency_sources: self.runtime_dependency_sources.copy(),
       signing: self.signing,
     })
   } else {

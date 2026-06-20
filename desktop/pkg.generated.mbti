@@ -73,6 +73,7 @@ pub fn DesktopProject::with_official_plugins(Self, Array[String], window_label? 
 pub fn DesktopProject::with_plugin(Self, @lepusa.Plugin) -> Self
 pub fn DesktopProject::with_registry(Self, @lepusa.CommandRegistry) -> Self
 pub fn DesktopProject::with_runtime(Self, @lepusa.RuntimeConfig) -> Self
+pub fn DesktopProject::with_runtime_dependency_source(Self, @lepusa.BundleRuntimeDependencySource) -> Self
 pub fn DesktopProject::with_signing(Self, @lepusa.SigningConfig) -> Self
 pub fn DesktopProject::with_startup(Self, @lepusa.Cmd) -> Self
 pub fn DesktopProject::with_sync_plugins(Self, window_label? : String) -> Self
