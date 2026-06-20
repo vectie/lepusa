@@ -65,6 +65,22 @@ pub struct BundledLifecyclePlan {
 pub fn BundledLifecyclePlan::action_jsons(Self) -> Array[String]
 pub fn BundledLifecyclePlan::event(Self) -> BundledLifecycleEvent
 
+pub struct BundledNativeRunPlan {
+  bootstrap : BundledBootstrapPlan
+  webviews : Array[@runtime.NativeWebViewPlan]
+} derive(@debug.Debug)
+pub fn BundledNativeRunPlan::bootstrap(Self) -> BundledBootstrapPlan
+pub fn BundledNativeRunPlan::bootstrap_json(Self) -> String
+pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
+pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
+pub fn BundledNativeRunPlan::first_webview_url(Self) -> String
+pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
+pub fn BundledNativeRunPlan::service_supervisor_plan(Self) -> @runtime.NativeServiceSupervisorPlan
+pub fn BundledNativeRunPlan::service_supervisor_report(Self) -> @runtime.NativeServiceSupervisorReport
+pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int
+pub fn BundledNativeRunPlan::webview_count(Self) -> Int
+pub fn BundledNativeRunPlan::webviews(Self) -> Array[@runtime.NativeWebViewPlan]
+
 pub(all) enum BundledRunMode {
   BundledDryRun
   BundledOpenWindow
@@ -141,6 +157,7 @@ pub fn BundledRuntimeManifest::local_service_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::parse(String, String) -> Result[Self, String]
 pub fn BundledRuntimeManifest::path(Self) -> String
 pub fn BundledRuntimeManifest::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
+pub fn BundledRuntimeManifest::prepare_native_run_plan(Self, target~ : String, target_name? : String, prepare_webview~ : (BundledWebView) -> Result[@runtime.NativeWebViewPlan, String], missing_webview_message? : String) -> Result[BundledNativeRunPlan, Array[String]]
 pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]

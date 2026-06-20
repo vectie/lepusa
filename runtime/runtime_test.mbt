@@ -298,6 +298,41 @@ test "native runtime prepares shared webview plans" {
 }
 
 ///|
+test "native runtime prepares shared run plans" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+    Ok(runtime) =>
+      match
+        runtime.prepare_run_plan(prepare_webview=fn(spec) {
+          runtime.webview_plan(
+            spec,
+            initialization_script="/* prepared hook */",
+          )
+        }) {
+        Ok(plan) => {
+          assert_eq(plan.webview_count(), 1)
+          assert_eq(plan.first_webview_url(), "lepusa://inline/main/index.html")
+          assert_eq(
+            plan.first_webview_load_url(),
+            "lepusa://inline/main/index.html",
+          )
+          assert_eq(plan.startup_operation_count(), 1)
+          assert_eq(plan.lifecycle_step_count(), 1)
+          assert_eq(plan.service_supervisor_plan().backend_name(), "test")
+          assert_true(plan.service_supervisor_report().ok())
+          match plan.first_webview() {
+            Ok(webview) =>
+              assert_eq(webview.initialization_script(), "/* prepared hook */")
+            Err(problem) => abort(problem)
+          }
+        }
+        Err(_) => abort("unexpected invalid native prepared run plan")
+      }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
 test "native asset load urls decode json envelopes" {
   let virtual_json =
     #|{

@@ -83,6 +83,21 @@ pub(all) enum NativeOperation {
 pub fn NativeOperation::from_runtime(RuntimeOperation) -> Self
 pub fn NativeOperation::to_json(Self) -> String
 
+pub struct NativePreparedRunPlan {
+  runner : NativeRunnerPlan
+  webviews : Array[NativeWebViewPlan]
+} derive(Eq, @debug.Debug)
+pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
+pub fn NativePreparedRunPlan::first_webview_load_url(Self) -> String
+pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
+pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int
+pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan
+pub fn NativePreparedRunPlan::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
+pub fn NativePreparedRunPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport
+pub fn NativePreparedRunPlan::startup_operation_count(Self) -> Int
+pub fn NativePreparedRunPlan::webview_count(Self) -> Int
+pub fn NativePreparedRunPlan::webviews(Self) -> Array[NativeWebViewPlan]
+
 pub struct NativeRunnerPlan {
   backend_name : String
   webview_engine : String
@@ -134,6 +149,7 @@ pub fn NativeRuntime::initial_load_url(Self, RuntimeWebViewSpec) -> Result[Strin
 pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Result[String, Array[String]]
 pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
 pub fn NativeRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeMessage, Array[String]]
+pub fn NativeRuntime::prepare_run_plan(Self, prepare_webview~ : (RuntimeWebViewSpec) -> Result[NativeWebViewPlan, String], missing_webview_message? : String) -> Result[NativePreparedRunPlan, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
 pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
 pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> @lepusa.RunReport

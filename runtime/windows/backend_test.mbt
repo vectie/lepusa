@@ -105,7 +105,7 @@ test "windows backend prepares run plan and reports unsupported launch" {
           )
           assert_true(result.plan().service_supervisor_report().ok())
           assert_eq(result.plan().service_supervisor_report().action_count(), 0)
-          assert_eq(result.plan().execute_service_startup().action_count(), 0)
+          assert_eq(execute_service_startup(result.plan()).action_count(), 0)
         }
         Err(_) => abort("unexpected invalid Windows dry run")
       }

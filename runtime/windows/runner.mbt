@@ -5,26 +5,14 @@ pub(all) enum WindowsRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub struct WindowsRunPlan {
-  runner : @runtime.NativeRunnerPlan
-  webviews : Array[@runtime.NativeWebViewPlan]
-} derive(Debug, Eq)
-
-///|
 pub struct WindowsRunResult {
-  plan : WindowsRunPlan
+  plan : @runtime.NativePreparedRunPlan
   status : @lepusa.RunStatus
 } derive(Debug, Eq)
 
 ///|
-pub struct WindowsBundledRunPlan {
-  bootstrap : @bundled.BundledBootstrapPlan
-  webviews : Array[@runtime.NativeWebViewPlan]
-} derive(Debug)
-
-///|
 pub struct WindowsBundledRunResult {
-  plan : WindowsBundledRunPlan
+  plan : @bundled.BundledNativeRunPlan
   status : @lepusa.RunStatus
 } derive(Debug)
 
@@ -48,24 +36,11 @@ extern "c" fn native_run_webview(
 ///|
 pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
-) -> Result[WindowsRunPlan, Array[String]] {
-  let runner = runtime.runner_plan()
-  let webviews : Array[@runtime.NativeWebViewPlan] = []
-  let problems : Array[String] = []
-  for spec in runner.webview_specs() {
-    match windows_webview_plan_from_spec(runtime, spec) {
-      Ok(webview) => webviews.push(webview)
-      Err(problem) => problems.push(problem)
-    }
-  }
-  if webviews.is_empty() {
-    problems.push("Windows run requires at least one webview")
-  }
-  if problems.is_empty() {
-    Ok({ runner, webviews })
-  } else {
-    Err(problems)
-  }
+) -> Result[@runtime.NativePreparedRunPlan, Array[String]] {
+  runtime.prepare_run_plan(
+    prepare_webview=fn(spec) { windows_webview_plan_from_spec(runtime, spec) },
+    missing_webview_message="Windows run requires at least one webview",
+  )
 }
 
 ///|
@@ -96,36 +71,15 @@ pub fn launch(
 ///|
 pub fn prepare_bundled_run(
   manifest : @bundled.BundledRuntimeManifest,
-) -> Result[WindowsBundledRunPlan, Array[String]] {
-  if manifest.target() != "windows" {
-    return Err([
-      "Windows bundled run requires target windows: \{manifest.target()}",
-    ])
-  }
-  let bootstrap = match manifest.bootstrap_plan() {
-    Ok(bootstrap) => bootstrap
-    Err(problem) => return Err([problem])
-  }
-  let bundled_webviews = match manifest.webviews() {
-    Ok(webviews) => webviews
-    Err(problem) => return Err([problem])
-  }
-  let webviews : Array[@runtime.NativeWebViewPlan] = []
-  let problems : Array[String] = []
-  for webview in bundled_webviews {
-    match windows_webview_plan_from_bundled(manifest, webview) {
-      Ok(plan) => webviews.push(plan)
-      Err(problem) => problems.push(problem)
-    }
-  }
-  if webviews.is_empty() {
-    problems.push("Windows bundled run requires at least one webview")
-  }
-  if problems.is_empty() {
-    Ok({ bootstrap, webviews })
-  } else {
-    Err(problems)
-  }
+) -> Result[@bundled.BundledNativeRunPlan, Array[String]] {
+  manifest.prepare_native_run_plan(
+    target="windows",
+    target_name="Windows",
+    prepare_webview=fn(webview) {
+      windows_webview_plan_from_bundled(manifest, webview)
+    },
+    missing_webview_message="Windows bundled run requires at least one webview",
+  )
 }
 
 ///|
@@ -154,69 +108,9 @@ pub fn launch_bundled(
 }
 
 ///|
-pub fn WindowsRunPlan::runner(
-  self : WindowsRunPlan,
-) -> @runtime.NativeRunnerPlan {
-  self.runner
-}
-
-///|
-pub fn WindowsRunPlan::webview_count(self : WindowsRunPlan) -> Int {
-  self.webviews.length()
-}
-
-///|
-pub fn WindowsRunPlan::first_webview_url(self : WindowsRunPlan) -> String {
-  match self.webviews.get(0) {
-    Some(webview) => webview.url()
-    None => ""
-  }
-}
-
-///|
-pub fn WindowsRunPlan::first_webview_load_url(self : WindowsRunPlan) -> String {
-  match self.webviews.get(0) {
-    Some(webview) => webview.load_url()
-    None => ""
-  }
-}
-
-///|
-pub fn WindowsRunPlan::first_webview(
-  self : WindowsRunPlan,
-) -> Result[@runtime.NativeWebViewPlan, String] {
-  match self.webviews.get(0) {
-    Some(webview) => Ok(webview)
-    None => Err("Windows run plan requires at least one webview")
-  }
-}
-
-///|
-pub fn WindowsRunPlan::startup_operation_count(self : WindowsRunPlan) -> Int {
-  self.runner.startup_operations().length()
-}
-
-///|
-pub fn WindowsRunPlan::service_supervisor_plan(
-  self : WindowsRunPlan,
-) -> @runtime.NativeServiceSupervisorPlan {
-  self.runner.service_supervisor_plan()
-}
-
-///|
-pub fn WindowsRunPlan::service_supervisor_report(
-  self : WindowsRunPlan,
-) -> @runtime.NativeServiceSupervisorReport {
-  self.service_supervisor_plan().prepared_report()
-}
-
-///|
-pub fn WindowsRunPlan::lifecycle_step_count(self : WindowsRunPlan) -> Int {
-  self.runner.lifecycle_steps().length()
-}
-
-///|
-pub fn WindowsRunResult::plan(self : WindowsRunResult) -> WindowsRunPlan {
+pub fn WindowsRunResult::plan(
+  self : WindowsRunResult,
+) -> @runtime.NativePreparedRunPlan {
   self.plan
 }
 
@@ -226,93 +120,9 @@ pub fn WindowsRunResult::status(self : WindowsRunResult) -> @lepusa.RunStatus {
 }
 
 ///|
-pub fn WindowsBundledRunPlan::bootstrap(
-  self : WindowsBundledRunPlan,
-) -> @bundled.BundledBootstrapPlan {
-  self.bootstrap
-}
-
-///|
-pub fn WindowsBundledRunPlan::bootstrap_json(
-  self : WindowsBundledRunPlan,
-) -> String {
-  self.bootstrap.to_json()
-}
-
-///|
-pub fn WindowsBundledRunPlan::webview_count(
-  self : WindowsBundledRunPlan,
-) -> Int {
-  self.webviews.length()
-}
-
-///|
-pub fn WindowsBundledRunPlan::first_webview_url(
-  self : WindowsBundledRunPlan,
-) -> String {
-  match self.webviews.get(0) {
-    Some(webview) => webview.url()
-    None => ""
-  }
-}
-
-///|
-pub fn WindowsBundledRunPlan::first_webview_load_url(
-  self : WindowsBundledRunPlan,
-) -> String {
-  match self.webviews.get(0) {
-    Some(webview) => webview.load_url()
-    None => ""
-  }
-}
-
-///|
-pub fn WindowsBundledRunPlan::first_webview(
-  self : WindowsBundledRunPlan,
-) -> Result[@runtime.NativeWebViewPlan, String] {
-  match self.webviews.get(0) {
-    Some(webview) => Ok(webview)
-    None => Err("Windows bundled run plan requires at least one webview")
-  }
-}
-
-///|
-pub fn WindowsBundledRunPlan::startup_operation_count(
-  self : WindowsBundledRunPlan,
-) -> Int {
-  self.bootstrap.startup_operations().length()
-}
-
-///|
-pub fn WindowsBundledRunPlan::service_supervisor_plan(
-  self : WindowsBundledRunPlan,
-) -> @runtime.NativeServiceSupervisorPlan {
-  let plan = self.bootstrap.run_plan()
-  @runtime.NativeServiceSupervisorPlan::new(
-    backend_name=plan.backend(),
-    webview_engine=plan.webview_engine(),
-    plan=plan.service_supervisor_plan(),
-  )
-}
-
-///|
-pub fn WindowsBundledRunPlan::service_supervisor_report(
-  self : WindowsBundledRunPlan,
-) -> @runtime.NativeServiceSupervisorReport {
-  self.service_supervisor_plan().prepared_report()
-}
-
-///|
-pub fn WindowsBundledRunPlan::lifecycle_step_count(
-  self : WindowsBundledRunPlan,
-) -> Int {
-  self.bootstrap.lifecycle_operations().length()
-}
-
-///|
 pub fn WindowsBundledRunResult::plan(
   self : WindowsBundledRunResult,
-) -> WindowsBundledRunPlan {
+) -> @bundled.BundledNativeRunPlan {
   self.plan
 }
 
@@ -363,7 +173,7 @@ fn windows_webview_plan_from_bundled(
 
 ///|
 fn windows_open_window(
-  plan : WindowsRunPlan,
+  plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
   let webview = match plan.first_webview() {
@@ -393,7 +203,7 @@ fn windows_open_window(
 
 ///|
 fn windows_open_bundled_window(
-  plan : WindowsBundledRunPlan,
+  plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
   let webview = match plan.first_webview() {

@@ -23,31 +23,31 @@ pub fn service_executor() -> @runtime.NativeServiceExecutor {
 }
 
 ///|
-pub fn WindowsRunPlan::execute_service_startup(
-  self : WindowsRunPlan,
+pub fn execute_service_startup(
+  plan : @runtime.NativePreparedRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_startup(self.service_supervisor_plan())
+  service_executor().execute_startup(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn WindowsRunPlan::execute_service_shutdown(
-  self : WindowsRunPlan,
+pub fn execute_service_shutdown(
+  plan : @runtime.NativePreparedRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_shutdown(self.service_supervisor_plan())
+  service_executor().execute_shutdown(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn WindowsBundledRunPlan::execute_service_startup(
-  self : WindowsBundledRunPlan,
+pub fn execute_bundled_service_startup(
+  plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_startup(self.service_supervisor_plan())
+  service_executor().execute_startup(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn WindowsBundledRunPlan::execute_service_shutdown(
-  self : WindowsBundledRunPlan,
+pub fn execute_bundled_service_shutdown(
+  plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_shutdown(self.service_supervisor_plan())
+  service_executor().execute_shutdown(plan.service_supervisor_plan())
 }
 
 ///|

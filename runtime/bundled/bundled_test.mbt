@@ -303,6 +303,58 @@ test "bundled runtime manifest resolves protocol assets" {
 }
 
 ///|
+test "bundled runtime manifest prepares shared native run plans" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      sample_bundled_manifest(),
+    ) {
+    Ok(runtime) =>
+      match
+        runtime.prepare_native_run_plan(target="linux", prepare_webview=fn(
+          webview,
+        ) {
+          runtime.webview_plan(
+            webview,
+            initialization_script="/* bundled prepared hook */",
+          )
+        }) {
+        Ok(plan) => {
+          assert_eq(plan.webview_count(), 1)
+          assert_eq(
+            plan.first_webview_url(),
+            "lepusa://rabbita/main/index.html",
+          )
+          assert_eq(
+            plan.first_webview_load_url(),
+            "lepusa://rabbita/main/index.html",
+          )
+          assert_eq(plan.startup_operation_count(), 2)
+          assert_eq(plan.lifecycle_step_count(), 2)
+          assert_true(
+            plan.bootstrap_json().contains("\"nativeBackend\":\"linux\""),
+          )
+          let supervisor = plan.service_supervisor_plan()
+          assert_eq(supervisor.backend_name(), "linux")
+          assert_eq(supervisor.webview_engine(), "WebKitGTK")
+          assert_true(supervisor.requires_supervisor())
+          assert_true(plan.service_supervisor_report().ok())
+          match plan.first_webview() {
+            Ok(webview) =>
+              assert_eq(
+                webview.initialization_script(),
+                "/* bundled prepared hook */",
+              )
+            Err(problem) => abort(problem)
+          }
+        }
+        Err(_) => abort("unexpected invalid bundled native run plan")
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime manifest selects lifecycle actions" {
   match
     BundledRuntimeManifest::parse(

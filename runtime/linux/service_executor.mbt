@@ -23,31 +23,31 @@ pub fn service_executor() -> @runtime.NativeServiceExecutor {
 }
 
 ///|
-pub fn LinuxRunPlan::execute_service_startup(
-  self : LinuxRunPlan,
+pub fn execute_service_startup(
+  plan : @runtime.NativePreparedRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_startup(self.service_supervisor_plan())
+  service_executor().execute_startup(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn LinuxRunPlan::execute_service_shutdown(
-  self : LinuxRunPlan,
+pub fn execute_service_shutdown(
+  plan : @runtime.NativePreparedRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_shutdown(self.service_supervisor_plan())
+  service_executor().execute_shutdown(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn LinuxBundledRunPlan::execute_service_startup(
-  self : LinuxBundledRunPlan,
+pub fn execute_bundled_service_startup(
+  plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_startup(self.service_supervisor_plan())
+  service_executor().execute_startup(plan.service_supervisor_plan())
 }
 
 ///|
-pub fn LinuxBundledRunPlan::execute_service_shutdown(
-  self : LinuxBundledRunPlan,
+pub fn execute_bundled_service_shutdown(
+  plan : @bundled.BundledNativeRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
-  service_executor().execute_shutdown(self.service_supervisor_plan())
+  service_executor().execute_shutdown(plan.service_supervisor_plan())
 }
 
 ///|
