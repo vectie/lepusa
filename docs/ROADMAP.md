@@ -234,8 +234,9 @@ desktop core is reliable.
 - App metadata manifest: id, product name, version, icons, capabilities,
   assets, sidecars, typed signing options, and target-aware signing steps now
   flow into bundle manifests.
-- `@lepusa/bundle` verifies materialized bundle files, resources, and runtime
-  manifests after `bundle-write` as the pre-install smoke boundary.
+- `@lepusa/bundle` verifies materialized bundle files, resources, runtime
+  manifests, and target launch capability after `bundle-write` as the
+  pre-install smoke boundary.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof

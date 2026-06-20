@@ -278,19 +278,22 @@ async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
         }) {
         Ok(plan) =>
           match plan.launch_session() {
-            Ok(session) =>
+            Ok(session) => {
+              let capability = bundle_launch_capability(manifest.target())
+              let blocker = session.launch_blocker_with_capability(
+                bundle_target_display_name(manifest.target()),
+                capability,
+              )
               BundleWriteCheck::new(
                 kind=NativeLaunchSessionCheck,
                 path~,
-                ok=session.can_launch(),
-                message=if session.can_launch() {
-                  "native launch session prepares"
-                } else {
-                  session
-                  .launch_blocker(manifest.target())
-                  .unwrap_or("native launch session is blocked")
+                ok=blocker is None,
+                message=match blocker {
+                  None => "native launch session prepares"
+                  Some(problem) => problem
                 },
               )
+            }
             Err(problem) =>
               BundleWriteCheck::new(
                 kind=NativeLaunchSessionCheck,
@@ -314,6 +317,31 @@ async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
         ok=false,
         message="runtime manifest parse failed: \{problem}",
       )
+  }
+}
+
+///|
+fn bundle_launch_capability(target : String) -> @runtime.NativeLaunchCapability {
+  match target {
+    "macos" => @macos_backend.launch_capability()
+    "linux" => @linux_backend.launch_capability()
+    "windows" => @windows_backend.launch_capability()
+    _ =>
+      @runtime.NativeLaunchCapability::new(
+        webview_creation=false,
+        async_bridge_drain=false,
+        webview_creation_message="native launch target is unsupported: \{target}",
+      )
+  }
+}
+
+///|
+fn bundle_target_display_name(target : String) -> String {
+  match target {
+    "macos" => "macOS"
+    "windows" => "Windows"
+    "linux" => "Linux"
+    _ => target
   }
 }
 

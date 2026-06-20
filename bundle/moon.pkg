@@ -2,7 +2,11 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/x/fs" @xfs,
   "vectie/lepusa",
+  "vectie/lepusa/runtime",
   "vectie/lepusa/runtime/bundled",
+  "vectie/lepusa/runtime/linux" @linux_backend,
+  "vectie/lepusa/runtime/macos" @macos_backend,
+  "vectie/lepusa/runtime/windows" @windows_backend,
 }
 
 supported_targets = "+native"

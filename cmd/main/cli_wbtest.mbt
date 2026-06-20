@@ -1532,6 +1532,21 @@ async test "bundle write materializes planned files" {
 }
 
 ///|
+async test "bundle write gates target launch capability" {
+  let root = "/tmp/lepusa-windows-bundle-write-\{@async.now().to_int()}"
+  let result = render_cli_async(["bundle-write", "windows", root])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("target: windows"))
+  assert_true(result.output.contains("verified: false"))
+  assert_true(result.output.contains("[fail] verify: native-launch-session"))
+  assert_true(
+    result.output.contains("Windows WebView2 creation loop is unavailable"),
+  )
+  assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
+  assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
+}
+
+///|
 async test "bundle write fails when native launch session is blocked" {
   let stamp = @async.now().to_int()
   let root = "/tmp/lepusa-async-bundle-\{stamp}"
@@ -1674,20 +1689,18 @@ async test "build and bundle aliases materialize planned files" {
     @fs.exists(build_root + "/lepusa-example.app/Contents/Info.plist"),
   )
   let bundle_root = "/tmp/lepusa-bundle-alias-\{@async.now().to_int()}"
-  let bundle = render_cli_async(["bundle", "windows", bundle_root])
+  let bundle = render_cli_async(["bundle", "linux", bundle_root])
   assert_eq(bundle.exit_code, 0)
-  assert_true(bundle.output.contains("target: windows"))
-  assert_true(@fs.exists(bundle_root + "/lepusa-example/app.manifest.xml"))
-  assert_true(@fs.exists(bundle_root + "/lepusa-example/lepusa-example.cmd"))
-  let windows_runtime_json = @fs.read_file(
+  assert_true(bundle.output.contains("target: linux"))
+  assert_true(
+    @fs.exists(bundle_root + "/lepusa-example/lepusa-example.desktop"),
+  )
+  assert_true(@fs.exists(bundle_root + "/lepusa-example/lepusa-example"))
+  let linux_runtime_json = @fs.read_file(
     bundle_root + "/lepusa-example/lepusa/runtime.json",
   ).text()
-  assert_true(windows_runtime_json.contains("\"kind\":\"executable\""))
-  assert_true(
-    windows_runtime_json.contains("lepusa-example/lepusa-example.cmd"),
-  )
-  assert_true(windows_runtime_json.contains("\"kind\":\"installer\""))
-  assert_true(windows_runtime_json.contains("lepusa-example-0.1.0-setup.exe"))
+  assert_true(linux_runtime_json.contains("\"target\":\"linux\""))
+  assert_true(linux_runtime_json.contains("\"productName\":\"Lepusa Example\""))
 }
 
 ///|

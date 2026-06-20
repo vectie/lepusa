@@ -612,8 +612,9 @@ registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
-into a target native launch session; bundles with async bridge routes stay
-unverified until the selected backend launch capability advertises async bridge
+into a target native launch session that passes the selected backend launch
+capability. Windows bundles and bundles with async bridge routes stay
+unverified until the backend advertises WebView creation and async bridge
 drain/evaluate support.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
