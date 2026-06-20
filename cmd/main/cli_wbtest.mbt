@@ -1033,7 +1033,7 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
-  assert_true(result.output.contains("verification-checks: 4"))
+  assert_true(result.output.contains("verification-checks: 5"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-file"))
   assert_true(result.output.contains("planned file content matches"))
@@ -1042,6 +1042,8 @@ async test "bundle write materializes planned files" {
   assert_true(
     result.output.contains("runtime manifest parses with webview data"),
   )
+  assert_true(result.output.contains("[ok] verify: native-launch-session"))
+  assert_true(result.output.contains("native launch session prepares"))
   assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 3"))
   let bundle_root = root + "/lepusa-example"
@@ -1063,6 +1065,38 @@ async test "bundle write materializes planned files" {
   assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
+}
+
+///|
+async test "bundle write fails when native launch session is blocked" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-async-bundle-\{stamp}"
+  let out = "/tmp/lepusa-async-bundle-out-\{stamp}"
+  @fs.mkdir(root + "/data", recursive=true, permission=0o755)
+  let config = [
+    "{", "\"identifier\":\"dev.local.async\",", "\"productName\":\"Async App\",",
+    "\"version\":\"0.1.0\",", "\"window\":{\"label\":\"main\",\"title\":\"Async App\"},",
+    "\"plugins\":[{\"name\":\"fs\"}],", "\"filesystemScopes\":[{\"name\":\"data\",\"root\":\"data\",\"writable\":true}],",
+    "\"capabilities\":[{\"name\":\"main\",\"windows\":[\"main\"],\"permissions\":[\"filesystem.read\",\"filesystem.write\"]}]",
+    "}",
+  ].join("")
+  @fs.write_file(
+    root + "/lepusa.json",
+    config,
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "bundle-write",
+    "linux",
+    out,
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("verified: false"))
+  assert_true(result.output.contains("[fail] verify: native-launch-session"))
+  assert_true(result.output.contains("requires native async bridge scheduling"))
 }
 
 ///|
@@ -1103,7 +1137,7 @@ async test "bundle write materializes planned resources" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
-  assert_true(result.output.contains("verification-checks: 5"))
+  assert_true(result.output.contains("verification-checks: 6"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-resource"))
   assert_true(result.output.contains("resource exists"))

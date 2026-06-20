@@ -11,6 +11,7 @@ pub(all) enum BundleWriteCheckKind {
   PlannedFileCheck
   PlannedResourceCheck
   RuntimeManifestCheck
+  NativeLaunchSessionCheck
 } derive(Debug, Eq)
 
 ///|
@@ -89,6 +90,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
     PlannedFileCheck => "planned-file"
     PlannedResourceCheck => "planned-resource"
     RuntimeManifestCheck => "runtime-manifest"
+    NativeLaunchSessionCheck => "native-launch-session"
   }
 }
 
@@ -166,6 +168,7 @@ async fn verify_written_plan(
     checks.push(verify_planned_file(path, file))
     if file.path().has_suffix("lepusa/runtime.json") {
       checks.push(verify_runtime_manifest(path))
+      checks.push(verify_native_launch_session(path))
     }
   }
   for resource in resources {
@@ -246,6 +249,67 @@ async fn verify_runtime_manifest(path : String) -> BundleWriteCheck {
     Err(problem) =>
       BundleWriteCheck::new(
         kind=RuntimeManifestCheck,
+        path~,
+        ok=false,
+        message="runtime manifest parse failed: \{problem}",
+      )
+  }
+}
+
+///|
+async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
+  let content = @fs.read_file(path) catch {
+    error =>
+      return BundleWriteCheck::new(
+        kind=NativeLaunchSessionCheck,
+        path~,
+        ok=false,
+        message="could not read runtime manifest: \{error}",
+      )
+  }
+  let text = content.text()
+  match @bundled.BundledRuntimeManifest::parse(path, text) {
+    Ok(manifest) =>
+      match
+        manifest.prepare_native_run_plan(target=manifest.target(), prepare_webview=fn(
+          webview,
+        ) {
+          manifest.webview_plan(webview, initialization_script="")
+        }) {
+        Ok(plan) =>
+          match plan.launch_session() {
+            Ok(session) =>
+              BundleWriteCheck::new(
+                kind=NativeLaunchSessionCheck,
+                path~,
+                ok=session.can_launch(),
+                message=if session.can_launch() {
+                  "native launch session prepares"
+                } else {
+                  session
+                  .launch_blocker(manifest.target())
+                  .unwrap_or("native launch session is blocked")
+                },
+              )
+            Err(problem) =>
+              BundleWriteCheck::new(
+                kind=NativeLaunchSessionCheck,
+                path~,
+                ok=false,
+                message="native launch session invalid: \{problem}",
+              )
+          }
+        Err(problems) =>
+          BundleWriteCheck::new(
+            kind=NativeLaunchSessionCheck,
+            path~,
+            ok=false,
+            message="native run plan invalid: \{problems.join("; ")}",
+          )
+      }
+    Err(problem) =>
+      BundleWriteCheck::new(
+        kind=NativeLaunchSessionCheck,
         path~,
         ok=false,
         message="runtime manifest parse failed: \{problem}",
