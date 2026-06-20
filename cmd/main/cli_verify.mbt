@@ -106,7 +106,7 @@ fn verify_native_session(
     Ok(runtime) =>
       match verify_native_dry_run(target, runtime) {
         Ok(session) => {
-          lines.push(verify_native_session_summary(session))
+          lines.push(verify_native_session_summary(target, session))
           verify_release_launch_gate(target, session, lines, strict~)
         }
         Err(problems) => {
@@ -150,9 +150,13 @@ fn verify_native_dry_run(
 
 ///|
 fn verify_native_session_summary(
+  target : @lepusa.BundleTarget,
   session : @runtime.NativeLaunchSession,
 ) -> String {
-  "[ok] native-session: webviews=\{session.webviews().length()} startup=\{session.execution().startup_operations().length()} lifecycle=\{session.execution().lifecycle_steps().length()} can-launch=\{session.can_launch()}\n"
+  let target_can_launch = session.can_launch_with_capability(
+    native_launch_capability_for_target(target),
+  )
+  "[ok] native-session: webviews=\{session.webviews().length()} startup=\{session.execution().startup_operations().length()} lifecycle=\{session.execution().lifecycle_steps().length()} scheduler-can-launch=\{session.can_launch()} target-can-launch=\{target_can_launch}\n"
 }
 
 ///|
@@ -193,20 +197,23 @@ fn verify_release_launch_gate(
   lines : Array[String],
   strict~ : Bool,
 ) -> Bool {
-  if !strict {
-    return true
-  }
   match
     session.launch_blocker_with_capability(
       verify_target_display_name(target),
       native_launch_capability_for_target(target),
     ) {
-    Some(problem) => {
-      lines.push("[fail] strict: \{problem}\n")
-      false
-    }
+    Some(problem) =>
+      if strict {
+        lines.push("[fail] strict: \{problem}\n")
+        false
+      } else {
+        lines.push("[warn] native-launch: \{problem}\n")
+        true
+      }
     None => {
-      lines.push("[ok] strict: native launch gate passed\n")
+      if strict {
+        lines.push("[ok] strict: native launch gate passed\n")
+      }
       true
     }
   }

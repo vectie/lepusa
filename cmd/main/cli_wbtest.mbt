@@ -547,7 +547,23 @@ async test "generated project config verifies end to end contracts" {
   )
   assert_true(result.output.contains("[ok] handlers: registered=6 missing=0"))
   assert_true(result.output.contains("[ok] native-session: webviews=1"))
+  assert_true(result.output.contains("target-can-launch=true"))
   assert_true(result.output.contains("[ok] bundle:"))
+  let windows = render_cli_async([
+    "verify",
+    "windows",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(windows.exit_code, 0)
+  assert_true(windows.output.contains("target: windows"))
+  assert_true(windows.output.contains("scheduler-can-launch=true"))
+  assert_true(windows.output.contains("target-can-launch=false"))
+  assert_true(
+    windows.output.contains(
+      "[warn] native-launch: Windows WebView2 creation loop is unavailable",
+    ),
+  )
   let strict = render_cli_async([
     "verify",
     "--strict",

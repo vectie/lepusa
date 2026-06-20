@@ -443,6 +443,9 @@ Add `--strict` when the command should act as a release gate: missing concrete
 handlers and known target launch blockers become failures instead of warnings.
 This keeps framework-development proofs useful while still giving CI a direct
 answer for "can this target ship?"
+The native-session line reports scheduler readiness separately from selected
+target launch readiness, so Windows and async-bridge blockers are visible even
+outside strict mode.
 `lepusa doctor` prints the same target launch-gate blocker as a warning so
 local diagnostics stay non-fatal while still showing whether the selected
 target can launch natively today.
