@@ -3,6 +3,7 @@ pub struct NativeLaunchCapability {
   webview_creation : Bool
   sync_bridge_evaluate : Bool
   async_bridge_drain : Bool
+  max_webviews : Int
   webview_creation_message : String
   sync_bridge_evaluate_message : String
 } derive(Debug, Eq)
@@ -12,6 +13,7 @@ pub fn NativeLaunchCapability::new(
   webview_creation~ : Bool,
   sync_bridge_evaluate? : Bool = webview_creation,
   async_bridge_drain~ : Bool,
+  max_webviews? : Int = 1,
   webview_creation_message? : String = "native WebView creation loop is unavailable",
   sync_bridge_evaluate_message? : String = "native sync bridge response evaluation is unavailable",
 ) -> NativeLaunchCapability {
@@ -19,6 +21,7 @@ pub fn NativeLaunchCapability::new(
     webview_creation,
     sync_bridge_evaluate,
     async_bridge_drain,
+    max_webviews,
     webview_creation_message,
     sync_bridge_evaluate_message,
   }
@@ -43,6 +46,13 @@ pub fn NativeLaunchCapability::sync_bridge_evaluate(
   self : NativeLaunchCapability,
 ) -> Bool {
   self.sync_bridge_evaluate
+}
+
+///|
+pub fn NativeLaunchCapability::max_webviews(
+  self : NativeLaunchCapability,
+) -> Int {
+  self.max_webviews
 }
 
 ///|
@@ -96,12 +106,28 @@ pub fn NativeLaunchCapability::can_launch(
 }
 
 ///|
+pub fn NativeLaunchCapability::webview_count_blocker(
+  self : NativeLaunchCapability,
+  platform_name : String,
+  webview_count : Int,
+) -> String? {
+  if self.max_webviews <= 0 || webview_count <= self.max_webviews {
+    None
+  } else {
+    Some(
+      "\{platform_name} native launch supports \{self.max_webviews} webview(s); plan has \{webview_count}",
+    )
+  }
+}
+
+///|
 pub fn NativeLaunchCapability::to_json(self : NativeLaunchCapability) -> String {
   [
     "{",
     "\"webviewCreation\":\{self.webview_creation.json_bool()},",
     "\"syncBridgeEvaluate\":\{self.sync_bridge_evaluate.json_bool()},",
     "\"asyncBridgeDrain\":\{self.async_bridge_drain.json_bool()},",
+    "\"maxWebviews\":\{self.max_webviews},",
     "\"bridgeMode\":\{self.bridge_mode().name().json_string()},",
     "\"webviewCreationMessage\":\{self.webview_creation_message.json_string()},",
     "\"syncBridgeEvaluateMessage\":\{self.sync_bridge_evaluate_message.json_string()}",
@@ -115,7 +141,11 @@ pub fn NativeLaunchSession::launch_blocker_with_capability(
   platform_name : String,
   capability : NativeLaunchCapability,
 ) -> String? {
-  capability.launch_blocker(platform_name, self.bridge_scheduler())
+  match capability.launch_blocker(platform_name, self.bridge_scheduler()) {
+    Some(message) => Some(message)
+    None =>
+      capability.webview_count_blocker(platform_name, self.webviews.length())
+  }
 }
 
 ///|
@@ -123,7 +153,7 @@ pub fn NativeLaunchSession::can_launch_with_capability(
   self : NativeLaunchSession,
   capability : NativeLaunchCapability,
 ) -> Bool {
-  capability.can_launch(self.bridge_scheduler())
+  self.launch_blocker_with_capability("", capability) is None
 }
 
 ///|

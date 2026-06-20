@@ -791,8 +791,14 @@ test "native launch capability gates webview and async bridge loops" {
   assert_true(sync_only.webview_creation())
   assert_true(sync_only.sync_bridge_evaluate())
   assert_false(sync_only.async_bridge_drain())
+  assert_eq(sync_only.max_webviews(), 1)
   assert_true(sync_only.bridge_mode() is NativeBridgeSyncOnly)
   assert_true(sync_only.launch_blocker("Test", sync_scheduler) is None)
+  assert_true(sync_only.webview_count_blocker("Test", 1) is None)
+  assert_eq(
+    sync_only.webview_count_blocker("Test", 2).unwrap(),
+    "Test native launch supports 1 webview(s); plan has 2",
+  )
   assert_true(
     sync_only
     .launch_blocker("Test", async_scheduler)
@@ -826,6 +832,13 @@ test "native launch capability gates webview and async bridge loops" {
   assert_true(async_capable.launch_blocker("Test", async_scheduler) is None)
   assert_true(async_capable.to_json().contains("\"syncBridgeEvaluate\":true"))
   assert_true(async_capable.to_json().contains("\"asyncBridgeDrain\":true"))
+  assert_true(async_capable.to_json().contains("\"maxWebviews\":1"))
+  let multi_window_capable = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=false,
+    max_webviews=0,
+  )
+  assert_true(multi_window_capable.webview_count_blocker("Test", 4) is None)
 }
 
 ///|

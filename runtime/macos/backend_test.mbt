@@ -385,6 +385,25 @@ test "macos backend preserves all webviews in run plan" {
 }
 
 ///|
+test "macos open-window launch rejects multi-window plans explicitly" {
+  match runtime(multi_window_test_host()) {
+    Ok(runtime) =>
+      match run(runtime, mode=MacOSOpenWindow) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) => {
+              assert_true(message.contains("supports 1 webview"))
+              assert_true(message.contains("plan has 2"))
+            }
+            _ => abort("unexpected multi-window macOS launch status")
+          }
+        Err(_) => abort("unexpected invalid multi-window macOS run")
+      }
+    Err(_) => abort("unexpected invalid multi-window macOS runtime")
+  }
+}
+
+///|
 test "macos backend dry run does not enter native loop" {
   match runtime(test_host()) {
     Ok(runtime) =>

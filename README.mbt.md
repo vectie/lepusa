@@ -244,6 +244,10 @@ sync-only and report `bridgeModeGranted: false`.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
+Launch capability also carries the backend's maximum live WebView count, so
+multi-window plans stay visible in dry-run/readiness output while current
+single-window native loops refuse open-window launch instead of silently
+opening only the first window.
 
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
@@ -699,11 +703,12 @@ instead of the generic skipped-operation fallback.
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
 package exposes `runtime(host)` and `detect_runtime(host)` helpers that return
 the same `NativeRuntime` facade, plus `launch_capability()` declarations for
-WebView creation and async bridge drain support. Platform packages also expose
-service executor helpers, and native run plans build launch sessions from the
-selected backend capability before running service startup, opening a WebView,
-running the `app-will-exit` lifecycle operation batch after the window loop
-returns, and then running service shutdown.
+WebView creation, maximum live WebView count, and async bridge drain support.
+Platform packages also expose service executor helpers, and native run plans
+build launch sessions from the selected backend capability before running
+service startup, opening a WebView, running the `app-will-exit` lifecycle
+operation batch after the window loop returns, and then running service
+shutdown.
 macOS, Linux, and Windows start tracked sidecar processes, poll HTTP readiness
 URLs, stop tracked processes through platform-owned native hooks, and install
 exit/interruption cleanup so supervised sidecars do not outlive the native

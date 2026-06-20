@@ -573,9 +573,13 @@ for async commands. `MacOSOpenWindow` reports the shared
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
 The platform packages expose `NativeLaunchCapability` so WebView creation, sync
-bridge response evaluation, and async bridge drain/evaluate support are
-declared in one place and consumed by `doctor`, `verify --strict`,
-launch-session readiness rendering, and open-window launch paths.
+bridge response evaluation, maximum live WebView count, and async bridge
+drain/evaluate support are declared in one place and consumed by `doctor`,
+`verify --strict`, launch-session readiness rendering, and open-window launch
+paths. Current macOS, Linux, and Windows native loops advertise one live
+WebView, so multi-window plans still prepare and render in dry-run/readiness
+artifacts but open-window launch returns `RunUnsupported` instead of silently
+opening only the first window.
 Source and packaged native run plans expose capability-aware launch-session
 helpers, so platform runners build the same bridge mode that the selected
 backend capability advertises instead of hand-assembling sync-only schedulers.
