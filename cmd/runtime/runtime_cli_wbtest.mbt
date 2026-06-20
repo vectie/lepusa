@@ -594,8 +594,12 @@ async test "runtime cli renders bridge dispatch tasks" {
     "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
   )
   assert_eq(sync_loop.exit_code, 0)
+  assert_true(sync_loop.output.contains("\"result\":{"))
+  assert_true(sync_loop.output.contains("\"evaluationPlan\":{"))
   assert_true(sync_loop.output.contains("\"immediateScript\":\"globalThis"))
   assert_true(sync_loop.output.contains("\"completions\":[]"))
+  assert_true(sync_loop.output.contains("\"operations\":[{"))
+  assert_true(sync_loop.output.contains("\"kind\":\"evaluate-script\""))
   assert_true(
     sync_loop.output.contains(
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
@@ -625,9 +629,14 @@ async test "runtime cli renders bridge dispatch tasks" {
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
   assert_eq(async_loop.exit_code, 0)
+  assert_true(async_loop.output.contains("\"result\":{"))
+  assert_true(async_loop.output.contains("\"evaluationPlan\":{"))
   assert_true(async_loop.output.contains("\"immediateScript\":\"\""))
   assert_true(async_loop.output.contains("\"completions\":[{"))
   assert_true(async_loop.output.contains("\"route\":\"fs.readText\""))
+  assert_true(async_loop.output.contains("\"operations\":[{"))
+  assert_true(async_loop.output.contains("\"kind\":\"evaluate-script\""))
+  assert_true(async_loop.output.contains("\"windowLabel\":\"main\""))
   assert_true(
     async_loop.output.contains(
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",

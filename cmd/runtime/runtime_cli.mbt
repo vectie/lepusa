@@ -751,7 +751,15 @@ async fn render_runtime_bridge_loop_text(
           let result = manifest
             .bridge_loop_adapter()
             .receive_message(@utf8.encode(message))
-          runtime_ok(result.to_json() + "\n")
+          let evaluation_plan = result.evaluation_plan(window_label~)
+          runtime_ok(
+            [
+              "{",
+              "\"result\":\{result.to_json()},",
+              "\"evaluationPlan\":\{evaluation_plan.to_json()}",
+              "}\n",
+            ].join(""),
+          )
         }
       }
   }

@@ -793,6 +793,17 @@ pub fn NativeBridgeLoopResult::evaluation_scripts(
 }
 
 ///|
+pub fn NativeBridgeLoopResult::evaluation_plan(
+  self : NativeBridgeLoopResult,
+  window_label~ : String,
+) -> NativeBridgeLoopEvaluationPlan {
+  NativeBridgeLoopEvaluationPlan::from_scripts(
+    window_label~,
+    scripts=self.evaluation_scripts(),
+  )
+}
+
+///|
 pub fn NativeBridgeLoopResult::to_json(self : NativeBridgeLoopResult) -> String {
   [
     "{",

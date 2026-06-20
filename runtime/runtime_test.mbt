@@ -1763,6 +1763,13 @@ async test "native runtime owns bridge message transport" {
           assert_eq(loop_result.immediate_script(), "")
           assert_eq(loop_result.completions().length(), 1)
           assert_eq(loop_result.evaluation_scripts().length(), 1)
+          let loop_plan = loop_result.evaluation_plan(window_label="main")
+          assert_eq(loop_plan.window_label(), "main")
+          assert_false(loop_plan.is_empty())
+          assert_eq(loop_plan.operations().length(), 1)
+          assert_eq(loop_plan.operations()[0].kind(), "evaluate-script")
+          assert_eq(loop_plan.evaluation_scripts().length(), 1)
+          assert_true(loop_plan.to_json().contains("\"operations\":[{"))
           assert_true(loop_result.to_json().contains("\"completions\":[{"))
           assert_true(
             loop_result.evaluation_scripts()[0].contains(
@@ -1890,6 +1897,10 @@ async test "native runtime owns bridge message transport" {
       )
       assert_eq(sync_result.completions().length(), 0)
       assert_eq(sync_result.evaluation_scripts().length(), 1)
+      let sync_loop_plan = sync_result.evaluation_plan(window_label="main")
+      assert_eq(sync_loop_plan.window_label(), "main")
+      assert_eq(sync_loop_plan.operations().length(), 1)
+      assert_eq(sync_loop_plan.operations()[0].kind(), "evaluate-script")
       let async_script = @utf8.decode(
         runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),
       ) catch {

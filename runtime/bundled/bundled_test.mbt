@@ -847,6 +847,13 @@ async test "bundled runtime owns bridge message transport" {
               "globalThis[\"__lepusaInvokeResponse\"]",
             ),
           )
+          let loop_plan = loop_result.evaluation_plan(window_label="main")
+          assert_eq(loop_plan.window_label(), "main")
+          assert_false(loop_plan.is_empty())
+          assert_eq(loop_plan.operations().length(), 1)
+          assert_eq(loop_plan.operations()[0].kind(), "evaluate-script")
+          assert_eq(loop_plan.evaluation_scripts().length(), 1)
+          assert_true(loop_plan.to_json().contains("\"operations\":[{"))
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)
             Err(_) => abort("unexpected bundled bridge queue enqueue failure")

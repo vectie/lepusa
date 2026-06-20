@@ -151,11 +151,24 @@ pub fn NativeBridgeLoopContract::required(Self) -> Bool
 pub fn NativeBridgeLoopContract::result_type(Self) -> String
 pub fn NativeBridgeLoopContract::to_json(Self) -> String
 
+pub struct NativeBridgeLoopEvaluationPlan {
+  window_label : String
+  operations : Array[NativeExecutableOperation]
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeLoopEvaluationPlan::evaluation_scripts(Self) -> Array[NativeEvaluationScript]
+pub fn NativeBridgeLoopEvaluationPlan::from_scripts(window_label~ : String, scripts~ : Array[String]) -> Self
+pub fn NativeBridgeLoopEvaluationPlan::is_empty(Self) -> Bool
+pub fn NativeBridgeLoopEvaluationPlan::new(window_label~ : String, operations~ : Array[NativeExecutableOperation]) -> Self
+pub fn NativeBridgeLoopEvaluationPlan::operations(Self) -> Array[NativeExecutableOperation]
+pub fn NativeBridgeLoopEvaluationPlan::to_json(Self) -> String
+pub fn NativeBridgeLoopEvaluationPlan::window_label(Self) -> String
+
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
 } derive(Eq, @debug.Debug)
 pub fn NativeBridgeLoopResult::completions(Self) -> Array[NativeBridgeCompletion]
+pub fn NativeBridgeLoopResult::evaluation_plan(Self, window_label~ : String) -> NativeBridgeLoopEvaluationPlan
 pub fn NativeBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
 pub fn NativeBridgeLoopResult::has_immediate_script(Self) -> Bool
 pub fn NativeBridgeLoopResult::immediate_script(Self) -> String

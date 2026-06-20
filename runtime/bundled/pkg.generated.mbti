@@ -99,6 +99,7 @@ pub struct BundledBridgeLoopResult {
   completions : Array[BundledBridgeCompletion]
 } derive(Eq, @debug.Debug)
 pub fn BundledBridgeLoopResult::completions(Self) -> Array[BundledBridgeCompletion]
+pub fn BundledBridgeLoopResult::evaluation_plan(Self, window_label~ : String) -> @runtime.NativeBridgeLoopEvaluationPlan
 pub fn BundledBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
 pub fn BundledBridgeLoopResult::has_immediate_script(Self) -> Bool
 pub fn BundledBridgeLoopResult::immediate_script(Self) -> String

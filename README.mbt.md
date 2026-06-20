@@ -438,6 +438,9 @@ into the object platform event loops should keep beside each WebView host.
 Their async `receive_message` method accepts one UTF-8 WebView bridge message
 and returns a loop result: immediate scripts for sync routes, drained completion
 scripts for async routes, and JSON diagnostics for backend tests.
+`NativeBridgeLoopEvaluationPlan` lowers those scripts into target-window
+`evaluate-script` operations, giving every platform runner the same operation
+shape for its drain/evaluate step.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView
@@ -457,7 +460,7 @@ starting a WebView.
 `lepusa bridge-loop <window> <plugin.command> [payload] --project lepusa.json`
 feeds one source-project WebView message through the bridge-loop adapter and
 prints the immediate script, drained async completions, and evaluation scripts
-that a native event loop should run.
+plus the native executable evaluation plan a platform loop should run.
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability
@@ -580,7 +583,7 @@ callback script that a native event loop evaluates back into the target WebView.
 `lepusa-runtime bridge-loop <window> <plugin.command> [payload] --manifest <runtime.json>`
 feeds one packaged WebView message through the bundled bridge-loop adapter and
 returns the immediate script, drained async completions, and evaluation scripts
-that a native loop should evaluate.
+plus the native executable evaluation plan a platform loop should evaluate.
 `lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes a packaged bridge command against the manifest's registered official
 native handlers. It checks the requested window's `allowedRoutes` before

@@ -185,6 +185,10 @@ Their async `receive_message` method is the next platform-loop boundary: it
 captures one bridge message, keeps sync routes immediate, drains async work into
 completion envelopes, and returns the full list of scripts the backend must
 evaluate in the WebView.
+`NativeBridgeLoopEvaluationPlan` converts that script list into window-scoped
+`NativeExecutableOperation::evaluate_script` operations, so source and packaged
+runtime loops share one executable drain/evaluate model before platform code
+crosses into C, WebKit, or WebView2 APIs.
 
 Command rules:
 

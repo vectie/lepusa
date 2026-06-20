@@ -578,8 +578,12 @@ async test "bridge task command reports source scheduling mode" {
     "bridge-loop", "main", "core.invoke", "true",
   ])
   assert_eq(sync_loop.exit_code, 0)
+  assert_true(sync_loop.output.contains("\"result\":{"))
+  assert_true(sync_loop.output.contains("\"evaluationPlan\":{"))
   assert_true(sync_loop.output.contains("\"immediateScript\":\"globalThis"))
   assert_true(sync_loop.output.contains("\"completions\":[]"))
+  assert_true(sync_loop.output.contains("\"operations\":[{"))
+  assert_true(sync_loop.output.contains("\"kind\":\"evaluate-script\""))
   assert_true(
     sync_loop.output.contains(
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
@@ -652,9 +656,14 @@ async test "bridge task command reports source scheduling mode" {
     root + "/lepusa.json",
   ])
   assert_eq(async_loop.exit_code, 0)
+  assert_true(async_loop.output.contains("\"result\":{"))
+  assert_true(async_loop.output.contains("\"evaluationPlan\":{"))
   assert_true(async_loop.output.contains("\"immediateScript\":\"\""))
   assert_true(async_loop.output.contains("\"completions\":[{"))
   assert_true(async_loop.output.contains("\"route\":\"fs.readText\""))
+  assert_true(async_loop.output.contains("\"operations\":[{"))
+  assert_true(async_loop.output.contains("\"kind\":\"evaluate-script\""))
+  assert_true(async_loop.output.contains("\"windowLabel\":\"main\""))
   assert_true(
     async_loop.output.contains(
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",

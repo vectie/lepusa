@@ -740,6 +740,17 @@ pub fn BundledBridgeLoopResult::evaluation_scripts(
 }
 
 ///|
+pub fn BundledBridgeLoopResult::evaluation_plan(
+  self : BundledBridgeLoopResult,
+  window_label~ : String,
+) -> @runtime.NativeBridgeLoopEvaluationPlan {
+  @runtime.NativeBridgeLoopEvaluationPlan::from_scripts(
+    window_label~,
+    scripts=self.evaluation_scripts(),
+  )
+}
+
+///|
 pub fn BundledBridgeLoopResult::to_json(
   self : BundledBridgeLoopResult,
 ) -> String {

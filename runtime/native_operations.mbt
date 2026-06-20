@@ -11,6 +11,12 @@ pub struct NativeNavigation {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeLoopEvaluationPlan {
+  window_label : String
+  operations : Array[NativeExecutableOperation]
+} derive(Debug, Eq)
+
+///|
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
   NativeExecutableEvaluateScript(NativeEvaluationScript)
@@ -32,6 +38,29 @@ pub fn NativeNavigation::new(
   url~ : String,
 ) -> NativeNavigation {
   { window_label, url }
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::new(
+  window_label~ : String,
+  operations~ : Array[NativeExecutableOperation],
+) -> NativeBridgeLoopEvaluationPlan {
+  { window_label, operations }
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::from_scripts(
+  window_label~ : String,
+  scripts~ : Array[String],
+) -> NativeBridgeLoopEvaluationPlan {
+  NativeBridgeLoopEvaluationPlan::new(
+    window_label~,
+    operations=scripts.map(fn(script) {
+      NativeExecutableOperation::evaluate_script(
+        NativeEvaluationScript::new(window_label~, script~),
+      )
+    }),
+  )
 }
 
 ///|
@@ -72,6 +101,53 @@ pub fn NativeNavigation::to_json(self : NativeNavigation) -> String {
     "{",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"url\":\{self.url.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::window_label(
+  self : NativeBridgeLoopEvaluationPlan,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::operations(
+  self : NativeBridgeLoopEvaluationPlan,
+) -> Array[NativeExecutableOperation] {
+  self.operations.copy()
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::evaluation_scripts(
+  self : NativeBridgeLoopEvaluationPlan,
+) -> Array[NativeEvaluationScript] {
+  let scripts : Array[NativeEvaluationScript] = []
+  for operation in self.operations {
+    match operation.evaluation_script() {
+      Some(script) => scripts.push(script)
+      None => ()
+    }
+  }
+  scripts
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::is_empty(
+  self : NativeBridgeLoopEvaluationPlan,
+) -> Bool {
+  self.operations.length() == 0
+}
+
+///|
+pub fn NativeBridgeLoopEvaluationPlan::to_json(
+  self : NativeBridgeLoopEvaluationPlan,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")
 }
