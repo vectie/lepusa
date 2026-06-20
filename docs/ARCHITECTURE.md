@@ -638,7 +638,9 @@ portable deterministic async handlers for runtime-owned dialogs.
 `@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare
 clipboard and notification routes and provide in-process async handlers for
 text clipboard state, notification permission, and notification show requests.
-`@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
+`@lepusa/plugins/shell` declares shell execution and process lifecycle routes
+and provides delegated process-table handlers with optional command allow-list
+validation.
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split process permissions.
 Native platform effects should be implemented by runtime backends behind those

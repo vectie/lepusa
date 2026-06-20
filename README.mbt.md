@@ -387,8 +387,9 @@ registry validates payloads and calls the platform opener through native stubs
 holding product-specific state.
 
 `@lepusa/plugins/shell` declares explicit shell execution and process lifecycle
-routes. Native backends own execution, process tracking, and platform-specific
-restrictions.
+routes. Its portable registry validates commands against an optional allow-list
+and tracks delegated spawned process state, stdin writes, and kill requests;
+native backends own actual OS execution and platform-specific restrictions.
 
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split `process.info`, `process.environment`, and

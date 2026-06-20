@@ -2,6 +2,7 @@
 package "vectie/lepusa/plugins/shell"
 
 import {
+  "moonbitlang/core/debug",
   "vectie/lepusa",
 }
 
@@ -12,9 +13,45 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : ShellPolicy, table? : ShellProcessTable) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : ShellPolicy, table? : ShellProcessTable) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
+pub struct ShellPolicy {
+  allowed_commands : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn ShellPolicy::allow(Self, String) -> Self
+pub fn ShellPolicy::allowed_commands(Self) -> Array[String]
+pub fn ShellPolicy::new(allowed_commands? : Array[String]) -> Self
+pub fn ShellPolicy::validate(Self) -> Array[String]
+
+pub struct ShellProcess {
+  id : String
+  command : String
+  args : Array[String]
+  cwd : String?
+  status : String
+  stdin_chunks : Array[String]
+}
+pub fn ShellProcess::args(Self) -> Array[String]
+pub fn ShellProcess::command(Self) -> String
+pub fn ShellProcess::cwd(Self) -> String?
+pub fn ShellProcess::id(Self) -> String
+pub fn ShellProcess::status(Self) -> String
+pub fn ShellProcess::stdin_chunks(Self) -> Array[String]
+
+pub struct ShellProcessTable {
+  mut next_id : Int
+  processes : Map[String, ShellProcess]
+}
+pub fn ShellProcessTable::get(Self, String) -> ShellProcess?
+pub fn ShellProcessTable::kill(Self, String) -> Bool
+pub fn ShellProcessTable::new() -> Self
+pub fn ShellProcessTable::processes(Self) -> Array[ShellProcess]
+pub fn ShellProcessTable::write_stdin(Self, String, String) -> Bool
 
 // Type aliases
 

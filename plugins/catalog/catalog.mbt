@@ -169,6 +169,7 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
         )
       },
     },
+    { name: "shell", register: fn(registry, _) { @shell.register(registry) } },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
     {
       name: "windowState",
