@@ -145,6 +145,7 @@ fn runtime_launch_readiness(
     platform_name=runtime_target_display_name(target),
     session~,
     capability=runtime_launch_capability_for_target(target),
+    preflight=runtime_backend_preflight_for_target(target),
   )
 }
 
@@ -160,6 +161,28 @@ fn runtime_launch_capability_for_target(
       @runtime_core.NativeLaunchCapability::new(
         webview_creation=false,
         async_bridge_drain=false,
+        webview_creation_message="unknown native launch target: \{target}",
+      )
+  }
+}
+
+///|
+fn runtime_backend_preflight_for_target(
+  target : String,
+) -> @runtime_core.NativeBackendPreflight {
+  match target {
+    "macos" => @macos.preflight()
+    "linux" => @linux.preflight()
+    "windows" => @windows.preflight()
+    _ =>
+      @runtime_core.NativeBackendPreflight::new(
+        platform=target,
+        webview_engine="unknown",
+        dependency_name="unknown",
+        dependency_available=false,
+        webview_creation_loop=false,
+        async_bridge_drain=false,
+        dependency_message="unknown native launch target: \{target}",
         webview_creation_message="unknown native launch target: \{target}",
       )
   }

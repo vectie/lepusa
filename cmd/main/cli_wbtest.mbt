@@ -127,6 +127,8 @@ async test "launch session prints source native handoff json" {
   assert_true(result.output.contains("\"execution\""))
   assert_true(result.output.contains("\"bridgeScheduler\""))
   assert_true(result.output.contains("\"launchCapability\":{"))
+  assert_true(result.output.contains("\"backendPreflight\":{"))
+  assert_true(result.output.contains("\"dependencyName\":\"webkitgtk\""))
   assert_true(result.output.contains("\"targetCanLaunch\":true"))
   assert_true(result.output.contains("\"targetLaunchBlocker\":null"))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
@@ -170,6 +172,8 @@ async test "launch session prints source native handoff json" {
   let windows = render_cli_async(["launch-session", "windows"])
   assert_eq(windows.exit_code, 0)
   assert_true(windows.output.contains("\"target\":\"windows\""))
+  assert_true(windows.output.contains("\"backendPreflight\":{"))
+  assert_true(windows.output.contains("\"dependencyName\":\"webview2-loader\""))
   assert_true(windows.output.contains("\"targetCanLaunch\":false"))
   assert_true(
     windows.output.contains("\"targetLaunchBlocker\":\"Windows WebView2"),

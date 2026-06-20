@@ -357,12 +357,14 @@ pub struct NativeLaunchReadiness {
   platform_name : String
   session : NativeLaunchSession
   capability : NativeLaunchCapability
+  preflight : NativeBackendPreflight
 } derive(Eq, @debug.Debug)
 pub fn NativeLaunchReadiness::can_launch(Self) -> Bool
 pub fn NativeLaunchReadiness::capability(Self) -> NativeLaunchCapability
 pub fn NativeLaunchReadiness::launch_blocker(Self) -> String?
-pub fn NativeLaunchReadiness::new(target~ : String, platform_name~ : String, session~ : NativeLaunchSession, capability~ : NativeLaunchCapability) -> Self
+pub fn NativeLaunchReadiness::new(target~ : String, platform_name~ : String, session~ : NativeLaunchSession, capability~ : NativeLaunchCapability, preflight~ : NativeBackendPreflight) -> Self
 pub fn NativeLaunchReadiness::platform_name(Self) -> String
+pub fn NativeLaunchReadiness::preflight(Self) -> NativeBackendPreflight
 pub fn NativeLaunchReadiness::session(Self) -> NativeLaunchSession
 pub fn NativeLaunchReadiness::target(Self) -> String
 pub fn NativeLaunchReadiness::to_json(Self) -> String

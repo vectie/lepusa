@@ -220,9 +220,9 @@ availability, WebView creation loops, and async bridge drain support.
 native-loop readiness envelope. Its `session` field carries the WebViews,
 protocol assets, lifecycle actions, service supervision, bridge scheduling, the
 async bridge executor descriptor, and the `bridgeLoop` adapter, delivery, and
-drain contract; its `launchCapability`, `targetCanLaunch`, and
-`targetLaunchBlocker` fields report whether the selected platform backend can
-actually open that session.
+drain contract; its `launchCapability`, `backendPreflight`, `targetCanLaunch`,
+and `targetLaunchBlocker` fields report whether the selected platform backend
+can actually open that session and whether host dependencies are present.
 Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
 the executor and bridge-loop contract as available for platform loops that wire
 deferred command completion through the queue-backed adapter APIs; it does not
@@ -738,7 +738,8 @@ native-operation boundary as source-project runs.
 Source and bundled native run plans also serialize to compact handoff artifacts
 that carry native metadata plus the canonical launch session, while the
 launch-session CLIs wrap that session with target readiness metadata for tools
-that need to distinguish prepared plans from launchable platform backends.
+that need to distinguish prepared plans from launchable platform backends and
+their host dependency preflight state.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command

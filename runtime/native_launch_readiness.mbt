@@ -4,6 +4,7 @@ pub struct NativeLaunchReadiness {
   platform_name : String
   session : NativeLaunchSession
   capability : NativeLaunchCapability
+  preflight : NativeBackendPreflight
 } derive(Debug, Eq)
 
 ///|
@@ -12,8 +13,9 @@ pub fn NativeLaunchReadiness::new(
   platform_name~ : String,
   session~ : NativeLaunchSession,
   capability~ : NativeLaunchCapability,
+  preflight~ : NativeBackendPreflight,
 ) -> NativeLaunchReadiness {
-  { target, platform_name, session, capability }
+  { target, platform_name, session, capability, preflight }
 }
 
 ///|
@@ -43,6 +45,13 @@ pub fn NativeLaunchReadiness::capability(
 }
 
 ///|
+pub fn NativeLaunchReadiness::preflight(
+  self : NativeLaunchReadiness,
+) -> NativeBackendPreflight {
+  self.preflight
+}
+
+///|
 pub fn NativeLaunchReadiness::launch_blocker(
   self : NativeLaunchReadiness,
 ) -> String? {
@@ -69,6 +78,7 @@ pub fn NativeLaunchReadiness::to_json(self : NativeLaunchReadiness) -> String {
     "\"platformName\":\{self.platform_name.json_string()},",
     "\"session\":\{self.session.to_json()},",
     "\"launchCapability\":\{self.capability.to_json()},",
+    "\"backendPreflight\":\{self.preflight.to_json()},",
     "\"targetCanLaunch\":\{self.can_launch().json_bool()},",
     "\"targetLaunchBlocker\":\{blocker_json}",
     "}",

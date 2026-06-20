@@ -467,6 +467,7 @@ fn native_launch_readiness(
     platform_name=verify_target_display_name(target),
     session~,
     capability=native_launch_capability_for_target(target),
+    preflight=native_backend_preflight_for_target(target),
   )
 }
 
@@ -490,6 +491,17 @@ fn native_launch_capability_for_target(
     MacOS => @macos_backend.launch_capability()
     Windows => @windows_backend.launch_capability()
     Linux => @linux_backend.launch_capability()
+  }
+}
+
+///|
+fn native_backend_preflight_for_target(
+  target : @lepusa.BundleTarget,
+) -> @runtime.NativeBackendPreflight {
+  match target {
+    MacOS => @macos_backend.preflight()
+    Windows => @windows_backend.preflight()
+    Linux => @linux_backend.preflight()
   }
 }
 

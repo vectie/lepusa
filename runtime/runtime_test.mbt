@@ -807,6 +807,42 @@ test "native backend preflight reports dependency and launch readiness" {
 }
 
 ///|
+test "native launch readiness includes backend preflight" {
+  let session = NativeLaunchSession::new(
+    webviews=[],
+    execution=NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[]),
+    bridge_scheduler=NativeBridgeScheduler::new(sync_routes=[], async_routes=[]),
+    service_supervisor=NativeServiceSupervisorPlan::new(
+      backend_name="test",
+      webview_engine="SystemWebView",
+      plan=@lepusa.LocalServiceSupervisorPlan::new(),
+    ),
+  )
+  let preflight = NativeBackendPreflight::new(
+    platform="test",
+    webview_engine="SystemWebView",
+    dependency_name="system-webview",
+    dependency_available=true,
+    webview_creation_loop=true,
+    async_bridge_drain=false,
+  )
+  let readiness = NativeLaunchReadiness::new(
+    target="test",
+    platform_name="Test",
+    session~,
+    capability=preflight.launch_capability(),
+    preflight~,
+  )
+  assert_true(readiness.can_launch())
+  assert_true(readiness.launch_blocker() is None)
+  assert_eq(readiness.preflight().dependency_name(), "system-webview")
+  let json = readiness.to_json()
+  assert_true(json.contains("\"backendPreflight\":{"))
+  assert_true(json.contains("\"dependencyName\":\"system-webview\""))
+  assert_true(json.contains("\"targetLaunchBlocker\":null"))
+}
+
+///|
 test "native asset load urls decode json envelopes" {
   let virtual_json =
     #|{
