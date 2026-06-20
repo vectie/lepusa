@@ -608,6 +608,10 @@ distribution contract without reinterpreting launcher or runtime manifest JSON.
 `@lepusa/bundle.BundleDistributionManifest::parse` is the matching read-side
 contract, and `lepusa bundle-inspect` exposes it from the CLI for release
 scripts.
+`BundleDistributionManifest::release_plan()` lowers that manifest into ordered
+release steps, keeping dependency validation, resource staging, signing checks,
+signing execution, and artifact collection explicit before platform-specific
+package generators are added.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

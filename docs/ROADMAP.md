@@ -159,6 +159,7 @@
   - `lepusa verify [macos|windows|linux] [--json]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, and bundle contracts, with machine-readable output for CI.
   - `lepusa bundle-plan [--json]`: prints a target bundle plan, with a machine-readable artifact/resource/signing/file report for tooling.
   - `lepusa bundle-inspect [--json]`: parses packaged `lepusa/distribution.json` and reports installer-facing artifact, resource, dependency, runtime executable, and signing metadata.
+  - `lepusa bundle-release-plan [--json]`: lowers packaged distribution metadata into ordered release steps for dependency validation, resource staging, signing, and artifact collection.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.

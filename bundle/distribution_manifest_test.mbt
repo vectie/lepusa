@@ -45,6 +45,27 @@ test "distribution manifest parser exposes installer-facing bundle data" {
                 .to_json()
                 .contains("\"productName\":\"Distribution App\""),
               )
+              let release = manifest.release_plan()
+              assert_eq(release.steps().length(), 5)
+              assert_eq(
+                release.steps()[0].kind().name(),
+                "validate-runtime-dependencies",
+              )
+              assert_eq(release.steps()[0].item_count(), 1)
+              assert_eq(release.steps()[1].kind().name(), "stage-resources")
+              assert_false(release.steps()[1].required())
+              assert_eq(
+                release.steps()[2].kind().name(),
+                "validate-signing-prerequisites",
+              )
+              assert_eq(release.steps()[2].item_count(), 2)
+              assert_eq(release.steps()[3].kind().name(), "run-signing-steps")
+              assert_false(release.steps()[3].required())
+              assert_eq(release.required_steps().length(), 3)
+              assert_true(release.summary().contains("step: collect-artifacts"))
+              assert_true(
+                release.to_json().contains("\"kind\":\"collect-artifacts\""),
+              )
             }
             Err(problem) => abort("unexpected invalid distribution: \{problem}")
           }

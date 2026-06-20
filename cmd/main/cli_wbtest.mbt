@@ -36,6 +36,7 @@ test "help text names available commands" {
     result.output.contains("lepusa bundle-plan [macos|windows|linux] [--json]"),
   )
   assert_true(result.output.contains("lepusa bundle-inspect"))
+  assert_true(result.output.contains("lepusa bundle-release-plan"))
   assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
@@ -1858,6 +1859,21 @@ async test "bundle write materializes planned files" {
   assert_true(inspect_json.output.contains("\"target\":\"linux\""))
   assert_true(inspect_json.output.contains("\"runtimeDependencies\":["))
   assert_true(inspect_json.output.contains("WebKitGTK 4.1 or 4.0"))
+  let release = render_cli_async(["bundle-release-plan", distribution_path])
+  assert_eq(release.exit_code, 0)
+  assert_true(release.output.contains("Lepusa release plan"))
+  assert_true(release.output.contains("steps: 5"))
+  assert_true(release.output.contains("step: validate-runtime-dependencies"))
+  assert_true(release.output.contains("step: collect-artifacts"))
+  let release_json = render_cli_async([
+    "bundle-release-plan", distribution_path, "--json",
+  ])
+  assert_eq(release_json.exit_code, 0)
+  assert_true(release_json.output.contains("\"steps\":["))
+  assert_true(
+    release_json.output.contains("\"kind\":\"validate-signing-prerequisites\""),
+  )
+  assert_true(release_json.output.contains("\"kind\":\"collect-artifacts\""))
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
   let json_result = render_cli_async([
     "bundle-write", "linux", json_root, "--json",

@@ -18,25 +18,51 @@ async fn render_bundle_plan_async(args : Array[String]) -> CliResult {
 
 ///|
 async fn render_bundle_inspect_async(args : Array[String]) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-inspect") {
+    Ok(manifest) =>
+      if has_flag(args, "--json") {
+        ok(manifest.to_json() + "\n")
+      } else {
+        ok(manifest.summary())
+      }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
+async fn render_bundle_release_plan_async(args : Array[String]) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-release-plan") {
+    Ok(manifest) => {
+      let plan = manifest.release_plan()
+      if has_flag(args, "--json") {
+        ok(plan.to_json() + "\n")
+      } else {
+        ok(plan.summary())
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
+async fn read_bundle_distribution_manifest(
+  args : Array[String],
+  command : String,
+) -> Result[@bundle.BundleDistributionManifest, String] {
   let values = positional_args(args)
   match values.get(0) {
     Some(path) => {
       let content = @fs.read_file(path) catch {
         error =>
-          return fail("could not read bundle distribution manifest: \{error}\n")
+          return Err("could not read bundle distribution manifest: \{error}\n")
       }
       match @bundle.BundleDistributionManifest::parse(path, content.text()) {
-        Ok(manifest) =>
-          if has_flag(args, "--json") {
-            ok(manifest.to_json() + "\n")
-          } else {
-            ok(manifest.summary())
-          }
+        Ok(manifest) => Ok(manifest)
         Err(problem) =>
-          fail("invalid bundle distribution manifest: \{problem}\n")
+          Err("invalid bundle distribution manifest: \{problem}\n")
       }
     }
-    None => fail("bundle-inspect requires a lepusa/distribution.json path\n")
+    None => Err("\{command} requires a lepusa/distribution.json path\n")
   }
 }
 

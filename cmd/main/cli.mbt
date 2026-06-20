@@ -38,6 +38,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("lifecycle") => render_lifecycle_async(args)
     Some("bundle-plan") => render_bundle_plan_async(args)
     Some("bundle-inspect") => render_bundle_inspect_async(args)
+    Some("bundle-release-plan") => render_bundle_release_plan_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
     Some("build") => render_bundle_write(args.with_first("bundle-write"))
@@ -83,6 +84,7 @@ fn help_text() -> String {
     #|  lepusa plugin new <name> [out-dir] [--workspace <lepusa-root>]
     #|  lepusa bundle-plan [macos|windows|linux] [--json]
     #|  lepusa bundle-inspect <lepusa/distribution.json> [--json]
+    #|  lepusa bundle-release-plan <lepusa/distribution.json> [--json]
     #|  lepusa bundle-write [macos|windows|linux] [out-dir] [--json]
     #|  lepusa build [macos|windows|linux] [out-dir]
     #|  lepusa bundle [macos|windows|linux] [out-dir]
