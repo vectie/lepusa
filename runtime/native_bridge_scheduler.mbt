@@ -136,3 +136,10 @@ pub fn NativeRuntime::bridge_async_dispatch_callback(
 ) -> async (Bytes) -> Bytes {
   message => self.dispatch_bridge_script_bytes_async(message)
 }
+
+///|
+pub fn NativeRuntime::bridge_handoff_callback(
+  self : NativeRuntime,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) { self.bridge_handoff_script_bytes(message) }
+}

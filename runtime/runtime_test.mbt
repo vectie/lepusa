@@ -1531,6 +1531,22 @@ test "runtime host dispatches bridge json through capability checks" {
   assert_true(denied.contains("\"error\":\"permission denied: core.invoke\""))
   let malformed = host.dispatch_json("{}")
   assert_true(malformed.contains("\"error\":\"invoke id is required\""))
+  let message = "{\"id\":\"3\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"false\"}"
+  match host.bridge_handoff(message) {
+    Ok(handoff) => {
+      assert_eq(handoff.kind(), "immediate")
+      assert_false(handoff.requires_async_dispatch())
+      assert_true(handoff.task().to_json().contains("\"mode\":\"sync\""))
+      assert_true(
+        handoff
+        .immediate_script()
+        .unwrap_or("")
+        .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(handoff.to_json().contains("\"immediateDispatch\":{"))
+    }
+    Err(_) => abort("unexpected runtime host bridge handoff failure")
+  }
 }
 
 ///|
@@ -1634,6 +1650,21 @@ async test "native runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bridge task failure")
       }
+      match runtime.bridge_handoff(message) {
+        Ok(handoff) => {
+          assert_eq(handoff.kind(), "deferred")
+          assert_true(handoff.requires_async_dispatch())
+          assert_true(handoff.immediate_script() is None)
+          assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+        }
+        Err(_) => abort("unexpected bridge handoff failure")
+      }
+      let handoff_script = @utf8.decode(
+        runtime.bridge_handoff_callback()(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid bridge handoff bytes")
+      }
+      assert_eq(handoff_script, "")
       match runtime.dispatch_bridge_message_sync(message) {
         Ok(dispatch) => {
           assert_true(dispatch.response_json().contains("\"id\":\"9\""))

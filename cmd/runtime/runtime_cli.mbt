@@ -24,6 +24,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
     Some("bridge-task") => render_runtime_bridge_task(args)
+    Some("bridge-handoff") => render_runtime_bridge_handoff(args)
     Some("bridge-dispatch") => render_runtime_bridge_dispatch(args)
     Some("invoke") => render_runtime_invoke(args)
     Some("--manifest") | None => render_runtime_manifest(args)
@@ -372,6 +373,7 @@ fn runtime_help() -> String {
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime bridge-handoff <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|
@@ -437,6 +439,78 @@ fn render_runtime_bridge_task_text(
               runtime_fail(
                 render_runtime_run_problems(
                   "Lepusa runtime bridge-task", problems,
+                ),
+              )
+          }
+        }
+      }
+  }
+}
+
+///|
+async fn render_runtime_bridge_handoff(
+  args : Array[String],
+) -> RuntimeCliResult {
+  let values = runtime_positional_args(args)
+  let window_label = values.get(1).unwrap_or("")
+  let route = values.get(2).unwrap_or("")
+  let payload = values.get(3).unwrap_or("")
+  if window_label == "" {
+    return runtime_fail("bridge-handoff window is required\n")
+  }
+  if route == "" || route == "--manifest" {
+    return runtime_fail("bridge-handoff route is required\n")
+  }
+  match runtime_parse_invoke_route(route, command_name="bridge-handoff") {
+    Err(problem) => return runtime_fail(problem + "\n")
+    Ok(_) => ()
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime bridge-handoff\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_bridge_handoff_text(
+        path, text, window_label, route, payload,
+      )
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+fn render_runtime_bridge_handoff_text(
+  path : String,
+  text : String,
+  window_label : String,
+  route : String,
+  payload : String,
+) -> RuntimeCliResult {
+  match runtime_parse_invoke_route(route, command_name="bridge-handoff") {
+    Err(problem) => runtime_fail(problem + "\n")
+    Ok((plugin, command)) =>
+      match @bundled.BundledRuntimeManifest::parse(path, text) {
+        Err(problem) =>
+          runtime_fail("Lepusa runtime bridge-handoff\n[fail] \{problem}\n")
+        Ok(manifest) => {
+          let runtime = @bundled.BundledRuntime::new(manifest)
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          let message = @runtime_core.encode_invoke_request_json(request)
+          match runtime.bridge_handoff(message, window_label~) {
+            Ok(handoff) => runtime_ok(handoff.to_json() + "\n")
+            Err(problems) =>
+              runtime_fail(
+                render_runtime_run_problems(
+                  "Lepusa runtime bridge-handoff", problems,
                 ),
               )
           }

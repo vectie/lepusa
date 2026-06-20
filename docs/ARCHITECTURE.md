@@ -612,6 +612,9 @@ lepusa run macos --launch
 lepusa bridge-task <window> <plugin.command> [payload]
   -> emits source-project bridge task message plus scheduling metadata for native handlers
 
+lepusa bridge-handoff <window> <plugin.command> [payload]
+  -> emits source-project immediate/deferred bridge callback handoff
+
 lepusa bridge-dispatch <window> <plugin.command> [payload]
   -> executes a source-project bridge message and emits response callback script
 
@@ -635,6 +638,9 @@ lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
 
 lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> emits bundled bridge task message plus scheduling metadata for native message handlers
+
+lepusa-runtime bridge-handoff <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+  -> emits bundled immediate/deferred bridge callback handoff
 
 lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> executes a bundled bridge message and emits response callback script

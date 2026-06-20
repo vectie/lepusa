@@ -22,6 +22,12 @@ pub struct BundledBridgeDispatchTask {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeHandoff {
+  task : BundledBridgeDispatchTask
+  immediate_dispatch : BundledBridgeDispatch?
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -57,6 +63,15 @@ pub fn BundledRuntimeManifest::bridge_dispatch_task(
 }
 
 ///|
+pub fn BundledRuntimeManifest::bridge_handoff(
+  self : BundledRuntimeManifest,
+  message : String,
+  window_label? : String = "",
+) -> Result[BundledBridgeHandoff, Array[String]] {
+  BundledRuntime::new(self).bridge_handoff(message, window_label~)
+}
+
+///|
 pub fn BundledRuntime::bridge_dispatch_task(
   self : BundledRuntime,
   message : String,
@@ -77,6 +92,25 @@ pub fn BundledRuntime::bridge_dispatch_task(
           Ok({ message: prepared, route, mode })
         }
       }
+  }
+}
+
+///|
+pub fn BundledRuntime::bridge_handoff(
+  self : BundledRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[BundledBridgeHandoff, Array[String]] {
+  match self.bridge_dispatch_task(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(task) => {
+      let immediate_dispatch = if task.requires_async_dispatch() {
+        None
+      } else {
+        Some(task.dispatch_sync(self))
+      }
+      Ok({ task, immediate_dispatch })
+    }
   }
 }
 
@@ -134,6 +168,22 @@ pub fn BundledRuntime::dispatch_bridge_script_bytes(
   let input = @utf8.decode(message) catch { _ => "" }
   match self.dispatch_bridge_message_sync(input) {
     Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
+pub fn BundledRuntime::bridge_handoff_script_bytes(
+  self : BundledRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match self.bridge_handoff(input) {
+    Ok(handoff) =>
+      match handoff.immediate_script() {
+        Some(script) => @utf8.encode(script)
+        None => @utf8.encode("")
+      }
     Err(_) => @utf8.encode("")
   }
 }
@@ -303,6 +353,14 @@ pub async fn BundledBridgeDispatchTask::dispatch(
 }
 
 ///|
+fn BundledBridgeDispatchTask::dispatch_sync(
+  self : BundledBridgeDispatchTask,
+  runtime : BundledRuntime,
+) -> BundledBridgeDispatch {
+  self.message.dispatch_sync(runtime)
+}
+
+///|
 pub fn BundledBridgeDispatchTask::to_json(
   self : BundledBridgeDispatchTask,
 ) -> String {
@@ -314,6 +372,67 @@ pub fn BundledBridgeDispatchTask::to_json(
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
     "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn BundledBridgeHandoff::task(
+  self : BundledBridgeHandoff,
+) -> BundledBridgeDispatchTask {
+  self.task
+}
+
+///|
+pub fn BundledBridgeHandoff::mode(
+  self : BundledBridgeHandoff,
+) -> @runtime.NativeBridgeDispatchMode {
+  self.task.mode()
+}
+
+///|
+pub fn BundledBridgeHandoff::requires_async_dispatch(
+  self : BundledBridgeHandoff,
+) -> Bool {
+  self.task.requires_async_dispatch()
+}
+
+///|
+pub fn BundledBridgeHandoff::immediate_dispatch(
+  self : BundledBridgeHandoff,
+) -> BundledBridgeDispatch? {
+  self.immediate_dispatch
+}
+
+///|
+pub fn BundledBridgeHandoff::immediate_script(
+  self : BundledBridgeHandoff,
+) -> String? {
+  match self.immediate_dispatch {
+    Some(dispatch) => Some(dispatch.evaluation_script())
+    None => None
+  }
+}
+
+///|
+pub fn BundledBridgeHandoff::kind(self : BundledBridgeHandoff) -> String {
+  match self.immediate_dispatch {
+    Some(_) => "immediate"
+    None => "deferred"
+  }
+}
+
+///|
+pub fn BundledBridgeHandoff::to_json(self : BundledBridgeHandoff) -> String {
+  let immediate = match self.immediate_dispatch {
+    Some(dispatch) => dispatch.to_json()
+    None => "null"
+  }
+  [
+    "{",
+    "\"kind\":\{self.kind().json_string()},",
+    "\"task\":\{self.task.to_json()},",
+    "\"immediateDispatch\":\{immediate}",
     "}",
   ].join("")
 }

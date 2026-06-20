@@ -52,6 +52,9 @@
 - Add a portable bridge dispatch envelope for source and bundled runtimes:
   response JSON plus the WebView callback script now flow through reusable
   runtime APIs and no-window CLI probes.
+- Add a portable bridge handoff envelope for source and bundled runtimes:
+  sync routes carry an immediate callback script, while async routes return a
+  deferred task that platform event loops can schedule without re-decoding.
 - Add `@lepusa/runtime/bundled` for packaged `lepusa/runtime.json` parsing,
   asset lookup, lifecycle action selection, and bundled service plans.
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
@@ -106,6 +109,7 @@
   - `lepusa asset`: prints the runtime asset protocol JSON envelope.
   - `lepusa lifecycle`: prints runtime lifecycle step JSON.
   - `lepusa bridge-task`: reports source bridge task scheduling metadata.
+  - `lepusa bridge-handoff`: reports source immediate/deferred native bridge handoff.
   - `lepusa bridge-dispatch`: executes source bridge messages and reports the native callback envelope.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
@@ -121,6 +125,7 @@
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
   - `lepusa-runtime bridge-task`: reports packaged bridge task scheduling metadata.
+  - `lepusa-runtime bridge-handoff`: reports packaged immediate/deferred native bridge handoff.
   - `lepusa-runtime bridge-dispatch`: executes packaged bridge messages and reports the native callback envelope.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.
 - Consume standalone `lepusa.json` project manifests for planning, manifest

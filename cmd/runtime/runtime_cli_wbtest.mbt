@@ -556,6 +556,12 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_true(sync.output.contains("\"mode\":\"sync\""))
   assert_true(sync.output.contains("\"requiresAsyncDispatch\":false"))
   assert_true(sync.output.contains("\"message\":\"{\\\"id\\\":\\\"cli\\\","))
+  let sync_handoff = render_runtime_bridge_handoff_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(sync_handoff.exit_code, 0)
+  assert_true(sync_handoff.output.contains("\"kind\":\"immediate\""))
+  assert_true(sync_handoff.output.contains("\"immediateDispatch\":{"))
   let async_task = render_runtime_bridge_task_text(
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
@@ -563,6 +569,12 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_true(async_task.output.contains("\"route\":\"fs.readText\""))
   assert_true(async_task.output.contains("\"mode\":\"async\""))
   assert_true(async_task.output.contains("\"requiresAsyncDispatch\":true"))
+  let async_handoff = render_runtime_bridge_handoff_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_eq(async_handoff.exit_code, 0)
+  assert_true(async_handoff.output.contains("\"kind\":\"deferred\""))
+  assert_true(async_handoff.output.contains("\"immediateDispatch\":null"))
   let invalid = render_runtime_cli_async(["bridge-task", "main", "log"])
   assert_eq(invalid.exit_code, 1)
   assert_true(

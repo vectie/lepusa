@@ -41,6 +41,14 @@ pub fn BundledRuntimeManifest::bridge_async_dispatch_callback(
 }
 
 ///|
+pub fn BundledRuntimeManifest::bridge_handoff_callback(
+  self : BundledRuntimeManifest,
+) -> (Bytes) -> Bytes {
+  let runtime = BundledRuntime::new(self)
+  fn(message : Bytes) { runtime.bridge_handoff_script_bytes(message) }
+}
+
+///|
 pub fn BundledRuntimeManifest::bridge_scheduler(
   self : BundledRuntimeManifest,
   mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,

@@ -25,6 +25,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("bridge") => render_bridge_async(args)
     Some("dev") => render_dev_async(args)
     Some("bridge-task") => render_bridge_task_async(args)
+    Some("bridge-handoff") => render_bridge_handoff_async(args)
     Some("bridge-dispatch") => render_bridge_dispatch_async(args)
     Some("init") => render_init(args)
     Some("plugin") => render_plugin(args)
@@ -64,6 +65,7 @@ fn help_text() -> String {
     #|  lepusa bridge
     #|  lepusa dev
     #|  lepusa bridge-task <window> <plugin.command> [payload]
+    #|  lepusa bridge-handoff <window> <plugin.command> [payload]
     #|  lepusa bridge-dispatch <window> <plugin.command> [payload]
     #|  lepusa invoke <window> <plugin.command> [payload]
     #|  lepusa asset <url>

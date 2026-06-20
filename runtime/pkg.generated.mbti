@@ -77,6 +77,18 @@ pub fn NativeBridgeDispatchTask::route(Self) -> String
 pub fn NativeBridgeDispatchTask::to_json(Self) -> String
 pub fn NativeBridgeDispatchTask::window_label(Self) -> String
 
+pub struct NativeBridgeHandoff {
+  task : NativeBridgeDispatchTask
+  immediate_dispatch : NativeBridgeDispatch?
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeHandoff::immediate_dispatch(Self) -> NativeBridgeDispatch?
+pub fn NativeBridgeHandoff::immediate_script(Self) -> String?
+pub fn NativeBridgeHandoff::kind(Self) -> String
+pub fn NativeBridgeHandoff::mode(Self) -> NativeBridgeDispatchMode
+pub fn NativeBridgeHandoff::requires_async_dispatch(Self) -> Bool
+pub fn NativeBridgeHandoff::task(Self) -> NativeBridgeDispatchTask
+pub fn NativeBridgeHandoff::to_json(Self) -> String
+
 pub struct NativeBridgeMessage {
   window_label : String
   response_hook : String
@@ -288,6 +300,9 @@ pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_dispatch_task(Self, String, window_label? : String) -> Result[NativeBridgeDispatchTask, Array[String]]
+pub fn NativeRuntime::bridge_handoff(Self, String, window_label? : String) -> Result[NativeBridgeHandoff, Array[String]]
+pub fn NativeRuntime::bridge_handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeRuntime::bridge_handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
@@ -464,6 +479,7 @@ pub struct RuntimeHost {
 }
 pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::bridge_dispatch_task(Self, String, window_label? : String) -> Result[NativeBridgeDispatchTask, Array[String]]
+pub fn RuntimeHost::bridge_handoff(Self, String, window_label? : String) -> Result[NativeBridgeHandoff, Array[String]]
 pub fn RuntimeHost::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn RuntimeHost::dev_plan(Self) -> Result[RuntimeDevPlan, Array[String]]
 pub fn RuntimeHost::dispatch(Self, @lepusa.InvokeRequest) -> @lepusa.InvokeResponse

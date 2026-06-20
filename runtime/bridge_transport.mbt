@@ -28,6 +28,12 @@ pub struct NativeBridgeDispatchTask {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeHandoff {
+  task : NativeBridgeDispatchTask
+  immediate_dispatch : NativeBridgeDispatch?
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -65,6 +71,25 @@ pub fn RuntimeHost::bridge_dispatch_task(
           Ok({ message: prepared, route, mode })
         }
       }
+  }
+}
+
+///|
+pub fn RuntimeHost::bridge_handoff(
+  self : RuntimeHost,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeHandoff, Array[String]] {
+  match self.bridge_dispatch_task(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(task) => {
+      let immediate_dispatch = if task.requires_async_dispatch() {
+        None
+      } else {
+        Some(task.dispatch_host_sync(self))
+      }
+      Ok({ task, immediate_dispatch })
+    }
   }
 }
 
@@ -134,6 +159,25 @@ pub fn NativeRuntime::bridge_dispatch_task(
 }
 
 ///|
+pub fn NativeRuntime::bridge_handoff(
+  self : NativeRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeHandoff, Array[String]] {
+  match self.bridge_dispatch_task(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(task) => {
+      let immediate_dispatch = if task.requires_async_dispatch() {
+        None
+      } else {
+        Some(task.dispatch_sync(self))
+      }
+      Ok({ task, immediate_dispatch })
+    }
+  }
+}
+
+///|
 pub async fn NativeRuntime::dispatch_bridge_message(
   self : NativeRuntime,
   message : String,
@@ -165,6 +209,22 @@ pub fn NativeRuntime::dispatch_bridge_script_bytes(
   let input = @utf8.decode(message) catch { _ => "" }
   match self.dispatch_bridge_message_sync(input) {
     Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
+pub fn NativeRuntime::bridge_handoff_script_bytes(
+  self : NativeRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match self.bridge_handoff(input) {
+    Ok(handoff) =>
+      match handoff.immediate_script() {
+        Some(script) => @utf8.encode(script)
+        None => @utf8.encode("")
+      }
     Err(_) => @utf8.encode("")
   }
 }
@@ -347,6 +407,22 @@ pub async fn NativeBridgeDispatchTask::dispatch(
 }
 
 ///|
+fn NativeBridgeDispatchTask::dispatch_sync(
+  self : NativeBridgeDispatchTask,
+  runtime : NativeRuntime,
+) -> NativeBridgeDispatch {
+  self.message.dispatch_sync(runtime)
+}
+
+///|
+fn NativeBridgeDispatchTask::dispatch_host_sync(
+  self : NativeBridgeDispatchTask,
+  host : RuntimeHost,
+) -> NativeBridgeDispatch {
+  self.message.dispatch_host_sync(host)
+}
+
+///|
 pub fn NativeBridgeDispatchTask::to_json(
   self : NativeBridgeDispatchTask,
 ) -> String {
@@ -358,6 +434,67 @@ pub fn NativeBridgeDispatchTask::to_json(
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
     "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeBridgeHandoff::task(
+  self : NativeBridgeHandoff,
+) -> NativeBridgeDispatchTask {
+  self.task
+}
+
+///|
+pub fn NativeBridgeHandoff::mode(
+  self : NativeBridgeHandoff,
+) -> NativeBridgeDispatchMode {
+  self.task.mode()
+}
+
+///|
+pub fn NativeBridgeHandoff::requires_async_dispatch(
+  self : NativeBridgeHandoff,
+) -> Bool {
+  self.task.requires_async_dispatch()
+}
+
+///|
+pub fn NativeBridgeHandoff::immediate_dispatch(
+  self : NativeBridgeHandoff,
+) -> NativeBridgeDispatch? {
+  self.immediate_dispatch
+}
+
+///|
+pub fn NativeBridgeHandoff::immediate_script(
+  self : NativeBridgeHandoff,
+) -> String? {
+  match self.immediate_dispatch {
+    Some(dispatch) => Some(dispatch.evaluation_script())
+    None => None
+  }
+}
+
+///|
+pub fn NativeBridgeHandoff::kind(self : NativeBridgeHandoff) -> String {
+  match self.immediate_dispatch {
+    Some(_) => "immediate"
+    None => "deferred"
+  }
+}
+
+///|
+pub fn NativeBridgeHandoff::to_json(self : NativeBridgeHandoff) -> String {
+  let immediate = match self.immediate_dispatch {
+    Some(dispatch) => dispatch.to_json()
+    None => "null"
+  }
+  [
+    "{",
+    "\"kind\":\{self.kind().json_string()},",
+    "\"task\":\{self.task.to_json()},",
+    "\"immediateDispatch\":\{immediate}",
     "}",
   ].join("")
 }

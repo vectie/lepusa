@@ -687,6 +687,21 @@ async test "bundled runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bundled sync bridge task failure")
       }
+      match runtime.bridge_handoff(sync_message) {
+        Ok(handoff) => {
+          assert_eq(handoff.kind(), "immediate")
+          assert_false(handoff.requires_async_dispatch())
+          assert_true(handoff.task().to_json().contains("\"mode\":\"sync\""))
+          assert_true(
+            handoff
+            .immediate_script()
+            .unwrap_or("")
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(handoff.to_json().contains("\"immediateDispatch\":{"))
+        }
+        Err(_) => abort("unexpected bundled sync bridge handoff failure")
+      }
       match runtime.dispatch_bridge_message_sync(sync_message) {
         Ok(dispatch) => {
           assert_eq(dispatch.window_label(), "main")
@@ -723,6 +738,21 @@ async test "bundled runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bundled async bridge task failure")
       }
+      match runtime.bridge_handoff(async_message) {
+        Ok(handoff) => {
+          assert_eq(handoff.kind(), "deferred")
+          assert_true(handoff.requires_async_dispatch())
+          assert_true(handoff.immediate_script() is None)
+          assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+        }
+        Err(_) => abort("unexpected bundled async bridge handoff failure")
+      }
+      let handoff_script = @utf8.decode(
+        manifest.bridge_handoff_callback()(@utf8.encode(async_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled handoff script")
+      }
+      assert_eq(handoff_script, "")
       let set_message = "{\"id\":\"set\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"set\",\"payload\":\"{\\\"key\\\":\\\"theme\\\",\\\"value\\\":\\\"dark\\\"}\"}"
       let get_message = "{\"id\":\"get\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"get\",\"payload\":\"{\\\"key\\\":\\\"theme\\\"}\"}"
       let set_script = @utf8.decode(
