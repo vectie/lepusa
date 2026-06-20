@@ -691,7 +691,9 @@ service executor helpers, and native run plans build launch sessions from the
 selected backend capability before running service startup, opening a WebView,
 and running service shutdown after the window loop returns.
 macOS, Linux, and Windows start tracked sidecar processes, poll HTTP readiness
-URLs, and stop tracked processes through platform-owned native hooks.
+URLs, stop tracked processes through platform-owned native hooks, and install
+exit/interruption cleanup so supervised sidecars do not outlive the native
+runner when the app process exits before the normal shutdown step.
 
 `Source::localhost(...)` supports gateway-style apps that load a local HTTP
 service and optionally declare the sidecar command plus readiness URL metadata.

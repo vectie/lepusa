@@ -59,7 +59,9 @@
   shared start/readiness/shutdown supervisor handoff with native execution
   reports, backend executor hooks, and macOS/Linux/Windows native
   process/readiness execution. Open-window launch paths now execute service
-  startup before WebView creation and service shutdown after the window loop.
+  startup before WebView creation and service shutdown after the window loop;
+  native service hooks now terminate replaced tracked services and install
+  runner-exit/interruption cleanup on macOS, Linux, and Windows.
 - Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
   protocol asset resolution, bridge dispatch, service supervisor
   plans/reports/executors, and lifecycle steps.

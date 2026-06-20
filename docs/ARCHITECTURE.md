@@ -670,8 +670,10 @@ Framework support needed for this mode:
 `Source::localhost(...)` lowers to a normal HTTP WebView URL and, when given a
 command, emits a `LocalService` entry into `RuntimeSession` and
 `RuntimeLaunchManifest.localServices`. Platform backends own process spawning,
-readiness polling, retry UI, and shutdown policy; Lepusa core only carries the
-portable service contract.
+readiness polling, retry UI, shutdown policy, and runner-exit cleanup; Lepusa
+core only carries the portable service contract. Native macOS, Linux, and
+Windows service hooks now terminate replaced service processes and register
+process-exit/interruption cleanup handlers when the first sidecar starts.
 
 ## Bundling
 

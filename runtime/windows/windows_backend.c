@@ -17,6 +17,7 @@ typedef struct {
 } LepusaWindowsServiceProcess;
 
 static LepusaWindowsServiceProcess lepusa_windows_service_processes[64];
+static int lepusa_windows_service_cleanup_handlers_installed = 0;
 
 typedef int (WSAAPI *LepusaWindowsWSAStartup)(WORD, LPWSADATA);
 typedef int (WSAAPI *LepusaWindowsWSACleanup)(void);
@@ -285,6 +286,12 @@ static int lepusa_windows_track_service(const char *name, HANDLE process) {
   for (int i = 0; i < 64; i++) {
     if (lepusa_windows_service_processes[i].name != NULL &&
         strcmp(lepusa_windows_service_processes[i].name, name) == 0) {
+      DWORD code = 0;
+      if (GetExitCodeProcess(lepusa_windows_service_processes[i].process, &code) &&
+          code == STILL_ACTIVE) {
+        TerminateProcess(lepusa_windows_service_processes[i].process, 0);
+        WaitForSingleObject(lepusa_windows_service_processes[i].process, 1000);
+      }
       CloseHandle(lepusa_windows_service_processes[i].process);
       lepusa_windows_service_processes[i].process = process;
       return 1;
@@ -315,6 +322,56 @@ static HANDLE lepusa_windows_untrack_service(const char *name) {
     }
   }
   return NULL;
+}
+
+static void lepusa_windows_terminate_tracked_services(int clear_entries) {
+  for (int i = 0; i < 64; i++) {
+    HANDLE process = lepusa_windows_service_processes[i].process;
+    if (process != NULL) {
+      DWORD code = 0;
+      if (GetExitCodeProcess(process, &code) && code == STILL_ACTIVE) {
+        TerminateProcess(process, 0);
+        WaitForSingleObject(process, 1000);
+      }
+      if (clear_entries) {
+        CloseHandle(process);
+      }
+    }
+    if (clear_entries) {
+      free(lepusa_windows_service_processes[i].name);
+      lepusa_windows_service_processes[i].name = NULL;
+      lepusa_windows_service_processes[i].process = NULL;
+    }
+  }
+}
+
+static void lepusa_windows_cleanup_services_at_exit(void) {
+  lepusa_windows_terminate_tracked_services(1);
+}
+
+static BOOL WINAPI lepusa_windows_cleanup_services_on_console(
+  DWORD control_type
+) {
+  switch (control_type) {
+    case CTRL_C_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_LOGOFF_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+      lepusa_windows_terminate_tracked_services(0);
+      return FALSE;
+    default:
+      return FALSE;
+  }
+}
+
+static void lepusa_windows_install_service_cleanup_handlers(void) {
+  if (lepusa_windows_service_cleanup_handlers_installed) {
+    return;
+  }
+  lepusa_windows_service_cleanup_handlers_installed = 1;
+  atexit(lepusa_windows_cleanup_services_at_exit);
+  SetConsoleCtrlHandler(lepusa_windows_cleanup_services_on_console, TRUE);
 }
 
 static int lepusa_windows_parse_http_url(
@@ -539,6 +596,7 @@ int32_t lepusa_windows_start_service(
     free(service_name);
     return 3;
   }
+  lepusa_windows_install_service_cleanup_handlers();
   free(service_name);
   return 0;
 #else

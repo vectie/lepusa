@@ -28,6 +28,7 @@ typedef struct {
 } LepusaLinuxServiceProcess;
 
 static LepusaLinuxServiceProcess lepusa_linux_service_processes[64];
+static volatile sig_atomic_t lepusa_linux_service_signal_handlers_installed = 0;
 
 typedef int (*LepusaGtkInitCheck)(int *, char ***);
 typedef void *(*LepusaGtkWindowNew)(int);
@@ -577,6 +578,11 @@ static int lepusa_linux_track_service(const char *name, pid_t pid) {
   for (int i = 0; i < 64; i++) {
     if (lepusa_linux_service_processes[i].name != NULL &&
         strcmp(lepusa_linux_service_processes[i].name, name) == 0) {
+      pid_t old_pid = lepusa_linux_service_processes[i].pid;
+      if (old_pid > 0) {
+        (void)kill(old_pid, SIGTERM);
+        (void)waitpid(old_pid, NULL, WNOHANG);
+      }
       lepusa_linux_service_processes[i].pid = pid;
       return 1;
     }
@@ -606,6 +612,43 @@ static pid_t lepusa_linux_untrack_service(const char *name) {
     }
   }
   return -1;
+}
+
+static void lepusa_linux_terminate_tracked_services(int clear_entries) {
+  for (int i = 0; i < 64; i++) {
+    pid_t pid = lepusa_linux_service_processes[i].pid;
+    if (pid > 0) {
+      if (kill(pid, SIGTERM) == 0 || errno == ESRCH) {
+        (void)waitpid(pid, NULL, WNOHANG);
+      }
+    }
+    if (clear_entries) {
+      free(lepusa_linux_service_processes[i].name);
+      lepusa_linux_service_processes[i].name = NULL;
+      lepusa_linux_service_processes[i].pid = 0;
+    }
+  }
+}
+
+static void lepusa_linux_cleanup_services_at_exit(void) {
+  lepusa_linux_terminate_tracked_services(1);
+}
+
+static void lepusa_linux_cleanup_services_on_signal(int signo) {
+  lepusa_linux_terminate_tracked_services(0);
+  signal(signo, SIG_DFL);
+  raise(signo);
+}
+
+static void lepusa_linux_install_service_cleanup_handlers(void) {
+  if (lepusa_linux_service_signal_handlers_installed) {
+    return;
+  }
+  lepusa_linux_service_signal_handlers_installed = 1;
+  atexit(lepusa_linux_cleanup_services_at_exit);
+  signal(SIGINT, lepusa_linux_cleanup_services_on_signal);
+  signal(SIGTERM, lepusa_linux_cleanup_services_on_signal);
+  signal(SIGHUP, lepusa_linux_cleanup_services_on_signal);
 }
 
 static long lepusa_linux_now_ms(void) {
@@ -942,6 +985,7 @@ int32_t lepusa_linux_start_service(
     free(service_name);
     return 3;
   }
+  lepusa_linux_install_service_cleanup_handlers();
   free(service_name);
   return 0;
 #else
