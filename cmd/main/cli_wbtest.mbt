@@ -613,6 +613,9 @@ async test "generated project config verifies end to end contracts" {
   assert_true(
     result.output.contains("[ok] asset: bridge lepusa://runtime/bridge.js"),
   )
+  assert_true(
+    result.output.contains("[ok] content: windows=1 checked=1 skipped=0"),
+  )
   assert_true(result.output.contains("[ok] handlers: registered=6 missing=0"))
   assert_true(result.output.contains("[ok] native-session: webviews=1"))
   assert_true(result.output.contains("target-can-launch=true"))
@@ -653,6 +656,41 @@ async test "generated project config verifies end to end contracts" {
   assert_true(
     strict_windows.output.contains(
       "[fail] strict: Windows WebView2 creation loop is unavailable",
+    ),
+  )
+}
+
+///|
+async test "verify rejects blank initial webview content" {
+  let root = "/tmp/lepusa-blank-content-\{@async.now().to_int()}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/lepusa.json",
+    (
+      #|{
+      #|  "identifier": "dev.local.blank",
+      #|  "productName": "Blank App",
+      #|  "version": "0.1.0",
+      #|  "window": {
+      #|    "label": "main",
+      #|    "title": "Blank App",
+      #|    "source": { "html": "   " }
+      #|  }
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "verify",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(
+    result.output.contains(
+      "[fail] content: window main has blank virtual asset",
     ),
   )
 }
@@ -706,6 +744,9 @@ async test "checked examples cover rabbita static and gateway modes" {
   assert_true(static_verify.output.contains("Lepusa verify"))
   assert_true(static_verify.output.contains("[ok] bundle:"))
   assert_true(
+    static_verify.output.contains("[ok] content: windows=1 checked=1 skipped=0"),
+  )
+  assert_true(
     static_verify.output.contains("[ok] handlers: registered=3 missing=0"),
   )
   assert_true(static_verify.output.contains("resources=1"))
@@ -725,6 +766,11 @@ async test "checked examples cover rabbita static and gateway modes" {
   ])
   assert_eq(gateway_strict.exit_code, 0)
   assert_true(gateway_strict.output.contains("mode: strict"))
+  assert_true(
+    gateway_strict.output.contains(
+      "[ok] content: windows=1 checked=0 skipped=1",
+    ),
+  )
   assert_true(
     gateway_strict.output.contains("[ok] handlers: registered=9 missing=0"),
   )

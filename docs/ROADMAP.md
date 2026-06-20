@@ -32,7 +32,9 @@
   native-window smoke test around a packaged counter.
 - Support direct `WindowConfig::new(..., source=...)` hosting for non-Rabbita
   assets.
-- Add a smoke test that proves the WebView is nonblank.
+- Add a smoke test that proves the WebView is nonblank: `lepusa verify` now
+  checks resolvable initial WebView assets for nonblank content; a real
+  native-window screenshot smoke remains future platform validation.
 
 ## Milestone 2: Native Runtime
 

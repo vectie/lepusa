@@ -17,7 +17,7 @@ async fn render_verify_async(args : Array[String]) -> CliResult {
 }
 
 ///|
-fn render_verify_project(
+async fn render_verify_project(
   target : @lepusa.BundleTarget,
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
@@ -31,6 +31,7 @@ fn render_verify_project(
   passed = verify_runtime_plan(host, lines) && passed
   passed = verify_dev_plan(host, lines) && passed
   passed = verify_launch_manifest(host, lines) && passed
+  passed = verify_webview_content(host, lines) && passed
   passed = verify_handler_coverage(host, lines, strict~) && passed
   passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
@@ -92,6 +93,104 @@ fn verify_launch_manifest(
       lines.push(render_problem_lines(problems))
       false
     }
+  }
+}
+
+///|
+enum VerifiedContent {
+  Checked
+  Skipped
+} derive(Debug, Eq)
+
+///|
+async fn verify_webview_content(
+  host : @runtime.RuntimeHost,
+  lines : Array[String],
+) -> Bool {
+  match host.snapshot() {
+    Ok(session) => {
+      let mut passed = true
+      let mut checked = 0
+      let mut skipped = 0
+      for window in session.windows() {
+        match verify_window_content(session, window) {
+          Ok(Checked) => checked += 1
+          Ok(Skipped) => skipped += 1
+          Err(problem) => {
+            lines.push("[fail] content: \{problem}\n")
+            passed = false
+          }
+        }
+      }
+      if passed {
+        lines.push(
+          "[ok] content: windows=\{session.windows().length()} checked=\{checked} skipped=\{skipped}\n",
+        )
+      }
+      passed
+    }
+    Err(problems) => {
+      lines.push(render_problem_lines(problems))
+      false
+    }
+  }
+}
+
+///|
+async fn verify_window_content(
+  session : @runtime.RuntimeSession,
+  window : @runtime.RuntimeWindow,
+) -> Result[VerifiedContent, String] {
+  let url = window.url()
+  if url.has_prefix("http://") || url.has_prefix("https://") {
+    return Ok(Skipped)
+  }
+  if url.has_prefix("data:") {
+    if url.trim() == "data:" {
+      Err("window \{window.label()} has blank data url")
+    } else {
+      Ok(Checked)
+    }
+  } else if url.has_prefix("file://") {
+    verify_file_content(window.label(), url[7:].to_owned())
+  } else {
+    match session.resolve_asset(url) {
+      Ok(asset) => verify_asset_content(window.label(), asset)
+      Err(problem) => Err("window \{window.label()} asset failed: \{problem}")
+    }
+  }
+}
+
+///|
+async fn verify_asset_content(
+  window_label : String,
+  asset : @runtime.RuntimeAssetResponse,
+) -> Result[VerifiedContent, String] {
+  match asset.body() {
+    VirtualContent(content) =>
+      if content.trim() == "" {
+        Err("window \{window_label} has blank virtual asset: \{asset.url()}")
+      } else {
+        Ok(Checked)
+      }
+    LocalFile(path) | PackagedFile(path) =>
+      verify_file_content(window_label, path)
+  }
+}
+
+///|
+async fn verify_file_content(
+  window_label : String,
+  path : String,
+) -> Result[VerifiedContent, String] {
+  let text = @fs.read_file(path).text() catch {
+    error =>
+      return Err("window \{window_label} file is unreadable: \{path}: \{error}")
+  }
+  if text.trim() == "" {
+    Err("window \{window_label} file is blank: \{path}")
+  } else {
+    Ok(Checked)
   }
 }
 

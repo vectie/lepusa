@@ -467,7 +467,8 @@ loop. It is intentionally a no-window command unless `--launch` is passed.
 
 `lepusa verify [macos|windows|linux] --project lepusa.json` runs the no-write
 foundation proof for an app: runtime plan, dev plan, launch manifest, bridge
-asset, handler coverage, native launch session, and bundle runtime contract.
+asset, nonblank initial WebView content for resolvable assets, handler
+coverage, native launch session, and bundle runtime contract.
 Add `--strict` when the command should act as a release gate: missing concrete
 handlers and known target launch blockers become failures instead of warnings.
 This keeps framework-development proofs useful while still giving CI a direct
