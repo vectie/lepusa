@@ -183,6 +183,64 @@ test "native runtime facade exposes platform loop hooks" {
 }
 
 ///|
+test "native asset protocol packet encodes runtime responses" {
+  match RuntimeHost::new(test_plan()).snapshot() {
+    Ok(session) =>
+      match session.resolve_asset("lepusa://inline/main/index.html") {
+        Ok(asset) => {
+          let packet = @utf8.decode(asset.to_native_protocol_packet()) catch {
+            _ => abort("unexpected invalid virtual packet")
+          }
+          assert_eq(packet, "ok\nvirtual\ntext/html\n<main>runtime</main>")
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid runtime session")
+  }
+}
+
+///|
+test "native asset protocol packet encodes json envelopes" {
+  let virtual_json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://runtime/bridge.js",
+    #|  "mimeType": "application/javascript",
+    #|  "body": { "kind": "virtual", "content": "console.log(\"ready\")" }
+    #|}
+  let virtual_packet = @utf8.decode(
+    native_asset_protocol_packet_from_json(virtual_json),
+  ) catch {
+    _ => abort("unexpected invalid virtual packet")
+  }
+  assert_true(
+    virtual_packet.has_prefix("ok\nvirtual\napplication/javascript\n"),
+  )
+  assert_true(virtual_packet.contains("console.log"))
+  let file_json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://packaged/main/app.css",
+    #|  "mimeType": "text/css",
+    #|  "body": { "kind": "packaged-file", "path": "/tmp/app.css" }
+    #|}
+  let file_packet = @utf8.decode(
+    native_asset_protocol_packet_from_json(file_json),
+  ) catch {
+    _ => abort("unexpected invalid file packet")
+  }
+  assert_eq(file_packet, "ok\nfile\ntext/css\n/tmp/app.css")
+  let error_packet = @utf8.decode(
+    native_asset_protocol_packet_from_json(
+      "{\"ok\":false,\"error\":\"missing\"}",
+    ),
+  ) catch {
+    _ => abort("unexpected invalid error packet")
+  }
+  assert_eq(error_packet, "error\nmissing")
+}
+
+///|
 test "native run report normalizes launch summaries" {
   let host = RuntimeHost::new(test_plan())
   let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")

@@ -743,7 +743,9 @@ fn runtime_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
 fn runtime_asset_resolver(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
   fn(url : Bytes) -> Bytes {
     let input = @utf8.decode(url) catch { _ => "" }
-    macos_protocol_packet_from_asset_json(runtime.resolve_asset_json(input))
+    @runtime.native_asset_protocol_packet_from_json(
+      runtime.resolve_asset_json(input),
+    )
   }
 }
 
@@ -767,7 +769,9 @@ fn bundled_asset_resolver(
 ) -> (Bytes) -> Bytes {
   fn(url : Bytes) -> Bytes {
     let input = @utf8.decode(url) catch { _ => "" }
-    macos_protocol_packet_from_asset_json(manifest.resolve_asset_json(input))
+    @runtime.native_asset_protocol_packet_from_json(
+      manifest.resolve_asset_json(input),
+    )
   }
 }
 
@@ -817,62 +821,6 @@ fn bundled_load_url_from_asset_json(json : String) -> Result[String, String] {
       }
     _ => Err("bundled asset response must be a json object")
   }
-}
-
-///|
-fn macos_protocol_packet_from_asset_json(json : String) -> Bytes {
-  try @json.parse(json) catch {
-    error => macos_protocol_error_packet("invalid asset response: \{error}")
-  } noraise {
-    Object(response) =>
-      if optional_response_bool(response, "ok").unwrap_or(false) {
-        match optional_response_object(response, "body") {
-          Some(body) => {
-            let mime_type = optional_response_string(response, "mimeType").unwrap_or(
-              "application/octet-stream",
-            )
-            match optional_response_string(body, "kind").unwrap_or("") {
-              "virtual" =>
-                macos_protocol_ok_packet(
-                  "virtual",
-                  mime_type,
-                  optional_response_string(body, "content").unwrap_or(""),
-                )
-              "local-file" | "packaged-file" =>
-                macos_protocol_ok_packet(
-                  "file",
-                  mime_type,
-                  optional_response_string(body, "path").unwrap_or(""),
-                )
-              kind =>
-                macos_protocol_error_packet("unsupported asset kind: \{kind}")
-            }
-          }
-          None => macos_protocol_error_packet("asset response body is required")
-        }
-      } else {
-        macos_protocol_error_packet(
-          optional_response_string(response, "error").unwrap_or(
-            "asset resolution failed",
-          ),
-        )
-      }
-    _ => macos_protocol_error_packet("asset response must be a json object")
-  }
-}
-
-///|
-fn macos_protocol_ok_packet(
-  kind : String,
-  mime_type : String,
-  body : String,
-) -> Bytes {
-  @utf8.encode("ok\n\{kind}\n\{mime_type}\n\{body}")
-}
-
-///|
-fn macos_protocol_error_packet(message : String) -> Bytes {
-  @utf8.encode("error\n\{message}")
 }
 
 ///|
