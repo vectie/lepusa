@@ -16,6 +16,7 @@ pub struct DesktopKit {
   capabilities : Array[@lepusa.Capability]
   filesystem_scopes : Array[@lepusa.FileSystemScope]
   local_services : Array[@lepusa.LocalService]
+  registry : @lepusa.CommandRegistry
   problems : Array[String]
 }
 pub fn DesktopKit::apply(Self, @lepusa.App) -> Result[@lepusa.App, Array[String]]
@@ -39,6 +40,7 @@ pub fn DesktopKit::with_local_service(Self, @lepusa.LocalService) -> Self
 pub fn DesktopKit::with_plugin(Self, String, window_label? : String, capability_name? : String) -> Self
 pub fn DesktopKit::with_plugin_spec(Self, @lepusa.Plugin) -> Self
 pub fn DesktopKit::with_plugins(Self, Array[String], window_label? : String) -> Self
+pub fn DesktopKit::with_registry(Self, @lepusa.CommandRegistry) -> Self
 
 pub struct DesktopProject {
   root : @lepusa.Cell
@@ -67,6 +69,7 @@ pub fn DesktopProject::with_local_service(Self, @lepusa.LocalService) -> Self
 pub fn DesktopProject::with_official_plugin(Self, String, window_label? : String, capability_name? : String) -> Self
 pub fn DesktopProject::with_official_plugins(Self, Array[String], window_label? : String) -> Self
 pub fn DesktopProject::with_plugin(Self, @lepusa.Plugin) -> Self
+pub fn DesktopProject::with_registry(Self, @lepusa.CommandRegistry) -> Self
 pub fn DesktopProject::with_runtime(Self, @lepusa.RuntimeConfig) -> Self
 pub fn DesktopProject::with_signing(Self, @lepusa.SigningConfig) -> Self
 pub fn DesktopProject::with_startup(Self, @lepusa.Cmd) -> Self

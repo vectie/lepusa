@@ -4,6 +4,7 @@ pub struct DesktopKit {
   capabilities : Array[@lepusa.Capability]
   filesystem_scopes : Array[@lepusa.FileSystemScope]
   local_services : Array[@lepusa.LocalService]
+  registry : @lepusa.CommandRegistry
   problems : Array[String]
 }
 
@@ -14,6 +15,7 @@ pub fn DesktopKit::new() -> DesktopKit {
     capabilities: [],
     filesystem_scopes: [],
     local_services: [],
+    registry: @lepusa.CommandRegistry::new(),
     problems: [],
   }
 }
@@ -94,6 +96,14 @@ pub fn DesktopKit::with_local_service(
   let services = self.local_services.copy()
   services.push(service)
   { ..self, local_services: services }
+}
+
+///|
+pub fn DesktopKit::with_registry(
+  self : DesktopKit,
+  registry : @lepusa.CommandRegistry,
+) -> DesktopKit {
+  { ..self, registry: self.registry.merge(registry) }
 }
 
 ///|
@@ -223,7 +233,7 @@ fn DesktopKit::registry_with_context(
     filesystem_scopes~,
     local_services~,
   )
-  let mut registry = @lepusa.CommandRegistry::new()
+  let mut registry = self.registry
   for plugin in self.plugins {
     registry = @catalog.register_with_context(registry, plugin.name(), context~)
   }

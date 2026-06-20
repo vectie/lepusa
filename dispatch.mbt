@@ -103,6 +103,22 @@ pub fn CommandRegistry::register_async_fn(
 }
 
 ///|
+pub fn CommandRegistry::merge(
+  self : CommandRegistry,
+  other : CommandRegistry,
+) -> CommandRegistry {
+  let mut merged = self
+  other.commands.each(fn(_, command) { merged = merged.register(command) })
+  let duplicate_routes = merged.duplicate_routes.copy()
+  for route in other.duplicate_routes {
+    if !duplicate_routes.contains(route) {
+      duplicate_routes.push(route)
+    }
+  }
+  { ..merged, duplicate_routes, }
+}
+
+///|
 pub fn CommandRegistry::contains(
   self : CommandRegistry,
   route : String,

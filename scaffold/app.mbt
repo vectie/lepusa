@@ -144,8 +144,8 @@ fn project_moon_pkg() -> String {
   (
     #|import {
     #|  "vectie/lepusa",
-    #|  "vectie/lepusa/ui",
-    #|  "vectie/lepusa/plugins/catalog"
+    #|  "vectie/lepusa/desktop",
+    #|  "vectie/lepusa/ui"
     #|}
     #|
     #|options(
@@ -272,37 +272,39 @@ fn project_main_mbt() -> String {
     #|    route="counter.dispatch",
     #|    render_event="counter.render",
     #|  )
-    #|  let registry = program.register(@catalog.register(
-    #|    @catalog.register(@lepusa.CommandRegistry::new(), "log"),
-    #|    "store",
-    #|  ))
-    #|  let app = @lepusa.new(program.cell())
+    #|  let project = @desktop.DesktopProject::new(
+    #|    @lepusa.AppMetadata::new(
+    #|      identifier="dev.local.lepusa-app",
+    #|      product_name="Lepusa App",
+    #|      version="0.1.0",
+    #|    ),
+    #|    program.cell(),
+    #|  )
     #|    .window(title="Lepusa App", width=1000, height=720)
     #|    .with_plugin(program.plugin())
-    #|    .with_plugin(@catalog.plugin("log").unwrap())
-    #|    .with_plugin(@catalog.plugin("store").unwrap())
     #|    .with_capability(program.capability_for_window())
-    #|    .with_capability(
-    #|      @lepusa.Capability::new("main")
-    #|      .window("main")
-    #|      .command("log.write")
-    #|      .command("store.get")
-    #|      .command("store.set")
-    #|      .command("store.delete")
-    #|      .command("store.clear")
-    #|      .command("store.keys"),
-    #|    )
+    #|    .with_registry(program.registry())
+    #|    .with_official_plugins(["log", "store"])
     #|    .with_startup(
     #|      @lepusa.Cmd::batch([
     #|        @lepusa.Cmd::effect("boot"),
     #|        @lepusa.Cmd::emit(@lepusa.Event::new("ready", payload="{\"message\":\"Ready\"}")),
     #|      ]),
     #|    )
-    #|  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
-    #|    Ok(plan) =>
-    #|      println(
-    #|        "ready: windows=\{plan.window_count()} routes=\{plan.command_routes().length()} handlers=\{registry.routes().length()}",
-    #|      )
+    #|  match project.runtime_host() {
+    #|    Ok(_) => {
+    #|      match project.runtime_plan() {
+    #|        Ok(plan) =>
+    #|          println(
+    #|            "ready: windows=\{plan.window_count()} routes=\{plan.command_routes().length()} handlers=\{project.kit().registered_routes().length()}",
+    #|          )
+    #|        Err(problems) => {
+    #|          for problem in problems {
+    #|            println("[fail] \{problem}")
+    #|          }
+    #|        }
+    #|      }
+    #|    }
     #|    Err(problems) => {
     #|      for problem in problems {
     #|        println("[fail] \{problem}")
@@ -321,9 +323,10 @@ fn project_readme() -> String {
     #|
     #|A standalone MoonBit desktop app scaffolded by `lepusa init`.
     #|
-    #|The generated app uses `@lepusa/ui.UiProgram` for model/update/view
-    #|desktop UI and `@lepusa/plugins/catalog` for official plugin declarations
-    #|and MoonBit-native handlers.
+    #|The generated app uses `@lepusa/ui.UiProgram` for model/update/view UI
+    #|and `@lepusa/desktop.DesktopProject` to keep custom UI handlers,
+    #|official desktop plugins, capabilities, runtime hosts, and bundle plans
+    #|aligned.
     #|
     #|```bash
     #|moon run src --target native

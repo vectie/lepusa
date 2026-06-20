@@ -142,6 +142,14 @@ pub fn DesktopProject::with_local_service(
 }
 
 ///|
+pub fn DesktopProject::with_registry(
+  self : DesktopProject,
+  registry : @lepusa.CommandRegistry,
+) -> DesktopProject {
+  { ..self, kit: self.kit.with_registry(registry) }
+}
+
+///|
 pub fn DesktopProject::with_startup(
   self : DesktopProject,
   command : @lepusa.Cmd,

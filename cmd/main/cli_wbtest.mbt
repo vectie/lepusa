@@ -275,17 +275,21 @@ async test "init writes standalone project skeleton" {
   assert_true(main_file.contains("enum Msg"))
   assert_true(main_file.contains("@ui.UiProgram::new"))
   assert_true(main_file.contains("route=\"counter.dispatch\""))
-  assert_true(main_file.contains("program.register"))
+  assert_true(main_file.contains("@desktop.DesktopProject::new"))
+  assert_true(main_file.contains(".with_registry(program.registry())"))
   assert_true(main_file.contains(".with_plugin(program.plugin())"))
   assert_true(
     main_file.contains(".with_capability(program.capability_for_window())"),
+  )
+  assert_true(
+    main_file.contains(".with_official_plugins([\"log\", \"store\"])"),
   )
   assert_true(main_file.contains("@ui.main_"))
   assert_true(main_file.contains("dispatch(Increment)"))
   assert_true(main_file.contains("@ui.text_listener(\"ready\", \"#status\")"))
   assert_true(main_file.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
-  assert_true(main_file.contains("@lepusa.new(program.cell())"))
-  assert_true(main_file.contains("RuntimeConfig::system_webview"))
+  assert_true(main_file.contains("project.runtime_host()"))
+  assert_false(main_file.contains("@lepusa.new(program.cell())"))
 }
 
 ///|
@@ -1561,7 +1565,8 @@ async test "bundle write materializes planned files" {
     @fs.read_file(desktop_path).text().contains("Name=Lepusa Example"),
   )
   let launcher = @fs.read_file(launcher_path).text()
-  assert_true(launcher.contains("lepusa-runtime launch"))
+  assert_true(launcher.contains("RUNTIME=lepusa-runtime"))
+  assert_true(launcher.contains("exec \"$RUNTIME\" launch"))
   assert_true(launcher.contains("lepusa/runtime.json"))
   let runtime_manifest = @fs.read_file(runtime_path).text()
   assert_true(runtime_manifest.contains("\"target\":\"linux\""))

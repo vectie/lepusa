@@ -1,9 +1,10 @@
 ///|
-test "app scaffold imports official plugin catalog" {
+test "app scaffold imports desktop project API" {
   let moon_pkg = project_moon_pkg()
-  assert_true(moon_pkg.contains("\"vectie/lepusa/plugins/catalog\""))
+  assert_true(moon_pkg.contains("\"vectie/lepusa/desktop\""))
   assert_true(moon_pkg.contains("\"vectie/lepusa/ui\""))
   assert_true(moon_pkg.contains("\"vectie/lepusa\","))
+  assert_false(moon_pkg.contains("\"vectie/lepusa/plugins/catalog\""))
 }
 
 ///|
@@ -32,26 +33,28 @@ test "app scaffold can include local workspace manifest" {
 ///|
 test "app scaffold wires official plugin handlers" {
   let main = project_main_mbt()
-  assert_true(main.contains("@catalog.register"))
+  assert_true(main.contains("@desktop.DesktopProject::new"))
   assert_true(main.contains("@ui.main_"))
   assert_true(main.contains("@ui.UiProgram::new"))
   assert_true(main.contains("route=\"counter.dispatch\""))
-  assert_true(main.contains("program.register"))
+  assert_true(main.contains(".with_registry(program.registry())"))
   assert_true(main.contains(".with_plugin(program.plugin())"))
   assert_true(
     main.contains(".with_capability(program.capability_for_window())"),
   )
+  assert_true(main.contains(".with_official_plugins([\"log\", \"store\"])"))
   assert_true(main.contains("dispatch(Increment)"))
   assert_true(main.contains("@ui.text_listener(\"ready\", \"#status\")"))
   assert_true(main.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
   assert_true(main.contains("ignore([Increment, Reset])"))
-  assert_true(main.contains("@catalog.plugin(\"log\").unwrap()"))
-  assert_true(main.contains("@catalog.plugin(\"store\").unwrap()"))
-  assert_true(main.contains("handlers=\\{registry.routes().length()}"))
+  assert_false(main.contains("@catalog.plugin"))
+  assert_true(
+    main.contains("handlers=\\{project.kit().registered_routes().length()}"),
+  )
 }
 
 ///|
-test "app scaffold config only advertises catalog registered routes" {
+test "app scaffold config only advertises official desktop routes" {
   let config = project_lepusa_json()
   assert_true(config.contains("\"log.write\""))
   assert_true(config.contains("\"store.set\""))
@@ -60,13 +63,13 @@ test "app scaffold config only advertises catalog registered routes" {
 }
 
 ///|
-test "app scaffold readme documents catalog usage" {
+test "app scaffold readme documents desktop project usage" {
   let readme = project_readme()
-  assert_true(readme.contains("@lepusa/plugins/catalog"))
+  assert_true(readme.contains("@lepusa/desktop.DesktopProject"))
   assert_true(readme.contains("@lepusa/ui"))
   assert_true(readme.contains("UiProgram"))
   assert_true(readme.contains("moon run src --target native"))
-  assert_true(readme.contains("MoonBit-native handlers"))
+  assert_true(readme.contains("runtime hosts"))
 }
 
 ///|
