@@ -576,6 +576,13 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(sync_handoff.exit_code, 0)
   assert_true(sync_handoff.output.contains("\"kind\":\"immediate\""))
   assert_true(sync_handoff.output.contains("\"immediateDispatch\":{"))
+  let sync_complete = render_runtime_bridge_complete_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(sync_complete.exit_code, 1)
+  assert_true(
+    sync_complete.output.contains("bundled bridge handoff is immediate"),
+  )
   let async_task = render_runtime_bridge_task_text(
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
@@ -589,6 +596,18 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(async_handoff.exit_code, 0)
   assert_true(async_handoff.output.contains("\"kind\":\"deferred\""))
   assert_true(async_handoff.output.contains("\"immediateDispatch\":null"))
+  let async_complete = render_runtime_bridge_complete_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_eq(async_complete.exit_code, 0)
+  assert_true(async_complete.output.contains("\"task\":{"))
+  assert_true(async_complete.output.contains("\"dispatch\":{"))
+  assert_true(async_complete.output.contains("\"route\":\"fs.readText\""))
+  assert_true(
+    async_complete.output.contains(
+      "\"evaluationScript\":\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let invalid = render_runtime_cli_async(["bridge-task", "main", "log"])
   assert_eq(invalid.exit_code, 1)
   assert_true(

@@ -6,6 +6,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa bridge-task"))
+  assert_true(result.output.contains("lepusa bridge-complete"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa asset"))
   assert_true(result.output.contains("lepusa lifecycle"))
@@ -566,6 +567,13 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(sync_handoff.exit_code, 0)
   assert_true(sync_handoff.output.contains("\"kind\":\"immediate\""))
   assert_true(sync_handoff.output.contains("\"immediateDispatch\":{"))
+  let sync_complete = render_cli_async([
+    "bridge-complete", "main", "core.invoke", "true",
+  ])
+  assert_eq(sync_complete.exit_code, 1)
+  assert_true(
+    sync_complete.output.contains("native bridge handoff is immediate"),
+  )
   let root = "/tmp/lepusa-project-bridge-task-\{@async.now().to_int()}"
   @fs.mkdir(root, recursive=true, permission=0o755)
   @fs.write_file(
@@ -617,6 +625,23 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(async_handoff.exit_code, 0)
   assert_true(async_handoff.output.contains("\"kind\":\"deferred\""))
   assert_true(async_handoff.output.contains("\"immediateDispatch\":null"))
+  let async_complete = render_cli_async([
+    "bridge-complete",
+    "main",
+    "fs.readText",
+    "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(async_complete.exit_code, 0)
+  assert_true(async_complete.output.contains("\"task\":{"))
+  assert_true(async_complete.output.contains("\"dispatch\":{"))
+  assert_true(async_complete.output.contains("\"route\":\"fs.readText\""))
+  assert_true(
+    async_complete.output.contains(
+      "\"evaluationScript\":\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let invalid = render_cli_async(["bridge-task", "main", "log"])
   assert_eq(invalid.exit_code, 1)
   assert_true(

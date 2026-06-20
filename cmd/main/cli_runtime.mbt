@@ -164,6 +164,57 @@ async fn render_bridge_handoff_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bridge_complete_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let window_label = values.get(0).unwrap_or("")
+  let route = values.get(1).unwrap_or("")
+  let payload = values.get(2).unwrap_or("")
+  if window_label == "" {
+    return fail("bridge-complete window is required\n")
+  }
+  match parse_command_route(route, command_name="bridge-complete") {
+    Ok((plugin, command)) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match
+            @runtime.NativeRuntime::new(
+              @runtime.NativeBackend::new(
+                name="cli",
+                webview_engine="SystemWebView",
+              ),
+              host,
+            ) {
+            Ok(runtime) => {
+              let request = @lepusa.InvokeRequest::new(
+                id="cli",
+                window_label~,
+                plugin~,
+                command~,
+                payload~,
+              )
+              let message = @runtime.encode_invoke_request_json(request)
+              match runtime.bridge_handoff(message, window_label~) {
+                Ok(handoff) =>
+                  match handoff.complete_deferred(runtime) {
+                    Ok(completion) => ok(completion.to_json() + "\n")
+                    Err(problem) =>
+                      fail("Lepusa bridge complete\n[fail] \{problem}\n")
+                  }
+                Err(problems) =>
+                  fail(render_problems("Lepusa bridge complete", problems))
+              }
+            }
+            Err(problems) =>
+              fail(render_problems("Lepusa bridge complete", problems))
+          }
+        Err(problems) =>
+          fail(render_problems("Lepusa bridge complete", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 async fn render_bridge_dispatch_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let window_label = values.get(0).unwrap_or("")

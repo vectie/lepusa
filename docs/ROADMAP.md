@@ -115,6 +115,7 @@
   - `lepusa lifecycle`: prints runtime lifecycle step JSON.
   - `lepusa bridge-task`: reports source bridge task scheduling metadata.
   - `lepusa bridge-handoff`: reports source immediate/deferred native bridge handoff.
+  - `lepusa bridge-complete`: executes source deferred bridge completion and reports the native completion envelope.
   - `lepusa bridge-dispatch`: executes source bridge messages and reports the native callback envelope.
   - `lepusa launch-session [--async-bridge]`: emits native-loop source session JSON with optional async-capable bridge scheduler metadata.
   - `lepusa bundle-plan`: prints a target bundle plan.
@@ -132,6 +133,7 @@
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
   - `lepusa-runtime bridge-task`: reports packaged bridge task scheduling metadata.
   - `lepusa-runtime bridge-handoff`: reports packaged immediate/deferred native bridge handoff.
+  - `lepusa-runtime bridge-complete`: executes packaged deferred bridge completion and reports the native completion envelope.
   - `lepusa-runtime bridge-dispatch`: executes packaged bridge messages and reports the native callback envelope.
   - `lepusa-runtime launch-session [--async-bridge]`: emits packaged native-loop session JSON with optional async-capable bridge scheduler metadata.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.

@@ -138,6 +138,7 @@ moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --pr
 moon run cmd/main --target native -- lifecycle app-will-exit --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-task main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-handoff main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-dispatch main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
@@ -151,6 +152,7 @@ moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html 
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-task main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-handoff main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-dispatch main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- invoke main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
@@ -429,6 +431,9 @@ prints that source-project scheduling task without starting a WebView.
 `lepusa bridge-handoff <window> <plugin.command> [payload] --project lepusa.json`
 prints the immediate-or-deferred native callback handoff for that bridge
 message.
+`lepusa bridge-complete <window> <plugin.command> [payload] --project lepusa.json`
+executes the deferred-completion path and prints the completion envelope used by
+native event loops after async work finishes.
 `lepusa bridge-dispatch <window> <plugin.command> [payload] --project lepusa.json`
 executes the same bridge message and prints the native callback envelope without
 starting a WebView.
@@ -545,6 +550,9 @@ wiring platform-specific message handlers.
 returns the packaged immediate-or-deferred handoff that native event loops use
 when deciding whether to answer a WebView callback immediately or schedule
 async completion.
+`lepusa-runtime bridge-complete <window> <plugin.command> [payload] --manifest <runtime.json>`
+executes the packaged deferred-completion path and returns the same completion
+envelope native event loops use after async work finishes.
 `lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes the packaged bridge message and returns the response JSON plus
 callback script that a native event loop evaluates back into the target WebView.
