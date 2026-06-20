@@ -103,6 +103,33 @@ test "macos backend exposes wkwebview descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  let execution = operation_executor().execute_all([
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
+        window_label="main",
+        script="resolve()",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::window_control(
+      @runtime.NativeWindowControl::new(
+        window_label="main",
+        action="setTitle",
+        payload="{\"title\":\"Ready\"}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::navigate(
+      @runtime.NativeNavigation::new(
+        window_label="main",
+        url="lepusa://inline/main/index.html",
+      ),
+    ),
+  ])
+  assert_eq(execution.executed_count(), 2)
+  assert_eq(execution.skipped_count(), 1)
+  assert_eq(
+    execution.outcomes()[2].status().message(),
+    "macOS native navigation after launch is not wired yet",
+  )
 }
 
 ///|

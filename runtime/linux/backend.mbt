@@ -66,6 +66,7 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     run_effect=fn(name) {
       NativeOperationSkipped("Linux native effect is not registered: \{name}")
     },
+    control_window=fn(_) { NativeOperationExecuted },
   )
 }
 

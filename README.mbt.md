@@ -690,8 +690,8 @@ show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
 `navigate-window` operations from the same handoff packet by loading the target
 URL in the live WebView after the approved MoonBit dispatch completes.
 Platform packages now expose `operation_executor()` so source and packaged run
-reports use the backend's actual script-evaluation policy instead of the
-generic skipped-operation fallback.
+reports use the backend's actual script-evaluation and window-control support
+instead of the generic skipped-operation fallback.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

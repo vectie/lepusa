@@ -45,9 +45,26 @@ test "linux backend exposes webkitgtk descriptor" {
         script="resolve()",
       ),
     ),
+    @runtime.NativeExecutableOperation::window_control(
+      @runtime.NativeWindowControl::new(
+        window_label="main",
+        action="setTitle",
+        payload="{\"title\":\"Ready\"}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::navigate(
+      @runtime.NativeNavigation::new(
+        window_label="main",
+        url="lepusa://inline/main/index.html",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 1)
-  assert_eq(execution.skipped_count(), 0)
+  assert_eq(execution.executed_count(), 2)
+  assert_eq(execution.skipped_count(), 1)
+  assert_eq(
+    execution.outcomes()[2].status().message(),
+    "Linux native navigation after launch is not wired yet",
+  )
 }
 
 ///|

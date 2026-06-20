@@ -136,9 +136,9 @@
   boundary for startup, lifecycle, and bridge-drain operations, and canonical
   `RunReport` values expose those execution counts for source and packaged
   native plans; platform packages now expose operation executors for their
-  current WebView script-evaluation support; native async bridge drain/evaluate
-  scheduling in the C/WebView loops and the Windows WebView creation loop
-  remain.
+  current WebView script-evaluation and window-control support; native async
+  bridge drain/evaluate scheduling in the C/WebView loops and the Windows
+  WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
