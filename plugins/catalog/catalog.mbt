@@ -1,26 +1,17 @@
 ///|
+priv struct CatalogPlugin {
+  name : String
+  load : () -> @lepusa.Plugin
+}
+
+///|
 pub fn plugin(name : String) -> @lepusa.Plugin? {
-  match name {
-    "autoLaunch" => Some(@auto_launch.plugin())
-    "clipboard" => Some(@clipboard.plugin())
-    "deepLink" => Some(@deep_link.plugin())
-    "dialog" => Some(@dialog.plugin())
-    "fileDialog" => Some(@file_dialog.plugin())
-    "log" => Some(@log.plugin())
-    "localhost" => Some(@localhost.plugin())
-    "notification" => Some(@notification.plugin())
-    "opener" => Some(@opener.plugin())
-    "process" => Some(@process.plugin())
-    "serviceDiscovery" => Some(@service_discovery.plugin())
-    "shell" => Some(@shell.plugin())
-    "singleInstance" => Some(@single_instance.plugin())
-    "store" => Some(@store.plugin())
-    "tray" => Some(@tray.plugin())
-    "updater" => Some(@updater.plugin())
-    "windowState" => Some(@window_state.plugin())
-    "fs" => Some(@fs_plugin.plugin())
-    _ => None
+  for entry in catalog_plugins() {
+    if entry.name == name {
+      return Some((entry.load)())
+    }
   }
+  None
 }
 
 ///|
@@ -53,9 +44,29 @@ pub fn registered_plugin_names() -> Array[String] {
 
 ///|
 pub fn plugin_names() -> Array[String] {
+  catalog_plugins().map(fn(entry) { entry.name })
+}
+
+///|
+fn catalog_plugins() -> Array[CatalogPlugin] {
   [
-    "autoLaunch", "clipboard", "deepLink", "dialog", "fileDialog", "fs", "localhost",
-    "log", "notification", "opener", "process", "serviceDiscovery", "shell", "singleInstance",
-    "store", "tray", "updater", "windowState",
+    { name: "autoLaunch", load: fn() { @auto_launch.plugin() } },
+    { name: "clipboard", load: fn() { @clipboard.plugin() } },
+    { name: "deepLink", load: fn() { @deep_link.plugin() } },
+    { name: "dialog", load: fn() { @dialog.plugin() } },
+    { name: "fileDialog", load: fn() { @file_dialog.plugin() } },
+    { name: "fs", load: fn() { @fs_plugin.plugin() } },
+    { name: "localhost", load: fn() { @localhost.plugin() } },
+    { name: "log", load: fn() { @log.plugin() } },
+    { name: "notification", load: fn() { @notification.plugin() } },
+    { name: "opener", load: fn() { @opener.plugin() } },
+    { name: "process", load: fn() { @process.plugin() } },
+    { name: "serviceDiscovery", load: fn() { @service_discovery.plugin() } },
+    { name: "shell", load: fn() { @shell.plugin() } },
+    { name: "singleInstance", load: fn() { @single_instance.plugin() } },
+    { name: "store", load: fn() { @store.plugin() } },
+    { name: "tray", load: fn() { @tray.plugin() } },
+    { name: "updater", load: fn() { @updater.plugin() } },
+    { name: "windowState", load: fn() { @window_state.plugin() } },
   ]
 }

@@ -85,6 +85,16 @@ test "catalog exposes official plugin declarations" {
 }
 
 ///|
+test "catalog plugin names resolve to plugins" {
+  for name in plugin_names() {
+    match plugin(name) {
+      Some(plugin) => assert_eq(plugin.name(), name)
+      None => abort("catalog name did not resolve: \{name}")
+    }
+  }
+}
+
+///|
 test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
   let registry = register(registry, "log")
