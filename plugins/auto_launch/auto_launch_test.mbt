@@ -135,3 +135,45 @@ test "auto launch registry validates policy and payloads" {
     set is InvokeError("2", "auto launch setEnabled enabled is required"),
   )
 }
+
+///|
+test "auto launch native registry reports status without mutating host" {
+  let policy = AutoLaunchPolicy::new(name="dev.local.lepusa")
+  let registry = native_registry(policy~)
+  let grant = capability_for_window("main")
+  assert_true(registry.contains("autoLaunch.status"))
+  assert_true(registry.contains("autoLaunch.enable"))
+  assert_true(registry.contains("autoLaunch.disable"))
+  assert_true(registry.contains("autoLaunch.setEnabled"))
+  let status = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="native-status",
+      window_label="main",
+      plugin="autoLaunch",
+      command="status",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(status.payload().unwrap_or("").contains("\"enabled\":"))
+  assert_true(status.payload().unwrap_or("").contains("\"native\":true"))
+}
+
+///|
+test "auto launch native enable requires executable" {
+  let registry = native_registry(
+    policy=AutoLaunchPolicy::new(name="dev.local.lepusa"),
+  )
+  let enabled = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="native-enable",
+      window_label="main",
+      plugin="autoLaunch",
+      command="enable",
+    ),
+    capabilities=[capability_for_window("main")],
+  )
+  assert_true(
+    enabled
+    is InvokeError("native-enable", "native auto launch executable is required"),
+  )
+}

@@ -392,8 +392,9 @@ icon creation and OS menu behavior to native backends.
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
 `autoLaunch.setEnabled`, plus startup registration policy metadata. Its
 portable sync registry validates startup metadata and tracks desired enablement
-state, then delegates platform login item, registry, service, or desktop-entry
-behavior to native backends.
+state. Its native registry writes macOS LaunchAgents, Linux autostart desktop
+entries, or Windows HKCU Run values when the runtime supplies an executable
+path.
 
 `@lepusa/plugins/window_state` defines window persistence routes such as
 `windowState.save`, `windowState.restore`, and `windowState.clear`, plus

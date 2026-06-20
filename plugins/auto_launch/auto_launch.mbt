@@ -77,6 +77,55 @@ pub fn AutoLaunchPolicy::validate(self : AutoLaunchPolicy) -> Array[String] {
 }
 
 ///|
+#cfg(target="native")
+extern "c" fn native_available_code() -> Int = "lepusa_auto_launch_available"
+
+///|
+#cfg(target="native")
+#borrow(name)
+extern "c" fn native_status_code(name : Bytes) -> Int = "lepusa_auto_launch_status"
+
+///|
+#cfg(target="native")
+#borrow(name, executable, arguments)
+extern "c" fn native_set_code(
+  name : Bytes,
+  executable : Bytes,
+  arguments : Bytes,
+  open_hidden : Int,
+  enabled : Int,
+) -> Int = "lepusa_auto_launch_set"
+
+///|
+#cfg(not(target="native"))
+fn native_available_code() -> Int {
+  0
+}
+
+///|
+#cfg(not(target="native"))
+fn native_status_code(_name : Bytes) -> Int {
+  2
+}
+
+///|
+#cfg(not(target="native"))
+fn native_set_code(
+  _name : Bytes,
+  _executable : Bytes,
+  _arguments : Bytes,
+  _open_hidden : Int,
+  _enabled : Int,
+) -> Int {
+  2
+}
+
+///|
+pub fn native_available() -> Bool {
+  native_available_code() == 1
+}
+
+///|
 pub fn AutoLaunchState::new(enabled? : Bool = false) -> AutoLaunchState {
   { enabled, last_action: "status" }
 }
@@ -122,6 +171,13 @@ pub fn registry(
 }
 
 ///|
+pub fn native_registry(
+  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+) -> @lepusa.CommandRegistry {
+  register_native(@lepusa.CommandRegistry::new(), policy~)
+}
+
+///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
   policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
@@ -139,6 +195,26 @@ pub fn register(
   })
   .register_fn("autoLaunch.setEnabled", permission=AutoLaunch, handler=payload => {
     handle_set_enabled(policy, state, payload)
+  })
+}
+
+///|
+pub fn register_native(
+  registry : @lepusa.CommandRegistry,
+  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_fn("autoLaunch.status", permission=AutoLaunch, handler=_ => {
+    handle_native_status(policy)
+  })
+  .register_fn("autoLaunch.enable", permission=AutoLaunch, handler=_ => {
+    handle_native_set(policy, enabled=true, action="enable")
+  })
+  .register_fn("autoLaunch.disable", permission=AutoLaunch, handler=_ => {
+    handle_native_set(policy, enabled=false, action="disable")
+  })
+  .register_fn("autoLaunch.setEnabled", permission=AutoLaunch, handler=payload => {
+    handle_native_set_enabled(policy, payload)
   })
 }
 
@@ -191,10 +267,90 @@ fn handle_set_enabled(
 }
 
 ///|
+fn handle_native_status(policy : AutoLaunchPolicy) -> Result[String, String] {
+  match first_problem(policy.validate()) {
+    Some(problem) => Err(problem)
+    None => {
+      let status = native_status_code(@utf8.encode(policy.name()))
+      match status {
+        0 | 1 =>
+          Ok(
+            auto_launch_json(
+              policy,
+              AutoLaunchState::new(enabled=status == 1),
+              status="ready",
+              native=true,
+            ).stringify(),
+          )
+        2 => Err("native auto launch is unavailable on this platform")
+        code => Err("native auto launch status failed: code \{code}")
+      }
+    }
+  }
+}
+
+///|
+fn handle_native_set(
+  policy : AutoLaunchPolicy,
+  enabled~ : Bool,
+  action~ : String,
+) -> Result[String, String] {
+  match first_problem(policy.validate()) {
+    Some(problem) => Err(problem)
+    None =>
+      match required_executable(policy, enabled~) {
+        Err(problem) => Err(problem)
+        Ok(executable) => {
+          let code = native_set_code(
+            @utf8.encode(policy.name()),
+            @utf8.encode(executable),
+            @utf8.encode(policy.arguments().join("\n")),
+            if policy.open_hidden() {
+              1
+            } else {
+              0
+            },
+            if enabled {
+              1
+            } else {
+              0
+            },
+          )
+          match code {
+            0 =>
+              Ok(
+                auto_launch_json(
+                  policy,
+                  { enabled, last_action: action },
+                  status="native",
+                  native=true,
+                ).stringify(),
+              )
+            2 => Err("native auto launch is unavailable on this platform")
+            code => Err("native auto launch \{action} failed: code \{code}")
+          }
+        }
+      }
+  }
+}
+
+///|
+fn handle_native_set_enabled(
+  policy : AutoLaunchPolicy,
+  payload : String,
+) -> Result[String, String] {
+  match decode_enabled_payload(payload) {
+    Ok(enabled) => handle_native_set(policy, enabled~, action="setEnabled")
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
 fn auto_launch_json(
   policy : AutoLaunchPolicy,
   state : AutoLaunchState,
   status~ : String,
+  native? : Bool = false,
 ) -> Json {
   Json::object({
     "status": Json::string(status),
@@ -206,7 +362,27 @@ fn auto_launch_json(
       policy.arguments().map(fn(argument) { Json::string(argument) }),
     ),
     "openHidden": Json::boolean(policy.open_hidden()),
+    "native": Json::boolean(native),
   })
+}
+
+///|
+fn required_executable(
+  policy : AutoLaunchPolicy,
+  enabled~ : Bool,
+) -> Result[String, String] {
+  if !enabled {
+    return Ok(policy.executable().unwrap_or(""))
+  }
+  match policy.executable() {
+    Some(executable) =>
+      if executable == "" {
+        Err("native auto launch executable is required")
+      } else {
+        Ok(executable)
+      }
+    None => Err("native auto launch executable is required")
+  }
 }
 
 ///|

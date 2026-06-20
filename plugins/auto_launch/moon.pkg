@@ -1,4 +1,9 @@
 import {
   "vectie/lepusa",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
 }
+
+options(
+  "native-stub": [ "auto_launch_backend.c" ],
+)
