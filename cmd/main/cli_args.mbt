@@ -91,6 +91,8 @@ fn positional_args(args : Array[String]) -> Array[String] {
       skip_next = false
     } else if args[i] == "--project" || args[i] == "--workspace" {
       skip_next = true
+    } else if is_boolean_flag(args[i]) {
+      continue
     } else {
       values.push(args[i])
     }
@@ -106,4 +108,12 @@ fn has_flag(args : Array[String], flag : String) -> Bool {
     }
   }
   false
+}
+
+///|
+fn is_boolean_flag(arg : String) -> Bool {
+  arg == "--launch" ||
+  arg == "--json" ||
+  arg == "--async-bridge" ||
+  arg == "--strict"
 }

@@ -62,6 +62,9 @@
 - Add `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
   `@lepusa/runtime/linux` backend descriptor packages with host availability
   checks for WKWebView, WebView2, and WebKitGTK.
+- Add `lepusa verify --strict` as the release gate over the no-write verifier:
+  missing concrete handlers and known target launch blockers fail CI, while the
+  default verifier stays useful for framework contract proofing.
 - Implement or port WebView window creation for macOS, Windows, and Linux:
   first macOS WKWebView launch path and document-start bridge injection exist;
   packaged macOS `lepusa-runtime launch` consumes `lepusa/runtime.json`;

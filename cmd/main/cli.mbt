@@ -66,7 +66,7 @@ fn help_text() -> String {
     #|  lepusa native-plan [macos|windows|linux]
     #|  lepusa launch-session [macos|windows|linux] [--async-bridge]
     #|  lepusa run [macos|windows|linux] [--launch]
-    #|  lepusa verify [macos|windows|linux]
+    #|  lepusa verify [macos|windows|linux] [--strict]
     #|  lepusa bridge
     #|  lepusa dev [--json]
     #|  lepusa bridge-task <window> <plugin.command> [payload]

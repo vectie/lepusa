@@ -1,12 +1,13 @@
 ///|
 async fn render_verify_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
+  let strict = has_flag(args, "--strict")
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
           match project_bundle_plan(args, target) {
-            Ok(bundle) => render_verify_project(target, host, bundle)
+            Ok(bundle) => render_verify_project(target, host, bundle, strict~)
             Err(problems) => fail(render_problems("Lepusa verify", problems))
           }
         Err(problems) => fail(render_problems("Lepusa verify", problems))
@@ -20,14 +21,18 @@ fn render_verify_project(
   target : @lepusa.BundleTarget,
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
+  strict~ : Bool,
 ) -> CliResult {
   let lines : Array[String] = ["Lepusa verify\n", "target: \{target.name()}\n"]
+  if strict {
+    lines.push("mode: strict\n")
+  }
   let mut passed = true
   passed = verify_runtime_plan(host, lines) && passed
   passed = verify_dev_plan(host, lines) && passed
   passed = verify_launch_manifest(host, lines) && passed
-  lines.push(render_handler_coverage(host))
-  passed = verify_native_session(target, host, lines) && passed
+  passed = verify_handler_coverage(host, lines, strict~) && passed
+  passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
   if passed {
     ok(lines.join(""))
@@ -95,13 +100,14 @@ fn verify_native_session(
   target : @lepusa.BundleTarget,
   host : @runtime.RuntimeHost,
   lines : Array[String],
+  strict~ : Bool,
 ) -> Bool {
   match native_runtime_for_target(target, host) {
     Ok(runtime) =>
       match verify_native_dry_run(target, runtime) {
-        Ok(summary) => {
-          lines.push(summary)
-          true
+        Ok(session) => {
+          lines.push(verify_native_session_summary(session))
+          verify_release_launch_gate(target, session, lines, strict~)
         }
         Err(problems) => {
           lines.push(render_problem_lines(problems))
@@ -119,24 +125,24 @@ fn verify_native_session(
 fn verify_native_dry_run(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
-) -> Result[String, Array[String]] {
+) -> Result[@runtime.NativeLaunchSession, Array[String]] {
   match target {
     MacOS =>
       match @macos_backend.run(runtime) {
         Ok(result) => {
           let session = result.plan().launch_session()
-          Ok(verify_native_session_summary(session))
+          Ok(session)
         }
         Err(problems) => Err(problems)
       }
     Windows =>
       match @windows_backend.run(runtime) {
-        Ok(result) => Ok(verify_native_session_summary(result.launch_session()))
+        Ok(result) => Ok(result.launch_session())
         Err(problems) => Err(problems)
       }
     Linux =>
       match @linux_backend.run(runtime) {
-        Ok(result) => Ok(verify_native_session_summary(result.launch_session()))
+        Ok(result) => Ok(result.launch_session())
         Err(problems) => Err(problems)
       }
   }
@@ -147,6 +153,77 @@ fn verify_native_session_summary(
   session : @runtime.NativeLaunchSession,
 ) -> String {
   "[ok] native-session: webviews=\{session.webviews().length()} startup=\{session.execution().startup_operations().length()} lifecycle=\{session.execution().lifecycle_steps().length()} can-launch=\{session.can_launch()}\n"
+}
+
+///|
+fn verify_handler_coverage(
+  host : @runtime.RuntimeHost,
+  lines : Array[String],
+  strict~ : Bool,
+) -> Bool {
+  let missing = missing_handler_routes(host)
+  lines.push(render_handler_coverage(host))
+  if strict && !missing.is_empty() {
+    lines.push(
+      "[fail] strict: missing concrete handlers for \{missing.length()} route(s)\n",
+    )
+    false
+  } else {
+    true
+  }
+}
+
+///|
+fn missing_handler_routes(host : @runtime.RuntimeHost) -> Array[String] {
+  let declared = host.plan().command_routes()
+  let registered = host.registry().routes()
+  let missing : Array[String] = []
+  for route in declared {
+    if !registered.contains(route) {
+      missing.push(route)
+    }
+  }
+  missing
+}
+
+///|
+fn verify_release_launch_gate(
+  target : @lepusa.BundleTarget,
+  session : @runtime.NativeLaunchSession,
+  lines : Array[String],
+  strict~ : Bool,
+) -> Bool {
+  if !strict {
+    return true
+  }
+  match target {
+    Windows => {
+      lines.push(
+        "[fail] strict: windows launch requires the WebView2 creation loop\n",
+      )
+      false
+    }
+    MacOS | Linux =>
+      match session.launch_blocker(verify_target_display_name(target)) {
+        Some(problem) => {
+          lines.push("[fail] strict: \{problem}\n")
+          false
+        }
+        None => {
+          lines.push("[ok] strict: native launch gate passed\n")
+          true
+        }
+      }
+  }
+}
+
+///|
+fn verify_target_display_name(target : @lepusa.BundleTarget) -> String {
+  match target {
+    MacOS => "macOS"
+    Windows => "Windows"
+    Linux => "Linux"
+  }
 }
 
 ///|

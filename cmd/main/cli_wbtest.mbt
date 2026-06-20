@@ -535,6 +535,29 @@ async test "generated project config verifies end to end contracts" {
   assert_true(result.output.contains("[ok] handlers: registered=6 missing=0"))
   assert_true(result.output.contains("[ok] native-session: webviews=1"))
   assert_true(result.output.contains("[ok] bundle:"))
+  let strict = render_cli_async([
+    "verify",
+    "--strict",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(strict.exit_code, 0)
+  assert_true(strict.output.contains("mode: strict"))
+  assert_true(strict.output.contains("[ok] strict: native launch gate passed"))
+  let strict_windows = render_cli_async([
+    "verify",
+    "windows",
+    "--strict",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(strict_windows.exit_code, 1)
+  assert_true(
+    strict_windows.output.contains(
+      "[fail] strict: windows launch requires the WebView2 creation loop",
+    ),
+  )
 }
 
 ///|
@@ -586,6 +609,15 @@ async test "checked examples cover rabbita static and gateway modes" {
   assert_true(static_verify.output.contains("Lepusa verify"))
   assert_true(static_verify.output.contains("[ok] bundle:"))
   assert_true(static_verify.output.contains("resources=1"))
+  let gateway_strict = render_cli_async([
+    "verify", "linux", "--strict", "--project", "examples/gateway/lepusa.json",
+  ])
+  assert_eq(gateway_strict.exit_code, 1)
+  assert_true(gateway_strict.output.contains("mode: strict"))
+  assert_true(gateway_strict.output.contains("[warn] handlers:"))
+  assert_true(
+    gateway_strict.output.contains("[fail] strict: missing concrete handlers"),
+  )
 }
 
 ///|

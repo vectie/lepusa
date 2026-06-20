@@ -144,6 +144,7 @@ moon run cmd/main --target native -- launch-session linux
 moon run cmd/main --target native -- launch-session linux --async-bridge
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
 moon run cmd/main --target native -- verify linux --project examples/static/lepusa.json
+moon run cmd/main --target native -- verify linux --strict --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
@@ -420,6 +421,10 @@ event loops are wired.
 `lepusa verify [macos|windows|linux] --project lepusa.json` runs the no-write
 foundation proof for an app: runtime plan, dev plan, launch manifest, bridge
 asset, handler coverage, native launch session, and bundle runtime contract.
+Add `--strict` when the command should act as a release gate: missing concrete
+handlers and known target launch blockers become failures instead of warnings.
+This keeps framework-development proofs useful while still giving CI a direct
+answer for "can this target ship?"
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
