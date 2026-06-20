@@ -1014,6 +1014,13 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("verification-checks: 4"))
   assert_true(result.output.contains("verified: true"))
+  assert_true(result.output.contains("[ok] verify: planned-file"))
+  assert_true(result.output.contains("planned file content matches"))
+  assert_true(result.output.contains("executable planned file content matches"))
+  assert_true(result.output.contains("[ok] verify: runtime-manifest"))
+  assert_true(
+    result.output.contains("runtime manifest parses with webview data"),
+  )
   assert_true(result.output.contains("signing-prerequisites: 2"))
   assert_true(result.output.contains("files: 3"))
   let bundle_root = root + "/lepusa-example"
@@ -1077,6 +1084,8 @@ async test "bundle write materializes planned resources" {
   assert_true(result.output.contains("resources-written: 1"))
   assert_true(result.output.contains("verification-checks: 5"))
   assert_true(result.output.contains("verified: true"))
+  assert_true(result.output.contains("[ok] verify: planned-resource"))
+  assert_true(result.output.contains("resource exists"))
   let icon_path = bundle_root + "/resource-app/resource-app.png"
   assert_true(@fs.exists(icon_path))
   assert_eq(@fs.read_file(icon_path).text(), "icon-bytes")

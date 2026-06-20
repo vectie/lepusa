@@ -163,32 +163,48 @@ async fn verify_written_plan(
   let checks : Array[BundleWriteCheck] = []
   for file in files {
     let path = join_path(root, file.path())
-    let exists = @fs.exists(path) catch { _ => false }
-    checks.push(
-      BundleWriteCheck::new(
-        kind=PlannedFileCheck,
-        path~,
-        ok=exists,
-        message=if exists { "file exists" } else { "file is missing" },
-      ),
-    )
+    checks.push(verify_planned_file(path, file))
     if file.path().has_suffix("lepusa/runtime.json") {
       checks.push(verify_runtime_manifest(path))
     }
   }
   for resource in resources {
     let path = join_path(root, resource.path())
-    let exists = @fs.exists(path) catch { _ => false }
-    checks.push(
-      BundleWriteCheck::new(
-        kind=PlannedResourceCheck,
-        path~,
-        ok=exists,
-        message=if exists { "resource exists" } else { "resource is missing" },
-      ),
-    )
+    checks.push(verify_resource(path, resource))
   }
   checks
+}
+
+///|
+async fn verify_planned_file(
+  path : String,
+  file : @lepusa.BundleFile,
+) -> BundleWriteCheck {
+  let content = @fs.read_file(path) catch {
+    error =>
+      return BundleWriteCheck::new(
+        kind=PlannedFileCheck,
+        path~,
+        ok=false,
+        message="could not read planned file: \{error}",
+      )
+  }
+  let actual = content.text()
+  let ok = actual == file.content()
+  BundleWriteCheck::new(
+    kind=PlannedFileCheck,
+    path~,
+    ok~,
+    message=if ok {
+      if file.executable() {
+        "executable planned file content matches"
+      } else {
+        "planned file content matches"
+      }
+    } else {
+      "planned file content differs"
+    },
+  )
 }
 
 ///|
@@ -203,16 +219,54 @@ async fn verify_runtime_manifest(path : String) -> BundleWriteCheck {
       )
   }
   let text = content.text()
-  let ok = text.contains("\"runtime\"") && text.contains("\"webviews\"")
+  match @bundled.BundledRuntimeManifest::parse(path, text) {
+    Ok(manifest) =>
+      match manifest.webviews() {
+        Ok(webviews) => {
+          let ok = !webviews.is_empty()
+          BundleWriteCheck::new(
+            kind=RuntimeManifestCheck,
+            path~,
+            ok~,
+            message=if ok {
+              "runtime manifest parses with webview data"
+            } else {
+              "runtime manifest has no webviews"
+            },
+          )
+        }
+        Err(problem) =>
+          BundleWriteCheck::new(
+            kind=RuntimeManifestCheck,
+            path~,
+            ok=false,
+            message="runtime manifest webviews invalid: \{problem}",
+          )
+      }
+    Err(problem) =>
+      BundleWriteCheck::new(
+        kind=RuntimeManifestCheck,
+        path~,
+        ok=false,
+        message="runtime manifest parse failed: \{problem}",
+      )
+  }
+}
+
+///|
+async fn verify_resource(
+  path : String,
+  resource : @lepusa.BundleResource,
+) -> BundleWriteCheck {
+  let ok = match resource.kind() {
+    AssetResource => @fs.exists(path) catch { _ => false }
+    _ => @xfs.is_file(path) catch { _ => false }
+  }
   BundleWriteCheck::new(
-    kind=RuntimeManifestCheck,
+    kind=PlannedResourceCheck,
     path~,
     ok~,
-    message=if ok {
-      "runtime manifest contains runtime and webview data"
-    } else {
-      "runtime manifest is missing runtime or webview data"
-    },
+    message=if ok { "resource exists" } else { "resource is missing" },
   )
 }
 

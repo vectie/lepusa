@@ -772,8 +772,7 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 Ok(manifest) => manifest.file_system_scopes().length()
                 Err(_) => 0
               }
-              ok(
-                "Lepusa bundle write\n" +
+              let output = "Lepusa bundle write\n" +
                 "target: \{plan.target().name()}\n" +
                 "root: \{result.root()}\n" +
                 "local-services: \{local_service_count}\n" +
@@ -783,8 +782,13 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
                 "verification-checks: \{result.checks().length()}\n" +
                 "verified: \{result.verified().to_string()}\n" +
                 "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
-                "files: \{result.files().length()}\n",
-              )
+                "files: \{result.files().length()}\n" +
+                render_bundle_write_checks(result.checks())
+              if result.verified() {
+                ok(output)
+              } else {
+                fail(output)
+              }
             }
             Err(problems) =>
               fail(render_problems("Lepusa bundle write", problems))
@@ -794,6 +798,18 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
     }
     Err(problem) => fail(problem + "\n")
   }
+}
+
+///|
+fn render_bundle_write_checks(
+  checks : Array[@bundle.BundleWriteCheck],
+) -> String {
+  checks
+  .map(fn(check) {
+    let status = if check.ok() { "ok" } else { "fail" }
+    "[\{status}] verify: \{check.kind().name()} \{check.path()} - \{check.message()}\n"
+  })
+  .join("")
 }
 
 ///|
