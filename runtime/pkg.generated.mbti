@@ -127,6 +127,7 @@ pub fn NativeBridgeLoopAdapter::new(NativeRuntime) -> Self
 pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn NativeBridgeLoopAdapter::queue(Self) -> NativeBridgeWorkQueue
 pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBridgeLoopResult
+pub async fn NativeBridgeLoopAdapter::receive_window_message(Self, window_label~ : String, Bytes) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::runtime(Self) -> NativeRuntime
 pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
 
@@ -150,6 +151,19 @@ pub fn NativeBridgeLoopContract::receive_message(Self) -> String
 pub fn NativeBridgeLoopContract::required(Self) -> Bool
 pub fn NativeBridgeLoopContract::result_type(Self) -> String
 pub fn NativeBridgeLoopContract::to_json(Self) -> String
+
+pub struct NativeBridgeLoopDelivery {
+  window_label : String
+  result : NativeBridgeLoopResult
+  evaluation_plan : NativeBridgeLoopEvaluationPlan
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeLoopDelivery::evaluation_plan(Self) -> NativeBridgeLoopEvaluationPlan
+pub fn NativeBridgeLoopDelivery::from_result(window_label~ : String, result~ : NativeBridgeLoopResult) -> Self
+pub fn NativeBridgeLoopDelivery::is_empty(Self) -> Bool
+pub fn NativeBridgeLoopDelivery::operations(Self) -> Array[NativeExecutableOperation]
+pub fn NativeBridgeLoopDelivery::result(Self) -> NativeBridgeLoopResult
+pub fn NativeBridgeLoopDelivery::to_json(Self) -> String
+pub fn NativeBridgeLoopDelivery::window_label(Self) -> String
 
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String

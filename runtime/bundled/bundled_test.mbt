@@ -854,6 +854,19 @@ async test "bundled runtime owns bridge message transport" {
           assert_eq(loop_plan.operations()[0].kind(), "evaluate-script")
           assert_eq(loop_plan.evaluation_scripts().length(), 1)
           assert_true(loop_plan.to_json().contains("\"operations\":[{"))
+          let loop_delivery = runtime
+            .bridge_loop_adapter()
+            .receive_window_message(
+              window_label="main",
+              @utf8.encode(async_message),
+            )
+          assert_eq(loop_delivery.window_label(), "main")
+          assert_false(loop_delivery.is_empty())
+          assert_eq(loop_delivery.result().completions().length(), 1)
+          assert_eq(loop_delivery.operations().length(), 1)
+          assert_eq(loop_delivery.operations()[0].kind(), "evaluate-script")
+          assert_true(loop_delivery.to_json().contains("\"result\":{"))
+          assert_true(loop_delivery.to_json().contains("\"evaluationPlan\":{"))
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)
             Err(_) => abort("unexpected bundled bridge queue enqueue failure")

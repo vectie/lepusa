@@ -51,6 +51,13 @@ pub struct BundledBridgeLoopResult {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeLoopDelivery {
+  window_label : String
+  result : BundledBridgeLoopResult
+  evaluation_plan : @runtime.NativeBridgeLoopEvaluationPlan
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -698,6 +705,18 @@ pub async fn BundledBridgeLoopAdapter::receive_message(
 }
 
 ///|
+pub async fn BundledBridgeLoopAdapter::receive_window_message(
+  self : BundledBridgeLoopAdapter,
+  window_label~ : String,
+  message : Bytes,
+) -> BundledBridgeLoopDelivery {
+  BundledBridgeLoopDelivery::from_result(
+    window_label~,
+    result=self.receive_message(message),
+  )
+}
+
+///|
 pub fn BundledBridgeLoopAdapter::to_json(
   self : BundledBridgeLoopAdapter,
 ) -> String {
@@ -748,6 +767,66 @@ pub fn BundledBridgeLoopResult::evaluation_plan(
     window_label~,
     scripts=self.evaluation_scripts(),
   )
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::from_result(
+  window_label~ : String,
+  result~ : BundledBridgeLoopResult,
+) -> BundledBridgeLoopDelivery {
+  {
+    window_label,
+    result,
+    evaluation_plan: result.evaluation_plan(window_label~),
+  }
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::window_label(
+  self : BundledBridgeLoopDelivery,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::result(
+  self : BundledBridgeLoopDelivery,
+) -> BundledBridgeLoopResult {
+  self.result
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::evaluation_plan(
+  self : BundledBridgeLoopDelivery,
+) -> @runtime.NativeBridgeLoopEvaluationPlan {
+  self.evaluation_plan
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::operations(
+  self : BundledBridgeLoopDelivery,
+) -> Array[@runtime.NativeExecutableOperation] {
+  self.evaluation_plan.operations()
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::is_empty(
+  self : BundledBridgeLoopDelivery,
+) -> Bool {
+  self.evaluation_plan.is_empty()
+}
+
+///|
+pub fn BundledBridgeLoopDelivery::to_json(
+  self : BundledBridgeLoopDelivery,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"result\":\{self.result.to_json()},",
+    "\"evaluationPlan\":\{self.evaluation_plan.to_json()}",
+    "}",
+  ].join("")
 }
 
 ///|

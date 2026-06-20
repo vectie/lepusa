@@ -189,6 +189,9 @@ evaluate in the WebView.
 `NativeExecutableOperation::evaluate_script` operations, so source and packaged
 runtime loops share one executable drain/evaluate model before platform code
 crosses into C, WebKit, or WebView2 APIs.
+`receive_window_message` is the per-WebView adapter entry point: it returns a
+`NativeBridgeLoopDelivery` or `BundledBridgeLoopDelivery` containing the raw
+loop result and executable evaluation plan for the target window.
 
 Command rules:
 

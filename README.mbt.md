@@ -441,6 +441,9 @@ scripts for async routes, and JSON diagnostics for backend tests.
 `NativeBridgeLoopEvaluationPlan` lowers those scripts into target-window
 `evaluate-script` operations, giving every platform runner the same operation
 shape for its drain/evaluate step.
+`receive_window_message` returns a `NativeBridgeLoopDelivery` /
+`BundledBridgeLoopDelivery`, pairing the raw loop result with that executable
+plan for the target window.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

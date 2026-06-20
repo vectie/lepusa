@@ -278,18 +278,10 @@ async fn render_bridge_loop_async(args : Array[String]) -> CliResult {
                 payload~,
               )
               let message = @runtime.encode_invoke_request_json(request)
-              let result = runtime
+              let delivery = runtime
                 .bridge_loop_adapter()
-                .receive_message(@utf8.encode(message))
-              let evaluation_plan = result.evaluation_plan(window_label~)
-              ok(
-                [
-                  "{",
-                  "\"result\":\{result.to_json()},",
-                  "\"evaluationPlan\":\{evaluation_plan.to_json()}",
-                  "}\n",
-                ].join(""),
-              )
+                .receive_window_message(window_label~, @utf8.encode(message))
+              ok(delivery.to_json() + "\n")
             }
             Err(problems) =>
               fail(render_problems("Lepusa bridge loop", problems))

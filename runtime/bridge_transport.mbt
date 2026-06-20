@@ -57,6 +57,13 @@ pub struct NativeBridgeLoopResult {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeLoopDelivery {
+  window_label : String
+  result : NativeBridgeLoopResult
+  evaluation_plan : NativeBridgeLoopEvaluationPlan
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -751,6 +758,18 @@ pub async fn NativeBridgeLoopAdapter::receive_message(
 }
 
 ///|
+pub async fn NativeBridgeLoopAdapter::receive_window_message(
+  self : NativeBridgeLoopAdapter,
+  window_label~ : String,
+  message : Bytes,
+) -> NativeBridgeLoopDelivery {
+  NativeBridgeLoopDelivery::from_result(
+    window_label~,
+    result=self.receive_message(message),
+  )
+}
+
+///|
 pub fn NativeBridgeLoopAdapter::to_json(
   self : NativeBridgeLoopAdapter,
 ) -> String {
@@ -801,6 +820,66 @@ pub fn NativeBridgeLoopResult::evaluation_plan(
     window_label~,
     scripts=self.evaluation_scripts(),
   )
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::from_result(
+  window_label~ : String,
+  result~ : NativeBridgeLoopResult,
+) -> NativeBridgeLoopDelivery {
+  {
+    window_label,
+    result,
+    evaluation_plan: result.evaluation_plan(window_label~),
+  }
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::window_label(
+  self : NativeBridgeLoopDelivery,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::result(
+  self : NativeBridgeLoopDelivery,
+) -> NativeBridgeLoopResult {
+  self.result
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::evaluation_plan(
+  self : NativeBridgeLoopDelivery,
+) -> NativeBridgeLoopEvaluationPlan {
+  self.evaluation_plan
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::operations(
+  self : NativeBridgeLoopDelivery,
+) -> Array[NativeExecutableOperation] {
+  self.evaluation_plan.operations()
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::is_empty(
+  self : NativeBridgeLoopDelivery,
+) -> Bool {
+  self.evaluation_plan.is_empty()
+}
+
+///|
+pub fn NativeBridgeLoopDelivery::to_json(
+  self : NativeBridgeLoopDelivery,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"result\":\{self.result.to_json()},",
+    "\"evaluationPlan\":\{self.evaluation_plan.to_json()}",
+    "}",
+  ].join("")
 }
 
 ///|

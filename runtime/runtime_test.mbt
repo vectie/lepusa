@@ -1776,6 +1776,16 @@ async test "native runtime owns bridge message transport" {
               "globalThis[\"__lepusaInvokeResponse\"]",
             ),
           )
+          let loop_delivery = runtime
+            .bridge_loop_adapter()
+            .receive_window_message(window_label="main", @utf8.encode(message))
+          assert_eq(loop_delivery.window_label(), "main")
+          assert_false(loop_delivery.is_empty())
+          assert_eq(loop_delivery.result().completions().length(), 1)
+          assert_eq(loop_delivery.operations().length(), 1)
+          assert_eq(loop_delivery.operations()[0].kind(), "evaluate-script")
+          assert_true(loop_delivery.to_json().contains("\"result\":{"))
+          assert_true(loop_delivery.to_json().contains("\"evaluationPlan\":{"))
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)
             Err(_) => abort("unexpected bridge queue enqueue failure")
@@ -1901,6 +1911,15 @@ async test "native runtime owns bridge message transport" {
       assert_eq(sync_loop_plan.window_label(), "main")
       assert_eq(sync_loop_plan.operations().length(), 1)
       assert_eq(sync_loop_plan.operations()[0].kind(), "evaluate-script")
+      let sync_delivery = runtime
+        .bridge_loop_adapter()
+        .receive_window_message(
+          window_label="main",
+          @utf8.encode(sync_handoff_message),
+        )
+      assert_eq(sync_delivery.window_label(), "main")
+      assert_false(sync_delivery.is_empty())
+      assert_true(sync_delivery.result().has_immediate_script())
       let async_script = @utf8.decode(
         runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),
       ) catch {

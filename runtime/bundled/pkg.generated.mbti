@@ -91,8 +91,22 @@ pub fn BundledBridgeLoopAdapter::new(BundledRuntime) -> Self
 pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn BundledBridgeLoopAdapter::queue(Self) -> BundledBridgeWorkQueue
 pub async fn BundledBridgeLoopAdapter::receive_message(Self, Bytes) -> BundledBridgeLoopResult
+pub async fn BundledBridgeLoopAdapter::receive_window_message(Self, window_label~ : String, Bytes) -> BundledBridgeLoopDelivery
 pub fn BundledBridgeLoopAdapter::runtime(Self) -> BundledRuntime
 pub fn BundledBridgeLoopAdapter::to_json(Self) -> String
+
+pub struct BundledBridgeLoopDelivery {
+  window_label : String
+  result : BundledBridgeLoopResult
+  evaluation_plan : @runtime.NativeBridgeLoopEvaluationPlan
+} derive(Eq, @debug.Debug)
+pub fn BundledBridgeLoopDelivery::evaluation_plan(Self) -> @runtime.NativeBridgeLoopEvaluationPlan
+pub fn BundledBridgeLoopDelivery::from_result(window_label~ : String, result~ : BundledBridgeLoopResult) -> Self
+pub fn BundledBridgeLoopDelivery::is_empty(Self) -> Bool
+pub fn BundledBridgeLoopDelivery::operations(Self) -> Array[@runtime.NativeExecutableOperation]
+pub fn BundledBridgeLoopDelivery::result(Self) -> BundledBridgeLoopResult
+pub fn BundledBridgeLoopDelivery::to_json(Self) -> String
+pub fn BundledBridgeLoopDelivery::window_label(Self) -> String
 
 pub struct BundledBridgeLoopResult {
   immediate_script : String

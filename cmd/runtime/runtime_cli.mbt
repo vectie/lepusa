@@ -748,18 +748,10 @@ async fn render_runtime_bridge_loop_text(
             payload~,
           )
           let message = @runtime_core.encode_invoke_request_json(request)
-          let result = manifest
+          let delivery = manifest
             .bridge_loop_adapter()
-            .receive_message(@utf8.encode(message))
-          let evaluation_plan = result.evaluation_plan(window_label~)
-          runtime_ok(
-            [
-              "{",
-              "\"result\":\{result.to_json()},",
-              "\"evaluationPlan\":\{evaluation_plan.to_json()}",
-              "}\n",
-            ].join(""),
-          )
+            .receive_window_message(window_label~, @utf8.encode(message))
+          runtime_ok(delivery.to_json() + "\n")
         }
       }
   }
