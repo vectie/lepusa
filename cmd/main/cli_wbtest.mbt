@@ -10,6 +10,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa lifecycle"))
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa native-plan"))
+  assert_true(result.output.contains("lepusa launch-session"))
   assert_true(result.output.contains("lepusa run"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
@@ -98,6 +99,19 @@ async test "native plan prints backend bootstrap json" {
   assert_true(result.output.contains("\"bridgeScheduler\""))
   assert_true(result.output.contains("\"mode\":\"sync-only\""))
   assert_true(result.output.contains("\"nativeHook\":\"__lepusaInvoke\""))
+}
+
+///|
+async test "launch session prints source native handoff json" {
+  let result = render_cli_async(["launch-session", "linux"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"webviews\""))
+  assert_true(result.output.contains("\"execution\""))
+  assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"serviceSupervisor\""))
+  assert_true(result.output.contains("\"mode\":\"sync-only\""))
+  assert_true(result.output.contains("\"loadUrl\""))
+  assert_true(result.output.contains("__lepusaInvoke"))
 }
 
 ///|

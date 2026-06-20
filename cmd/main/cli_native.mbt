@@ -56,6 +56,25 @@ async fn render_run_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_launch_session_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match parse_bundle_target(values.get(0)) {
+    Ok(target) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match native_runtime_for_target(target, host) {
+            Ok(runtime) => render_native_launch_session(target, runtime)
+            Err(problems) =>
+              fail(render_problems("Lepusa launch session", problems))
+          }
+        Err(problems) =>
+          fail(render_problems("Lepusa launch session", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 fn render_doctor_host(
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
@@ -265,6 +284,33 @@ fn render_native_run_summary(
     include_bridge_url=true,
     include_services=true,
   )
+}
+
+///|
+fn render_native_launch_session(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
+) -> CliResult {
+  match target {
+    MacOS =>
+      match @macos_backend.run(runtime) {
+        Ok(result) => ok(result.plan().launch_session().to_json() + "\n")
+        Err(problems) =>
+          fail(render_problems("Lepusa launch session", problems))
+      }
+    Windows =>
+      match @windows_backend.run(runtime) {
+        Ok(result) => ok(result.launch_session().to_json() + "\n")
+        Err(problems) =>
+          fail(render_problems("Lepusa launch session", problems))
+      }
+    Linux =>
+      match @linux_backend.run(runtime) {
+        Ok(result) => ok(result.launch_session().to_json() + "\n")
+        Err(problems) =>
+          fail(render_problems("Lepusa launch session", problems))
+      }
+  }
 }
 
 ///|

@@ -122,6 +122,7 @@ moon run cmd/main --target native -- doctor linux
 moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- native-plan macos
+moon run cmd/main --target native -- launch-session linux
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
 moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
 moon run cmd/main --target native -- bridge
@@ -130,6 +131,7 @@ moon run cmd/main --target native -- init _build/lepusa-app
 moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- native-plan linux --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- launch-session linux --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- dev --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- asset lepusa://rabbita/main/index.html --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- lifecycle app-will-exit --project _build/lepusa-app/lepusa.json
@@ -344,6 +346,11 @@ per-window WebView specs, startup operations, and prelowered lifecycle
 operations that a platform runner needs. The bootstrap also includes
 `bridgeScheduler`, the shared sync-only/async-capable launch policy derived
 from registered bridge routes.
+
+`lepusa launch-session [macos|windows|linux]` prepares the selected backend and
+emits the same canonical `NativeLaunchSession` shape used by packaged runtime
+manifests: concrete WebView launch plans, executable operations, bridge
+scheduler policy, and service supervisor plan.
 
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,

@@ -20,6 +20,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("plan") => render_plan_async(args)
     Some("manifest") => render_manifest_async(args)
     Some("native-plan") => render_native_plan_async(args)
+    Some("launch-session") => render_launch_session_async(args)
     Some("run") => render_run_async(args)
     Some("bridge") => render_bridge_async(args)
     Some("dev") => render_dev_async(args)
@@ -56,6 +57,7 @@ fn help_text() -> String {
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa native-plan [macos|windows|linux]
+    #|  lepusa launch-session [macos|windows|linux]
     #|  lepusa run [macos|windows|linux] [--launch]
     #|  lepusa bridge
     #|  lepusa dev
