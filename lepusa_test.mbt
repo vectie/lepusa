@@ -280,6 +280,13 @@ test "capabilities scope permissions by window" {
     }
     Err(_) => abort("unexpected invalid auto launch permission")
   }
+  match @lepusa.Permission::named("window") {
+    Ok(permission) => {
+      assert_true(permission is Window)
+      assert_eq(permission.name(), "window")
+    }
+    Err(_) => abort("unexpected invalid window permission")
+  }
   match @lepusa.Permission::named("window-state") {
     Ok(permission) => {
       assert_true(permission is WindowState)

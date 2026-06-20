@@ -17,5 +17,6 @@ import {
   "vectie/lepusa/plugins/store",
   "vectie/lepusa/plugins/tray",
   "vectie/lepusa/plugins/updater",
+  "vectie/lepusa/plugins/window",
   "vectie/lepusa/plugins/window_state",
 }

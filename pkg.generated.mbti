@@ -454,6 +454,7 @@ pub(all) enum Permission {
   SingleInstance
   Tray
   AutoLaunch
+  Window
   WindowState
   Updater
   ServiceDiscovery

@@ -291,7 +291,8 @@ Official plugins can be declared by name, for example
 `{ "name": "opener" }`, `{ "name": "process" }`,
 `{ "name": "serviceDiscovery" }`, `{ "name": "shell" }`,
 `{ "name": "singleInstance" }`, `{ "name": "store" }`, `{ "name": "tray" }`,
-`{ "name": "updater" }`, `{ "name": "windowState" }`, or
+`{ "name": "updater" }`, `{ "name": "window" }`,
+`{ "name": "windowState" }`, or
 `{ "name": "fs" }`;
 Lepusa expands those declarations to the package's
 official command contract. Custom plugins can still provide an explicit
@@ -397,6 +398,12 @@ policy metadata. Its portable registry validates and tracks icon, tooltip,
 menu, visibility, and destroy state through sync handlers, then delegates status
 icon creation and OS menu behavior to native backends.
 
+`@lepusa/plugins/window` defines window control routes such as `window.close`,
+`window.focus`, `window.minimize`, `window.maximize`, `window.setTitle`,
+`window.setSize`, and `window.setFullscreen`. Its portable registry records
+sync control operations for the target window; native backends own the actual
+window-manager calls.
+
 `@lepusa/plugins/auto_launch` defines launch-at-login routes such as
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
 `autoLaunch.setEnabled`, plus startup registration policy metadata. Its
@@ -459,7 +466,7 @@ process termination policy.
 tooling. Project parsing uses it to expand name-only official plugin
 declarations and bind MoonBit handlers where they exist, including scoped async
 filesystem handlers and portable sync process, localhost, service-discovery,
-deep-link, single-instance, tray, auto-launch, and window-state handlers.
+deep-link, single-instance, tray, auto-launch, window, and window-state handlers.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,

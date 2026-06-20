@@ -100,7 +100,7 @@ pub fn plugin_names() -> Array[String] {
 pub fn sync_plugin_names() -> Array[String] {
   [
     "autoLaunch", "clipboard", "deepLink", "localhost", "log", "notification", "opener",
-    "serviceDiscovery", "singleInstance", "store", "tray", "windowState",
+    "serviceDiscovery", "singleInstance", "store", "tray", "window", "windowState",
   ]
 }
 
@@ -124,6 +124,7 @@ fn catalog_plugins() -> Array[CatalogPlugin] {
     { name: "store", load: fn() { @store.plugin() } },
     { name: "tray", load: fn() { @tray.plugin() } },
     { name: "updater", load: fn() { @updater.plugin() } },
+    { name: "window", load: fn() { @window.plugin() } },
     { name: "windowState", load: fn() { @window_state.plugin() } },
   ]
 }
@@ -204,6 +205,7 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
     { name: "tray", register: fn(registry, _) { @tray.register(registry) } },
+    { name: "window", register: fn(registry, _) { @window.register(registry) } },
     {
       name: "updater",
       register: fn(registry, _) { @updater.register(registry) },

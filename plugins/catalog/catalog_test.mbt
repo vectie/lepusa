@@ -1,7 +1,7 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 18)
+  assert_eq(names.length(), 19)
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
@@ -19,6 +19,7 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("store"))
   assert_true(names.contains("tray"))
   assert_true(names.contains("updater"))
+  assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
   assert_true(
     plugin("autoLaunch").unwrap().command_routes().contains("autoLaunch.status"),
@@ -75,6 +76,9 @@ test "catalog exposes official plugin declarations" {
   assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
   assert_true(plugin("tray").unwrap().command_routes().contains("tray.setMenu"))
   assert_true(
+    plugin("window").unwrap().command_routes().contains("window.close"),
+  )
+  assert_true(
     plugin("updater").unwrap().command_routes().contains("updater.check"),
   )
   assert_true(
@@ -108,6 +112,7 @@ test "catalog exposes sync-safe official plugin profile" {
   assert_true(names.contains("singleInstance"))
   assert_true(names.contains("store"))
   assert_true(names.contains("tray"))
+  assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
   assert_false(names.contains("dialog"))
   assert_false(names.contains("fileDialog"))
@@ -148,6 +153,7 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "serviceDiscovery")
   let registry = register(registry, "shell")
   let registry = register(registry, "singleInstance")
+  let registry = register(registry, "window")
   let registry = register(registry, "windowState")
   let registry = register(registry, "tray")
   let registry = register(registry, "updater")
@@ -171,12 +177,14 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("singleInstance.acquire"))
   assert_true(registry.contains("tray.setMenu"))
   assert_true(registry.contains("tray.destroy"))
+  assert_true(registry.contains("window.close"))
+  assert_true(registry.contains("window.setTitle"))
   assert_true(registry.contains("updater.check"))
   assert_true(registry.contains("updater.downloadAndInstall"))
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 18)
+  assert_eq(names.length(), 19)
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
@@ -194,6 +202,7 @@ test "catalog registers pure moonbit handlers" {
   assert_true(names.contains("store"))
   assert_true(names.contains("tray"))
   assert_true(names.contains("updater"))
+  assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
 }
 

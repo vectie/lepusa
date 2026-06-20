@@ -239,6 +239,8 @@ Stabilize the cross-platform core set first:
   sync primary-state handlers exist
 - tray: initial status icon/menu contract and delegated sync tray state handlers
   exist
+- window: initial sync window control contract and delegated operation recording
+  handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and
   native macOS/Linux/Windows registration handlers exist
 - windowState: initial window geometry persistence contract, sync runtime state

@@ -9,6 +9,7 @@ pub(all) enum Permission {
   SingleInstance
   Tray
   AutoLaunch
+  Window
   WindowState
   Updater
   ServiceDiscovery
@@ -40,6 +41,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
     "single-instance" => Ok(SingleInstance)
     "tray" => Ok(Tray)
     "auto-launch" => Ok(AutoLaunch)
+    "window" => Ok(Window)
     "window-state" => Ok(WindowState)
     "updater" => Ok(Updater)
     "service-discovery" => Ok(ServiceDiscovery)
@@ -77,6 +79,7 @@ pub fn Permission::name(self : Permission) -> String {
     SingleInstance => "single-instance"
     Tray => "tray"
     AutoLaunch => "auto-launch"
+    Window => "window"
     WindowState => "window-state"
     Updater => "updater"
     ServiceDiscovery => "service-discovery"

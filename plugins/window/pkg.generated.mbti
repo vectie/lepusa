@@ -1,0 +1,69 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/window"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, policy? : WindowControlPolicy, state? : WindowControlState) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : WindowControlPolicy, state? : WindowControlState) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub(all) enum WindowControlAction {
+  Close
+  Focus
+  Hide
+  Maximize
+  Minimize
+  SetFullscreen
+  SetPosition
+  SetSize
+  SetTitle
+  Show
+  Unmaximize
+} derive(Eq, @debug.Debug)
+pub fn WindowControlAction::name(Self) -> String
+
+pub struct WindowControlOperation {
+  window_label : String
+  action : WindowControlAction
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn WindowControlOperation::action(Self) -> WindowControlAction
+pub fn WindowControlOperation::new(window_label~ : String, action~ : WindowControlAction, payload? : String) -> Self
+pub fn WindowControlOperation::payload(Self) -> String
+pub fn WindowControlOperation::to_json(Self) -> String
+pub fn WindowControlOperation::window_label(Self) -> String
+
+pub struct WindowControlPolicy {
+  allowed_windows : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn WindowControlPolicy::allowed_windows(Self) -> Array[String]
+pub fn WindowControlPolicy::allows(Self, String) -> Bool
+pub fn WindowControlPolicy::new(allowed_windows? : Array[String]) -> Self
+pub fn WindowControlPolicy::validate(Self) -> Array[String]
+pub fn WindowControlPolicy::window(Self, String) -> Self
+
+pub struct WindowControlState {
+  operations : Array[WindowControlOperation]
+}
+pub fn WindowControlState::last(Self) -> WindowControlOperation?
+pub fn WindowControlState::new() -> Self
+pub fn WindowControlState::operations(Self) -> Array[WindowControlOperation]
+pub fn WindowControlState::record(Self, WindowControlOperation) -> Unit
+
+// Type aliases
+
+// Traits
+
