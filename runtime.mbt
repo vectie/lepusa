@@ -98,6 +98,22 @@ pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
 }
 
 ///|
+pub fn RuntimePlan::command_routes_by_mode(
+  self : RuntimePlan,
+  mode : CommandMode,
+) -> Array[String] {
+  let routes : Array[String] = []
+  for plugin in self.launch.plugins() {
+    for command in plugin.commands() {
+      if command.mode() == mode {
+        routes.push("\{plugin.name()}.\{command.name()}")
+      }
+    }
+  }
+  routes
+}
+
+///|
 pub fn RuntimePlan::file_system_scopes(
   self : RuntimePlan,
 ) -> Array[FileSystemScope] {

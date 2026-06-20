@@ -100,28 +100,20 @@ let bundle = @lepusa.BundleConfig::new(
 )
 ```
 
-For official desktop APIs, `@lepusa/desktop.DesktopKit` wires the framework
-parts together:
+For official desktop APIs, `@lepusa/desktop.DesktopProject` wires the
+framework parts together:
 
 ```moonbit nocheck
 ///|
-let kit = @desktop.DesktopKit::new().with_plugins(["dialog", "fs"])
+let project = @desktop.DesktopProject::new(metadata, root)
+  .window(title="Desk", source=@lepusa.Source::html("<main></main>"))
+  .with_official_plugins(["dialog", "fs"])
 
 ///|
-let app = kit
-  .apply(
-    @lepusa.new(root).window(
-      title="Desk",
-      source=@lepusa.Source::html("<main></main>"),
-    ),
-  )
-  .unwrap()
+let host = project.runtime_host().unwrap()
 
 ///|
-let plan = app.runtime_plan().unwrap()
-
-///|
-let host = kit.runtime_host(plan).unwrap()
+let bundle = project.bundle_plan(target=@lepusa.MacOS).unwrap()
 ```
 
 For programmatic project configuration, use `ProjectManifest`:

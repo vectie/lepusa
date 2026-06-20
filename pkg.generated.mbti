@@ -702,6 +702,7 @@ pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
 pub fn RuntimePlan::command_permission(Self, String) -> Permission?
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
+pub fn RuntimePlan::command_routes_by_mode(Self, CommandMode) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::file_system_scopes(Self) -> Array[FileSystemScope]
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]

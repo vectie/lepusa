@@ -7,6 +7,34 @@ bridge without registering its native handler.
 
 ```mbt check
 ///|
+test "build a desktop project" {
+  let project = DesktopProject::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.lepusa.desktop",
+        product_name="Lepusa Desktop",
+        version="0.1.0",
+      ),
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(source=@lepusa.Source::html("<main></main>"))
+    .with_official_plugins(["log", "clipboard"])
+  match project.runtime_host() {
+    Ok(host) => {
+      assert_true(host.sync_command_routes().contains("log.write"))
+      assert_true(host.async_command_routes().contains("clipboard.readText"))
+    }
+    Err(problems) => fail(problems.join("; "))
+  }
+  match project.bundle_plan(target=Linux) {
+    Ok(bundle) =>
+      assert_true(bundle.registered_routes().contains("clipboard.readText"))
+    Err(problems) => fail(problems.join("; "))
+  }
+}
+```
+
+```mbt check
+///|
 test "build an app with official desktop plugins" {
   let kit = DesktopKit::new().with_plugins(["log", "clipboard"])
   let base = @lepusa.new(
@@ -31,4 +59,3 @@ test "build an app with official desktop plugins" {
   }
 }
 ```
-

@@ -179,9 +179,49 @@ pub fn DesktopKit::validate(self : DesktopKit) -> Array[String] {
 
 ///|
 pub fn DesktopKit::registry(self : DesktopKit) -> @lepusa.CommandRegistry {
-  let context = @catalog.CatalogContext::new(
+  self.registry_with_context(
     filesystem_scopes=self.filesystem_scopes,
     local_services=self.local_services,
+  )
+}
+
+///|
+pub fn DesktopKit::registry_for_plan(
+  self : DesktopKit,
+  plan : @lepusa.RuntimePlan,
+) -> Result[@lepusa.CommandRegistry, Array[String]] {
+  match self.context_for_plan(plan) {
+    Ok(context) =>
+      Ok(
+        self.registry_with_context(
+          filesystem_scopes=context.filesystem_scopes(),
+          local_services=context.local_services(),
+        ),
+      )
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
+pub fn DesktopKit::registered_routes_for_plan(
+  self : DesktopKit,
+  plan : @lepusa.RuntimePlan,
+) -> Result[Array[String], Array[String]] {
+  match self.registry_for_plan(plan) {
+    Ok(registry) => Ok(registry.routes())
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
+fn DesktopKit::registry_with_context(
+  self : DesktopKit,
+  filesystem_scopes~ : Array[@lepusa.FileSystemScope],
+  local_services~ : Array[@lepusa.LocalService],
+) -> @lepusa.CommandRegistry {
+  let context = @catalog.CatalogContext::new(
+    filesystem_scopes~,
+    local_services~,
   )
   let mut registry = @lepusa.CommandRegistry::new()
   for plugin in self.plugins {
@@ -223,12 +263,93 @@ pub fn DesktopKit::runtime_host(
   if !problems.is_empty() {
     return Err(problems)
   }
-  let registry = self.registry()
+  let registry = match self.registry_for_plan(plan) {
+    Ok(registry) => registry
+    Err(problems) => return Err(problems)
+  }
   let registry_problems = registry.validate()
   if !registry_problems.is_empty() {
     return Err(registry_problems)
   }
+  let missing = missing_registered_routes(plan, registry)
+  if !missing.is_empty() {
+    return Err(
+      missing.map(fn(route) { "desktop handler is not registered: \{route}" }),
+    )
+  }
   Ok(@runtime.RuntimeHost::new(plan, registry~))
+}
+
+///|
+fn DesktopKit::context_for_plan(
+  self : DesktopKit,
+  plan : @lepusa.RuntimePlan,
+) -> Result[@catalog.CatalogContext, Array[String]] {
+  match plan.launch_manifest() {
+    Ok(manifest) =>
+      Ok(
+        @catalog.CatalogContext::new(
+          filesystem_scopes=self.scopes_with_plan(plan),
+          local_services=self.services_with_plan(manifest.local_services()),
+        ),
+      )
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
+fn DesktopKit::scopes_with_plan(
+  self : DesktopKit,
+  plan : @lepusa.RuntimePlan,
+) -> Array[@lepusa.FileSystemScope] {
+  let scopes = self.filesystem_scopes.copy()
+  for scope in plan.file_system_scopes() {
+    if !scopes.any(fn(item) { item.name() == scope.name() }) {
+      scopes.push(scope)
+    }
+  }
+  scopes
+}
+
+///|
+fn DesktopKit::services_with_plan(
+  self : DesktopKit,
+  plan_services : Array[@lepusa.LocalService],
+) -> Array[@lepusa.LocalService] {
+  let services = self.local_services.copy()
+  for service in plan_services {
+    if !services.any(fn(item) { item.name() == service.name() }) {
+      services.push(service)
+    }
+  }
+  services
+}
+
+///|
+fn missing_registered_routes(
+  plan : @lepusa.RuntimePlan,
+  registry : @lepusa.CommandRegistry,
+) -> Array[String] {
+  let missing : Array[String] = []
+  let registered = registry.routes()
+  for route in command_handler_routes(plan) {
+    if !registered.contains(route) {
+      missing.push(route)
+    }
+  }
+  missing
+}
+
+///|
+fn command_handler_routes(plan : @lepusa.RuntimePlan) -> Array[String] {
+  let routes = plan.command_routes_by_mode(Sync)
+  for route in plan.command_routes_by_mode(Async) {
+    routes.push(route)
+  }
+  for route in plan.command_routes_by_mode(Stream) {
+    routes.push(route)
+  }
+  routes
 }
 
 ///|

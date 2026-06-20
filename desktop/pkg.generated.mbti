@@ -28,7 +28,9 @@ pub fn DesktopKit::plugin_names(Self) -> Array[String]
 pub fn DesktopKit::plugins(Self) -> Array[@lepusa.Plugin]
 pub fn DesktopKit::problems(Self) -> Array[String]
 pub fn DesktopKit::registered_routes(Self) -> Array[String]
+pub fn DesktopKit::registered_routes_for_plan(Self, @lepusa.RuntimePlan) -> Result[Array[String], Array[String]]
 pub fn DesktopKit::registry(Self) -> @lepusa.CommandRegistry
+pub fn DesktopKit::registry_for_plan(Self, @lepusa.RuntimePlan) -> Result[@lepusa.CommandRegistry, Array[String]]
 pub fn DesktopKit::runtime_host(Self, @lepusa.RuntimePlan) -> Result[@runtime.RuntimeHost, Array[String]]
 pub fn DesktopKit::validate(Self) -> Array[String]
 pub fn DesktopKit::with_capability(Self, @lepusa.Capability) -> Self
@@ -38,7 +40,38 @@ pub fn DesktopKit::with_plugin(Self, String, window_label? : String, capability_
 pub fn DesktopKit::with_plugin_spec(Self, @lepusa.Plugin) -> Self
 pub fn DesktopKit::with_plugins(Self, Array[String], window_label? : String) -> Self
 
+pub struct DesktopProject {
+  root : @lepusa.Cell
+  manifest : @lepusa.ProjectManifest
+  kit : DesktopKit
+}
+pub fn DesktopProject::app(Self) -> Result[@lepusa.App, Array[String]]
+pub fn DesktopProject::base_manifest(Self) -> @lepusa.ProjectManifest
+pub fn DesktopProject::bundle_plan(Self, target? : @lepusa.BundleTarget) -> Result[@lepusa.BundlePlan, Array[String]]
+pub fn DesktopProject::kit(Self) -> DesktopKit
+pub fn DesktopProject::manifest(Self) -> Result[@lepusa.ProjectManifest, Array[String]]
+pub fn DesktopProject::new(@lepusa.AppMetadata, @lepusa.Cell, runtime? : @lepusa.RuntimeConfig) -> Self
+pub fn DesktopProject::on_shutdown(Self, @lepusa.Cmd) -> Self
+pub fn DesktopProject::on_window_close_requested(Self, String, @lepusa.Cmd) -> Self
+pub fn DesktopProject::root(Self) -> @lepusa.Cell
+pub fn DesktopProject::runtime_host(Self) -> Result[@runtime.RuntimeHost, Array[String]]
+pub fn DesktopProject::runtime_plan(Self) -> Result[@lepusa.RuntimePlan, Array[String]]
+pub fn DesktopProject::validate(Self) -> Array[String]
+pub fn DesktopProject::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : @lepusa.TitleBarStyle, source? : @lepusa.Source) -> Self
+pub fn DesktopProject::with_capability(Self, @lepusa.Capability) -> Self
+pub fn DesktopProject::with_filesystem_scope(Self, @lepusa.FileSystemScope) -> Self
+pub fn DesktopProject::with_icon_path(Self, String) -> Self
+pub fn DesktopProject::with_kit(Self, DesktopKit) -> Self
+pub fn DesktopProject::with_lifecycle(Self, @lepusa.LifecycleEvent, @lepusa.Cmd) -> Self
+pub fn DesktopProject::with_local_service(Self, @lepusa.LocalService) -> Self
+pub fn DesktopProject::with_official_plugin(Self, String, window_label? : String, capability_name? : String) -> Self
+pub fn DesktopProject::with_official_plugins(Self, Array[String], window_label? : String) -> Self
+pub fn DesktopProject::with_plugin(Self, @lepusa.Plugin) -> Self
+pub fn DesktopProject::with_runtime(Self, @lepusa.RuntimeConfig) -> Self
+pub fn DesktopProject::with_signing(Self, @lepusa.SigningConfig) -> Self
+pub fn DesktopProject::with_startup(Self, @lepusa.Cmd) -> Self
+pub fn DesktopProject::with_window(Self, @lepusa.WindowConfig) -> Self
+
 // Type aliases
 
 // Traits
-

@@ -86,6 +86,10 @@ through the catalog with policy context, and can build a `RuntimeHost` from the
 same registry. This prevents the common framework failure mode where the
 frontend bridge advertises a command route that was not registered in the
 native process.
+`DesktopProject` composes that kit with `ProjectManifest`, so a MoonBit app can
+declare windows, official desktop APIs, filesystem scopes, runtime config, and
+bundle metadata once, then derive the runtime plan, runtime host, and bundle
+plan with the same registered route set.
 
 ## Process Model
 

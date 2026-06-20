@@ -20,7 +20,9 @@
   model/update/view state flow for compact MoonBit-authored desktop views.
 - Add `@lepusa/desktop.DesktopKit` as the official desktop API kit that keeps
   plugin declarations, capability grants, catalog registries, and runtime hosts
-  aligned for app authors.
+  aligned for app authors, and add `DesktopProject` as the concise app-level
+  boundary for deriving runtime hosts and bundle plans from the same desktop
+  configuration.
 - Lower source-less `App` windows into generated Rabbita-style HTML from the
   root `Cell`.
 - Add native `run` once the first runtime backend is wired: macOS now has an

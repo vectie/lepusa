@@ -53,11 +53,140 @@ test "desktop kit applies plugins and capabilities to app runtime" {
 }
 
 ///|
+test "desktop kit rejects runtime routes without registered handlers" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main>desktop</main>")),
+    )
+    .window(source=@lepusa.Source::html("<main>desktop</main>"))
+    .with_plugin(@lepusa.Plugin::new("custom").command_sync("run"))
+    .with_capability(@lepusa.Capability::new("custom").command("custom.run"))
+  match app.runtime_plan() {
+    Ok(plan) =>
+      match DesktopKit::new().runtime_host(plan) {
+        Ok(_) => abort("unexpected valid host")
+        Err(problems) => {
+          assert_eq(problems.length(), 1)
+          assert_eq(
+            problems[0],
+            "desktop handler is not registered: custom.run",
+          )
+        }
+      }
+    Err(problems) => abort(problems.join("; "))
+  }
+}
+
+///|
 test "desktop kit reports unknown official plugins before app planning" {
   let kit = DesktopKit::new().with_plugin("missing")
   let problems = kit.validate()
   assert_eq(problems.length(), 1)
   assert_eq(problems[0], "unknown official plugin: missing")
+}
+
+///|
+test "desktop project builds runtime host and bundle plan from one boundary" {
+  let project = DesktopProject::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.lepusa.desktop",
+        product_name="Lepusa Desktop",
+        version="0.1.0",
+      ),
+      @lepusa.simple_cell(@lepusa.Html::text("<main>project</main>")),
+    )
+    .window(source=@lepusa.Source::html("<main>project</main>"))
+    .with_official_plugins(["log", "clipboard"])
+    .with_startup(@lepusa.Cmd::effect("boot"))
+    .on_shutdown(@lepusa.Cmd::effect("flush"))
+  match project.runtime_host() {
+    Ok(host) => {
+      assert_true(host.sync_command_routes().contains("log.write"))
+      assert_true(host.async_command_routes().contains("clipboard.readText"))
+      match host.snapshot() {
+        Ok(session) => {
+          assert_true(session.registered_routes().contains("log.write"))
+          assert_true(
+            session.registered_routes().contains("clipboard.readText"),
+          )
+          assert_true(session.startup_actions()[0] is RuntimeEffect("boot"))
+        }
+        Err(problems) => abort(problems.join("; "))
+      }
+    }
+    Err(problems) => abort(problems.join("; "))
+  }
+  match project.bundle_plan(target=Linux) {
+    Ok(bundle) => {
+      assert_true(bundle.registered_routes().contains("log.write"))
+      assert_true(bundle.registered_routes().contains("clipboard.readText"))
+      match bundle.runtime_manifest() {
+        Ok(manifest) => {
+          assert_true(manifest.registered_routes().contains("log.write"))
+          assert_true(
+            manifest.registered_routes().contains("clipboard.readText"),
+          )
+        }
+        Err(problems) => abort(problems.join("; "))
+      }
+    }
+    Err(problems) => abort(problems.join("; "))
+  }
+}
+
+///|
+test "desktop project reports unknown official plugins before planning" {
+  let project = DesktopProject::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.lepusa.desktop",
+        product_name="Lepusa Desktop",
+        version="0.1.0",
+      ),
+      @lepusa.simple_cell(@lepusa.Html::text("<main>project</main>")),
+    )
+    .window(source=@lepusa.Source::html("<main>project</main>"))
+    .with_official_plugin("missing")
+  match project.runtime_host() {
+    Ok(_) => abort("unexpected valid project")
+    Err(problems) => {
+      assert_eq(problems.length(), 1)
+      assert_eq(problems[0], "unknown official plugin: missing")
+    }
+  }
+}
+
+///|
+async test "desktop project derives localhost services for catalog handlers" {
+  let project = DesktopProject::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.lepusa.gateway",
+        product_name="Lepusa Gateway",
+        version="0.1.0",
+      ),
+      @lepusa.simple_cell(@lepusa.Html::text("<main>gateway</main>")),
+    )
+    .window(
+      label="gateway",
+      source=@lepusa.Source::localhost(port=4317, readiness_path="/ready", command=[
+        "moon", "run", "cmd/server",
+      ]),
+    )
+    .with_official_plugin("serviceDiscovery", window_label="gateway")
+  match project.runtime_host() {
+    Ok(host) => {
+      let response = host.dispatch_async(
+        @lepusa.InvokeRequest::new(
+          id="1",
+          window_label="gateway",
+          plugin="serviceDiscovery",
+          command="resolve",
+          payload="{\"name\":\"gateway\"}",
+        ),
+      )
+      assert_true(response.error_message() is None)
+      assert_true(response.payload().unwrap_or("").contains("4317"))
+    }
+    Err(problems) => abort(problems.join("; "))
+  }
 }
 
 ///|
