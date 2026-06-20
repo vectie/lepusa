@@ -13,6 +13,7 @@ pub(all) enum BundleWriteCheckKind {
   RuntimeExecutableCheck
   RuntimeDependencyCheck
   RuntimeManifestCheck
+  DistributionManifestCheck
   InitialContentCheck
   NativeLaunchSessionCheck
 } derive(Debug, Eq)
@@ -120,6 +121,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
     RuntimeExecutableCheck => "runtime-executable"
     RuntimeDependencyCheck => "runtime-dependency"
     RuntimeManifestCheck => "runtime-manifest"
+    DistributionManifestCheck => "distribution-manifest"
     InitialContentCheck => "initial-content"
     NativeLaunchSessionCheck => "native-launch-session"
   }
@@ -222,6 +224,8 @@ async fn verify_written_plan(
       checks.push(verify_runtime_manifest(path))
       checks.push(verify_initial_content(path))
       checks.push(verify_native_launch_session(path))
+    } else if file.path().has_suffix("lepusa/distribution.json") {
+      checks.push(verify_distribution_manifest(path))
     }
   }
   for resource in resources {
@@ -264,6 +268,125 @@ async fn verify_planned_file(
       "planned file content differs"
     },
   )
+}
+
+///|
+async fn verify_distribution_manifest(path : String) -> BundleWriteCheck {
+  let content = @fs.read_file(path) catch {
+    error =>
+      return BundleWriteCheck::new(
+        kind=DistributionManifestCheck,
+        path~,
+        ok=false,
+        message="could not read distribution manifest: \{error}",
+      )
+  }
+  let json = @json.parse(content.text()) catch {
+    error =>
+      return BundleWriteCheck::new(
+        kind=DistributionManifestCheck,
+        path~,
+        ok=false,
+        message="distribution manifest parse failed: \{error}",
+      )
+  }
+  match json {
+    Object(object) => {
+      let problems : Array[String] = []
+      ignore(required_distribution_string(object, "identifier", problems))
+      ignore(required_distribution_string(object, "productName", problems))
+      ignore(required_distribution_string(object, "version", problems))
+      ignore(required_distribution_string(object, "target", problems))
+      ignore(required_distribution_string(object, "executable", problems))
+      ignore(required_distribution_string(object, "bundle", problems))
+      ignore(
+        required_distribution_string(object, "runtimeExecutable", problems),
+      )
+      let artifacts = required_distribution_array(object, "artifacts", problems)
+      ignore(required_distribution_array(object, "resources", problems))
+      let dependencies = required_distribution_array(
+        object, "runtimeDependencies", problems,
+      )
+      ignore(required_distribution_object(object, "signing", problems))
+      ignore(
+        required_distribution_array(object, "signingPrerequisites", problems),
+      )
+      ignore(required_distribution_array(object, "signingSteps", problems))
+      if artifacts.is_empty() {
+        problems.push("distribution artifacts must not be empty")
+      }
+      if dependencies.is_empty() {
+        problems.push("distribution runtimeDependencies must not be empty")
+      }
+      BundleWriteCheck::new(
+        kind=DistributionManifestCheck,
+        path~,
+        ok=problems.is_empty(),
+        message=if problems.is_empty() {
+          "distribution manifest parses with artifact and dependency data"
+        } else {
+          "distribution manifest invalid: \{problems.join("; ")}"
+        },
+      )
+    }
+    _ =>
+      BundleWriteCheck::new(
+        kind=DistributionManifestCheck,
+        path~,
+        ok=false,
+        message="distribution manifest must be a json object",
+      )
+  }
+}
+
+///|
+fn required_distribution_string(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> String {
+  match object.get(key) {
+    Some(String(value)) => {
+      if value == "" {
+        problems.push("distribution \{key} must not be empty")
+      }
+      value
+    }
+    _ => {
+      problems.push("distribution \{key} string is required")
+      ""
+    }
+  }
+}
+
+///|
+fn required_distribution_array(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> Array[Json] {
+  match object.get(key) {
+    Some(Array(value)) => value
+    _ => {
+      problems.push("distribution \{key} array is required")
+      []
+    }
+  }
+}
+
+///|
+fn required_distribution_object(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> Map[String, Json] {
+  match object.get(key) {
+    Some(Object(value)) => value
+    _ => {
+      problems.push("distribution \{key} object is required")
+      {}
+    }
+  }
 }
 
 ///|

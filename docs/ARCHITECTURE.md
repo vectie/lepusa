@@ -594,7 +594,10 @@ Its post-write checks parse `lepusa/runtime.json`, prepare the bundled
 native launch session, and apply the target `NativeLaunchCapability`, so
 pre-install smoke verification cannot mark a Windows or async-bridge bundle
 ready before the selected backend owns the required native loop. The native CLI
-delegates `lepusa bundle-write` to that package.
+also parses `lepusa/distribution.json` and verifies that installer-facing
+artifact, resource, dependency, runtime executable, and signing fields are
+present before reporting the bundle as verified. The native CLI delegates
+`lepusa bundle-write` to that package.
 `BundlePlan::runtime_manifest()` exposes the same typed native-runner manifest
 without forcing tooling to scan `BundlePlan::files()`. When created from a
 registry-aware project path, it also preserves the registered native routes that
