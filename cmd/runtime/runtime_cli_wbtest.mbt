@@ -157,6 +157,13 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(result.output.contains("\"kind\":\"start-service\""))
   assert_true(result.output.contains("\"kind\":\"run-effect\""))
   assert_true(result.output.contains("\"mode\":\"sync-only\""))
+  let async_bridge = render_runtime_launch_session_text(
+    "/app/lepusa/runtime.json",
+    manifest,
+    bridge_mode=NativeBridgeAsyncCapable,
+  )
+  assert_eq(async_bridge.exit_code, 0)
+  assert_true(async_bridge.output.contains("\"mode\":\"async-capable\""))
 }
 
 ///|

@@ -129,8 +129,9 @@ pub fn WindowsRunResult::execution_plan(
 ///|
 pub fn WindowsRunResult::launch_session(
   self : WindowsRunResult,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeLaunchSession {
-  self.plan.launch_session()
+  self.plan.launch_session(bridge_mode~)
 }
 
 ///|
@@ -157,8 +158,9 @@ pub fn WindowsBundledRunResult::execution_plan(
 ///|
 pub fn WindowsBundledRunResult::launch_session(
   self : WindowsBundledRunResult,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> Result[@runtime.NativeLaunchSession, String] {
-  self.plan.launch_session()
+  self.plan.launch_session(bridge_mode~)
 }
 
 ///|

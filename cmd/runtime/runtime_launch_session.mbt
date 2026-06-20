@@ -10,7 +10,11 @@ async fn render_runtime_launch_session(
             "Lepusa runtime launch-session\n[fail] could not read manifest \{path}: \{error}\n",
           )
       }
-      render_runtime_launch_session_text(path, text)
+      render_runtime_launch_session_text(
+        path,
+        text,
+        bridge_mode=runtime_bridge_mode_from_args(args),
+      )
     }
     Err(problem) => runtime_fail(problem + "\n")
   }
@@ -20,15 +24,16 @@ async fn render_runtime_launch_session(
 fn render_runtime_launch_session_text(
   path : String,
   text : String,
+  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> RuntimeCliResult {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) =>
       runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
     Ok(manifest) =>
       match manifest.target() {
-        "macos" => render_macos_launch_session(manifest)
-        "linux" => render_linux_launch_session(manifest)
-        "windows" => render_windows_launch_session(manifest)
+        "macos" => render_macos_launch_session(manifest, bridge_mode~)
+        "linux" => render_linux_launch_session(manifest, bridge_mode~)
+        "windows" => render_windows_launch_session(manifest, bridge_mode~)
         target =>
           runtime_fail(
             "Lepusa runtime launch-session\n[fail] native launch-session requires target macos, linux, or windows: \{target}\n",
@@ -40,9 +45,11 @@ fn render_runtime_launch_session_text(
 ///|
 fn render_macos_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
+  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> RuntimeCliResult {
   match @macos.run_bundled(manifest) {
-    Ok(result) => runtime_ok(result.plan().launch_session().to_json() + "\n")
+    Ok(result) =>
+      runtime_ok(result.plan().launch_session(bridge_mode~).to_json() + "\n")
     Err(problems) =>
       runtime_fail(
         render_runtime_run_problems("Lepusa runtime launch-session", problems),
@@ -53,10 +60,11 @@ fn render_macos_launch_session(
 ///|
 fn render_linux_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
+  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> RuntimeCliResult {
   match @linux.run_bundled(manifest) {
     Ok(result) =>
-      match result.launch_session() {
+      match result.launch_session(bridge_mode~) {
         Ok(session) => runtime_ok(session.to_json() + "\n")
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
@@ -71,10 +79,11 @@ fn render_linux_launch_session(
 ///|
 fn render_windows_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
+  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> RuntimeCliResult {
   match @windows.run_bundled(manifest) {
     Ok(result) =>
-      match result.launch_session() {
+      match result.launch_session(bridge_mode~) {
         Ok(session) => runtime_ok(session.to_json() + "\n")
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")

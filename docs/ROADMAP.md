@@ -79,8 +79,10 @@
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
   the final native launch ABI for source and packaged manifests, with that ABI
-  reporting unsupported until the COM creation loop lands; native async bridge
-  scheduling and the Windows WebView creation loop remain.
+  reporting unsupported until the COM creation loop lands; source and bundled
+  launch-session JSON can now advertise async-capable bridge scheduling for
+  native loops that wire deferred completion; native async bridge scheduling and
+  the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
@@ -111,6 +113,7 @@
   - `lepusa bridge-task`: reports source bridge task scheduling metadata.
   - `lepusa bridge-handoff`: reports source immediate/deferred native bridge handoff.
   - `lepusa bridge-dispatch`: executes source bridge messages and reports the native callback envelope.
+  - `lepusa launch-session [--async-bridge]`: emits native-loop source session JSON with optional async-capable bridge scheduler metadata.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton.
@@ -127,6 +130,7 @@
   - `lepusa-runtime bridge-task`: reports packaged bridge task scheduling metadata.
   - `lepusa-runtime bridge-handoff`: reports packaged immediate/deferred native bridge handoff.
   - `lepusa-runtime bridge-dispatch`: executes packaged bridge messages and reports the native callback envelope.
+  - `lepusa-runtime launch-session [--async-bridge]`: emits packaged native-loop session JSON with optional async-capable bridge scheduler metadata.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.

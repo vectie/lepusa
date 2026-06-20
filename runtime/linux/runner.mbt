@@ -129,8 +129,9 @@ pub fn LinuxRunResult::execution_plan(
 ///|
 pub fn LinuxRunResult::launch_session(
   self : LinuxRunResult,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeLaunchSession {
-  self.plan.launch_session()
+  self.plan.launch_session(bridge_mode~)
 }
 
 ///|
@@ -157,8 +158,9 @@ pub fn LinuxBundledRunResult::execution_plan(
 ///|
 pub fn LinuxBundledRunResult::launch_session(
   self : LinuxBundledRunResult,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> Result[@runtime.NativeLaunchSession, String] {
-  self.plan.launch_session()
+  self.plan.launch_session(bridge_mode~)
 }
 
 ///|

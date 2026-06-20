@@ -350,6 +350,27 @@ fn runtime_manifest_path(args : Array[String]) -> Result[String, String] {
 }
 
 ///|
+fn runtime_has_flag(args : Array[String], flag : String) -> Bool {
+  for arg in args {
+    if arg == flag {
+      return true
+    }
+  }
+  false
+}
+
+///|
+fn runtime_bridge_mode_from_args(
+  args : Array[String],
+) -> @runtime_core.NativeBridgeSchedulerMode {
+  if runtime_has_flag(args, "--async-bridge") {
+    NativeBridgeAsyncCapable
+  } else {
+    NativeBridgeSyncOnly
+  }
+}
+
+///|
 fn runtime_ok(output : String) -> RuntimeCliResult {
   { exit_code: 0, output }
 }
@@ -369,7 +390,7 @@ fn runtime_help() -> String {
     #|  lepusa-runtime run --manifest <lepusa/runtime.json>
     #|  lepusa-runtime launch --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
-    #|  lepusa-runtime launch-session --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime launch-session [--async-bridge] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>

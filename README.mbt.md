@@ -123,6 +123,7 @@ moon run cmd/main --target native -- plan
 moon run cmd/main --target native -- manifest
 moon run cmd/main --target native -- native-plan macos
 moon run cmd/main --target native -- launch-session linux
+moon run cmd/main --target native -- launch-session linux --async-bridge
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
 moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
 moon run cmd/main --target native -- bridge
@@ -145,6 +146,7 @@ moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-a
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bootstrap --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- launch-session --async-bridge --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- asset lepusa://packaged/main/index.html --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- lifecycle app-started --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-task main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -165,6 +167,12 @@ WebView2 on Windows, and WebKitGTK on Linux.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
+
+`lepusa launch-session` and `lepusa-runtime launch-session` emit native-loop
+handoff JSON for WebViews, protocol assets, lifecycle actions, service
+supervision, and bridge scheduling. Passing `--async-bridge` marks the bridge
+scheduler as async-capable for platform loops that wire deferred command
+completion; it does not change `run` or `launch` behavior.
 
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin

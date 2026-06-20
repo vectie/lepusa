@@ -148,6 +148,11 @@ backend-provided `globalThis.__lepusaInvoke(request)` hook, and exposes
 namespace helpers for those granted routes. This bridge is framework-neutral and
 can be used from Rabbita, React, Vue, Svelte, or plain JavaScript.
 
+Native launch-session JSON carries bridge scheduler metadata. Sync-only mode is
+the conservative default, while `--async-bridge` marks the session as
+async-capable for platform loops that schedule deferred command tasks and later
+run the generated callback script.
+
 Command rules:
 
 - JSON schema generated from MoonBit `ToJson`/`FromJson` types where possible.

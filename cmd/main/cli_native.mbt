@@ -63,7 +63,12 @@ async fn render_launch_session_async(args : Array[String]) -> CliResult {
       match project_runtime_host(args) {
         Ok(host) =>
           match native_runtime_for_target(target, host) {
-            Ok(runtime) => render_native_launch_session(target, runtime)
+            Ok(runtime) =>
+              render_native_launch_session(
+                target,
+                runtime,
+                bridge_mode=bridge_mode_from_args(args),
+              )
             Err(problems) =>
               fail(render_problems("Lepusa launch session", problems))
           }
@@ -290,26 +295,39 @@ fn render_native_run_summary(
 fn render_native_launch_session(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> CliResult {
   match target {
     MacOS =>
       match @macos_backend.run(runtime) {
-        Ok(result) => ok(result.plan().launch_session().to_json() + "\n")
+        Ok(result) =>
+          ok(result.plan().launch_session(bridge_mode~).to_json() + "\n")
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
     Windows =>
       match @windows_backend.run(runtime) {
-        Ok(result) => ok(result.launch_session().to_json() + "\n")
+        Ok(result) => ok(result.launch_session(bridge_mode~).to_json() + "\n")
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
     Linux =>
       match @linux_backend.run(runtime) {
-        Ok(result) => ok(result.launch_session().to_json() + "\n")
+        Ok(result) => ok(result.launch_session(bridge_mode~).to_json() + "\n")
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
+  }
+}
+
+///|
+fn bridge_mode_from_args(
+  args : Array[String],
+) -> @runtime.NativeBridgeSchedulerMode {
+  if has_flag(args, "--async-bridge") {
+    NativeBridgeAsyncCapable
+  } else {
+    NativeBridgeSyncOnly
   }
 }
 

@@ -113,6 +113,11 @@ async test "launch session prints source native handoff json" {
   assert_true(result.output.contains("\"mode\":\"sync-only\""))
   assert_true(result.output.contains("\"loadUrl\""))
   assert_true(result.output.contains("__lepusaInvoke"))
+  let async_bridge = render_cli_async([
+    "launch-session", "linux", "--async-bridge",
+  ])
+  assert_eq(async_bridge.exit_code, 0)
+  assert_true(async_bridge.output.contains("\"mode\":\"async-capable\""))
 }
 
 ///|

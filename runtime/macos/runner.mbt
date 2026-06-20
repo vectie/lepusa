@@ -241,11 +241,12 @@ pub fn MacOSRunPlan::service_supervisor_plan(
 ///|
 pub fn MacOSRunPlan::launch_session(
   self : MacOSRunPlan,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeLaunchSession {
   @runtime.NativeLaunchSession::new(
     webviews=self.webviews(),
     execution=self.execution(),
-    bridge_scheduler=self.bridge().scheduler(),
+    bridge_scheduler=self.bridge().scheduler(mode=bridge_mode),
     service_supervisor=self.service_supervisor_plan(),
   )
 }
