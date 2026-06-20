@@ -5,6 +5,12 @@ priv struct CatalogPlugin {
 }
 
 ///|
+priv struct CatalogRegistration {
+  name : String
+  register : (@lepusa.CommandRegistry, Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+}
+
+///|
 pub fn plugin(name : String) -> @lepusa.Plugin? {
   for entry in catalog_plugins() {
     if entry.name == name {
@@ -28,18 +34,17 @@ pub fn register_with_filesystem_scopes(
   plugin_name : String,
   scopes~ : Array[@lepusa.FileSystemScope],
 ) -> @lepusa.CommandRegistry {
-  match plugin_name {
-    "log" => @log.register(registry)
-    "store" => @store.register(registry)
-    "fs" =>
-      @fs_plugin.register(registry, policy=@fs_plugin.FsPolicy::new(scopes~))
-    _ => registry
+  for entry in catalog_registrations() {
+    if entry.name == plugin_name {
+      return (entry.register)(registry, scopes)
+    }
   }
+  registry
 }
 
 ///|
 pub fn registered_plugin_names() -> Array[String] {
-  ["fs", "log", "store"]
+  catalog_registrations().map(fn(entry) { entry.name })
 }
 
 ///|
@@ -68,5 +73,19 @@ fn catalog_plugins() -> Array[CatalogPlugin] {
     { name: "tray", load: fn() { @tray.plugin() } },
     { name: "updater", load: fn() { @updater.plugin() } },
     { name: "windowState", load: fn() { @window_state.plugin() } },
+  ]
+}
+
+///|
+fn catalog_registrations() -> Array[CatalogRegistration] {
+  [
+    {
+      name: "fs",
+      register: fn(registry, scopes) {
+        @fs_plugin.register(registry, policy=@fs_plugin.FsPolicy::new(scopes~))
+      },
+    },
+    { name: "log", register: fn(registry, _) { @log.register(registry) } },
+    { name: "store", register: fn(registry, _) { @store.register(registry) } },
   ]
 }

@@ -109,3 +109,13 @@ test "catalog registers pure moonbit handlers" {
   assert_true(names.contains("log"))
   assert_true(names.contains("store"))
 }
+
+///|
+test "catalog registered plugin names resolve and install handlers" {
+  for name in registered_plugin_names() {
+    assert_true(plugin_names().contains(name))
+    assert_true(plugin(name) is Some(_))
+    let registry = register(@lepusa.CommandRegistry::new(), name)
+    assert_true(registry.routes().length() > 0)
+  }
+}
