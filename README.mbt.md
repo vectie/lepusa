@@ -590,9 +590,11 @@ drive lifecycle/startup work.
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
 package exposes `runtime(host)` and `detect_runtime(host)` helpers that return
-the same `NativeRuntime` facade. Platform packages also expose service executor
-helpers. macOS, Linux, and Windows start tracked sidecar processes, poll HTTP
-readiness URLs, and stop tracked processes through platform-owned native hooks.
+the same `NativeRuntime` facade, plus `launch_capability()` declarations for
+WebView creation and async bridge drain support. Platform packages also expose
+service executor helpers. macOS, Linux, and Windows start tracked sidecar
+processes, poll HTTP readiness URLs, and stop tracked processes through
+platform-owned native hooks.
 
 `Source::localhost(...)` supports gateway-style apps that load a local HTTP
 service and optionally declare the sidecar command plus readiness URL metadata.
@@ -611,16 +613,17 @@ registered official plugin routes into
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
 into a target native launch session; bundles with async bridge routes stay
-unverified until the selected backend advertises async-capable dispatch.
+unverified until the selected backend launch capability advertises async bridge
+drain/evaluate support.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
 macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
 package owns WebKitGTK source and packaged-window loops when GTK3 and
 WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
 callback for MoonBit-resolved runtime, virtual, local, and packaged assets.
-Windows source and packaged runs prepare typed WebView2 boot plans and pass
-through the platform-owned native launch ABI, which still reports unsupported
-until the WebView2 creation loop lands.
+Windows source and packaged runs prepare typed WebView2 boot plans and declare
+the missing WebView2 creation loop through the same target launch-capability
+gate used by `doctor`, `verify --strict`, and platform launch attempts.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap
@@ -686,7 +689,8 @@ The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
 responses. Native launch paths refuse async bridge routes with an explicit
-scheduler requirement until a backend event loop can dispatch them without
+scheduler requirement until a backend launch capability declares that its event
+loop can drain queued completions and evaluate the resulting scripts without
 blocking the WebView callback. Launch-session JSON also carries
 `asyncBridgeExecutor`, which names `NativeRuntime::bridge_async_dispatch_callback`
 and its UTF-8 bridge-message to JavaScript-callback-script byte contract. The

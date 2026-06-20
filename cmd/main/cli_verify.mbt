@@ -196,24 +196,19 @@ fn verify_release_launch_gate(
   if !strict {
     return true
   }
-  match target {
-    Windows => {
-      lines.push(
-        "[fail] strict: windows launch requires the WebView2 creation loop\n",
-      )
+  match
+    session.launch_blocker_with_capability(
+      verify_target_display_name(target),
+      native_launch_capability_for_target(target),
+    ) {
+    Some(problem) => {
+      lines.push("[fail] strict: \{problem}\n")
       false
     }
-    MacOS | Linux =>
-      match session.launch_blocker(verify_target_display_name(target)) {
-        Some(problem) => {
-          lines.push("[fail] strict: \{problem}\n")
-          false
-        }
-        None => {
-          lines.push("[ok] strict: native launch gate passed\n")
-          true
-        }
-      }
+    None => {
+      lines.push("[ok] strict: native launch gate passed\n")
+      true
+    }
   }
 }
 

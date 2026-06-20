@@ -302,6 +302,20 @@ pub fn NativeExecutionStep::operation_jsons(Self) -> Array[String]
 pub fn NativeExecutionStep::operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeExecutionStep::to_json(Self) -> String
 
+pub struct NativeLaunchCapability {
+  webview_creation : Bool
+  async_bridge_drain : Bool
+  webview_creation_message : String
+} derive(Eq, @debug.Debug)
+pub fn NativeLaunchCapability::async_bridge_drain(Self) -> Bool
+pub fn NativeLaunchCapability::bridge_mode(Self) -> NativeBridgeSchedulerMode
+pub fn NativeLaunchCapability::can_launch(Self, NativeBridgeScheduler) -> Bool
+pub fn NativeLaunchCapability::launch_blocker(Self, String, NativeBridgeScheduler) -> String?
+pub fn NativeLaunchCapability::new(webview_creation~ : Bool, async_bridge_drain~ : Bool, webview_creation_message? : String) -> Self
+pub fn NativeLaunchCapability::to_json(Self) -> String
+pub fn NativeLaunchCapability::webview_creation(Self) -> Bool
+pub fn NativeLaunchCapability::webview_creation_message(Self) -> String
+
 pub struct NativeLaunchPlan {
   backend_name : String
   webview_engine : String
@@ -323,10 +337,12 @@ pub fn NativeLaunchSession::async_bridge_executor(Self) -> NativeBridgeAsyncExec
 pub fn NativeLaunchSession::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
 pub fn NativeLaunchSession::can_launch(Self) -> Bool
+pub fn NativeLaunchSession::can_launch_with_capability(Self, NativeLaunchCapability) -> Bool
 pub fn NativeLaunchSession::execution(Self) -> NativeExecutionPlan
 pub fn NativeLaunchSession::first_launch_context(Self) -> Result[NativeWebViewLaunchContext, String]
 pub fn NativeLaunchSession::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativeLaunchSession::launch_blocker(Self, String) -> String?
+pub fn NativeLaunchSession::launch_blocker_with_capability(Self, String, NativeLaunchCapability) -> String?
 pub fn NativeLaunchSession::new(webviews~ : Array[NativeWebViewPlan], execution~ : NativeExecutionPlan, bridge_scheduler~ : NativeBridgeScheduler, service_supervisor~ : NativeServiceSupervisorPlan) -> Self
 pub fn NativeLaunchSession::service_supervisor(Self) -> NativeServiceSupervisorPlan
 pub fn NativeLaunchSession::to_json(Self) -> String

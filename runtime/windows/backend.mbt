@@ -27,6 +27,15 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
 }
 
 ///|
+pub fn launch_capability() -> @runtime.NativeLaunchCapability {
+  @runtime.NativeLaunchCapability::new(
+    webview_creation=false,
+    async_bridge_drain=false,
+    webview_creation_message="Windows WebView2 creation loop is unavailable",
+  )
+}
+
+///|
 pub fn runtime(
   host : @runtime.RuntimeHost,
 ) -> Result[@runtime.NativeRuntime, Array[String]] {

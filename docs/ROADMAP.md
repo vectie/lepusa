@@ -100,8 +100,10 @@
   plus bundled bridge-loop callback bundles bind queue-backed handoff and async
   drain callbacks to that launched window for platform runners;
   WebView launch contexts now carry the byte packet plus scheduler, executor,
-  and bridge-loop contracts into platform runner code; open-window runners now
-  pass the queue-backed handoff callback into native message handlers; native
+  and bridge-loop contracts into platform runner code; platform packages now
+  declare `NativeLaunchCapability` for WebView creation and async bridge
+  drain/evaluate support, and open-window runners pass the queue-backed handoff
+  callback into native message handlers only after that gate passes; native
   async bridge drain/evaluate scheduling in the C/WebView loops and the Windows
   WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,

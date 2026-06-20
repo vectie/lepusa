@@ -29,15 +29,43 @@ fn render_runtime_launch_session_text(
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) =>
       runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
-    Ok(manifest) =>
+    Ok(manifest) => {
+      let target_bridge_mode = runtime_bridge_mode_for_target(
+        manifest.target(),
+        bridge_mode,
+      )
       match manifest.target() {
-        "macos" => render_macos_launch_session(manifest, bridge_mode~)
-        "linux" => render_linux_launch_session(manifest, bridge_mode~)
-        "windows" => render_windows_launch_session(manifest, bridge_mode~)
+        "macos" =>
+          render_macos_launch_session(manifest, bridge_mode=target_bridge_mode)
+        "linux" =>
+          render_linux_launch_session(manifest, bridge_mode=target_bridge_mode)
+        "windows" =>
+          render_windows_launch_session(
+            manifest,
+            bridge_mode=target_bridge_mode,
+          )
         target =>
           runtime_fail(
             "Lepusa runtime launch-session\n[fail] native launch-session requires target macos, linux, or windows: \{target}\n",
           )
+      }
+    }
+  }
+}
+
+///|
+fn runtime_bridge_mode_for_target(
+  target : String,
+  requested : @runtime_core.NativeBridgeSchedulerMode,
+) -> @runtime_core.NativeBridgeSchedulerMode {
+  match requested {
+    NativeBridgeSyncOnly => NativeBridgeSyncOnly
+    NativeBridgeAsyncCapable =>
+      match target {
+        "macos" => @macos.launch_capability().bridge_mode()
+        "linux" => @linux.launch_capability().bridge_mode()
+        "windows" => @windows.launch_capability().bridge_mode()
+        _ => NativeBridgeSyncOnly
       }
   }
 }

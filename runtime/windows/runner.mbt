@@ -206,7 +206,7 @@ fn windows_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
-  match plan.bridge_scheduler().launch_blocker("Windows") {
+  match launch_capability().launch_blocker("Windows", plan.bridge_scheduler()) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
@@ -240,7 +240,7 @@ fn windows_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
-  match plan.bridge_scheduler().launch_blocker("Windows") {
+  match launch_capability().launch_blocker("Windows", plan.bridge_scheduler()) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }

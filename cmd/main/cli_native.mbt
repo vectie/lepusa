@@ -67,7 +67,7 @@ async fn render_launch_session_async(args : Array[String]) -> CliResult {
               render_native_launch_session(
                 target,
                 runtime,
-                bridge_mode=bridge_mode_from_args(args),
+                bridge_mode=bridge_mode_from_args(args, target),
               )
             Err(problems) =>
               fail(render_problems("Lepusa launch session", problems))
@@ -137,10 +137,10 @@ fn doctor_native_launch_blocker(
   target : @lepusa.BundleTarget,
   session : @runtime.NativeLaunchSession,
 ) -> String? {
-  match target {
-    Windows => Some("Windows WebView2 creation loop is unavailable")
-    MacOS | Linux => session.launch_blocker(verify_target_display_name(target))
-  }
+  session.launch_blocker_with_capability(
+    verify_target_display_name(target),
+    native_launch_capability_for_target(target),
+  )
 }
 
 ///|
@@ -373,11 +373,23 @@ fn render_native_launch_session(
 ///|
 fn bridge_mode_from_args(
   args : Array[String],
+  target : @lepusa.BundleTarget,
 ) -> @runtime.NativeBridgeSchedulerMode {
   if has_flag(args, "--async-bridge") {
-    NativeBridgeAsyncCapable
+    native_launch_capability_for_target(target).bridge_mode()
   } else {
     NativeBridgeSyncOnly
+  }
+}
+
+///|
+fn native_launch_capability_for_target(
+  target : @lepusa.BundleTarget,
+) -> @runtime.NativeLaunchCapability {
+  match target {
+    MacOS => @macos_backend.launch_capability()
+    Windows => @windows_backend.launch_capability()
+    Linux => @linux_backend.launch_capability()
   }
 }
 

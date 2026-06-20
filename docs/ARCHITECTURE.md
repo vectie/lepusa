@@ -503,6 +503,10 @@ for async commands. `MacOSOpenWindow` reports the shared
 `RunUnsupported` status when the plan contains async command routes, so the
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
+The platform packages expose `NativeLaunchCapability` so WebView creation and
+async bridge drain/evaluate support are declared in one place and consumed by
+`doctor`, `verify --strict`, launch-session rendering, and open-window launch
+paths.
 `lepusa run macos --launch` is the first protocol-complete GUI entry point. The
 Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge
@@ -514,8 +518,8 @@ virtual, local, and packaged assets, so Linux packaged manifests can open their
 first `lepusa://` WebView through `launch_bundled(manifest)`. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
-routes launch attempts through a package-owned native ABI. That ABI currently
-returns the shared unsupported status until the WebView2 COM creation path
+routes launch attempts through the same capability gate. Windows currently
+declares the WebView2 creation loop unavailable until the COM creation path
 lands.
 
 ## Bundling

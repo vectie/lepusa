@@ -700,6 +700,44 @@ test "native runner plans expose async bridge blockers" {
 }
 
 ///|
+test "native launch capability gates webview and async bridge loops" {
+  let sync_scheduler = NativeBridgeScheduler::new(sync_routes=["core.invoke"], async_routes=[])
+  let async_scheduler = NativeBridgeScheduler::new(sync_routes=[], async_routes=[
+    "fs.readText",
+  ])
+  let sync_only = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=false,
+  )
+  assert_true(sync_only.webview_creation())
+  assert_false(sync_only.async_bridge_drain())
+  assert_true(sync_only.bridge_mode() is NativeBridgeSyncOnly)
+  assert_true(sync_only.launch_blocker("Test", sync_scheduler) is None)
+  assert_true(
+    sync_only
+    .launch_blocker("Test", async_scheduler)
+    .unwrap()
+    .contains("1 async command route"),
+  )
+  let unavailable = NativeLaunchCapability::new(
+    webview_creation=false,
+    async_bridge_drain=false,
+    webview_creation_message="Test WebView loop missing",
+  )
+  assert_eq(
+    unavailable.launch_blocker("Test", sync_scheduler).unwrap(),
+    "Test WebView loop missing",
+  )
+  let async_capable = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=true,
+  )
+  assert_true(async_capable.bridge_mode() is NativeBridgeAsyncCapable)
+  assert_true(async_capable.launch_blocker("Test", async_scheduler) is None)
+  assert_true(async_capable.to_json().contains("\"asyncBridgeDrain\":true"))
+}
+
+///|
 test "native asset load urls decode json envelopes" {
   let virtual_json =
     #|{

@@ -318,7 +318,8 @@ fn run_plan(
     MacOSDryRun => Ok({ plan, status: RunPrepared })
     MacOSOpenWindow => {
       let session = plan.launch_session()
-      match session.launch_blocker("macOS") {
+      match
+        session.launch_blocker_with_capability("macOS", launch_capability()) {
         Some(message) => return Ok({ plan, status: RunUnsupported(message) })
         None => ()
       }

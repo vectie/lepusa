@@ -192,7 +192,7 @@ fn linux_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
-  match plan.bridge_scheduler().launch_blocker("Linux") {
+  match launch_capability().launch_blocker("Linux", plan.bridge_scheduler()) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
@@ -230,7 +230,7 @@ fn linux_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
-  match plan.bridge_scheduler().launch_blocker("Linux") {
+  match launch_capability().launch_blocker("Linux", plan.bridge_scheduler()) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
