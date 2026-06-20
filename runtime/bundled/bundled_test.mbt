@@ -248,6 +248,23 @@ test "bundled runtime manifest resolves protocol assets" {
       )
       assert_true(virtual_asset.contains("\"mimeType\":\"text/html\""))
       assert_true(virtual_asset.contains("<main></main>"))
+      let virtual_packet = @utf8.decode(
+        runtime.resolve_asset_protocol_packet_bytes(
+          @utf8.encode("lepusa://rabbita/main/index.html?v=1#top"),
+        ),
+      ) catch {
+        _ => abort("unexpected invalid bundled asset packet")
+      }
+      assert_eq(virtual_packet, "ok\nvirtual\ntext/html\n<main></main>")
+      match runtime.webviews() {
+        Ok(webviews) =>
+          match runtime.initial_load_url(webviews[0]) {
+            Ok(load_url) =>
+              assert_eq(load_url, "lepusa://rabbita/main/index.html")
+            Err(problem) => abort(problem)
+          }
+        Err(problem) => abort(problem)
+      }
       let local_asset = runtime.resolve_asset_json(
         "lepusa://local/static/app.css",
       )
@@ -429,6 +446,15 @@ async test "bundled runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bundled sync bridge failure")
       }
+      let sync_script = @utf8.decode(
+        runtime.dispatch_bridge_script_bytes(@utf8.encode(sync_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled bridge script")
+      }
+      assert_true(
+        sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(sync_script.contains("\"id\":\"log\""))
       let set_message = "{\"id\":\"set\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"set\",\"payload\":\"{\\\"key\\\":\\\"theme\\\",\\\"value\\\":\\\"dark\\\"}\"}"
       let get_message = "{\"id\":\"get\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"get\",\"payload\":\"{\\\"key\\\":\\\"theme\\\"}\"}"
       match runtime.dispatch_bridge_message(set_message) {

@@ -126,6 +126,7 @@ pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
+pub fn NativeRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeRuntime::dispatch_json(Self, String) -> String
 pub async fn NativeRuntime::dispatch_json_async(Self, String) -> String
 pub fn NativeRuntime::host(Self) -> RuntimeHost
@@ -134,6 +135,7 @@ pub fn NativeRuntime::lifecycle_step_json(Self, @lepusa.LifecycleEvent) -> Resul
 pub fn NativeRuntime::new(NativeBackend, RuntimeHost) -> Result[Self, Array[String]]
 pub fn NativeRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeMessage, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
+pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
 pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 pub fn NativeRuntime::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan

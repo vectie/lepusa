@@ -87,6 +87,18 @@ pub fn BundledRuntime::dispatch_bridge_message_sync(
 }
 
 ///|
+pub fn BundledRuntime::dispatch_bridge_script_bytes(
+  self : BundledRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match self.dispatch_bridge_message_sync(input) {
+    Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
 pub async fn BundledRuntimeManifest::dispatch_bridge_message(
   self : BundledRuntimeManifest,
   message : String,

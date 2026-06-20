@@ -42,6 +42,15 @@ pub fn NativeRuntime::initial_load_url(
 }
 
 ///|
+pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(
+  self : NativeRuntime,
+  url : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(url) catch { _ => "" }
+  native_asset_protocol_packet_from_json(self.resolve_asset_json(input))
+}
+
+///|
 pub fn native_asset_load_url_from_json(json : String) -> Result[String, String] {
   try @json.parse(json) catch {
     error => Err("invalid asset response: \{error}")

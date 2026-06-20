@@ -109,6 +109,7 @@ pub struct BundledRuntime {
 }
 pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
+pub fn BundledRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
 pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
@@ -132,6 +133,7 @@ pub fn BundledRuntimeManifest::dispatch_bridge_message_sync(Self, String, window
 pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
 pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
+pub fn BundledRuntimeManifest::initial_load_url(Self, BundledWebView) -> Result[String, String]
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String
 pub fn BundledRuntimeManifest::lifecycle_plans(Self) -> Result[Array[BundledLifecyclePlan], String]
 pub fn BundledRuntimeManifest::local_service_jsons(Self) -> Array[String]
@@ -142,6 +144,7 @@ pub fn BundledRuntimeManifest::registered_async_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
+pub fn BundledRuntimeManifest::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
 pub fn BundledRuntimeManifest::resource_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::run(Self, mode? : BundledRunMode) -> Result[BundledRunResult, String]
 pub fn BundledRuntimeManifest::run_plan(Self) -> Result[BundledRunPlan, String]

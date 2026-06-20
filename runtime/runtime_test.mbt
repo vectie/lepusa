@@ -1285,6 +1285,23 @@ async test "native runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bridge sync dispatch failure")
       }
+      let sync_script = @utf8.decode(
+        runtime.dispatch_bridge_script_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid bridge script bytes")
+      }
+      assert_true(
+        sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(sync_script.contains("command requires async dispatch"))
+      let asset_packet = @utf8.decode(
+        runtime.resolve_asset_protocol_packet_bytes(
+          @utf8.encode("lepusa://inline/main/index.html"),
+        ),
+      ) catch {
+        _ => abort("unexpected invalid asset packet bytes")
+      }
+      assert_eq(asset_packet, "ok\nvirtual\ntext/html\n<main>runtime</main>")
       match
         runtime.dispatch_bridge_message(
           "{\"id\":\"10\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"false\"}",

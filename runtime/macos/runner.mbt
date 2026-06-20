@@ -100,7 +100,7 @@ fn macos_webview_plan_from_spec(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[MacOSWebViewPlan, String] {
-  match initial_load_url(runtime, spec) {
+  match runtime.initial_load_url(spec) {
     Ok(load_url) =>
       Ok({
         label: spec.label(),
@@ -173,7 +173,7 @@ fn macos_webview_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
 ) -> Result[MacOSWebViewPlan, String] {
-  match bundled_initial_load_url(manifest, webview) {
+  match manifest.initial_load_url(webview) {
     Err(problem) => Err(problem)
     Ok(load_url) =>
       Ok({
@@ -631,14 +631,6 @@ pub fn MacOSRunResult::status(self : MacOSRunResult) -> @lepusa.RunStatus {
 }
 
 ///|
-fn initial_load_url(
-  runtime : @runtime.NativeRuntime,
-  spec : @runtime.RuntimeWebViewSpec,
-) -> Result[String, String] {
-  runtime.initial_load_url(spec)
-}
-
-///|
 fn run_plan(
   plan : MacOSRunPlan,
   mode~ : MacOSRunMode,
@@ -693,23 +685,12 @@ fn async_bridge_launch_message(plan : MacOSRunPlan) -> String {
 
 ///|
 fn runtime_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(message : Bytes) -> Bytes {
-    let input = @utf8.decode(message) catch { _ => "" }
-    match runtime.dispatch_bridge_message_sync(input) {
-      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
-      Err(_) => @utf8.encode("")
-    }
-  }
+  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
 }
 
 ///|
 fn runtime_asset_resolver(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(url : Bytes) -> Bytes {
-    let input = @utf8.decode(url) catch { _ => "" }
-    @runtime.native_asset_protocol_packet_from_json(
-      runtime.resolve_asset_json(input),
-    )
-  }
+  fn(url : Bytes) { runtime.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|
@@ -717,40 +698,14 @@ fn bundled_dispatch(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {
   let runtime = @bundled.BundledRuntime::new(manifest)
-  fn(message : Bytes) -> Bytes {
-    let input = @utf8.decode(message) catch { _ => "" }
-    match runtime.dispatch_bridge_message_sync(input) {
-      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
-      Err(_) => @utf8.encode("")
-    }
-  }
+  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
 }
 
 ///|
 fn bundled_asset_resolver(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {
-  fn(url : Bytes) -> Bytes {
-    let input = @utf8.decode(url) catch { _ => "" }
-    @runtime.native_asset_protocol_packet_from_json(
-      manifest.resolve_asset_json(input),
-    )
-  }
-}
-
-///|
-fn bundled_initial_load_url(
-  manifest : @bundled.BundledRuntimeManifest,
-  webview : @bundled.BundledWebView,
-) -> Result[String, String] {
-  if @runtime.native_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
-    @runtime.native_direct_load_url(webview.url()) {
-    Ok(webview.url())
-  } else {
-    @runtime.native_asset_load_url_from_json(
-      manifest.resolve_asset_json(webview.url()),
-    )
-  }
+  fn(url : Bytes) { manifest.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|

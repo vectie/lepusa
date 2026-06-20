@@ -404,7 +404,7 @@ fn windows_webview_plan_from_spec(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[WindowsWebViewPlan, String] {
-  match windows_initial_load_url(runtime, spec) {
+  match runtime.initial_load_url(spec) {
     Ok(load_url) =>
       Ok({
         label: spec.label(),
@@ -430,7 +430,7 @@ fn windows_webview_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
 ) -> Result[WindowsWebViewPlan, String] {
-  match windows_bundled_initial_load_url(manifest, webview) {
+  match manifest.initial_load_url(webview) {
     Err(problem) => Err(problem)
     Ok(load_url) =>
       Ok({
@@ -448,29 +448,6 @@ fn windows_webview_plan_from_bundled(
         height: webview.height(),
         resizable: webview.resizable(),
       })
-  }
-}
-
-///|
-fn windows_initial_load_url(
-  runtime : @runtime.NativeRuntime,
-  spec : @runtime.RuntimeWebViewSpec,
-) -> Result[String, String] {
-  runtime.initial_load_url(spec)
-}
-
-///|
-fn windows_bundled_initial_load_url(
-  manifest : @bundled.BundledRuntimeManifest,
-  webview : @bundled.BundledWebView,
-) -> Result[String, String] {
-  if @runtime.native_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
-    @runtime.native_direct_load_url(webview.url()) {
-    Ok(webview.url())
-  } else {
-    @runtime.native_asset_load_url_from_json(
-      manifest.resolve_asset_json(webview.url()),
-    )
   }
 }
 
@@ -545,13 +522,7 @@ fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
 
 ///|
 fn windows_dispatch(runtime : @runtime.NativeRuntime) -> (Bytes) -> Bytes {
-  fn(message : Bytes) -> Bytes {
-    let input = @utf8.decode(message) catch { _ => "" }
-    match runtime.dispatch_bridge_message_sync(input) {
-      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
-      Err(_) => @utf8.encode("")
-    }
-  }
+  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
 }
 
 ///|
@@ -559,37 +530,21 @@ fn windows_bundled_dispatch(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {
   let runtime = @bundled.BundledRuntime::new(manifest)
-  fn(message : Bytes) -> Bytes {
-    let input = @utf8.decode(message) catch { _ => "" }
-    match runtime.dispatch_bridge_message_sync(input) {
-      Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
-      Err(_) => @utf8.encode("")
-    }
-  }
+  fn(message : Bytes) { runtime.dispatch_bridge_script_bytes(message) }
 }
 
 ///|
 fn windows_runtime_asset_resolver(
   runtime : @runtime.NativeRuntime,
 ) -> (Bytes) -> Bytes {
-  fn(url : Bytes) -> Bytes {
-    let input = @utf8.decode(url) catch { _ => "" }
-    @runtime.native_asset_protocol_packet_from_json(
-      runtime.resolve_asset_json(input),
-    )
-  }
+  fn(url : Bytes) { runtime.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|
 fn windows_bundled_asset_resolver(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {
-  fn(url : Bytes) -> Bytes {
-    let input = @utf8.decode(url) catch { _ => "" }
-    @runtime.native_asset_protocol_packet_from_json(
-      manifest.resolve_asset_json(input),
-    )
-  }
+  fn(url : Bytes) { manifest.resolve_asset_protocol_packet_bytes(url) }
 }
 
 ///|

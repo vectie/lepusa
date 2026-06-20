@@ -56,6 +56,18 @@ pub fn NativeRuntime::dispatch_bridge_message_sync(
 }
 
 ///|
+pub fn NativeRuntime::dispatch_bridge_script_bytes(
+  self : NativeRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match self.dispatch_bridge_message_sync(input) {
+    Ok(dispatch) => @utf8.encode(dispatch.evaluation_script())
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
 pub fn NativeRuntime::bridge_response_hook(
   self : NativeRuntime,
   window_label? : String = "",
