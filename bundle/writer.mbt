@@ -12,6 +12,7 @@ pub(all) enum BundleWriteCheckKind {
   PlannedResourceCheck
   RuntimeExecutableCheck
   RuntimeManifestCheck
+  InitialContentCheck
   NativeLaunchSessionCheck
 } derive(Debug, Eq)
 
@@ -92,6 +93,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
     PlannedResourceCheck => "planned-resource"
     RuntimeExecutableCheck => "runtime-executable"
     RuntimeManifestCheck => "runtime-manifest"
+    InitialContentCheck => "initial-content"
     NativeLaunchSessionCheck => "native-launch-session"
   }
 }
@@ -177,6 +179,7 @@ async fn verify_written_plan(
     checks.push(verify_planned_file(path, file))
     if file.path().has_suffix("lepusa/runtime.json") {
       checks.push(verify_runtime_manifest(path))
+      checks.push(verify_initial_content(path))
       checks.push(verify_native_launch_session(path))
     }
   }

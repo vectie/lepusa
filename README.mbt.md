@@ -661,9 +661,10 @@ a launcher fallback to `lepusa-runtime` on `PATH` until Lepusa owns
 cross-compiled runtime artifacts.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
 into a target native launch session that passes the selected backend launch
-capability. Windows bundles and bundles with async bridge routes stay
-unverified until the backend advertises WebView creation and async bridge
-drain/evaluate support.
+capability, and that resolvable initial WebView content is present and
+nonblank. Windows bundles and bundles with async bridge routes stay unverified
+until the backend advertises WebView creation and async bridge drain/evaluate
+support.
 Generated desktop launcher stubs call
 `lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
 macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux

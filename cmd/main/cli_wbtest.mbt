@@ -1627,7 +1627,7 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("target: linux"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
-  assert_true(result.output.contains("verification-checks: 5"))
+  assert_true(result.output.contains("verification-checks: 6"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-file"))
   assert_true(result.output.contains("planned file content matches"))
@@ -1636,6 +1636,8 @@ async test "bundle write materializes planned files" {
   assert_true(
     result.output.contains("runtime manifest parses with webview data"),
   )
+  assert_true(result.output.contains("[ok] verify: initial-content"))
+  assert_true(result.output.contains("initial content checked=1 skipped=0"))
   assert_true(result.output.contains("[ok] verify: native-launch-session"))
   assert_true(result.output.contains("native launch session prepares"))
   assert_true(result.output.contains("signing-prerequisites: 2"))
@@ -1674,7 +1676,7 @@ async test "bundle write embeds host runtime executable when compatible" {
     _ => false
   }
   if @macos_backend.available() && source_exists {
-    assert_true(result.output.contains("verification-checks: 6"))
+    assert_true(result.output.contains("verification-checks: 7"))
     assert_true(result.output.contains("files: 4"))
     assert_true(result.output.contains("[ok] verify: runtime-executable"))
     assert_true(result.output.contains("runtime executable is bundled"))
@@ -1734,6 +1736,43 @@ async test "bundle write fails when native launch session is blocked" {
 }
 
 ///|
+async test "bundle write rejects blank initial webview content" {
+  let stamp = @async.now().to_int()
+  let root = "/tmp/lepusa-blank-bundle-\{stamp}"
+  let out = "/tmp/lepusa-blank-bundle-out-\{stamp}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/lepusa.json",
+    (
+      #|{
+      #|  "identifier": "dev.local.blankbundle",
+      #|  "productName": "Blank Bundle",
+      #|  "version": "0.1.0",
+      #|  "window": {
+      #|    "label": "main",
+      #|    "title": "Blank Bundle",
+      #|    "source": { "html": "   " }
+      #|  }
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "bundle-write",
+    "linux",
+    out,
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("verified: false"))
+  assert_true(result.output.contains("[fail] verify: initial-content"))
+  assert_true(result.output.contains("window main has blank virtual asset"))
+  assert_true(@fs.exists(out + "/blank-bundle/lepusa/runtime.json"))
+}
+
+///|
 async test "bundle write materializes planned resources" {
   let stamp = @async.now().to_int()
   let root = "/tmp/lepusa-resource-project-\{stamp}"
@@ -1771,8 +1810,9 @@ async test "bundle write materializes planned resources" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
-  assert_true(result.output.contains("verification-checks: 6"))
+  assert_true(result.output.contains("verification-checks: 7"))
   assert_true(result.output.contains("verified: true"))
+  assert_true(result.output.contains("[ok] verify: initial-content"))
   assert_true(result.output.contains("[ok] verify: planned-resource"))
   assert_true(result.output.contains("resource exists"))
   let icon_path = bundle_root + "/resource-app/resource-app.png"
@@ -1823,6 +1863,8 @@ async test "bundle write materializes packaged asset directories" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
+  assert_true(result.output.contains("[ok] verify: initial-content"))
+  assert_true(result.output.contains("initial content checked=1 skipped=0"))
   let asset_root = bundle_root + "/packaged-app/lepusa/assets/main"
   assert_true(@fs.exists(asset_root + "/index.html"))
   assert_true(@fs.exists(asset_root + "/css/app.css"))
