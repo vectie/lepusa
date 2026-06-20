@@ -409,10 +409,11 @@ backends own resolver integration, health checks, and change watching.
 validates payloads and returns deterministic runtime-owned responses; native
 backends own the actual OS dialog implementation.
 
-`@lepusa/plugins/clipboard` provides async text clipboard handlers backed by an
-in-process `ClipboardStore`, and `@lepusa/plugins/notification` provides async
-permission and show handlers backed by an in-process `NotificationCenter`.
-Native backends own system clipboard and OS notification integration.
+`@lepusa/plugins/clipboard` provides async text clipboard handlers backed by
+native system clipboard stubs for desktop runtimes, plus an in-process
+`ClipboardStore` for deterministic tests. `@lepusa/plugins/notification`
+provides async permission and show handlers backed by an in-process
+`NotificationCenter`; native backends own OS notification integration.
 
 `@lepusa/plugins/opener` declares platform-neutral URL and path opener routes:
 `opener.openUrl`, `opener.openPath`, and `opener.revealPath`. Its portable

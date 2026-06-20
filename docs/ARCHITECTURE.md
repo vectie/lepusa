@@ -685,9 +685,10 @@ declares service lookup, status, watch, change-event routes, and portable
 metadata handlers for configured endpoints.
 `@lepusa/plugins/dialog` declares message, confirm, and prompt routes, plus
 portable deterministic async handlers for runtime-owned dialogs.
-`@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare
-clipboard and notification routes and provide in-process async handlers for
-text clipboard state, notification permission, and notification show requests.
+`@lepusa/plugins/clipboard` declares clipboard routes and provides native
+system clipboard handlers for desktop runtimes plus an in-process handler for
+tests. `@lepusa/plugins/notification` declares notification routes and provides
+in-process async handlers for permission and show requests.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes
 and provides delegated process-table handlers with optional command allow-list
 validation.

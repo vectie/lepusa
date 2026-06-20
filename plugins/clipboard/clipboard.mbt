@@ -20,6 +20,52 @@ pub fn capability_for_window(
 }
 
 ///|
+#cfg(target="native")
+extern "c" fn native_available_code() -> Int = "lepusa_clipboard_available"
+
+///|
+#cfg(target="native")
+extern "c" fn native_read_text_packet() -> Bytes = "lepusa_clipboard_read_text"
+
+///|
+#cfg(target="native")
+#borrow(text)
+extern "c" fn native_write_text_code(text : Bytes) -> Int = "lepusa_clipboard_write_text"
+
+///|
+#cfg(target="native")
+extern "c" fn native_clear_code() -> Int = "lepusa_clipboard_clear"
+
+///|
+#cfg(not(target="native"))
+fn native_available_code() -> Int {
+  0
+}
+
+///|
+#cfg(not(target="native"))
+fn native_read_text_packet() -> Bytes {
+  b"err\nnative clipboard is unavailable"
+}
+
+///|
+#cfg(not(target="native"))
+fn native_write_text_code(_text : Bytes) -> Int {
+  2
+}
+
+///|
+#cfg(not(target="native"))
+fn native_clear_code() -> Int {
+  2
+}
+
+///|
+pub fn native_available() -> Bool {
+  native_available_code() == 1
+}
+
+///|
 pub struct ClipboardStore {
   values : Map[String, String]
 }
@@ -54,6 +100,11 @@ pub fn registry(
 }
 
 ///|
+pub fn native_registry() -> @lepusa.CommandRegistry {
+  register_native(@lepusa.CommandRegistry::new())
+}
+
+///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
   store? : ClipboardStore = ClipboardStore::new(),
@@ -67,6 +118,22 @@ pub fn register(
   })
   .register_async_fn("clipboard.clear", permission=Clipboard, handler=_ => {
     handle_clear(store)
+  })
+}
+
+///|
+pub fn register_native(
+  registry : @lepusa.CommandRegistry,
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_async_fn("clipboard.readText", permission=Clipboard, handler=_ => {
+    handle_native_read_text()
+  })
+  .register_async_fn("clipboard.writeText", permission=Clipboard, handler=payload => {
+    handle_native_write_text(payload)
+  })
+  .register_async_fn("clipboard.clear", permission=Clipboard, handler=_ => {
+    handle_native_clear()
   })
 }
 
@@ -116,6 +183,59 @@ async fn handle_clear(store : ClipboardStore) -> Result[String, String] {
 }
 
 ///|
+async fn handle_native_read_text() -> Result[String, String] {
+  @async.sleep(0)
+  match decode_native_read_packet(native_read_text_packet()) {
+    Ok(text) =>
+      Ok(
+        Json::object({
+          "text": Json::string(text),
+          "found": Json::boolean(text != ""),
+          "native": Json::boolean(true),
+        }).stringify(),
+      )
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+async fn handle_native_write_text(payload : String) -> Result[String, String] {
+  @async.sleep(0)
+  match decode_text_payload(payload, context="clipboard writeText") {
+    Ok(text) =>
+      match native_write_text_code(@utf8.encode(text)) {
+        0 =>
+          Ok(
+            Json::object({
+              "text": Json::string(text),
+              "written": Json::boolean(true),
+              "native": Json::boolean(true),
+            }).stringify(),
+          )
+        2 => Err("native clipboard is unavailable on this platform")
+        code => Err("native clipboard writeText failed: code \{code}")
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+async fn handle_native_clear() -> Result[String, String] {
+  @async.sleep(0)
+  match native_clear_code() {
+    0 =>
+      Ok(
+        Json::object({
+          "cleared": Json::boolean(true),
+          "native": Json::boolean(true),
+        }).stringify(),
+      )
+    2 => Err("native clipboard is unavailable on this platform")
+    code => Err("native clipboard clear failed: code \{code}")
+  }
+}
+
+///|
 fn decode_text_payload(
   payload : String,
   context~ : String,
@@ -134,5 +254,24 @@ fn decode_text_payload(
         _ => Err("\{context} text is required")
       }
     _ => Err("\{context} payload must be a string or object")
+  }
+}
+
+///|
+fn decode_native_read_packet(packet : Bytes) -> Result[String, String] {
+  let text = @utf8.decode(packet) catch {
+    _ => return Err("native clipboard readText returned invalid utf8")
+  }
+  match text.find("\n") {
+    Some(index) => {
+      let status = text[:index]
+      let body = text[index + 1:]
+      if status == "ok" {
+        Ok(body.to_owned())
+      } else {
+        Err(body.to_owned())
+      }
+    }
+    None => Err("native clipboard readText returned malformed packet")
   }
 }

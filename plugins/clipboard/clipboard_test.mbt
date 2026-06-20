@@ -54,3 +54,12 @@ async test "clipboard registry stores text in process" {
   let clear = registry.dispatch_async(clear_request, capabilities=[grant])
   assert_true(clear.payload().unwrap_or("").contains("\"cleared\":true"))
 }
+
+///|
+test "clipboard native registry exposes desktop handlers" {
+  let registry = native_registry()
+  assert_true(registry.contains("clipboard.readText"))
+  assert_true(registry.contains("clipboard.writeText"))
+  assert_true(registry.contains("clipboard.clear"))
+  assert_eq(registry.async_routes().length(), 3)
+}

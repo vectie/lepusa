@@ -138,7 +138,7 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     },
     {
       name: "clipboard",
-      register: fn(registry, _) { @clipboard.register(registry) },
+      register: fn(registry, _) { @clipboard.register_native(registry) },
     },
     {
       name: "deepLink",

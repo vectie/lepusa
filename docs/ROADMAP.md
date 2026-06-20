@@ -207,8 +207,8 @@ Stabilize the cross-platform core set first:
 - shell: initial platform-neutral command contract and delegated process-table
   handlers exist
 - process: initial explicit process permission contract exists
-- clipboard: initial platform-neutral command contract and in-process async
-  text handlers exist
+- clipboard: platform-neutral command contract, native system clipboard stubs,
+  and in-process async text handlers for deterministic tests exist
 - notification: initial platform-neutral command contract and in-process async
   permission/show handlers exist
 - log: initial pure command-registry package exists
