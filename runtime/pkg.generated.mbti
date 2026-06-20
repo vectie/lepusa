@@ -235,6 +235,25 @@ pub fn NativeServiceSupervisorReport::ok(Self) -> Bool
 pub fn NativeServiceSupervisorReport::to_json(Self) -> String
 pub fn NativeServiceSupervisorReport::webview_engine(Self) -> String
 
+pub struct NativeWebViewLaunchPacket {
+  title : Bytes
+  load_url : Bytes
+  initialization_script : Bytes
+  native_hook : Bytes
+  asset_protocol : Bytes
+  width : Int
+  height : Int
+  resizable : Int
+} derive(Eq, @debug.Debug)
+pub fn NativeWebViewLaunchPacket::asset_protocol(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::height(Self) -> Int
+pub fn NativeWebViewLaunchPacket::initialization_script(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::load_url(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::native_hook(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::resizable(Self) -> Int
+pub fn NativeWebViewLaunchPacket::title(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::width(Self) -> Int
+
 pub struct NativeWebViewPlan {
   label : String
   title : String
@@ -251,6 +270,7 @@ pub fn NativeWebViewPlan::asset_protocol(Self) -> String
 pub fn NativeWebViewPlan::height(Self) -> Int
 pub fn NativeWebViewPlan::initialization_script(Self) -> String
 pub fn NativeWebViewPlan::label(Self) -> String
+pub fn NativeWebViewPlan::launch_packet(Self) -> NativeWebViewLaunchPacket
 pub fn NativeWebViewPlan::load_url(Self) -> String
 pub fn NativeWebViewPlan::native_hook(Self) -> String
 pub fn NativeWebViewPlan::new(label~ : String, title~ : String, url~ : String, load_url~ : String, initialization_script~ : String, native_hook~ : String, asset_protocol~ : String, width~ : Int, height~ : Int, resizable~ : Bool) -> Self

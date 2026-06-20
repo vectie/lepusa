@@ -166,19 +166,16 @@ fn linux_open_window(
     Ok(webview) => webview
     Err(problem) => return RunFailed(problem)
   }
+  let packet = webview.launch_packet()
   let exit_code = native_run_webview(
-    @utf8.encode(webview.title()),
-    @utf8.encode(webview.load_url()),
-    @utf8.encode(webview.initialization_script()),
-    @utf8.encode(webview.native_hook()),
-    @utf8.encode(webview.asset_protocol()),
-    webview.width(),
-    webview.height(),
-    if webview.resizable() {
-      1
-    } else {
-      0
-    },
+    packet.title(),
+    packet.load_url(),
+    packet.initialization_script(),
+    packet.native_hook(),
+    packet.asset_protocol(),
+    packet.width(),
+    packet.height(),
+    packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
     runtime.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
@@ -200,19 +197,16 @@ fn linux_open_bundled_window(
     Ok(webview) => webview
     Err(problem) => return RunFailed(problem)
   }
+  let packet = webview.launch_packet()
   let exit_code = native_run_webview(
-    @utf8.encode(webview.title()),
-    @utf8.encode(webview.load_url()),
-    @utf8.encode(webview.initialization_script()),
-    @utf8.encode(webview.native_hook()),
-    @utf8.encode(webview.asset_protocol()),
-    webview.width(),
-    webview.height(),
-    if webview.resizable() {
-      1
-    } else {
-      0
-    },
+    packet.title(),
+    packet.load_url(),
+    packet.initialization_script(),
+    packet.native_hook(),
+    packet.asset_protocol(),
+    packet.width(),
+    packet.height(),
+    packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
     manifest.bridge_dispatch_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },

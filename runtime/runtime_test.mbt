@@ -328,6 +328,40 @@ test "native runtime prepares shared webview plans" {
 }
 
 ///|
+test "native webview launch packet owns abi lowering" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+    Ok(runtime) =>
+      match
+        runtime.webview_plan(
+          runtime.runner_plan().webview_specs()[0],
+          initialization_script="/* native hook */",
+        ) {
+        Ok(webview) => {
+          let packet = webview.launch_packet()
+          let title = @utf8.decode(packet.title()) catch {
+            _ => abort("unexpected invalid packet title")
+          }
+          let load_url = @utf8.decode(packet.load_url()) catch {
+            _ => abort("unexpected invalid packet url")
+          }
+          let native_hook = @utf8.decode(packet.native_hook()) catch {
+            _ => abort("unexpected invalid packet hook")
+          }
+          assert_eq(title, "Runtime")
+          assert_eq(load_url, "lepusa://inline/main/index.html")
+          assert_eq(native_hook, "__lepusaInvoke")
+          assert_eq(packet.width(), 900)
+          assert_eq(packet.height(), 640)
+          assert_eq(packet.resizable(), 1)
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
 test "native runtime prepares shared run plans" {
   let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
   match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {

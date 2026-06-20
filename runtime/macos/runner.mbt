@@ -526,19 +526,16 @@ fn run_plan(
         Ok(webview) => webview
         Err(problem) => return Err([problem])
       }
+      let packet = webview.launch_packet()
       let exit_code = run_webview_with_bridge(
-        @utf8.encode(webview.title()),
-        @utf8.encode(webview.load_url()),
-        @utf8.encode(webview.initialization_script()),
-        @utf8.encode(webview.native_hook()),
-        @utf8.encode(webview.asset_protocol()),
-        webview.width(),
-        webview.height(),
-        if webview.resizable() {
-          1
-        } else {
-          0
-        },
+        packet.title(),
+        packet.load_url(),
+        packet.initialization_script(),
+        packet.native_hook(),
+        packet.asset_protocol(),
+        packet.width(),
+        packet.height(),
+        packet.resizable(),
         fn(dispatch, message) { dispatch(message) },
         dispatch,
         fn(resolve_asset, url) { resolve_asset(url) },
