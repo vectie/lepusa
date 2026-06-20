@@ -154,7 +154,7 @@
   - `lepusa bridge-dispatch`: executes source bridge messages and reports the native callback envelope.
   - `lepusa bridge-loop`: feeds one source bridge message through the adapter loop and reports the window delivery envelope with immediate scripts, async completions, evaluation scripts, and executable evaluation operations. Runtime adapters also expose `drain_window` for async work captured by native message-handler callbacks.
   - `lepusa bridge-drain`: probes the source split native path by running the handoff callback before draining pending async bridge work into a window delivery envelope.
-  - `lepusa launch-session [--async-bridge]`: emits a target-aware source launch readiness envelope with session JSON, backend preflight, launch capability, and optional async-capable bridge scheduler metadata.
+  - `lepusa launch-session [--async-bridge]`: emits a target-aware source launch readiness envelope with session JSON, backend preflight, launch capability, requested versus effective bridge mode, and optional async-capable bridge scheduler metadata.
   - `lepusa verify [macos|windows|linux]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, and bundle contracts.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
@@ -175,7 +175,7 @@
   - `lepusa-runtime bridge-dispatch`: executes packaged bridge messages and reports the native callback envelope.
   - `lepusa-runtime bridge-loop`: feeds one packaged bridge message through the adapter loop and reports the window delivery envelope with immediate scripts, async completions, evaluation scripts, and executable evaluation operations. Bundled runtime adapters also expose `drain_window` for async work captured by native message-handler callbacks.
   - `lepusa-runtime bridge-drain`: probes the packaged split native path by running the handoff callback before draining pending async bridge work into a window delivery envelope.
-  - `lepusa-runtime launch-session [--async-bridge]`: emits a packaged native-loop launch readiness envelope with session JSON, backend preflight, launch capability, and optional async-capable bridge scheduler metadata.
+  - `lepusa-runtime launch-session [--async-bridge]`: emits a packaged native-loop launch readiness envelope with session JSON, backend preflight, launch capability, requested versus effective bridge mode, and optional async-capable bridge scheduler metadata.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.

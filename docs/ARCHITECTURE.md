@@ -181,13 +181,15 @@ can be used from Rabbita, React, Vue, Svelte, or plain JavaScript.
 
 Native launch-session JSON is a target-aware readiness envelope. Its `session`
 field carries bridge scheduler metadata: sync-only mode is the conservative
-default, while `--async-bridge` marks the session as async-capable for platform
-loops that schedule deferred command tasks and later run the generated callback
-script. The envelope also carries `launchCapability`, `targetCanLaunch`, and
-`targetLaunchBlocker`, so tooling can distinguish prepared launch plans from
-platform backends that can actually open them. `backendPreflight` carries the
-host dependency, WebView loop, and async bridge support state through the same
-machine-readable envelope. The same session payload carries an
+default, while `--async-bridge` records an async-capable request. The envelope
+keeps `requestedBridgeMode`, `effectiveBridgeMode`, and `bridgeModeGranted`
+separate, so tooling can see when a backend safely downgraded the session
+because its native loop cannot drain async completions yet. The envelope also
+carries `launchCapability`, `targetCanLaunch`, and `targetLaunchBlocker`, so
+tooling can distinguish prepared launch plans from platform backends that can
+actually open them. `backendPreflight` carries the host dependency, WebView
+loop, and async bridge support state through the same machine-readable
+envelope. The same session payload carries an
 `asyncBridgeExecutor` descriptor naming
 `NativeRuntime::bridge_async_dispatch_callback` and the UTF-8 bridge-message to
 JavaScript-callback-script byte contract.

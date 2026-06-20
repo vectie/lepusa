@@ -265,6 +265,7 @@ pub(all) enum NativeBridgeSchedulerMode {
   NativeBridgeSyncOnly
   NativeBridgeAsyncCapable
 } derive(Eq, @debug.Debug)
+pub fn NativeBridgeSchedulerMode::name(Self) -> String
 
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
@@ -361,13 +362,17 @@ pub struct NativeLaunchReadiness {
   session : NativeLaunchSession
   capability : NativeLaunchCapability
   preflight : NativeBackendPreflight
+  requested_bridge_mode : NativeBridgeSchedulerMode
 } derive(Eq, @debug.Debug)
+pub fn NativeLaunchReadiness::bridge_mode_granted(Self) -> Bool
 pub fn NativeLaunchReadiness::can_launch(Self) -> Bool
 pub fn NativeLaunchReadiness::capability(Self) -> NativeLaunchCapability
+pub fn NativeLaunchReadiness::effective_bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchReadiness::launch_blocker(Self) -> String?
-pub fn NativeLaunchReadiness::new(target~ : String, platform_name~ : String, session~ : NativeLaunchSession, capability~ : NativeLaunchCapability, preflight~ : NativeBackendPreflight) -> Self
+pub fn NativeLaunchReadiness::new(target~ : String, platform_name~ : String, session~ : NativeLaunchSession, capability~ : NativeLaunchCapability, preflight~ : NativeBackendPreflight, requested_bridge_mode~ : NativeBridgeSchedulerMode) -> Self
 pub fn NativeLaunchReadiness::platform_name(Self) -> String
 pub fn NativeLaunchReadiness::preflight(Self) -> NativeBackendPreflight
+pub fn NativeLaunchReadiness::requested_bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchReadiness::session(Self) -> NativeLaunchSession
 pub fn NativeLaunchReadiness::target(Self) -> String
 pub fn NativeLaunchReadiness::to_json(Self) -> String

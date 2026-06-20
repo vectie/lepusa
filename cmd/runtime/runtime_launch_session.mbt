@@ -36,13 +36,22 @@ fn render_runtime_launch_session_text(
       )
       match manifest.target() {
         "macos" =>
-          render_macos_launch_session(manifest, bridge_mode=target_bridge_mode)
+          render_macos_launch_session(
+            manifest,
+            bridge_mode=target_bridge_mode,
+            requested_bridge_mode=bridge_mode,
+          )
         "linux" =>
-          render_linux_launch_session(manifest, bridge_mode=target_bridge_mode)
+          render_linux_launch_session(
+            manifest,
+            bridge_mode=target_bridge_mode,
+            requested_bridge_mode=bridge_mode,
+          )
         "windows" =>
           render_windows_launch_session(
             manifest,
             bridge_mode=target_bridge_mode,
+            requested_bridge_mode=bridge_mode,
           )
         target =>
           runtime_fail(
@@ -74,6 +83,7 @@ fn runtime_bridge_mode_for_target(
 fn render_macos_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
   bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @macos.run_bundled(manifest) {
     Ok(result) =>
@@ -81,6 +91,7 @@ fn render_macos_launch_session(
         runtime_launch_readiness(
           "macos",
           result.plan().launch_session(bridge_mode~),
+          requested_bridge_mode~,
         ).to_json() +
         "\n",
       )
@@ -95,13 +106,15 @@ fn render_macos_launch_session(
 fn render_linux_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
   bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @linux.run_bundled(manifest) {
     Ok(result) =>
       match result.launch_session(bridge_mode~) {
         Ok(session) =>
           runtime_ok(
-            runtime_launch_readiness("linux", session).to_json() + "\n",
+            runtime_launch_readiness("linux", session, requested_bridge_mode~).to_json() +
+            "\n",
           )
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
@@ -117,13 +130,15 @@ fn render_linux_launch_session(
 fn render_windows_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
   bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @windows.run_bundled(manifest) {
     Ok(result) =>
       match result.launch_session(bridge_mode~) {
         Ok(session) =>
           runtime_ok(
-            runtime_launch_readiness("windows", session).to_json() + "\n",
+            runtime_launch_readiness("windows", session, requested_bridge_mode~).to_json() +
+            "\n",
           )
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
@@ -139,6 +154,7 @@ fn render_windows_launch_session(
 fn runtime_launch_readiness(
   target : String,
   session : @runtime_core.NativeLaunchSession,
+  requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> @runtime_core.NativeLaunchReadiness {
   @runtime_core.NativeLaunchReadiness::new(
     target~,
@@ -146,6 +162,7 @@ fn runtime_launch_readiness(
     session~,
     capability=runtime_launch_capability_for_target(target),
     preflight=runtime_backend_preflight_for_target(target),
+    requested_bridge_mode~,
   )
 }
 

@@ -220,13 +220,12 @@ availability, WebView creation loops, and async bridge drain support.
 native-loop readiness envelope. Its `session` field carries the WebViews,
 protocol assets, lifecycle actions, service supervision, bridge scheduling, the
 async bridge executor descriptor, and the `bridgeLoop` adapter, delivery, and
-drain contract; its `launchCapability`, `backendPreflight`, `targetCanLaunch`,
-and `targetLaunchBlocker` fields report whether the selected platform backend
-can actually open that session and whether host dependencies are present.
-Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
-the executor and bridge-loop contract as available for platform loops that wire
-deferred command completion through the queue-backed adapter APIs; it does not
-change `run` or `launch` behavior.
+drain contract. The envelope also records `requestedBridgeMode`,
+`effectiveBridgeMode`, and `bridgeModeGranted`, then reports backend capability
+through `launchCapability`, `backendPreflight`, `targetCanLaunch`, and
+`targetLaunchBlocker`. Passing `--async-bridge` records an async-capable request;
+platforms that cannot drain async completions keep the effective session
+sync-only and report `bridgeModeGranted: false`.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
@@ -458,7 +457,8 @@ from registered bridge routes.
 emits a readiness envelope around the same canonical `NativeLaunchSession`
 shape used by packaged runtime manifests: concrete WebView launch plans,
 executable operations, bridge scheduler policy, async bridge executor metadata,
-service supervisor plan, and target launch capability.
+service supervisor plan, requested versus effective bridge mode, and target
+launch capability.
 
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,

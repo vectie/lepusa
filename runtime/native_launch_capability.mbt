@@ -71,15 +71,11 @@ pub fn NativeLaunchCapability::can_launch(
 
 ///|
 pub fn NativeLaunchCapability::to_json(self : NativeLaunchCapability) -> String {
-  let bridge_mode = match self.bridge_mode() {
-    NativeBridgeSyncOnly => "sync-only"
-    NativeBridgeAsyncCapable => "async-capable"
-  }
   [
     "{",
     "\"webviewCreation\":\{self.webview_creation.json_bool()},",
     "\"asyncBridgeDrain\":\{self.async_bridge_drain.json_bool()},",
-    "\"bridgeMode\":\{bridge_mode.json_string()},",
+    "\"bridgeMode\":\{self.bridge_mode().name().json_string()},",
     "\"webviewCreationMessage\":\{self.webview_creation_message.json_string()}",
     "}",
   ].join("")

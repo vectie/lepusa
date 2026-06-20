@@ -843,12 +843,19 @@ test "native launch readiness includes backend preflight" {
     session~,
     capability=preflight.launch_capability(),
     preflight~,
+    requested_bridge_mode=NativeBridgeSyncOnly,
   )
   assert_true(readiness.can_launch())
   assert_true(readiness.launch_blocker() is None)
   assert_eq(readiness.preflight().dependency_name(), "system-webview")
+  assert_true(readiness.requested_bridge_mode() is NativeBridgeSyncOnly)
+  assert_true(readiness.effective_bridge_mode() is NativeBridgeSyncOnly)
+  assert_true(readiness.bridge_mode_granted())
   let json = readiness.to_json()
   assert_true(json.contains("\"backendPreflight\":{"))
+  assert_true(json.contains("\"requestedBridgeMode\":\"sync-only\""))
+  assert_true(json.contains("\"effectiveBridgeMode\":\"sync-only\""))
+  assert_true(json.contains("\"bridgeModeGranted\":true"))
   assert_true(json.contains("\"dependencyName\":\"system-webview\""))
   assert_true(json.contains("\"targetLaunchBlocker\":null"))
 }

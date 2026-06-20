@@ -170,6 +170,9 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(result.output.contains("\"dependencyName\":\"webkitgtk\""))
   assert_true(result.output.contains("\"targetCanLaunch\":true"))
   assert_true(result.output.contains("\"targetLaunchBlocker\":null"))
+  assert_true(result.output.contains("\"requestedBridgeMode\":\"sync-only\""))
+  assert_true(result.output.contains("\"effectiveBridgeMode\":\"sync-only\""))
+  assert_true(result.output.contains("\"bridgeModeGranted\":true"))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
   assert_true(result.output.contains("\"bridgeLoop\""))
   assert_true(result.output.contains("\"serviceSupervisor\""))
@@ -184,7 +187,13 @@ test "runtime cli renders bundled launch-session json" {
   assert_eq(async_bridge.exit_code, 0)
   assert_true(async_bridge.output.contains("\"mode\":\"sync-only\""))
   assert_true(async_bridge.output.contains("\"available\":false"))
-  assert_false(async_bridge.output.contains("\"mode\":\"async-capable\""))
+  assert_true(
+    async_bridge.output.contains("\"requestedBridgeMode\":\"async-capable\""),
+  )
+  assert_true(
+    async_bridge.output.contains("\"effectiveBridgeMode\":\"sync-only\""),
+  )
+  assert_true(async_bridge.output.contains("\"bridgeModeGranted\":false"))
   assert_true(
     async_bridge.output.contains(
       "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",

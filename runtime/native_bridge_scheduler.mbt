@@ -5,6 +5,16 @@ pub(all) enum NativeBridgeSchedulerMode {
 } derive(Debug, Eq)
 
 ///|
+pub fn NativeBridgeSchedulerMode::name(
+  self : NativeBridgeSchedulerMode,
+) -> String {
+  match self {
+    NativeBridgeSyncOnly => "sync-only"
+    NativeBridgeAsyncCapable => "async-capable"
+  }
+}
+
+///|
 pub struct NativeBridgeScheduler {
   sync_routes : Array[String]
   async_routes : Array[String]
@@ -128,13 +138,9 @@ pub fn NativeBridgeScheduler::async_bridge_launch_message(
 
 ///|
 pub fn NativeBridgeScheduler::to_json(self : NativeBridgeScheduler) -> String {
-  let mode = match self.mode {
-    NativeBridgeSyncOnly => "sync-only"
-    NativeBridgeAsyncCapable => "async-capable"
-  }
   [
     "{",
-    "\"mode\":\{mode.json_string()},",
+    "\"mode\":\{self.mode.name().json_string()},",
     "\"syncRoutes\":[\{self.sync_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"asyncRoutes\":[\{self.async_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()},",

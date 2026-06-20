@@ -67,7 +67,8 @@ async fn render_launch_session_async(args : Array[String]) -> CliResult {
               render_native_launch_session(
                 target,
                 runtime,
-                bridge_mode=bridge_mode_from_args(args, target),
+                bridge_mode=target_bridge_mode_from_args(args, target),
+                requested_bridge_mode=bridge_mode_from_args(args),
               )
             Err(problems) =>
               fail(render_problems("Lepusa launch session", problems))
@@ -419,6 +420,7 @@ fn render_native_launch_session(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
   bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  requested_bridge_mode~ : @runtime.NativeBridgeSchedulerMode,
 ) -> CliResult {
   match target {
     MacOS =>
@@ -428,6 +430,7 @@ fn render_native_launch_session(
             native_launch_readiness(
               target,
               result.plan().launch_session(bridge_mode~),
+              requested_bridge_mode~,
             ).to_json() +
             "\n",
           )
@@ -438,7 +441,11 @@ fn render_native_launch_session(
       match @windows_backend.run(runtime) {
         Ok(result) =>
           ok(
-            native_launch_readiness(target, result.launch_session(bridge_mode~)).to_json() +
+            native_launch_readiness(
+              target,
+              result.launch_session(bridge_mode~),
+              requested_bridge_mode~,
+            ).to_json() +
             "\n",
           )
         Err(problems) =>
@@ -448,7 +455,11 @@ fn render_native_launch_session(
       match @linux_backend.run(runtime) {
         Ok(result) =>
           ok(
-            native_launch_readiness(target, result.launch_session(bridge_mode~)).to_json() +
+            native_launch_readiness(
+              target,
+              result.launch_session(bridge_mode~),
+              requested_bridge_mode~,
+            ).to_json() +
             "\n",
           )
         Err(problems) =>
@@ -461,6 +472,7 @@ fn render_native_launch_session(
 fn native_launch_readiness(
   target : @lepusa.BundleTarget,
   session : @runtime.NativeLaunchSession,
+  requested_bridge_mode~ : @runtime.NativeBridgeSchedulerMode,
 ) -> @runtime.NativeLaunchReadiness {
   @runtime.NativeLaunchReadiness::new(
     target=target.name(),
@@ -468,11 +480,23 @@ fn native_launch_readiness(
     session~,
     capability=native_launch_capability_for_target(target),
     preflight=native_backend_preflight_for_target(target),
+    requested_bridge_mode~,
   )
 }
 
 ///|
 fn bridge_mode_from_args(
+  args : Array[String],
+) -> @runtime.NativeBridgeSchedulerMode {
+  if has_flag(args, "--async-bridge") {
+    NativeBridgeAsyncCapable
+  } else {
+    NativeBridgeSyncOnly
+  }
+}
+
+///|
+fn target_bridge_mode_from_args(
   args : Array[String],
   target : @lepusa.BundleTarget,
 ) -> @runtime.NativeBridgeSchedulerMode {
