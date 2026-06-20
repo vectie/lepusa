@@ -13,6 +13,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : DeepLinkPolicy, state? : DeepLinkState) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : DeepLinkPolicy, state? : DeepLinkState) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
@@ -33,6 +37,17 @@ pub fn DeepLinkScheme::hosts(Self) -> Array[String]
 pub fn DeepLinkScheme::new(scheme~ : String, hosts? : Array[String]) -> Self
 pub fn DeepLinkScheme::scheme(Self) -> String
 pub fn DeepLinkScheme::validate(Self) -> Array[String]
+
+pub struct DeepLinkState {
+  initial_urls : Array[String]
+  opened_urls : Array[String]
+  registered_schemes : Array[String]
+}
+pub fn DeepLinkState::initial_urls(Self) -> Array[String]
+pub fn DeepLinkState::new(initial_urls? : Array[String]) -> Self
+pub fn DeepLinkState::opened_urls(Self) -> Array[String]
+pub fn DeepLinkState::push_initial_url(Self, String) -> Unit
+pub fn DeepLinkState::registered_schemes(Self) -> Array[String]
 
 // Type aliases
 

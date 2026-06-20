@@ -43,3 +43,66 @@ test "deep link policy rejects invalid and duplicate schemes" {
   assert_true(problems.contains("deep link host is invalid: bad host"))
   assert_true(problems.contains("deep link host is required"))
 }
+
+///|
+async test "deep link registry records URL handoff state" {
+  let state = DeepLinkState::new(initial_urls=["lepusa://open/start"])
+  let registry = registry(
+    policy=DeepLinkPolicy::new().scheme(
+      DeepLinkScheme::new(scheme="lepusa", hosts=["open"]),
+    ),
+    state~,
+  )
+  let grant = capability_for_window("main")
+  assert_true(registry.contains("deepLink.getInitialUrls"))
+  assert_true(registry.contains("deepLink.register"))
+  assert_true(registry.contains("deepLink.unregister"))
+  assert_true(registry.contains("deepLink.openUrl"))
+  assert_eq(registry.async_routes().length(), 4)
+  let initial_request = @lepusa.InvokeRequest::new(
+    id="1",
+    window_label="main",
+    plugin="deepLink",
+    command="getInitialUrls",
+  )
+  let initial = registry.dispatch_async(initial_request, capabilities=[grant])
+  assert_true(initial.payload().unwrap_or("").contains("lepusa://open/start"))
+  let register_request = @lepusa.InvokeRequest::new(
+    id="2",
+    window_label="main",
+    plugin="deepLink",
+    command="register",
+    payload="\"lepusa\"",
+  )
+  let registered = registry.dispatch_async(register_request, capabilities=[
+    grant,
+  ])
+  assert_true(
+    registered.payload().unwrap_or("").contains("\"registered\":true"),
+  )
+  assert_true(state.registered_schemes().contains("lepusa"))
+  let open_request = @lepusa.InvokeRequest::new(
+    id="3",
+    window_label="main",
+    plugin="deepLink",
+    command="openUrl",
+    payload="{\"url\":\"lepusa://open/item\"}",
+  )
+  let opened = registry.dispatch_async(open_request, capabilities=[grant])
+  assert_true(
+    opened.payload().unwrap_or("").contains("\"status\":\"delegated\""),
+  )
+  assert_eq(state.opened_urls()[0], "lepusa://open/item")
+  let denied_request = @lepusa.InvokeRequest::new(
+    id="4",
+    window_label="main",
+    plugin="deepLink",
+    command="openUrl",
+    payload="{\"url\":\"lepusa://blocked/item\"}",
+  )
+  let denied = registry.dispatch_async(denied_request, capabilities=[grant])
+  assert_true(
+    denied
+    is InvokeError("4", "deep link url is not allowed: lepusa://blocked/item"),
+  )
+}

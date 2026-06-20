@@ -198,8 +198,10 @@ Stabilize the cross-platform core set first:
 - store: initial pure command-registry package exists
 - localhost: initial local service lifecycle contract and portable metadata
   handlers exist
-- deepLink: initial app URL scheme contract exists
-- singleInstance: initial app lock and launch handoff contract exists
+- deepLink: initial app URL scheme contract and portable URL state handlers
+  exist
+- singleInstance: initial app lock/launch handoff contract and portable
+  primary-state handlers exist
 - tray: initial status icon and menu contract exists
 - autoLaunch: initial launch-at-login contract exists
 - windowState: initial window geometry persistence contract exists

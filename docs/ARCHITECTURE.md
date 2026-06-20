@@ -641,6 +641,9 @@ text clipboard state, notification permission, and notification show requests.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes
 and provides delegated process-table handlers with optional command allow-list
 validation.
+`@lepusa/plugins/deep_link` and `@lepusa/plugins/single_instance` declare app
+launch handoff routes and provide portable state handlers for initial URLs,
+delegated URL opens, primary-instance acquisition, and focus requests.
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split process permissions.
 Native platform effects should be implemented by runtime backends behind those

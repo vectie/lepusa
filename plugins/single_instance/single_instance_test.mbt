@@ -44,3 +44,64 @@ test "single instance policy rejects invalid identifiers" {
   assert_true(problems.contains("single instance key is invalid: bad/key"))
   assert_true(problems.contains("single instance primary window is required"))
 }
+
+///|
+async test "single instance registry tracks primary launch state" {
+  let state = SingleInstanceState::new()
+  let policy = SingleInstancePolicy::new(
+    key="dev.local.lepusa",
+    primary_window="main",
+  )
+  let registry = registry(policy~, state~)
+  let grant = capability_for_window("main")
+  assert_true(registry.contains("singleInstance.status"))
+  assert_true(registry.contains("singleInstance.acquire"))
+  assert_true(registry.contains("singleInstance.release"))
+  assert_true(registry.contains("singleInstance.focus"))
+  assert_eq(registry.async_routes().length(), 4)
+  let acquire_request = @lepusa.InvokeRequest::new(
+    id="1",
+    window_label="main",
+    plugin="singleInstance",
+    command="acquire",
+  )
+  let primary = registry.dispatch_async(acquire_request, capabilities=[grant])
+  assert_true(
+    primary.payload().unwrap_or("").contains("\"status\":\"primary\""),
+  )
+  assert_true(state.acquired())
+  let second_request = @lepusa.InvokeRequest::new(
+    id="2",
+    window_label="main",
+    plugin="singleInstance",
+    command="acquire",
+    payload="{\"launch\":\"--open lepusa://open/item\"}",
+  )
+  let secondary = registry.dispatch_async(second_request, capabilities=[grant])
+  assert_true(
+    secondary.payload().unwrap_or("").contains("\"status\":\"secondary\""),
+  )
+  assert_eq(state.second_launches()[0], "--open lepusa://open/item")
+  let focus_request = @lepusa.InvokeRequest::new(
+    id="3",
+    window_label="main",
+    plugin="singleInstance",
+    command="focus",
+  )
+  let focused = registry.dispatch_async(focus_request, capabilities=[grant])
+  assert_true(
+    focused.payload().unwrap_or("").contains("\"status\":\"focused\""),
+  )
+  assert_eq(state.focused_count(), 1)
+  let release_request = @lepusa.InvokeRequest::new(
+    id="4",
+    window_label="main",
+    plugin="singleInstance",
+    command="release",
+  )
+  let released = registry.dispatch_async(release_request, capabilities=[grant])
+  assert_true(
+    released.payload().unwrap_or("").contains("\"status\":\"released\""),
+  )
+  assert_false(state.acquired())
+}

@@ -336,12 +336,15 @@ lifecycle actions; native backends own process execution and HTTP probing.
 
 `@lepusa/plugins/deep_link` defines app URL scheme routes such as
 `deepLink.getInitialUrls`, `deepLink.onOpenUrl`, and `deepLink.openUrl`, plus
-scheme/host policy metadata. Native backends own OS registration and dispatch.
+scheme/host policy metadata. Its portable registry reports initial URLs,
+records delegated registration/open requests, and validates scheme/host policy;
+native backends own OS registration and dispatch.
 
 `@lepusa/plugins/single_instance` defines app lock and launch handoff routes
 such as `singleInstance.acquire`, `singleInstance.focus`, and
-`singleInstance.onSecondLaunch`, plus instance-key policy metadata. Native
-backends own cross-process locking and platform window activation.
+`singleInstance.onSecondLaunch`, plus instance-key policy metadata. Its
+portable registry tracks primary/secondary launch state and focus requests;
+native backends own cross-process locking and platform window activation.
 
 `@lepusa/plugins/tray` defines system tray routes such as `tray.setIcon`,
 `tray.setMenu`, `tray.setVisible`, and `tray.onMenuItemClick`, plus menu item

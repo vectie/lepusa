@@ -13,6 +13,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : SingleInstancePolicy, state? : SingleInstanceState) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : SingleInstancePolicy, state? : SingleInstanceState) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
@@ -28,6 +32,16 @@ pub fn SingleInstancePolicy::key(Self) -> String
 pub fn SingleInstancePolicy::new(key~ : String, primary_window? : String, forward_args? : Bool, forward_urls? : Bool) -> Self
 pub fn SingleInstancePolicy::primary_window(Self) -> String?
 pub fn SingleInstancePolicy::validate(Self) -> Array[String]
+
+pub struct SingleInstanceState {
+  mut acquired : Bool
+  mut focused_count : Int
+  second_launches : Array[String]
+}
+pub fn SingleInstanceState::acquired(Self) -> Bool
+pub fn SingleInstanceState::focused_count(Self) -> Int
+pub fn SingleInstanceState::new(acquired? : Bool) -> Self
+pub fn SingleInstanceState::second_launches(Self) -> Array[String]
 
 // Type aliases
 

@@ -136,6 +136,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       name: "clipboard",
       register: fn(registry, _) { @clipboard.register(registry) },
     },
+    {
+      name: "deepLink",
+      register: fn(registry, _) { @deep_link.register(registry) },
+    },
     { name: "dialog", register: fn(registry, _) { @dialog.register(registry) } },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },
     {
@@ -170,6 +174,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       },
     },
     { name: "shell", register: fn(registry, _) { @shell.register(registry) } },
+    {
+      name: "singleInstance",
+      register: fn(registry, _) { @single_instance.register(registry) },
+    },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
     {
       name: "windowState",
