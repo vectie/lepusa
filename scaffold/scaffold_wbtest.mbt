@@ -34,7 +34,14 @@ test "app scaffold wires official plugin handlers" {
   let main = project_main_mbt()
   assert_true(main.contains("@catalog.register"))
   assert_true(main.contains("@ui.main_"))
-  assert_true(main.contains("@ui.on_click(\"log.write\""))
+  assert_true(main.contains("@ui.UiProgram::new"))
+  assert_true(main.contains("route=\"counter.dispatch\""))
+  assert_true(main.contains("program.register"))
+  assert_true(main.contains(".with_plugin(program.plugin())"))
+  assert_true(
+    main.contains(".with_capability(program.capability_for_window())"),
+  )
+  assert_true(main.contains("dispatch(Increment)"))
   assert_true(main.contains("@ui.text_listener(\"ready\", \"#status\")"))
   assert_true(main.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
   assert_true(main.contains("ignore([Increment, Reset])"))
@@ -57,6 +64,7 @@ test "app scaffold readme documents catalog usage" {
   let readme = project_readme()
   assert_true(readme.contains("@lepusa/plugins/catalog"))
   assert_true(readme.contains("@lepusa/ui"))
+  assert_true(readme.contains("UiProgram"))
   assert_true(readme.contains("moon run src --target native"))
   assert_true(readme.contains("MoonBit-native handlers"))
 }

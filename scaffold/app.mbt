@@ -226,19 +226,36 @@ fn project_main_mbt() -> String {
     #|///|
     #|fn update(msg : Msg, model : Model) -> (Model, @lepusa.Cmd) {
     #|  match msg {
-    #|    Increment =>
-    #|      ({ count: model.count + 1 }, @lepusa.Cmd::effect("counter.increment"))
-    #|    Reset => ({ count: 0 }, @lepusa.Cmd::effect("counter.reset"))
+    #|    Increment => ({ count: model.count + 1 }, @lepusa.none)
+    #|    Reset => ({ count: 0 }, @lepusa.none)
     #|  }
     #|}
     #|
     #|///|
-    #|fn view(_dispatch : @lepusa.Dispatch[Msg], model : Model) -> @lepusa.Html {
+    #|fn encode(msg : Msg) -> String {
+    #|  match msg {
+    #|    Increment => "{\"kind\":\"increment\"}"
+    #|    Reset => "{\"kind\":\"reset\"}"
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn decode(payload : String) -> Result[Msg, String] {
+    #|  match payload {
+    #|    "{\"kind\":\"increment\"}" => Ok(Increment)
+    #|    "{\"kind\":\"reset\"}" => Ok(Reset)
+    #|    _ => Err("unknown counter message")
+    #|  }
+    #|}
+    #|
+    #|///|
+    #|fn view(dispatch : @ui.ViewDispatch[Msg], model : Model) -> @lepusa.Html {
     #|  @ui.main_([
     #|    @ui.h1([@ui.text("Lepusa App")]),
     #|    @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
     #|    @ui.p([@ui.text("Starting")], attrs=[@ui.id("status")]),
-    #|    @ui.button("Increment", attrs=[@ui.on_click("log.write", payload="{\"message\":\"increment\"}")]),
+    #|    @ui.button("Increment", attrs=[dispatch(Increment)]),
+    #|    @ui.button("Reset", attrs=[dispatch(Reset)]),
     #|    @ui.text_listener("ready", "#status"),
     #|  ])
     #|}
@@ -246,19 +263,25 @@ fn project_main_mbt() -> String {
     #|///|
     #|fn main {
     #|  ignore([Increment, Reset])
-    #|  let (_, root) = @lepusa.cell_with_dispatch(
+    #|  let program = @ui.UiProgram::new(
     #|    model={ count: 0 },
     #|    update=update,
     #|    view=view,
+    #|    encode=encode,
+    #|    decode=decode,
+    #|    route="counter.dispatch",
+    #|    render_event="counter.render",
     #|  )
-    #|  let registry = @catalog.register(
+    #|  let registry = program.register(@catalog.register(
     #|    @catalog.register(@lepusa.CommandRegistry::new(), "log"),
     #|    "store",
-    #|  )
-    #|  let app = @lepusa.new(root)
+    #|  ))
+    #|  let app = @lepusa.new(program.cell())
     #|    .window(title="Lepusa App", width=1000, height=720)
+    #|    .with_plugin(program.plugin())
     #|    .with_plugin(@catalog.plugin("log").unwrap())
     #|    .with_plugin(@catalog.plugin("store").unwrap())
+    #|    .with_capability(program.capability_for_window())
     #|    .with_capability(
     #|      @lepusa.Capability::new("main")
     #|      .window("main")
@@ -298,9 +321,9 @@ fn project_readme() -> String {
     #|
     #|A standalone MoonBit desktop app scaffolded by `lepusa init`.
     #|
-    #|The generated app uses `@lepusa/plugins/catalog` to declare official
-    #|plugins and register their MoonBit-native handlers. Its view uses
-    #|`@lepusa/ui` helpers that still return root `@lepusa.Html` values.
+    #|The generated app uses `@lepusa/ui.UiProgram` for model/update/view
+    #|desktop UI and `@lepusa/plugins/catalog` for official plugin declarations
+    #|and MoonBit-native handlers.
     #|
     #|```bash
     #|moon run src --target native

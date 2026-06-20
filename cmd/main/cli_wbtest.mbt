@@ -270,12 +270,18 @@ async test "init writes standalone project skeleton" {
   assert_true(config_file.contains("\"event\": \"app-will-exit\""))
   let main_file = @fs.read_file(root + "/src/main.mbt").text()
   assert_true(main_file.contains("enum Msg"))
-  assert_true(main_file.contains("cell_with_dispatch"))
+  assert_true(main_file.contains("@ui.UiProgram::new"))
+  assert_true(main_file.contains("route=\"counter.dispatch\""))
+  assert_true(main_file.contains("program.register"))
+  assert_true(main_file.contains(".with_plugin(program.plugin())"))
+  assert_true(
+    main_file.contains(".with_capability(program.capability_for_window())"),
+  )
   assert_true(main_file.contains("@ui.main_"))
-  assert_true(main_file.contains("@ui.on_click(\"log.write\""))
+  assert_true(main_file.contains("dispatch(Increment)"))
   assert_true(main_file.contains("@ui.text_listener(\"ready\", \"#status\")"))
   assert_true(main_file.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
-  assert_true(main_file.contains("@lepusa.new(root)"))
+  assert_true(main_file.contains("@lepusa.new(program.cell())"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
 }
 

@@ -174,7 +174,8 @@
 - Extract `@lepusa/scaffold` as reusable app/plugin skeleton generation,
   keeping ecosystem project creation separate from CLI commands: reusable app
   and plugin writers now support both publish-ready registry dependencies and
-  local `moon.work` manifests for pre-publish development.
+  local `moon.work` manifests for pre-publish development, and app scaffolds
+  now start from the routable `UiProgram` source-app pattern.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies, target launch gate, and

@@ -225,8 +225,10 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 `@lepusa/scaffold.write_app` writes a standalone MoonBit project skeleton with
 a versioned `vectie/lepusa` module dependency. It is intentionally small:
 `moon.mod`, `lepusa.json`, `src/moon.pkg`, `src/main.mbt`, and
-`README.mbt.md`. The generated `src/main.mbt` starts with the same
-`cell_with_dispatch` model/update/view shape as the public authoring API.
+`README.mbt.md`. The generated `src/main.mbt` starts with the current
+`@lepusa/ui.UiProgram` model/update/view flow, declares the UI dispatch plugin
+and window capability, and registers the UI handler through the same command
+registry boundary as official plugins.
 `write_app_with_workspace` also writes a `moon.work` file pointing at a local
 Lepusa checkout, which lets new apps compile against this repository before the
 framework is published to the MoonBit registry. `lepusa init` is the CLI wrapper
