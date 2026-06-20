@@ -107,6 +107,7 @@ pub fn BundledNativeRunPlan::startup_evaluation_scripts(Self) -> Array[@runtime.
 pub fn BundledNativeRunPlan::startup_executable_operations(Self) -> Result[Array[@runtime.NativeExecutableOperation], String]
 pub fn BundledNativeRunPlan::startup_navigations(Self) -> Array[@runtime.NativeNavigation]
 pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int
+pub fn BundledNativeRunPlan::to_json(Self) -> Result[String, String]
 pub fn BundledNativeRunPlan::webview_count(Self) -> Int
 pub fn BundledNativeRunPlan::webviews(Self) -> Array[@runtime.NativeWebViewPlan]
 

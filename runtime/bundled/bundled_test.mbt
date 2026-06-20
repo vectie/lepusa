@@ -380,6 +380,19 @@ test "bundled runtime manifest prepares shared native run plans" {
               )
             Err(problem) => abort(problem)
           }
+          match plan.to_json() {
+            Ok(artifact) => {
+              assert_true(
+                artifact.contains("\"kind\":\"bundled-native-run-plan\""),
+              )
+              assert_true(artifact.contains("\"source\":\"bundle\""))
+              assert_true(artifact.contains("\"target\":\"linux\""))
+              assert_true(artifact.contains("\"nativeBackend\":\"linux\""))
+              assert_true(artifact.contains("\"launchSession\""))
+              assert_true(artifact.contains("\"serviceSupervisor\""))
+            }
+            Err(problem) => abort(problem)
+          }
         }
         Err(_) => abort("unexpected invalid bundled native run plan")
       }

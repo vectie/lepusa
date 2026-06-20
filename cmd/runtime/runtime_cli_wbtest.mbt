@@ -122,6 +122,44 @@ test "runtime cli renders bundled bootstrap json" {
 }
 
 ///|
+test "runtime cli renders bundled launch-session json" {
+  let manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "linux",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html"
+    #|    }],
+    #|    "localServices": [{
+    #|      "name": "api",
+    #|      "command": ["moon", "run", "cmd/server"],
+    #|      "readinessUrl": "http://127.0.0.1:4317/ready"
+    #|    }],
+    #|    "startupActions": [{ "kind": "effect", "name": "boot" }],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  let result = render_runtime_launch_session_text(
+    "/app/lepusa/runtime.json", manifest,
+  )
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"webviews\""))
+  assert_true(result.output.contains("\"execution\""))
+  assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"serviceSupervisor\""))
+  assert_true(result.output.contains("\"kind\":\"start-service\""))
+  assert_true(result.output.contains("\"kind\":\"run-effect\""))
+  assert_true(result.output.contains("\"mode\":\"sync-only\""))
+}
+
+///|
 test "runtime cli rejects invalid bundled bootstrap plan" {
   let manifest =
     #|{

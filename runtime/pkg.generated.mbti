@@ -204,6 +204,7 @@ pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan
 pub fn NativePreparedRunPlan::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativePreparedRunPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport
 pub fn NativePreparedRunPlan::startup_operation_count(Self) -> Int
+pub fn NativePreparedRunPlan::to_json(Self) -> String
 pub fn NativePreparedRunPlan::webview_count(Self) -> Int
 pub fn NativePreparedRunPlan::webviews(Self) -> Array[NativeWebViewPlan]
 

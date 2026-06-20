@@ -20,6 +20,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("run") => render_runtime_run(args, launch=false)
     Some("launch") => render_runtime_run(args, launch=true)
     Some("bootstrap") => render_runtime_bootstrap(args)
+    Some("launch-session") => render_runtime_launch_session(args)
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
     Some("invoke") => render_runtime_invoke(args)
@@ -365,6 +366,7 @@ fn runtime_help() -> String {
     #|  lepusa-runtime run --manifest <lepusa/runtime.json>
     #|  lepusa-runtime launch --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime launch-session --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>

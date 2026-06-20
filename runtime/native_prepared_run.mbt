@@ -136,3 +136,18 @@ pub fn NativePreparedRunPlan::async_bridge_launch_message(
 ) -> String {
   self.bridge_scheduler().async_bridge_launch_message(platform_name)
 }
+
+///|
+pub fn NativePreparedRunPlan::to_json(self : NativePreparedRunPlan) -> String {
+  let runner = self.runner()
+  [
+    "{",
+    "\"kind\":\"native-run-plan\",",
+    "\"source\":\"project\",",
+    "\"nativeBackend\":\{runner.backend_name().json_string()},",
+    "\"webviewEngine\":\{runner.webview_engine().json_string()},",
+    "\"webviewCount\":\{self.webview_count()},",
+    "\"launchSession\":\{self.launch_session().to_json()}",
+    "}",
+  ].join("")
+}

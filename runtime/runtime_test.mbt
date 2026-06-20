@@ -527,6 +527,13 @@ test "native runtime prepares shared run plans" {
           assert_eq(session.service_supervisor().backend_name(), "test")
           assert_true(session.can_launch())
           assert_true(session.to_json().contains("\"bridgeScheduler\""))
+          let artifact = plan.to_json()
+          assert_true(artifact.contains("\"kind\":\"native-run-plan\""))
+          assert_true(artifact.contains("\"source\":\"project\""))
+          assert_true(artifact.contains("\"nativeBackend\":\"test\""))
+          assert_true(artifact.contains("\"launchSession\""))
+          assert_true(artifact.contains("\"execution\""))
+          assert_true(artifact.contains("\"serviceSupervisor\""))
         }
         Err(_) => abort("unexpected invalid native prepared run plan")
       }

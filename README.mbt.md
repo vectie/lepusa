@@ -469,6 +469,10 @@ for platform loops: manifest path, bundle root, app metadata, native backend,
 WebView engine, WebView specs, service supervisor plan, startup operations,
 lifecycle operations, bridge routes, bridge scheduler policy, and the canonical
 runtime object that a backend consumes.
+`lepusa-runtime launch-session --manifest <runtime.json>` emits the narrower
+native host handoff: prepared WebView launch plans, executable startup and
+lifecycle operations, bridge scheduler policy, and service supervisor plan in a
+single `launchSession` object.
 `lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe and
 reports the bundled service supervisor requirement plus sidecar start order.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
@@ -492,6 +496,9 @@ scripts, while the manifest helper remains useful for one-shot probes.
 Bundled native run plans expose startup and lifecycle event scripts plus window
 navigations as typed runtime values, so packaged app loops can consume the same
 native-operation boundary as source-project runs.
+Source and bundled native run plans also serialize to compact handoff artifacts
+that carry native metadata plus the canonical launch session, giving future host
+adapters a stable JSON boundary without depending on bootstrap-only fields.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command

@@ -198,3 +198,31 @@ pub fn BundledNativeRunPlan::launch_session(
     Err(problem) => Err(problem)
   }
 }
+
+///|
+pub fn BundledNativeRunPlan::to_json(
+  self : BundledNativeRunPlan,
+) -> Result[String, String] {
+  match self.launch_session() {
+    Ok(session) => {
+      let manifest = self.bootstrap.manifest
+      let run_plan = self.bootstrap.run_plan()
+      Ok(
+        [
+          "{",
+          "\"kind\":\"bundled-native-run-plan\",",
+          "\"source\":\"bundle\",",
+          "\"manifestPath\":\{manifest.path().json_string()},",
+          "\"bundleRoot\":\{manifest.bundle_root().json_string()},",
+          "\"target\":\{run_plan.target().json_string()},",
+          "\"nativeBackend\":\{run_plan.backend().json_string()},",
+          "\"webviewEngine\":\{run_plan.webview_engine().json_string()},",
+          "\"webviewCount\":\{self.webview_count()},",
+          "\"launchSession\":\{session.to_json()}",
+          "}",
+        ].join(""),
+      )
+    }
+    Err(problem) => Err(problem)
+  }
+}
