@@ -92,8 +92,10 @@
   that normalize immediate scripts and drained completions; launch-session JSON
   now advertises that adapter/result boundary as a `bridgeLoop` contract;
   WebView launch contexts now carry the byte packet plus scheduler, executor,
-  and bridge-loop contracts into platform runner code; native async bridge
-  scheduling in the C/WebView loops and the Windows WebView creation loop remain.
+  and bridge-loop contracts into platform runner code; open-window runners now
+  pass the queue-backed handoff callback into native message handlers; native
+  async bridge drain/evaluate scheduling in the C/WebView loops and the Windows
+  WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

@@ -165,7 +165,7 @@ pub fn run(
       run_plan(
         plan,
         mode~,
-        dispatch=runtime.bridge_dispatch_callback(),
+        dispatch=runtime.bridge_loop_adapter().handoff_callback(),
         resolve_asset=runtime.asset_protocol_resolver_callback(),
       )
   }
@@ -182,7 +182,7 @@ pub fn run_bundled(
       run_plan(
         plan,
         mode~,
-        dispatch=manifest.bridge_dispatch_callback(),
+        dispatch=manifest.bridge_loop_adapter().handoff_callback(),
         resolve_asset=manifest.asset_protocol_resolver_callback(),
       )
   }

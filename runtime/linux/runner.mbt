@@ -212,7 +212,7 @@ fn linux_open_window(
     packet.height(),
     packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
-    runtime.bridge_dispatch_callback(),
+    runtime.bridge_loop_adapter().handoff_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
     runtime.asset_protocol_resolver_callback(),
   )
@@ -251,7 +251,7 @@ fn linux_open_bundled_window(
     packet.height(),
     packet.resizable(),
     fn(dispatch, message) { dispatch(message) },
-    manifest.bridge_dispatch_callback(),
+    manifest.bridge_loop_adapter().handoff_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
     manifest.asset_protocol_resolver_callback(),
   )

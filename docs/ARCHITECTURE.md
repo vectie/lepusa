@@ -163,6 +163,10 @@ runtime loops.
 it keeps the byte-level native launch packet together with the same scheduler,
 async executor, and `bridgeLoop` contract from the launch session before a
 backend crosses into C, WebKit, or WebView2 code.
+Open-window runners pass the queue-backed
+`bridge_loop_adapter().handoff_callback` into native message handlers, so sync
+commands still return callback scripts immediately while async commands are
+captured for the backend drain/evaluate step.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a

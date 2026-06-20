@@ -39,6 +39,17 @@ test "macos bridge callback dispatches native runtime messages" {
           assert_true(script.contains("globalThis[\"__lepusaInvokeResponse\"]"))
           assert_true(script.contains("\"id\":\"42\""))
           assert_true(script.contains("\"payload\":\"{\\\"seen\\\":true}\""))
+          let handoff = runtime.bridge_loop_adapter().handoff_callback()
+          let handoff_script = @utf8.decode(handoff(@utf8.encode(message))) catch {
+            _ => abort("unexpected invalid utf8 handoff response script")
+          }
+          assert_true(
+            handoff_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(handoff_script.contains("\"id\":\"42\""))
+          assert_true(
+            handoff_script.contains("\"payload\":\"{\\\"seen\\\":true}\""),
+          )
         }
         Err(_) => abort("unexpected invalid macOS run plan")
       }
@@ -64,6 +75,15 @@ test "macos bridge callback dispatches bundled sync messages" {
           assert_true(script.contains("globalThis[\"__lepusaInvokeResponse\"]"))
           assert_true(script.contains("\"id\":\"43\""))
           assert_true(script.contains("\\\"message\\\":\\\"ready\\\""))
+          let handoff = manifest.bridge_loop_adapter().handoff_callback()
+          let handoff_script = @utf8.decode(handoff(@utf8.encode(message))) catch {
+            _ => abort("unexpected invalid bundled handoff response script")
+          }
+          assert_true(
+            handoff_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(handoff_script.contains("\"id\":\"43\""))
+          assert_true(handoff_script.contains("\\\"message\\\":\\\"ready\\\""))
         }
         Err(_) => abort("unexpected invalid bundled macOS plan")
       }
