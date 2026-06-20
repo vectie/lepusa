@@ -17,6 +17,17 @@ pub struct BundleDistributionManifest {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundleDistributionEntry {
+  kind : String
+  name : String
+  path : String?
+  source_path : String?
+  required : Bool
+  description : String
+  json : String
+} derive(Debug, Eq)
+
+///|
 pub fn BundleDistributionManifest::parse(
   path : String,
   text : String,
@@ -155,6 +166,13 @@ pub fn BundleDistributionManifest::artifacts(
 }
 
 ///|
+pub fn BundleDistributionManifest::artifact_entries(
+  self : BundleDistributionManifest,
+) -> Array[BundleDistributionEntry] {
+  distribution_entries(self.artifacts, fallback_kind="artifact")
+}
+
+///|
 pub fn BundleDistributionManifest::resources(
   self : BundleDistributionManifest,
 ) -> Array[String] {
@@ -162,10 +180,27 @@ pub fn BundleDistributionManifest::resources(
 }
 
 ///|
+pub fn BundleDistributionManifest::resource_entries(
+  self : BundleDistributionManifest,
+) -> Array[BundleDistributionEntry] {
+  distribution_entries(self.resources, fallback_kind="resource")
+}
+
+///|
 pub fn BundleDistributionManifest::runtime_dependencies(
   self : BundleDistributionManifest,
 ) -> Array[String] {
   self.runtime_dependencies.copy()
+}
+
+///|
+pub fn BundleDistributionManifest::runtime_dependency_entries(
+  self : BundleDistributionManifest,
+) -> Array[BundleDistributionEntry] {
+  distribution_entries(
+    self.runtime_dependencies,
+    fallback_kind="runtime-dependency",
+  )
 }
 
 ///|
@@ -190,10 +225,85 @@ pub fn BundleDistributionManifest::signing_prerequisites(
 }
 
 ///|
+pub fn BundleDistributionManifest::signing_prerequisite_entries(
+  self : BundleDistributionManifest,
+) -> Array[BundleDistributionEntry] {
+  distribution_entries(
+    self.signing_prerequisites,
+    fallback_kind="signing-prerequisite",
+  )
+}
+
+///|
 pub fn BundleDistributionManifest::signing_steps(
   self : BundleDistributionManifest,
 ) -> Array[String] {
   self.signing_steps.copy()
+}
+
+///|
+pub fn BundleDistributionManifest::signing_step_entries(
+  self : BundleDistributionManifest,
+) -> Array[BundleDistributionEntry] {
+  distribution_entries(self.signing_steps, fallback_kind="signing-step")
+}
+
+///|
+pub fn BundleDistributionEntry::kind(self : BundleDistributionEntry) -> String {
+  self.kind
+}
+
+///|
+pub fn BundleDistributionEntry::name(self : BundleDistributionEntry) -> String {
+  self.name
+}
+
+///|
+pub fn BundleDistributionEntry::path(self : BundleDistributionEntry) -> String? {
+  self.path
+}
+
+///|
+pub fn BundleDistributionEntry::source_path(
+  self : BundleDistributionEntry,
+) -> String? {
+  self.source_path
+}
+
+///|
+pub fn BundleDistributionEntry::required(
+  self : BundleDistributionEntry,
+) -> Bool {
+  self.required
+}
+
+///|
+pub fn BundleDistributionEntry::description(
+  self : BundleDistributionEntry,
+) -> String {
+  self.description
+}
+
+///|
+pub fn BundleDistributionEntry::json(self : BundleDistributionEntry) -> String {
+  self.json
+}
+
+///|
+pub fn BundleDistributionEntry::to_json(
+  self : BundleDistributionEntry,
+) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.json_string()},",
+    "\"name\":\{self.name.json_string()},",
+    "\"path\":\{optional_distribution_entry_string(self.path)},",
+    "\"sourcePath\":\{optional_distribution_entry_string(self.source_path)},",
+    "\"required\":\{self.required.json_bool()},",
+    "\"description\":\{self.description.json_string()},",
+    "\"json\":\{self.json}",
+    "}",
+  ].join("")
 }
 
 ///|
@@ -288,5 +398,92 @@ fn distribution_manifest_json_object(
       problems.push("distribution \{key} object is required")
       "{}"
     }
+  }
+}
+
+///|
+fn distribution_entries(
+  items : Array[String],
+  fallback_kind~ : String,
+) -> Array[BundleDistributionEntry] {
+  items.map(fn(item) { distribution_entry(item, fallback_kind~) })
+}
+
+///|
+fn distribution_entry(
+  item : String,
+  fallback_kind~ : String,
+) -> BundleDistributionEntry {
+  let json = @json.parse(item) catch {
+    _ =>
+      return {
+        kind: fallback_kind,
+        name: fallback_kind,
+        path: None,
+        source_path: None,
+        required: true,
+        description: "",
+        json: item.json_string(),
+      }
+  }
+  match json {
+    Object(object) => {
+      let kind = distribution_entry_string(object, "kind").unwrap_or(
+        fallback_kind,
+      )
+      let path = distribution_entry_string(object, "path")
+      let name = distribution_entry_string(object, "name").unwrap_or(
+        path.unwrap_or(kind),
+      )
+      {
+        kind,
+        name,
+        path,
+        source_path: distribution_entry_string(object, "sourcePath"),
+        required: distribution_entry_bool(object, "required").unwrap_or(true),
+        description: distribution_entry_string(object, "description").unwrap_or(
+          "",
+        ),
+        json: item,
+      }
+    }
+    _ =>
+      {
+        kind: fallback_kind,
+        name: fallback_kind,
+        path: None,
+        source_path: None,
+        required: true,
+        description: "",
+        json: item,
+      }
+  }
+}
+
+///|
+fn distribution_entry_string(
+  object : Map[String, Json],
+  key : String,
+) -> String? {
+  match object.get(key) {
+    Some(String(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+fn distribution_entry_bool(object : Map[String, Json], key : String) -> Bool? {
+  match object.get(key) {
+    Some(True) => Some(true)
+    Some(False) => Some(false)
+    _ => None
+  }
+}
+
+///|
+fn optional_distribution_entry_string(value : String?) -> String {
+  match value {
+    Some(text) => text.json_string()
+    None => "null"
   }
 }

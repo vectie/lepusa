@@ -611,7 +611,9 @@ scripts.
 `BundleDistributionManifest::release_plan()` lowers that manifest into ordered
 release steps, keeping dependency validation, resource staging, signing checks,
 signing execution, and artifact collection explicit before platform-specific
-package generators are added.
+package generators are added. Each step carries typed distribution entries with
+kind, name, optional path/sourcePath, required flag, description, and original
+JSON, so package generators do not need ad hoc manifest parsing.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

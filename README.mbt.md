@@ -680,6 +680,9 @@ package generators.
 `lepusa bundle-release-plan <lepusa/distribution.json>` lowers the same
 manifest to ordered release steps for runtime dependency validation, resource
 staging, signing checks, signing commands, and artifact collection.
+Each release step carries structured entries with kind, name, path, sourcePath,
+required, and description fields so release tooling does not need to scrape raw
+manifest JSON.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

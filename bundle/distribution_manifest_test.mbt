@@ -39,6 +39,21 @@ test "distribution manifest parser exposes installer-facing bundle data" {
               assert_true(
                 manifest.runtime_dependencies()[0].contains("WebKitGTK"),
               )
+              let dependency_entries = manifest.runtime_dependency_entries()
+              assert_eq(dependency_entries.length(), 1)
+              assert_eq(dependency_entries[0].kind(), "system-webview-runtime")
+              assert_eq(dependency_entries[0].name(), "WebKitGTK 4.1 or 4.0")
+              assert_true(dependency_entries[0].path() is None)
+              assert_true(dependency_entries[0].source_path() is None)
+              assert_true(dependency_entries[0].required())
+              assert_true(
+                dependency_entries[0].description().contains("Linux WebView"),
+              )
+              let artifact_entries = manifest.artifact_entries()
+              assert_eq(artifact_entries.length(), 2)
+              assert_eq(artifact_entries[0].kind(), "portable-directory")
+              assert_eq(artifact_entries[0].path().unwrap(), "distribution-app")
+              assert_eq(artifact_entries[0].name(), "distribution-app")
               assert_true(manifest.summary().contains("target: linux"))
               assert_true(
                 manifest
@@ -52,6 +67,10 @@ test "distribution manifest parser exposes installer-facing bundle data" {
                 "validate-runtime-dependencies",
               )
               assert_eq(release.steps()[0].item_count(), 1)
+              assert_eq(
+                release.steps()[0].items()[0].name(),
+                "WebKitGTK 4.1 or 4.0",
+              )
               assert_eq(release.steps()[1].kind().name(), "stage-resources")
               assert_false(release.steps()[1].required())
               assert_eq(
@@ -59,6 +78,10 @@ test "distribution manifest parser exposes installer-facing bundle data" {
                 "validate-signing-prerequisites",
               )
               assert_eq(release.steps()[2].item_count(), 2)
+              assert_eq(
+                release.steps()[2].items()[0].kind(),
+                "signing-identity",
+              )
               assert_eq(release.steps()[3].kind().name(), "run-signing-steps")
               assert_false(release.steps()[3].required())
               assert_eq(release.required_steps().length(), 3)

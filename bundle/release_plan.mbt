@@ -12,7 +12,7 @@ pub struct BundleReleaseStep {
   kind : BundleReleaseStepKind
   name : String
   required : Bool
-  items : Array[String]
+  items : Array[BundleDistributionEntry]
 } derive(Debug, Eq)
 
 ///|
@@ -26,7 +26,7 @@ pub fn BundleReleaseStep::new(
   kind~ : BundleReleaseStepKind,
   name~ : String,
   required? : Bool = true,
-  items? : Array[String] = [],
+  items? : Array[BundleDistributionEntry] = [],
 ) -> BundleReleaseStep {
   { kind, name, required, items }
 }
@@ -60,7 +60,9 @@ pub fn BundleReleaseStep::required(self : BundleReleaseStep) -> Bool {
 }
 
 ///|
-pub fn BundleReleaseStep::items(self : BundleReleaseStep) -> Array[String] {
+pub fn BundleReleaseStep::items(
+  self : BundleReleaseStep,
+) -> Array[BundleDistributionEntry] {
   self.items.copy()
 }
 
@@ -77,7 +79,7 @@ pub fn BundleReleaseStep::to_json(self : BundleReleaseStep) -> String {
     "\"name\":\{self.name.json_string()},",
     "\"required\":\{self.required.json_bool()},",
     "\"itemCount\":\{self.item_count()},",
-    "\"items\":[\{self.items.join(",")}]",
+    "\"items\":[\{self.items.map(fn(item) { item.to_json() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -92,29 +94,29 @@ pub fn BundleDistributionManifest::release_plan(
       BundleReleaseStep::new(
         kind=ValidateRuntimeDependencies,
         name="Validate runtime dependencies",
-        items=self.runtime_dependencies(),
+        items=self.runtime_dependency_entries(),
       ),
       BundleReleaseStep::new(
         kind=StageResources,
         name="Stage bundle resources",
         required=false,
-        items=self.resources(),
+        items=self.resource_entries(),
       ),
       BundleReleaseStep::new(
         kind=ValidateSigningPrerequisites,
         name="Validate signing prerequisites",
-        items=self.signing_prerequisites(),
+        items=self.signing_prerequisite_entries(),
       ),
       BundleReleaseStep::new(
         kind=RunSigningSteps,
         name="Run signing steps",
         required=self.signing_configured(),
-        items=self.signing_steps(),
+        items=self.signing_step_entries(),
       ),
       BundleReleaseStep::new(
         kind=CollectArtifacts,
         name="Collect release artifacts",
-        items=self.artifacts(),
+        items=self.artifact_entries(),
       ),
     ],
   }
