@@ -282,6 +282,11 @@ fn render_runtime_run_report(
   } else {
     ""
   }
+  let status_message = if report.status().message() == "" {
+    ""
+  } else {
+    "status-message: \{report.status().message()}\n"
+  }
   let bridge_url = if include_bridge_url {
     "bridge: \{report.bridge_url()}\n"
   } else {
@@ -305,7 +310,7 @@ fn render_runtime_run_report(
     "backend: \{report.backend()}",
     "engine: \{report.engine()}",
     "status: \{report.status().name()}",
-    "webviews: \{report.webviews()}",
+    status_message + "webviews: \{report.webviews()}",
     title + "first-window-url: \{report.first_window_url()}",
     "target-can-launch: \{report.target_can_launch()}",
     target_blocker +

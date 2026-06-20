@@ -1560,6 +1560,7 @@ test "native service executor runs startup and shutdown hooks" {
   assert_eq(startup.backend_name(), "test")
   assert_true(startup.ok())
   assert_eq(startup.action_count(), 2)
+  assert_true(startup.first_failure_message() is None)
   assert_true(
     startup.action_reports()[0].status() is NativeServiceActionStarted,
   )
@@ -1601,6 +1602,14 @@ test "native backend creates service executor with backend metadata" {
   let startup = executor.execute_startup(plan)
   assert_false(startup.ok())
   assert_eq(startup.failed_count(), 1)
+  match startup.first_failure_message(context="test startup") {
+    Some(message) => {
+      assert_true(message.contains("test startup"))
+      assert_true(message.contains("wait-ready api"))
+      assert_true(message.contains("not ready"))
+    }
+    None => abort("expected service startup failure message")
+  }
   assert_true(
     startup.action_reports()[1].status() is NativeServiceActionFailed(_),
   )

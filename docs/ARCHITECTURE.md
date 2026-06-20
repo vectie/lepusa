@@ -386,6 +386,9 @@ Each platform package exposes `runtime(host)` and `detect_runtime(host)` helpers
 that return the shared `NativeRuntime` facade. Platform packages consume the
 same `RuntimeHost` boundary and must not re-read app manifests, capabilities,
 or source configuration.
+Open-window launch paths execute the shared service supervisor startup actions
+before native WebView creation, fail the run if startup cannot complete, and
+execute service shutdown after the window loop returns.
 
 Lifecycle hooks use the same lowering path. App authors attach commands to
 `AppStarted`, `AppWillExit`, `WindowCloseRequested(label)`, or

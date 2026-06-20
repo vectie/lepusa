@@ -478,6 +478,14 @@ test "macos service executor reports native service failures" {
   let startup = service_executor().execute_startup(plan)
   assert_false(startup.ok())
   assert_eq(startup.action_count(), 2)
+  match startup.first_failure_message(context="macOS service startup") {
+    Some(message) => {
+      assert_true(message.contains("macOS service startup"))
+      assert_true(message.contains("start-service missing"))
+      assert_true(message.contains("macOS service start failed"))
+    }
+    None => abort("expected macOS service startup failure message")
+  }
   assert_true(
     startup.action_reports()[0].status() is NativeServiceActionFailed(message) &&
     message.contains("macOS service start failed"),

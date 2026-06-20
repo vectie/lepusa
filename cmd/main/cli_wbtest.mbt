@@ -207,6 +207,7 @@ async test "run launch rejects unwired native targets" {
   assert_true(result.output.contains("backend: linux"))
   assert_true(result.output.contains("engine: WebKitGTK"))
   assert_true(result.output.contains("status: unsupported"))
+  assert_true(result.output.contains("status-message: Linux WebKitGTK"))
   assert_true(result.output.contains("webviews: 1"))
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),

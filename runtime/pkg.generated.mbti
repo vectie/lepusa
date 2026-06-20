@@ -564,6 +564,7 @@ pub fn NativeServiceSupervisorReport::action_count(Self) -> Int
 pub fn NativeServiceSupervisorReport::action_reports(Self) -> Array[NativeServiceActionReport]
 pub fn NativeServiceSupervisorReport::backend_name(Self) -> String
 pub fn NativeServiceSupervisorReport::failed_count(Self) -> Int
+pub fn NativeServiceSupervisorReport::first_failure_message(Self, context? : String) -> String?
 pub fn NativeServiceSupervisorReport::new(backend_name~ : String, webview_engine~ : String, action_reports? : Array[NativeServiceActionReport]) -> Self
 pub fn NativeServiceSupervisorReport::ok(Self) -> Bool
 pub fn NativeServiceSupervisorReport::to_json(Self) -> String

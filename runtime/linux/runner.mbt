@@ -212,6 +212,14 @@ fn linux_open_window(
     Err(problem) => return RunFailed(problem)
   }
   let packet = context.packet()
+  let startup = execute_service_startup(plan)
+  match startup.first_failure_message(context="Linux service startup") {
+    Some(message) => {
+      ignore(execute_service_shutdown(plan))
+      return RunFailed(message)
+    }
+    None => ()
+  }
   let adapter = runtime.bridge_loop_adapter()
   let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
@@ -228,6 +236,33 @@ fn linux_open_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     runtime.asset_protocol_resolver_callback(),
   )
+  linux_status_with_shutdown(
+    match exit_code {
+      0 => RunLaunched
+      2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
+      code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
+    },
+    shutdown=execute_service_shutdown(plan),
+  )
+}
+
+///|
+fn linux_status_with_shutdown(
+  status : @lepusa.RunStatus,
+  shutdown~ : @runtime.NativeServiceSupervisorReport,
+) -> @lepusa.RunStatus {
+  match status {
+    RunLaunched =>
+      match shutdown.first_failure_message(context="Linux service shutdown") {
+        Some(message) => RunFailed(message)
+        None => RunLaunched
+      }
+    _ => status
+  }
+}
+
+///|
+fn linux_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
   match exit_code {
     0 => RunLaunched
     2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
@@ -253,6 +288,14 @@ fn linux_open_bundled_window(
     Err(problem) => return RunFailed(problem)
   }
   let packet = context.packet()
+  let startup = execute_bundled_service_startup(plan)
+  match startup.first_failure_message(context="Linux bundled service startup") {
+    Some(message) => {
+      ignore(execute_bundled_service_shutdown(plan))
+      return RunFailed(message)
+    }
+    None => ()
+  }
   let adapter = manifest.bridge_loop_adapter()
   let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
@@ -269,11 +312,10 @@ fn linux_open_bundled_window(
     fn(resolve_asset, url) { resolve_asset(url) },
     manifest.asset_protocol_resolver_callback(),
   )
-  match exit_code {
-    0 => RunLaunched
-    2 => RunUnsupported("Linux WebKitGTK launch loop is unavailable")
-    code => RunFailed("Linux WebKitGTK launch failed: code \{code}")
-  }
+  linux_status_with_shutdown(
+    linux_status_from_exit_code(exit_code),
+    shutdown=execute_bundled_service_shutdown(plan),
+  )
 }
 
 ///|

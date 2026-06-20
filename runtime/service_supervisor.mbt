@@ -443,6 +443,23 @@ pub fn NativeServiceSupervisorReport::ok(
 }
 
 ///|
+pub fn NativeServiceSupervisorReport::first_failure_message(
+  self : NativeServiceSupervisorReport,
+  context? : String = "native service supervisor",
+) -> String? {
+  for report in self.action_reports {
+    match report.status() {
+      NativeServiceActionFailed(message) =>
+        return Some(
+          "\{context}: \{report.action_kind()} \{report.service_name()}: \{message}",
+        )
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 pub fn NativeServiceSupervisorReport::to_json(
   self : NativeServiceSupervisorReport,
 ) -> String {

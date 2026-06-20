@@ -330,6 +330,11 @@ fn render_native_run_report(
   } else {
     ""
   }
+  let status_message = if include_status && report.status().message() != "" {
+    "status-message: \{report.status().message()}\n"
+  } else {
+    ""
+  }
   let load_url = if report.load_url() == "" {
     ""
   } else {
@@ -361,6 +366,7 @@ fn render_native_run_report(
     "backend: \{report.backend()}\n" +
     "engine: \{report.engine()}\n" +
     status +
+    status_message +
     "webviews: \{report.webviews()}\n" +
     "first-window-url: \{report.first_window_url()}\n" +
     "target-can-launch: \{report.target_can_launch()}\n" +

@@ -328,6 +328,14 @@ fn run_plan(
         Err(problem) => return Err([problem])
       }
       let packet = context.packet()
+      let startup = plan.execute_service_startup()
+      match startup.first_failure_message(context="macOS service startup") {
+        Some(message) => {
+          ignore(plan.execute_service_shutdown())
+          return Ok({ plan, status: RunFailed(message) })
+        }
+        None => ()
+      }
       let dispatch = dispatch_for_window(packet.label_text())
       let exit_code = run_webview_with_bridge(
         packet.title(),
@@ -343,8 +351,12 @@ fn run_plan(
         fn(resolve_asset, url) { resolve_asset(url) },
         resolve_asset,
       )
+      let shutdown = plan.execute_service_shutdown()
       if exit_code == 0 {
-        Ok({ plan, status: RunLaunched })
+        match shutdown.first_failure_message(context="macOS service shutdown") {
+          Some(message) => Ok({ plan, status: RunFailed(message) })
+          None => Ok({ plan, status: RunLaunched })
+        }
       } else {
         Ok({ plan, status: RunFailed("macOS WebView launch failed") })
       }

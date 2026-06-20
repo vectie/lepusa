@@ -324,6 +324,14 @@ test "windows service executor reports native service failures" {
   let startup = service_executor().execute_startup(plan)
   assert_false(startup.ok())
   assert_eq(startup.action_count(), 2)
+  match startup.first_failure_message(context="Windows service startup") {
+    Some(message) => {
+      assert_true(message.contains("Windows service startup"))
+      assert_true(message.contains("start-service missing"))
+      assert_true(message.contains("Windows service start failed"))
+    }
+    None => abort("expected Windows service startup failure message")
+  }
   assert_true(
     startup.action_reports()[0].status() is NativeServiceActionFailed(message) &&
     message.contains("Windows service start failed"),

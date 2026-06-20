@@ -358,7 +358,8 @@ test "runtime cli dry-runs bundled linux manifest by target" {
   )
   assert_eq(launch.exit_code, 0)
   assert_true(launch.output.contains("mode: launch"))
-  assert_true(launch.output.contains("status: unsupported"))
+  assert_true(launch.output.contains("status: failed"))
+  assert_true(launch.output.contains("Linux bundled service startup"))
   assert_true(launch.output.contains("target-can-launch: true"))
   assert_true(launch.output.contains("engine: WebKitGTK"))
 }

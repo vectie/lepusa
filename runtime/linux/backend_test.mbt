@@ -291,8 +291,10 @@ test "linux backend prepares bundled runtime contract" {
       match launch_bundled(manifest) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("WebKitGTK launch loop"))
+            RunFailed(message) => {
+              assert_true(message.contains("Linux bundled service startup"))
+              assert_true(message.contains("start-service api"))
+            }
             _ => abort("unexpected Linux bundled launch status")
           }
         Err(_) => abort("unexpected invalid Linux bundled launch plan")
@@ -319,6 +321,14 @@ test "linux service executor reports native service failures" {
   let startup = service_executor().execute_startup(plan)
   assert_false(startup.ok())
   assert_eq(startup.action_count(), 2)
+  match startup.first_failure_message(context="Linux service startup") {
+    Some(message) => {
+      assert_true(message.contains("Linux service startup"))
+      assert_true(message.contains("start-service missing"))
+      assert_true(message.contains("Linux service start failed"))
+    }
+    None => abort("expected Linux service startup failure message")
+  }
   assert_true(
     startup.action_reports()[0].status() is NativeServiceActionFailed(message) &&
     message.contains("Linux service start failed"),
