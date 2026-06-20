@@ -717,6 +717,17 @@ pub async fn BundledBridgeLoopAdapter::receive_window_message(
 }
 
 ///|
+pub async fn BundledBridgeLoopAdapter::drain_window(
+  self : BundledBridgeLoopAdapter,
+  window_label~ : String,
+) -> BundledBridgeLoopDelivery {
+  BundledBridgeLoopDelivery::from_result(window_label~, result={
+    immediate_script: "",
+    completions: self.drain(),
+  })
+}
+
+///|
 pub fn BundledBridgeLoopAdapter::to_json(
   self : BundledBridgeLoopAdapter,
 ) -> String {

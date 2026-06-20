@@ -192,6 +192,9 @@ crosses into C, WebKit, or WebView2 APIs.
 `receive_window_message` is the per-WebView adapter entry point: it returns a
 `NativeBridgeLoopDelivery` or `BundledBridgeLoopDelivery` containing the raw
 loop result and executable evaluation plan for the target window.
+`drain_window` exposes the split native-loop path: the message handler can
+enqueue async work through `handoff_callback`, then later drain pending work
+into the same delivery envelope after leaving the synchronous WebView callback.
 
 Command rules:
 

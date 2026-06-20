@@ -770,6 +770,17 @@ pub async fn NativeBridgeLoopAdapter::receive_window_message(
 }
 
 ///|
+pub async fn NativeBridgeLoopAdapter::drain_window(
+  self : NativeBridgeLoopAdapter,
+  window_label~ : String,
+) -> NativeBridgeLoopDelivery {
+  NativeBridgeLoopDelivery::from_result(window_label~, result={
+    immediate_script: "",
+    completions: self.drain(),
+  })
+}
+
+///|
 pub fn NativeBridgeLoopAdapter::to_json(
   self : NativeBridgeLoopAdapter,
 ) -> String {

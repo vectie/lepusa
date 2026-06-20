@@ -1746,13 +1746,19 @@ async test "native runtime owns bridge message transport" {
           assert_eq(adapter.pending_count(), 1)
           assert_true(adapter.to_json().contains("\"pendingCount\":1"))
           assert_true(adapter.to_json().contains("\"route\":\"core.invoke\""))
-          let adapter_completions = adapter.drain()
-          assert_eq(adapter_completions.length(), 1)
+          let adapter_delivery = adapter.drain_window(window_label="main")
+          assert_eq(adapter_delivery.window_label(), "main")
+          assert_false(adapter_delivery.result().has_immediate_script())
+          assert_eq(adapter_delivery.operations().length(), 1)
+          assert_eq(
+            adapter_delivery.evaluation_plan().evaluation_scripts().length(),
+            1,
+          )
           assert_true(adapter.is_empty())
           assert_true(adapter.queue().is_empty())
           assert_eq(adapter.runtime().backend().name(), "test")
           assert_true(
-            adapter_completions[0]
+            adapter_delivery.result().completions()[0]
             .evaluation_script()
             .contains("globalThis[\"__lepusaInvokeResponse\"]"),
           )

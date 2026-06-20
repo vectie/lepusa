@@ -120,6 +120,7 @@ pub struct NativeBridgeLoopAdapter {
   queue : NativeBridgeWorkQueue
 }
 pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
+pub async fn NativeBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool

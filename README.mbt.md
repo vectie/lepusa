@@ -444,6 +444,9 @@ shape for its drain/evaluate step.
 `receive_window_message` returns a `NativeBridgeLoopDelivery` /
 `BundledBridgeLoopDelivery`, pairing the raw loop result with that executable
 plan for the target window.
+`drain_window` returns the same delivery shape for async tasks previously
+captured by the message-handler handoff callback, which is the native loop path
+for post-callback WebView evaluation.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView
