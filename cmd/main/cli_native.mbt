@@ -97,6 +97,7 @@ fn render_doctor_host(
             "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
             render_handler_coverage(host) +
             "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+            render_doctor_native_launch_gate(bundle.target(), host) +
             "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
             render_signing_prerequisites(bundle) +
             render_native_backend_diagnostics(),
@@ -104,6 +105,41 @@ fn render_doctor_host(
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
       }
     Err(problems) => fail(render_problems("Lepusa doctor", problems))
+  }
+}
+
+///|
+fn render_doctor_native_launch_gate(
+  target : @lepusa.BundleTarget,
+  host : @runtime.RuntimeHost,
+) -> String {
+  match native_runtime_for_target(target, host) {
+    Ok(runtime) =>
+      match verify_native_dry_run(target, runtime) {
+        Ok(session) => {
+          let base = "target=\{target.name()} webviews=\{session.webviews().length()} startup=\{session.execution().startup_operations().length()} lifecycle=\{session.execution().lifecycle_steps().length()}"
+          match doctor_native_launch_blocker(target, session) {
+            None => "[ok] native-launch: \{base} can-launch=true\n"
+            Some(problem) =>
+              "[warn] native-launch: \{base} can-launch=false reason=\{problem}\n"
+          }
+        }
+        Err(problems) =>
+          "[warn] native-launch: target=\{target.name()} can-launch=false reason=\{problems.join("; ")}\n"
+      }
+    Err(problems) =>
+      "[warn] native-launch: target=\{target.name()} can-launch=false reason=\{problems.join("; ")}\n"
+  }
+}
+
+///|
+fn doctor_native_launch_blocker(
+  target : @lepusa.BundleTarget,
+  session : @runtime.NativeLaunchSession,
+) -> String? {
+  match target {
+    Windows => Some("Windows WebView2 creation loop is unavailable")
+    MacOS | Linux => session.launch_blocker(verify_target_display_name(target))
   }
 }
 

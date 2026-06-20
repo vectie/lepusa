@@ -189,9 +189,9 @@ These commands exercise the public planning contracts and give the native
 runtime and bundler work concrete outputs to consume.
 
 `lepusa doctor [macos|windows|linux]` checks the portable runtime and bundle
-plans, reports the selected target's signing prerequisites, and reports host
-WebView availability for the platform backend descriptors: WKWebView on macOS,
-WebView2 on Windows, and WebKitGTK on Linux.
+plans, reports the selected target's native launch gate and signing
+prerequisites, and reports host WebView availability for the platform backend
+descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
@@ -443,6 +443,9 @@ Add `--strict` when the command should act as a release gate: missing concrete
 handlers and known target launch blockers become failures instead of warnings.
 This keeps framework-development proofs useful while still giving CI a direct
 answer for "can this target ship?"
+`lepusa doctor` prints the same target launch-gate blocker as a warning so
+local diagnostics stay non-fatal while still showing whether the selected
+target can launch natively today.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
