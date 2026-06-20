@@ -597,7 +597,9 @@ Native runner plans also report bridge sync and async route sets, giving
 platform loops an explicit scheduling contract before they open a WebView.
 They also expose executable operation views for frontend event scripts and
 window navigations, so native loops do not need to parse operation JSON to
-drive lifecycle/startup work.
+drive lifecycle/startup work. Prepared source and packaged run plans append
+startup frontend event scripts to the matching WebView initialization script,
+so launchers consume the same operation boundary they report.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

@@ -41,10 +41,30 @@ pub fn BundledRuntimeManifest::prepare_native_run_plan(
     problems.push(missing_webview_message)
   }
   if problems.is_empty() {
-    Ok({ bootstrap, bundled_webviews, webviews })
+    let execution = match bootstrap.native_execution_plan() {
+      Ok(execution) => execution
+      Err(problem) => return Err([problem])
+    }
+    Ok({
+      bootstrap,
+      bundled_webviews,
+      webviews: bundled_webviews_with_startup_scripts(execution, webviews),
+    })
   } else {
     Err(problems)
   }
+}
+
+///|
+fn bundled_webviews_with_startup_scripts(
+  execution : @runtime.NativeExecutionPlan,
+  webviews : Array[@runtime.NativeWebViewPlan],
+) -> Array[@runtime.NativeWebViewPlan] {
+  webviews.map(fn(webview) {
+    webview.with_initialization_script_suffix(
+      execution.startup_initialization_script(webview.label()),
+    )
+  })
 }
 
 ///|

@@ -444,3 +444,31 @@ fn native_navigations(
   }
   navigations
 }
+
+///|
+fn native_executable_evaluation_scripts(
+  operations : Array[NativeExecutableOperation],
+) -> Array[NativeEvaluationScript] {
+  let scripts : Array[NativeEvaluationScript] = []
+  for operation in operations {
+    match operation.evaluation_script() {
+      Some(script) => scripts.push(script)
+      None => ()
+    }
+  }
+  scripts
+}
+
+///|
+fn native_executable_navigations(
+  operations : Array[NativeExecutableOperation],
+) -> Array[NativeNavigation] {
+  let navigations : Array[NativeNavigation] = []
+  for operation in operations {
+    match operation.navigation() {
+      Some(navigation) => navigations.push(navigation)
+      None => ()
+    }
+  }
+  navigations
+}

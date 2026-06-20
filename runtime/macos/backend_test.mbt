@@ -220,6 +220,10 @@ test "macos backend prepares first webview load url" {
             webview.initialization_script().contains("__lepusaInvokeResponse"),
           )
           assert_true(webview.initialization_script().contains("windowLabel"))
+          assert_true(
+            webview.initialization_script().contains("__lepusaDispatchEvent"),
+          )
+          assert_true(webview.initialization_script().contains("ready"))
           assert_eq(webview.width(), 1000)
           assert_eq(webview.height(), 720)
           let execution = plan.execution()
@@ -389,6 +393,9 @@ test "macos backend prepares bundled runtime manifest" {
             webview.initialization_script().contains("__lepusaInvokeResponse"),
           )
           assert_true(webview.initialization_script().contains("bridge ready"))
+          assert_true(
+            webview.initialization_script().contains("__lepusaDispatchEvent"),
+          )
           assert_eq(webview.width(), 900)
           assert_eq(webview.height(), 640)
           assert_eq(webview.resizable(), false)

@@ -40,6 +40,21 @@ pub fn NativeWebViewPlan::new(
 }
 
 ///|
+pub fn NativeWebViewPlan::with_initialization_script_suffix(
+  self : NativeWebViewPlan,
+  suffix : String,
+) -> NativeWebViewPlan {
+  if suffix == "" {
+    self
+  } else {
+    {
+      ..self,
+      initialization_script: [self.initialization_script, suffix].join("\n"),
+    }
+  }
+}
+
+///|
 pub fn NativeRuntime::webview_plan(
   self : NativeRuntime,
   spec : RuntimeWebViewSpec,

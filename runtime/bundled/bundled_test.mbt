@@ -438,6 +438,12 @@ test "bundled native run plans expose executable operation views" {
                 execution.startup_operations()[1].kind(),
                 "evaluate-script",
               )
+              assert_eq(execution.startup_evaluation_scripts().length(), 1)
+              assert_true(
+                execution
+                .startup_initialization_script("main")
+                .contains("__lepusaDispatchEvent"),
+              )
               assert_true(
                 execution.startup_operation_jsons()[2].contains(
                   "\"kind\":\"navigate-window\"",
@@ -471,6 +477,15 @@ test "bundled native run plans expose executable operation views" {
           assert_eq(scripts[0].window_label(), "main")
           assert_true(scripts[0].script().contains("__lepusaDispatchEvent"))
           assert_true(scripts[0].script().contains("ready"))
+          match plan.first_webview() {
+            Ok(webview) =>
+              assert_true(
+                webview
+                .initialization_script()
+                .contains("__lepusaDispatchEvent"),
+              )
+            Err(problem) => abort(problem)
+          }
           let navigations = plan.startup_navigations()
           assert_eq(navigations.length(), 1)
           assert_eq(navigations[0].window_label(), "main")

@@ -223,6 +223,14 @@ test "native runner exposes executable operation views" {
           assert_eq(execution.startup_operations().length(), 4)
           assert_eq(execution.startup_operations()[0].kind(), "start-service")
           assert_eq(execution.startup_operations()[3].kind(), "navigate-window")
+          assert_eq(execution.startup_evaluation_scripts().length(), 1)
+          assert_eq(execution.startup_navigations().length(), 1)
+          assert_true(
+            execution
+            .startup_initialization_script("main")
+            .contains("__lepusaDispatchEvent"),
+          )
+          assert_eq(execution.startup_initialization_script("settings"), "")
           assert_true(
             execution.startup_operation_jsons()[1].contains(
               "\"kind\":\"evaluate-script\"",
@@ -236,6 +244,30 @@ test "native runner exposes executable operation views" {
           assert_eq(navigations.length(), 1)
           assert_eq(navigations[0].window_label(), "main")
           assert_true(navigations[0].to_json().contains("\"url\""))
+          match NativeRuntime::new(backend, RuntimeHost::new(plan)) {
+            Ok(runtime) =>
+              match
+                runtime.prepare_run_plan(prepare_webview=fn(spec) {
+                  runtime.webview_plan(spec, initialization_script="base")
+                }) {
+                Ok(prepared) =>
+                  match prepared.first_webview() {
+                    Ok(webview) => {
+                      assert_true(
+                        webview.initialization_script().contains("base"),
+                      )
+                      assert_true(
+                        webview
+                        .initialization_script()
+                        .contains("__lepusaDispatchEvent"),
+                      )
+                    }
+                    Err(problem) => abort(problem)
+                  }
+                Err(_) => abort("unexpected invalid prepared native run plan")
+              }
+            Err(_) => abort("unexpected invalid native runtime")
+          }
           match runner.lifecycle_step(WindowCloseRequested("main")) {
             Ok(step) => {
               let lifecycle_executable = step.executable_operations()

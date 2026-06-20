@@ -23,10 +23,28 @@ pub fn NativeRuntime::prepare_run_plan(
     problems.push(missing_webview_message)
   }
   if problems.is_empty() {
-    Ok({ runner, webviews })
+    Ok({
+      runner,
+      webviews: native_webviews_with_startup_scripts(
+        runner.execution_plan(),
+        webviews,
+      ),
+    })
   } else {
     Err(problems)
   }
+}
+
+///|
+fn native_webviews_with_startup_scripts(
+  execution : NativeExecutionPlan,
+  webviews : Array[NativeWebViewPlan],
+) -> Array[NativeWebViewPlan] {
+  webviews.map(fn(webview) {
+    webview.with_initialization_script_suffix(
+      execution.startup_initialization_script(webview.label()),
+    )
+  })
 }
 
 ///|

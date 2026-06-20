@@ -288,6 +288,9 @@ pub struct NativeExecutionPlan {
 } derive(Eq, @debug.Debug)
 pub fn NativeExecutionPlan::lifecycle_steps(Self) -> Array[NativeExecutionStep]
 pub fn NativeExecutionPlan::new(startup_operations~ : Array[NativeExecutableOperation], lifecycle_steps~ : Array[NativeExecutionStep]) -> Self
+pub fn NativeExecutionPlan::startup_evaluation_scripts(Self) -> Array[NativeEvaluationScript]
+pub fn NativeExecutionPlan::startup_initialization_script(Self, String) -> String
+pub fn NativeExecutionPlan::startup_navigations(Self) -> Array[NativeNavigation]
 pub fn NativeExecutionPlan::startup_operation_jsons(Self) -> Array[String]
 pub fn NativeExecutionPlan::startup_operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeExecutionPlan::to_json(Self) -> String
@@ -634,6 +637,7 @@ pub fn NativeWebViewPlan::title(Self) -> String
 pub fn NativeWebViewPlan::to_json(Self) -> String
 pub fn NativeWebViewPlan::url(Self) -> String
 pub fn NativeWebViewPlan::width(Self) -> Int
+pub fn NativeWebViewPlan::with_initialization_script_suffix(Self, String) -> Self
 
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 

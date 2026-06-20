@@ -42,7 +42,9 @@
   mappings, command routes, and capability grants.
 - Lower `Cmd` startup trees into backend-executable runtime actions.
 - Add runtime lifecycle hooks for startup, shutdown, and window close events:
-  initial generic and native runner lowering exists
+  initial generic and native runner lowering exists, and source plus packaged
+  prepared run plans now embed startup frontend event scripts into the matching
+  WebView initialization script.
 - Add shared `@lepusa/runtime` native backend lowering over portable runtime
   operations.
 - Add `RuntimeServicePlan` as the service-specific runtime handoff for

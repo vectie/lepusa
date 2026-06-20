@@ -44,6 +44,32 @@ pub fn NativeExecutionPlan::startup_operation_jsons(
 }
 
 ///|
+pub fn NativeExecutionPlan::startup_evaluation_scripts(
+  self : NativeExecutionPlan,
+) -> Array[NativeEvaluationScript] {
+  native_executable_evaluation_scripts(self.startup_operations)
+}
+
+///|
+pub fn NativeExecutionPlan::startup_navigations(
+  self : NativeExecutionPlan,
+) -> Array[NativeNavigation] {
+  native_executable_navigations(self.startup_operations)
+}
+
+///|
+pub fn NativeExecutionPlan::startup_initialization_script(
+  self : NativeExecutionPlan,
+  window_label : String,
+) -> String {
+  self
+  .startup_evaluation_scripts()
+  .filter(fn(script) { script.window_label() == window_label })
+  .map(fn(script) { script.script() })
+  .join("\n")
+}
+
+///|
 pub fn NativeExecutionPlan::lifecycle_steps(
   self : NativeExecutionPlan,
 ) -> Array[NativeExecutionStep] {
