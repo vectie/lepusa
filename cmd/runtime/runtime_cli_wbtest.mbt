@@ -1,4 +1,12 @@
 ///|
+async test "runtime help text names bridge loop command" {
+  let result = render_runtime_cli_async(["help"])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("lepusa-runtime bridge-task"))
+  assert_true(result.output.contains("lepusa-runtime bridge-loop"))
+}
+
+///|
 test "runtime cli summarizes bundled manifest envelope" {
   let manifest =
     #|{
@@ -582,6 +590,17 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(sync_handoff.exit_code, 0)
   assert_true(sync_handoff.output.contains("\"kind\":\"immediate\""))
   assert_true(sync_handoff.output.contains("\"immediateDispatch\":{"))
+  let sync_loop = render_runtime_bridge_loop_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(sync_loop.exit_code, 0)
+  assert_true(sync_loop.output.contains("\"immediateScript\":\"globalThis"))
+  assert_true(sync_loop.output.contains("\"completions\":[]"))
+  assert_true(
+    sync_loop.output.contains(
+      "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let sync_complete = render_runtime_bridge_complete_text(
     "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
   )
@@ -602,6 +621,18 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(async_handoff.exit_code, 0)
   assert_true(async_handoff.output.contains("\"kind\":\"deferred\""))
   assert_true(async_handoff.output.contains("\"immediateDispatch\":null"))
+  let async_loop = render_runtime_bridge_loop_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_eq(async_loop.exit_code, 0)
+  assert_true(async_loop.output.contains("\"immediateScript\":\"\""))
+  assert_true(async_loop.output.contains("\"completions\":[{"))
+  assert_true(async_loop.output.contains("\"route\":\"fs.readText\""))
+  assert_true(
+    async_loop.output.contains(
+      "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let async_complete = render_runtime_bridge_complete_text(
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
@@ -618,6 +649,11 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(invalid.exit_code, 1)
   assert_true(
     invalid.output.contains("bridge-task route must be <plugin.command>"),
+  )
+  let invalid_loop = render_runtime_cli_async(["bridge-loop", "main", "log"])
+  assert_eq(invalid_loop.exit_code, 1)
+  assert_true(
+    invalid_loop.output.contains("bridge-loop route must be <plugin.command>"),
   )
 }
 

@@ -7,6 +7,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa dev"))
   assert_true(result.output.contains("lepusa bridge-task"))
   assert_true(result.output.contains("lepusa bridge-complete"))
+  assert_true(result.output.contains("lepusa bridge-loop"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa asset"))
   assert_true(result.output.contains("lepusa lifecycle"))
@@ -573,6 +574,17 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(sync_handoff.exit_code, 0)
   assert_true(sync_handoff.output.contains("\"kind\":\"immediate\""))
   assert_true(sync_handoff.output.contains("\"immediateDispatch\":{"))
+  let sync_loop = render_cli_async([
+    "bridge-loop", "main", "core.invoke", "true",
+  ])
+  assert_eq(sync_loop.exit_code, 0)
+  assert_true(sync_loop.output.contains("\"immediateScript\":\"globalThis"))
+  assert_true(sync_loop.output.contains("\"completions\":[]"))
+  assert_true(
+    sync_loop.output.contains(
+      "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let sync_complete = render_cli_async([
     "bridge-complete", "main", "core.invoke", "true",
   ])
@@ -631,6 +643,23 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(async_handoff.exit_code, 0)
   assert_true(async_handoff.output.contains("\"kind\":\"deferred\""))
   assert_true(async_handoff.output.contains("\"immediateDispatch\":null"))
+  let async_loop = render_cli_async([
+    "bridge-loop",
+    "main",
+    "fs.readText",
+    "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(async_loop.exit_code, 0)
+  assert_true(async_loop.output.contains("\"immediateScript\":\"\""))
+  assert_true(async_loop.output.contains("\"completions\":[{"))
+  assert_true(async_loop.output.contains("\"route\":\"fs.readText\""))
+  assert_true(
+    async_loop.output.contains(
+      "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
+    ),
+  )
   let async_complete = render_cli_async([
     "bridge-complete",
     "main",
@@ -652,6 +681,11 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(invalid.exit_code, 1)
   assert_true(
     invalid.output.contains("bridge-task route must be <plugin.command>"),
+  )
+  let invalid_loop = render_cli_async(["bridge-loop", "main", "log"])
+  assert_eq(invalid_loop.exit_code, 1)
+  assert_true(
+    invalid_loop.output.contains("bridge-loop route must be <plugin.command>"),
   )
 }
 

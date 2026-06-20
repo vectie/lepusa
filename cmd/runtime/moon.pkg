@@ -1,6 +1,7 @@
 import {
   "moonbitlang/async",
   "moonbitlang/async/fs",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/x/sys",
   "vectie/lepusa",
   "vectie/lepusa/runtime" @runtime_core,

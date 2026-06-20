@@ -249,6 +249,50 @@ async fn render_bridge_dispatch_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bridge_loop_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let window_label = values.get(0).unwrap_or("")
+  let route = values.get(1).unwrap_or("")
+  let payload = values.get(2).unwrap_or("")
+  if window_label == "" {
+    return fail("bridge-loop window is required\n")
+  }
+  match parse_command_route(route, command_name="bridge-loop") {
+    Ok((plugin, command)) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match
+            @runtime.NativeRuntime::new(
+              @runtime.NativeBackend::new(
+                name="cli",
+                webview_engine="SystemWebView",
+              ),
+              host,
+            ) {
+            Ok(runtime) => {
+              let request = @lepusa.InvokeRequest::new(
+                id="cli",
+                window_label~,
+                plugin~,
+                command~,
+                payload~,
+              )
+              let message = @runtime.encode_invoke_request_json(request)
+              let result = runtime
+                .bridge_loop_adapter()
+                .receive_message(@utf8.encode(message))
+              ok(result.to_json() + "\n")
+            }
+            Err(problems) =>
+              fail(render_problems("Lepusa bridge loop", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa bridge loop", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
 async fn render_invoke_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let window_label = values.get(0).unwrap_or("")

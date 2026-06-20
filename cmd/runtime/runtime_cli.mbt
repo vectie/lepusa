@@ -27,6 +27,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("bridge-handoff") => render_runtime_bridge_handoff(args)
     Some("bridge-complete") => render_runtime_bridge_complete(args)
     Some("bridge-dispatch") => render_runtime_bridge_dispatch(args)
+    Some("bridge-loop") => render_runtime_bridge_loop(args)
     Some("invoke") => render_runtime_invoke(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
@@ -398,6 +399,7 @@ fn runtime_help() -> String {
     #|  lepusa-runtime bridge-handoff <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-complete <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime bridge-loop <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|
   )
@@ -688,6 +690,68 @@ async fn render_runtime_bridge_dispatch_text(
                 ),
               )
           }
+        }
+      }
+  }
+}
+
+///|
+async fn render_runtime_bridge_loop(args : Array[String]) -> RuntimeCliResult {
+  let values = runtime_positional_args(args)
+  let window_label = values.get(1).unwrap_or("")
+  let route = values.get(2).unwrap_or("")
+  let payload = values.get(3).unwrap_or("")
+  if window_label == "" {
+    return runtime_fail("bridge-loop window is required\n")
+  }
+  if route == "" || route == "--manifest" {
+    return runtime_fail("bridge-loop route is required\n")
+  }
+  match runtime_parse_invoke_route(route, command_name="bridge-loop") {
+    Err(problem) => return runtime_fail(problem + "\n")
+    Ok(_) => ()
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime bridge-loop\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_bridge_loop_text(path, text, window_label, route, payload)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+async fn render_runtime_bridge_loop_text(
+  path : String,
+  text : String,
+  window_label : String,
+  route : String,
+  payload : String,
+) -> RuntimeCliResult {
+  match runtime_parse_invoke_route(route, command_name="bridge-loop") {
+    Err(problem) => runtime_fail(problem + "\n")
+    Ok((plugin, command)) =>
+      match @bundled.BundledRuntimeManifest::parse(path, text) {
+        Err(problem) =>
+          runtime_fail("Lepusa runtime bridge-loop\n[fail] \{problem}\n")
+        Ok(manifest) => {
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          let message = @runtime_core.encode_invoke_request_json(request)
+          let result = manifest
+            .bridge_loop_adapter()
+            .receive_message(@utf8.encode(message))
+          runtime_ok(result.to_json() + "\n")
         }
       }
   }

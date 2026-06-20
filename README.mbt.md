@@ -140,6 +140,7 @@ moon run cmd/main --target native -- bridge-task main log.write '{"message":"rea
 moon run cmd/main --target native -- bridge-handoff main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-dispatch main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bridge-loop main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -154,6 +155,7 @@ moon run cmd/runtime --target native -- bridge-task main log.write '{"message":"
 moon run cmd/runtime --target native -- bridge-handoff main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-dispatch main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- bridge-loop main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- invoke main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
@@ -452,6 +454,10 @@ native event loops after async work finishes.
 `lepusa bridge-dispatch <window> <plugin.command> [payload] --project lepusa.json`
 executes the same bridge message and prints the native callback envelope without
 starting a WebView.
+`lepusa bridge-loop <window> <plugin.command> [payload] --project lepusa.json`
+feeds one source-project WebView message through the bridge-loop adapter and
+prints the immediate script, drained async completions, and evaluation scripts
+that a native event loop should run.
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability
@@ -571,15 +577,19 @@ envelope native event loops use after async work finishes.
 `lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes the packaged bridge message and returns the response JSON plus
 callback script that a native event loop evaluates back into the target WebView.
+`lepusa-runtime bridge-loop <window> <plugin.command> [payload] --manifest <runtime.json>`
+feeds one packaged WebView message through the bundled bridge-loop adapter and
+returns the immediate script, drained async completions, and evaluation scripts
+that a native loop should evaluate.
 `lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes a packaged bridge command against the manifest's registered official
 native handlers. It checks the requested window's `allowedRoutes` before
 dispatching and returns the same JSON response shape as project-hosted
 `lepusa invoke`.
 `@lepusa/runtime/bundled` owns the reusable manifest parser and bootstrap,
-asset, lifecycle, bridge-task, and invoke JSON behind those commands, so native
-platform loops can consume bundled runtime data without depending on CLI
-internals.
+asset, lifecycle, bridge-task, bridge-loop, and invoke JSON behind those
+commands, so native platform loops can consume bundled runtime data without
+depending on CLI internals.
 `BundledRuntime::new(manifest)` keeps the native command registry state alive
 for repeated bridge calls. It also owns bundled bridge message preparation,
 sync/async dispatch, target-window response-hook lookup, and response-callback
