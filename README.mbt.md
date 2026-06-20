@@ -45,6 +45,9 @@ The first implementation slice already owns the public MoonBit foundation:
   consume without reinterpreting app configuration
 - `@lepusa/runtime.NativeRuntime` as the single native-loop facade over backend
   bootstrap, asset protocol responses, IPC dispatch, and lifecycle steps
+- `@lepusa/runtime.NativeOperationExecutor` as the shared execution boundary
+  for startup, lifecycle, and bridge-drain operations that platform loops must
+  map to WebView evaluation, navigation, effects, and service work
 
 The common authoring path is intentionally small:
 
@@ -568,6 +571,10 @@ captured by the message-handler handoff callback, which is the native loop path
 for post-callback WebView evaluation. The callback bundles also expose
 `drain_window_scripts`, a compact UTF-8 JavaScript payload for native loops that
 only need to evaluate the completed callback scripts.
+`NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
+platform packages provide handlers for `evaluate-script`, `navigate-window`,
+`run-effect`, and service operations, then receive a typed execution report
+instead of parsing operation JSON.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView
@@ -649,6 +656,9 @@ window navigations, so native loops do not need to parse operation JSON to
 drive lifecycle/startup work. Prepared source and packaged run plans append
 startup frontend event scripts to the matching WebView initialization script,
 so launchers consume the same operation boundary they report.
+`NativeOperationExecutor` executes those operation arrays through platform
+handlers and reports executed, skipped, and failed outcomes, giving WebView
+loops one reusable path for startup, lifecycle, and bridge-drain work.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

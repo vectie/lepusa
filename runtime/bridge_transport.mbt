@@ -864,6 +864,14 @@ pub fn NativeBridgeLoopResult::immediate_script(
 }
 
 ///|
+pub fn NativeBridgeLoopResult::new(
+  immediate_script? : String = "",
+  completions? : Array[NativeBridgeCompletion] = [],
+) -> NativeBridgeLoopResult {
+  { immediate_script, completions: completions.copy() }
+}
+
+///|
 pub fn NativeBridgeLoopResult::has_immediate_script(
   self : NativeBridgeLoopResult,
 ) -> Bool {

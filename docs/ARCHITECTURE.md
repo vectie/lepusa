@@ -227,6 +227,10 @@ evaluate in the WebView.
 `NativeExecutableOperation::evaluate_script` operations, so source and packaged
 runtime loops share one executable drain/evaluate model before platform code
 crosses into C, WebKit, or WebView2 APIs.
+`NativeOperationExecutor` is the shared MoonBit-side executor for those
+operation arrays. Platform packages supply handlers for WebView script
+evaluation, navigation, effects, and service work, then get back a typed report
+of executed, skipped, and failed operations.
 `receive_window_message` is the per-WebView adapter entry point: it returns a
 `NativeBridgeLoopDelivery` or `BundledBridgeLoopDelivery` containing the raw
 loop result and executable evaluation plan for the target window.

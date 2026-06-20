@@ -235,6 +235,7 @@ pub fn NativeBridgeLoopResult::evaluation_plan(Self, window_label~ : String) -> 
 pub fn NativeBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
 pub fn NativeBridgeLoopResult::has_immediate_script(Self) -> Bool
 pub fn NativeBridgeLoopResult::immediate_script(Self) -> String
+pub fn NativeBridgeLoopResult::new(immediate_script? : String, completions? : Array[NativeBridgeCompletion]) -> Self
 pub fn NativeBridgeLoopResult::to_json(Self) -> String
 
 pub struct NativeBridgeMessage {
@@ -427,6 +428,50 @@ pub fn NativeOperation::navigation(Self) -> NativeNavigation?
 pub fn NativeOperation::service(Self) -> @lepusa.LocalService?
 pub fn NativeOperation::to_json(Self) -> String
 pub fn NativeOperation::window_label(Self) -> String?
+
+pub struct NativeOperationExecutionOutcome {
+  operation : NativeExecutableOperation
+  status : NativeOperationExecutionStatus
+} derive(Eq, @debug.Debug)
+pub fn NativeOperationExecutionOutcome::ok(Self) -> Bool
+pub fn NativeOperationExecutionOutcome::operation(Self) -> NativeExecutableOperation
+pub fn NativeOperationExecutionOutcome::status(Self) -> NativeOperationExecutionStatus
+pub fn NativeOperationExecutionOutcome::to_json(Self) -> String
+
+pub struct NativeOperationExecutionReport {
+  outcomes : Array[NativeOperationExecutionOutcome]
+} derive(Eq, @debug.Debug)
+pub fn NativeOperationExecutionReport::executed_count(Self) -> Int
+pub fn NativeOperationExecutionReport::failed_count(Self) -> Int
+pub fn NativeOperationExecutionReport::first_failure_message(Self) -> String?
+pub fn NativeOperationExecutionReport::ok(Self) -> Bool
+pub fn NativeOperationExecutionReport::operation_count(Self) -> Int
+pub fn NativeOperationExecutionReport::outcomes(Self) -> Array[NativeOperationExecutionOutcome]
+pub fn NativeOperationExecutionReport::skipped_count(Self) -> Int
+pub fn NativeOperationExecutionReport::to_json(Self) -> String
+
+pub(all) enum NativeOperationExecutionStatus {
+  NativeOperationExecuted
+  NativeOperationSkipped(String)
+  NativeOperationFailed(String)
+} derive(Eq, @debug.Debug)
+pub fn NativeOperationExecutionStatus::message(Self) -> String
+pub fn NativeOperationExecutionStatus::name(Self) -> String
+pub fn NativeOperationExecutionStatus::ok(Self) -> Bool
+pub fn NativeOperationExecutionStatus::to_json(Self) -> String
+
+pub struct NativeOperationExecutor {
+  start_service : (@lepusa.LocalService) -> NativeOperationExecutionStatus
+  evaluate_script : (NativeEvaluationScript) -> NativeOperationExecutionStatus
+  run_effect : (String) -> NativeOperationExecutionStatus
+  navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
+}
+pub fn NativeOperationExecutor::execute(Self, NativeExecutableOperation) -> NativeOperationExecutionOutcome
+pub fn NativeOperationExecutor::execute_all(Self, Array[NativeExecutableOperation]) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::execute_delivery(Self, NativeBridgeLoopDelivery) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPlan) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
+pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus) -> Self
 
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
