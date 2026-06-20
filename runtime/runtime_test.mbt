@@ -798,8 +798,25 @@ test "native backend preflight reports dependency and launch readiness" {
   assert_false(ready.async_bridge_drain())
   assert_true(ready.can_launch())
   assert_eq(ready.problem(), "")
+  assert_eq(ready.problem_kind(), "none")
+  assert_true(ready.dependency_problem() is None)
+  assert_true(ready.webview_creation_problem() is None)
+  assert_eq(
+    ready.async_bridge_drain_problem().unwrap(),
+    "native async bridge drain/evaluate support is unavailable",
+  )
   assert_true(ready.launch_capability().webview_creation())
   assert_true(ready.to_json().contains("\"canLaunch\":true"))
+  assert_true(ready.to_json().contains("\"problemKind\":\"none\""))
+  assert_true(ready.to_json().contains("\"dependencyProblem\":null"))
+  assert_true(ready.to_json().contains("\"webviewCreationProblem\":null"))
+  assert_true(
+    ready
+    .to_json()
+    .contains(
+      "\"asyncBridgeDrainProblem\":\"native async bridge drain/evaluate support is unavailable\"",
+    ),
+  )
   let missing = NativeBackendPreflight::new(
     platform="test",
     webview_engine="SystemWebView",
@@ -811,9 +828,35 @@ test "native backend preflight reports dependency and launch readiness" {
   )
   assert_false(missing.can_launch())
   assert_eq(missing.problem(), "system webview missing")
+  assert_eq(missing.problem_kind(), "dependency")
+  assert_eq(missing.dependency_problem().unwrap(), "system webview missing")
+  assert_true(missing.webview_creation_problem() is None)
   assert_false(missing.launch_capability().webview_creation())
   assert_true(
     missing.to_json().contains("\"problem\":\"system webview missing\""),
+  )
+  assert_true(missing.to_json().contains("\"problemKind\":\"dependency\""))
+  assert_true(
+    missing
+    .to_json()
+    .contains("\"dependencyProblem\":\"system webview missing\""),
+  )
+  let no_loop = NativeBackendPreflight::new(
+    platform="test",
+    webview_engine="SystemWebView",
+    dependency_name="system-webview",
+    dependency_available=true,
+    webview_creation_loop=false,
+    async_bridge_drain=false,
+    webview_creation_message="loop missing",
+  )
+  assert_false(no_loop.can_launch())
+  assert_eq(no_loop.problem(), "loop missing")
+  assert_eq(no_loop.problem_kind(), "webview-creation")
+  assert_true(no_loop.dependency_problem() is None)
+  assert_eq(no_loop.webview_creation_problem().unwrap(), "loop missing")
+  assert_true(
+    no_loop.to_json().contains("\"webviewCreationProblem\":\"loop missing\""),
   )
 }
 

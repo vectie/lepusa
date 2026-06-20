@@ -212,6 +212,9 @@ prerequisites, and reports host WebView availability for the platform backend
 descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
 It also prints typed backend preflight lines that separate host dependency
 availability, WebView creation loops, and async bridge drain support.
+The underlying `NativeBackendPreflight` JSON classifies the active blocker as
+`dependency`, `webview-creation`, or `none`, and carries separate dependency,
+WebView creation, and async bridge drain problem fields for tooling.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
@@ -746,6 +749,11 @@ that carry native metadata plus the canonical launch session, while the
 launch-session CLIs wrap that session with target readiness metadata for tools
 that need to distinguish prepared plans from launchable platform backends and
 their host dependency preflight state.
+`NativeBackendPreflight` keeps the collapsed `problem` for human summaries, and
+adds `problemKind`, `dependencyProblem`, `webviewCreationProblem`, and
+`asyncBridgeDrainProblem` so release tooling can distinguish an unavailable
+system dependency from framework backend work that is still intentionally
+gated.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command

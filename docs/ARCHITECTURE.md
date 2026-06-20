@@ -566,7 +566,10 @@ declares the WebView2 creation loop unavailable until the COM creation path
 lands. Each platform package exposes a shared
 `runtime.NativeBackendPreflight`, so diagnostics separate host dependency
 availability, WebView creation-loop support, and async bridge drain support
-without duplicating CLI-specific checks.
+without duplicating CLI-specific checks. Its JSON reports the collapsed human
+`problem` plus `problemKind`, `dependencyProblem`, `webviewCreationProblem`,
+and `asyncBridgeDrainProblem`, which lets CI distinguish machine setup issues
+from framework backend implementation gaps.
 
 ## Bundling
 

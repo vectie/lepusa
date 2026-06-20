@@ -46,6 +46,7 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     async_bridge_drain=false,
     dependency_message="macOS Cocoa/WebKit backend is not available",
     webview_creation_message="macOS WKWebView creation loop is unavailable",
+    async_bridge_drain_message="macOS WKWebView async bridge drain/evaluate support is unavailable",
   )
 }
 

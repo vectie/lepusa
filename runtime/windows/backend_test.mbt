@@ -49,7 +49,29 @@ test "windows backend exposes webview2 descriptor" {
   assert_false(preflight.async_bridge_drain())
   assert_false(preflight.can_launch())
   assert_true(preflight.problem().contains("WebView2"))
+  assert_true(
+    preflight.problem_kind() == "dependency" ||
+    preflight.problem_kind() == "webview-creation",
+  )
+  if preflight.dependency_available() {
+    assert_true(preflight.dependency_problem() is None)
+    assert_true(
+      preflight.webview_creation_problem().unwrap().contains("WebView2"),
+    )
+  } else {
+    assert_true(preflight.dependency_problem().unwrap().contains("WebView2"))
+    assert_true(
+      preflight.webview_creation_problem().unwrap().contains("WebView2"),
+    )
+  }
+  assert_true(
+    preflight.async_bridge_drain_problem().unwrap().contains("WebView2"),
+  )
   assert_true(preflight.to_json().contains("\"canLaunch\":false"))
+  assert_true(preflight.to_json().contains("\"problemKind\":"))
+  assert_true(preflight.to_json().contains("\"dependencyProblem\":"))
+  assert_true(preflight.to_json().contains("\"webviewCreationProblem\":"))
+  assert_true(preflight.to_json().contains("\"asyncBridgeDrainProblem\":"))
   let capability = launch_capability()
   assert_false(capability.webview_creation())
   assert_false(capability.async_bridge_drain())

@@ -8,6 +8,7 @@ pub struct NativeBackendPreflight {
   async_bridge_drain : Bool
   dependency_message : String
   webview_creation_message : String
+  async_bridge_drain_message : String
 } derive(Debug, Eq)
 
 ///|
@@ -20,6 +21,7 @@ pub fn NativeBackendPreflight::new(
   async_bridge_drain~ : Bool,
   dependency_message? : String = "native WebView dependency is unavailable",
   webview_creation_message? : String = "native WebView creation loop is unavailable",
+  async_bridge_drain_message? : String = "native async bridge drain/evaluate support is unavailable",
 ) -> NativeBackendPreflight {
   {
     platform,
@@ -30,6 +32,7 @@ pub fn NativeBackendPreflight::new(
     async_bridge_drain,
     dependency_message,
     webview_creation_message,
+    async_bridge_drain_message,
   }
 }
 
@@ -94,6 +97,52 @@ pub fn NativeBackendPreflight::problem(self : NativeBackendPreflight) -> String 
 }
 
 ///|
+pub fn NativeBackendPreflight::problem_kind(
+  self : NativeBackendPreflight,
+) -> String {
+  if !self.dependency_available {
+    "dependency"
+  } else if !self.webview_creation_loop {
+    "webview-creation"
+  } else {
+    "none"
+  }
+}
+
+///|
+pub fn NativeBackendPreflight::dependency_problem(
+  self : NativeBackendPreflight,
+) -> String? {
+  if self.dependency_available {
+    None
+  } else {
+    Some(self.dependency_message)
+  }
+}
+
+///|
+pub fn NativeBackendPreflight::webview_creation_problem(
+  self : NativeBackendPreflight,
+) -> String? {
+  if self.webview_creation_loop {
+    None
+  } else {
+    Some(self.webview_creation_message)
+  }
+}
+
+///|
+pub fn NativeBackendPreflight::async_bridge_drain_problem(
+  self : NativeBackendPreflight,
+) -> String? {
+  if self.async_bridge_drain {
+    None
+  } else {
+    Some(self.async_bridge_drain_message)
+  }
+}
+
+///|
 pub fn NativeBackendPreflight::launch_capability(
   self : NativeBackendPreflight,
 ) -> NativeLaunchCapability {
@@ -115,7 +164,19 @@ pub fn NativeBackendPreflight::to_json(self : NativeBackendPreflight) -> String 
     "\"webviewCreationLoop\":\{self.webview_creation_loop.json_bool()},",
     "\"asyncBridgeDrain\":\{self.async_bridge_drain.json_bool()},",
     "\"canLaunch\":\{self.can_launch().json_bool()},",
-    "\"problem\":\{self.problem().json_string()}",
+    "\"problemKind\":\{self.problem_kind().json_string()},",
+    "\"problem\":\{self.problem().json_string()},",
+    "\"dependencyProblem\":\{optional_json_string(self.dependency_problem())},",
+    "\"webviewCreationProblem\":\{optional_json_string(self.webview_creation_problem())},",
+    "\"asyncBridgeDrainProblem\":\{optional_json_string(self.async_bridge_drain_problem())}",
     "}",
   ].join("")
+}
+
+///|
+fn optional_json_string(value : String?) -> String {
+  match value {
+    Some(text) => text.json_string()
+    None => "null"
+  }
 }

@@ -42,6 +42,7 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     async_bridge_drain=false,
     dependency_message="Windows WebView2 loader is not available",
     webview_creation_message="Windows WebView2 creation loop is unavailable",
+    async_bridge_drain_message="Windows WebView2 async bridge drain/evaluate support is unavailable",
   )
 }
 

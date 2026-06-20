@@ -196,6 +196,10 @@ async test "launch session prints source native handoff json" {
   assert_true(windows.output.contains("\"target\":\"windows\""))
   assert_true(windows.output.contains("\"backendPreflight\":{"))
   assert_true(windows.output.contains("\"dependencyName\":\"webview2-loader\""))
+  assert_true(windows.output.contains("\"problemKind\":"))
+  assert_true(windows.output.contains("\"dependencyProblem\":"))
+  assert_true(windows.output.contains("\"webviewCreationProblem\":"))
+  assert_true(windows.output.contains("\"asyncBridgeDrainProblem\":"))
   assert_true(windows.output.contains("\"targetCanLaunch\":false"))
   assert_true(
     windows.output.contains("\"targetLaunchBlocker\":\"Windows WebView2"),

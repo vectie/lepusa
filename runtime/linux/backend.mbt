@@ -46,6 +46,7 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     async_bridge_drain=false,
     dependency_message="Linux WebKitGTK backend is not available",
     webview_creation_message="Linux WebKitGTK launch loop is unavailable",
+    async_bridge_drain_message="Linux WebKitGTK async bridge drain/evaluate support is unavailable",
   )
 }
 
