@@ -605,6 +605,9 @@ the host exposes to command dispatch.
 `BundlePlan::distribution_manifest_json()` exposes the installer-facing
 manifest directly, so future package generators can consume the same
 distribution contract without reinterpreting launcher or runtime manifest JSON.
+`@lepusa/bundle.BundleDistributionManifest::parse` is the matching read-side
+contract, and `lepusa bundle-inspect` exposes it from the CLI for release
+scripts.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

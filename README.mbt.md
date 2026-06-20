@@ -187,6 +187,7 @@ moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-plan macos --json
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bundle-inspect _build/lepusa-bundle/lepusa-app/lepusa/distribution.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -672,6 +673,9 @@ and steps, and planned bundle files for CI and native runner tooling.
 The generated distribution manifest records those runtime dependencies beside
 artifacts, resources, signing data, runtime executable placement, and target
 metadata without requiring installer tooling to parse the launch manifest.
+`lepusa bundle-inspect <lepusa/distribution.json>` parses that manifest and
+prints either a compact summary or the normalized JSON contract for downstream
+package generators.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

@@ -17,6 +17,30 @@ async fn render_bundle_plan_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bundle_inspect_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  match values.get(0) {
+    Some(path) => {
+      let content = @fs.read_file(path) catch {
+        error =>
+          return fail("could not read bundle distribution manifest: \{error}\n")
+      }
+      match @bundle.BundleDistributionManifest::parse(path, content.text()) {
+        Ok(manifest) =>
+          if has_flag(args, "--json") {
+            ok(manifest.to_json() + "\n")
+          } else {
+            ok(manifest.summary())
+          }
+        Err(problem) =>
+          fail("invalid bundle distribution manifest: \{problem}\n")
+      }
+    }
+    None => fail("bundle-inspect requires a lepusa/distribution.json path\n")
+  }
+}
+
+///|
 fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
   match plan.files() {
     Ok(files) => {

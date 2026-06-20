@@ -35,6 +35,7 @@ test "help text names available commands" {
   assert_true(
     result.output.contains("lepusa bundle-plan [macos|windows|linux] [--json]"),
   )
+  assert_true(result.output.contains("lepusa bundle-inspect"))
   assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
@@ -1844,6 +1845,19 @@ async test "bundle write materializes planned files" {
   assert_true(distribution_manifest.contains("\"runtimeDependencies\""))
   assert_true(distribution_manifest.contains("\"runtimeExecutable\""))
   assert_true(distribution_manifest.contains("WebKitGTK 4.1 or 4.0"))
+  let inspect = render_cli_async(["bundle-inspect", distribution_path])
+  assert_eq(inspect.exit_code, 0)
+  assert_true(inspect.output.contains("Lepusa distribution"))
+  assert_true(inspect.output.contains("identifier: dev.vectie.lepusa.example"))
+  assert_true(inspect.output.contains("target: linux"))
+  assert_true(inspect.output.contains("runtime-dependencies: 1"))
+  let inspect_json = render_cli_async([
+    "bundle-inspect", distribution_path, "--json",
+  ])
+  assert_eq(inspect_json.exit_code, 0)
+  assert_true(inspect_json.output.contains("\"target\":\"linux\""))
+  assert_true(inspect_json.output.contains("\"runtimeDependencies\":["))
+  assert_true(inspect_json.output.contains("WebKitGTK 4.1 or 4.0"))
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
   let json_result = render_cli_async([
     "bundle-write", "linux", json_root, "--json",
