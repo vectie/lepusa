@@ -101,18 +101,22 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "store")
   let registry = register(registry, "fs")
   let registry = register(registry, "process")
+  let registry = register(registry, "windowState")
   assert_true(registry.contains("log.write"))
   assert_true(registry.contains("store.set"))
   assert_true(registry.contains("fs.readText"))
   assert_true(registry.contains("process.info"))
   assert_true(registry.contains("process.env"))
   assert_false(registry.contains("process.exit"))
+  assert_true(registry.contains("windowState.set"))
+  assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 4)
+  assert_eq(names.length(), 5)
   assert_true(names.contains("fs"))
   assert_true(names.contains("log"))
   assert_true(names.contains("process"))
   assert_true(names.contains("store"))
+  assert_true(names.contains("windowState"))
 }
 
 ///|

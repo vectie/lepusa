@@ -55,3 +55,52 @@ test "window state policy rejects invalid metadata" {
     problems.contains("window state rule must remember at least one property"),
   )
 }
+
+///|
+async test "window state plugin registers portable state handlers" {
+  let store = WindowStateStore::new()
+  let registry = register(@lepusa.CommandRegistry::new(), store~)
+  assert_true(registry.contains("windowState.save"))
+  assert_true(registry.contains("windowState.restore"))
+  assert_true(registry.contains("windowState.clear"))
+  assert_true(registry.contains("windowState.get"))
+  assert_true(registry.contains("windowState.set"))
+  let capability = capability_for_window("main")
+  let set = registry.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="set",
+      window_label="main",
+      plugin="windowState",
+      command="set",
+      payload="{\"window\":\"main\",\"width\":900,\"height\":640}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(set is InvokeOk("set", _))
+  assert_true(set.payload().unwrap_or("").contains("\"status\":\"set\""))
+  let get = registry.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="get",
+      window_label="main",
+      plugin="windowState",
+      command="get",
+      payload="{\"window\":\"main\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(get is InvokeOk("get", _))
+  assert_true(get.payload().unwrap_or("").contains("\"found\":true"))
+  assert_true(get.payload().unwrap_or("").contains("\\\"width\\\":900"))
+  let clear = registry.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="clear",
+      window_label="main",
+      plugin="windowState",
+      command="clear",
+      payload="{\"window\":\"main\"}",
+    ),
+    capabilities=[capability],
+  )
+  assert_true(clear is InvokeOk("clear", _))
+  assert_true(clear.payload().unwrap_or("").contains("\"cleared\":1"))
+}

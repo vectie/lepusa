@@ -451,11 +451,11 @@ async test "runtime cli invokes bundled official plugins" {
     #|    "webviews": [
     #|      {
     #|        "label": "main",
-    #|        "allowedRoutes": ["log.write", "store.set", "store.get", "process.info"]
+    #|        "allowedRoutes": ["log.write", "store.set", "store.get", "process.info", "windowState.set", "windowState.get"]
     #|      }
     #|    ],
     #|    "filesystemScopes": [],
-    #|    "registeredRoutes": ["log.write", "store.set", "store.get", "process.info"]
+    #|    "registeredRoutes": ["log.write", "store.set", "store.get", "process.info", "windowState.set", "windowState.get"]
     #|  }
     #|}
   let log = render_runtime_invoke_text(
@@ -477,6 +477,14 @@ async test "runtime cli invokes bundled official plugins" {
   )
   assert_true(process_info.output.contains("\"id\":\"cli\""))
   assert_true(process_info.output.contains("\\\"cwd\\\""))
+  let window_set = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "windowState.set", "{\"window\":\"main\",\"width\":900}",
+  )
+  assert_true(window_set.output.contains("\\\"status\\\":\\\"set\\\""))
+  let window_get = render_runtime_invoke_text(
+    "lepusa/runtime.json", manifest, "main", "windowState.get", "{\"window\":\"main\"}",
+  )
+  assert_true(window_get.output.contains("\\\"found\\\":false"))
 }
 
 ///|

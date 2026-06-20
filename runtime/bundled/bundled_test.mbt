@@ -433,10 +433,10 @@ async test "bundled runtime preserves official plugin state" {
     #|{
     #|  "runtime": {
     #|    "webviews": [
-    #|      { "label": "main", "allowedRoutes": ["store.set", "store.get"] }
+    #|      { "label": "main", "allowedRoutes": ["store.set", "store.get", "windowState.set", "windowState.get"] }
     #|    ],
     #|    "filesystemScopes": [],
-    #|    "registeredRoutes": ["store.set", "store.get"]
+    #|    "registeredRoutes": ["store.set", "store.get", "windowState.set", "windowState.get"]
     #|  }
     #|}
   match BundledRuntimeManifest::parse("runtime.json", manifest) {
@@ -457,6 +457,22 @@ async test "bundled runtime preserves official plugin state" {
       )
       assert_true(get.contains("\\\"value\\\":\\\"dark\\\""))
       assert_true(get.contains("\\\"found\\\":true"))
+      let window_set = runtime.dispatch_json_async(
+        id="window-set",
+        window_label="main",
+        route="windowState.set",
+        payload="{\"window\":\"main\",\"width\":900,\"height\":640}",
+      )
+      assert_true(window_set.contains("\"id\":\"window-set\""))
+      assert_true(window_set.contains("\\\"status\\\":\\\"set\\\""))
+      let window_get = runtime.dispatch_json_async(
+        id="window-get",
+        window_label="main",
+        route="windowState.get",
+        payload="{\"window\":\"main\"}",
+      )
+      assert_true(window_get.contains("\\\"found\\\":true"))
+      assert_true(window_get.contains("\\\\\\\"width\\\\\\\":900"))
     }
     Err(problem) => abort(problem)
   }

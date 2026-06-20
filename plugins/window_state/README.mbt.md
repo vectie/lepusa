@@ -1,8 +1,9 @@
 # @lepusa/plugins/window_state
 
 `@lepusa/plugins/window_state` defines Lepusa's official window persistence
-command contract. Native backends own platform window state capture,
-restoration, and persistence storage.
+command contract. The portable registry keeps state in the current runtime
+process for tests and lightweight runtimes. Native backends own platform window
+state capture, restoration, and durable persistence storage.
 
 ```moonbit nocheck
 ///|
@@ -13,5 +14,9 @@ test "declare window state access" {
 
   let grant = @window_state.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=@lepusa.WindowState))
+
+  let registry = @window_state.registry()
+  assert_true(registry.contains("windowState.set"))
+  assert_true(registry.contains("windowState.get"))
 }
 ```

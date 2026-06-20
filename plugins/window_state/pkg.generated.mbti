@@ -13,6 +13,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, store? : WindowStateStore) -> @lepusa.CommandRegistry
+
+pub fn registry(store? : WindowStateStore) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
@@ -38,6 +42,14 @@ pub fn WindowStateRule::remember_size(Self) -> Bool
 pub fn WindowStateRule::remember_visibility(Self) -> Bool
 pub fn WindowStateRule::validate(Self) -> Array[String]
 pub fn WindowStateRule::window_label(Self) -> String
+
+pub struct WindowStateStore {
+  states : Map[String, String]
+}
+pub fn WindowStateStore::clear(Self, window_label? : String) -> Int
+pub fn WindowStateStore::get(Self, String) -> String?
+pub fn WindowStateStore::new() -> Self
+pub fn WindowStateStore::set(Self, String, String) -> Unit
 
 // Type aliases
 

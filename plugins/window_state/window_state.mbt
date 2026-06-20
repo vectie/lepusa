@@ -133,6 +133,194 @@ pub fn capability_for_window(
 }
 
 ///|
+pub struct WindowStateStore {
+  states : Map[String, String]
+}
+
+///|
+pub fn WindowStateStore::new() -> WindowStateStore {
+  { states: {} }
+}
+
+///|
+pub fn WindowStateStore::get(
+  self : WindowStateStore,
+  window_label : String,
+) -> String? {
+  self.states.get(window_label)
+}
+
+///|
+pub fn WindowStateStore::set(
+  self : WindowStateStore,
+  window_label : String,
+  state : String,
+) -> Unit {
+  self.states[window_label] = state
+}
+
+///|
+pub fn WindowStateStore::clear(
+  self : WindowStateStore,
+  window_label? : String = "",
+) -> Int {
+  if window_label == "" {
+    let count = self.states.length()
+    self.states.clear()
+    count
+  } else {
+    let existed = self.states.contains(window_label)
+    self.states.remove(window_label)
+    if existed {
+      1
+    } else {
+      0
+    }
+  }
+}
+
+///|
+pub fn registry(
+  store? : WindowStateStore = WindowStateStore::new(),
+) -> @lepusa.CommandRegistry {
+  register(@lepusa.CommandRegistry::new(), store~)
+}
+
+///|
+pub fn register(
+  registry : @lepusa.CommandRegistry,
+  store? : WindowStateStore = WindowStateStore::new(),
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_async_fn("windowState.save", permission=WindowState, handler=payload => {
+    handle_set(store, payload, status="saved")
+  })
+  .register_async_fn("windowState.restore", permission=WindowState, handler=payload => {
+    handle_get(store, payload)
+  })
+  .register_async_fn("windowState.clear", permission=WindowState, handler=payload => {
+    handle_clear(store, payload)
+  })
+  .register_async_fn("windowState.get", permission=WindowState, handler=payload => {
+    handle_get(store, payload)
+  })
+  .register_async_fn("windowState.set", permission=WindowState, handler=payload => {
+    handle_set(store, payload, status="set")
+  })
+}
+
+///|
+async fn handle_get(
+  store : WindowStateStore,
+  payload : String,
+) -> Result[String, String] {
+  @async.sleep(0)
+  match decode_window_payload(payload, context="window state get") {
+    Ok(label) =>
+      match store.get(label) {
+        Some(state) =>
+          Ok(
+            Json::object({
+              "window": Json::string(label),
+              "state": Json::string(state),
+              "found": Json::boolean(true),
+            }).stringify(),
+          )
+        None =>
+          Ok(
+            Json::object({
+              "window": Json::string(label),
+              "state": Json::string(""),
+              "found": Json::boolean(false),
+            }).stringify(),
+          )
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+async fn handle_set(
+  store : WindowStateStore,
+  payload : String,
+  status~ : String,
+) -> Result[String, String] {
+  @async.sleep(0)
+  match decode_window_payload(payload, context="window state set") {
+    Ok(label) => {
+      store.set(label, payload)
+      Ok(
+        Json::object({
+          "window": Json::string(label),
+          "status": Json::string(status),
+        }).stringify(),
+      )
+    }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+async fn handle_clear(
+  store : WindowStateStore,
+  payload : String,
+) -> Result[String, String] {
+  @async.sleep(0)
+  let label = if payload == "" {
+    ""
+  } else {
+    match decode_window_payload(payload, context="window state clear") {
+      Ok(label) => label
+      Err(problem) => return Err(problem)
+    }
+  }
+  let cleared = store.clear(window_label=label)
+  Ok(
+    Json::object({
+      "window": Json::string(label),
+      "cleared": Json::number(cleared.to_double(), repr=cleared.to_string()),
+    }).stringify(),
+  )
+}
+
+///|
+fn decode_window_payload(
+  payload : String,
+  context~ : String,
+) -> Result[String, String] {
+  if payload == "" {
+    return Err("\{context} payload is required")
+  }
+  try @json.parse(payload) catch {
+    error => Err("invalid \{context} payload: \{error}")
+  } noraise {
+    String(label) => validate_window_label(label)
+    Object(object) =>
+      validate_window_label(required_string_field(object, "window"))
+    _ => Err("\{context} payload must be a string or object")
+  }
+}
+
+///|
+fn validate_window_label(label : String) -> Result[String, String] {
+  if label == "" {
+    Err("window state label is required")
+  } else if invalid_key(label) {
+    Err("window state label is invalid: \{label}")
+  } else {
+    Ok(label)
+  }
+}
+
+///|
+fn required_string_field(object : Map[String, Json], key : String) -> String {
+  match object.get(key) {
+    Some(String(value)) => value
+    _ => ""
+  }
+}
+
+///|
 fn invalid_key(value : String) -> Bool {
   value.contains("/") ||
   value.contains("\\") ||

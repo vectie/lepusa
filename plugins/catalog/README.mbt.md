@@ -31,6 +31,9 @@ test "lookup official plugins" {
   let process = @catalog.plugin("process").unwrap()
   assert_true(process.command_routes().contains("process.info"))
 
+  let window_state = @catalog.plugin("windowState").unwrap()
+  assert_true(window_state.command_routes().contains("windowState.restore"))
+
   let registry = @catalog.register(@lepusa.CommandRegistry::new(), "log")
   assert_true(registry.contains("log.write"))
 }

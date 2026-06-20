@@ -91,5 +91,9 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       register: fn(registry, _) { @process.register(registry) },
     },
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
+    {
+      name: "windowState",
+      register: fn(registry, _) { @window_state.register(registry) },
+    },
   ]
 }

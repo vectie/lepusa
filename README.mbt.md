@@ -202,10 +202,11 @@ runtime sessions and native launch manifests for backend enforcement.
 It also describes runtime behavior through `startup` and `lifecycle` commands:
 `effect`, `emit`, `navigate`, and `batch` map directly to the portable
 `RuntimeAction` model consumed by native backends.
-When a project declares official `log`, `store`, `fs`, or `process` plugins,
-the CLI binds their MoonBit-native handlers into the project `RuntimeHost`
-without adding moon-suite-specific behavior. `fs` handlers run through the
-async command registry and are constrained by named `filesystemScopes`.
+When a project declares official `log`, `store`, `fs`, `process`, or
+`windowState` plugins, the CLI binds their MoonBit-native handlers into the
+project `RuntimeHost` without adding moon-suite-specific behavior. `fs`
+handlers run through the async command registry and are constrained by named
+`filesystemScopes`.
 `process.info`, `process.cwd`, `process.env`, and `process.setEnv` are portable
 handlers; `process.exit` remains a declared route for backend-owned termination
 policy.
@@ -290,8 +291,9 @@ backends own platform login item, registry, service, or desktop-entry behavior.
 
 `@lepusa/plugins/window_state` defines window persistence routes such as
 `windowState.save`, `windowState.restore`, and `windowState.clear`, plus
-window-label policy metadata. Native backends own geometry capture, restoration,
-and storage.
+window-label policy metadata. The portable registry stores state in the current
+runtime process for `windowState.save`/`set`, `windowState.restore`/`get`, and
+`windowState.clear`; native backends own geometry capture and durable storage.
 
 `@lepusa/plugins/updater` defines update lifecycle routes such as
 `updater.check`, `updater.download`, `updater.install`, and
@@ -329,7 +331,7 @@ process termination policy.
 `@lepusa/plugins/catalog` centralizes official plugin lookup for framework
 tooling. Project parsing uses it to expand name-only official plugin
 declarations and bind MoonBit handlers where they exist, including scoped async
-filesystem handlers.
+filesystem handlers and portable process/window-state handlers.
 
 `lepusa manifest` emits the portable native-runner JSON from
 `RuntimeHost::launch_manifest()`: WebView boot data, bridge hook names,
