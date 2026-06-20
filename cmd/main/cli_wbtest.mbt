@@ -18,7 +18,11 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa manifest"))
   assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa launch-session"))
-  assert_true(result.output.contains("lepusa run"))
+  assert_true(
+    result.output.contains(
+      "lepusa run [macos|windows|linux] [--launch] [--json]",
+    ),
+  )
   assert_true(
     result.output.contains(
       "lepusa verify [macos|windows|linux] [--strict] [--json]",
@@ -237,6 +241,22 @@ async test "run prints native runner smoke summary" {
   assert_true(result.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(result.output.contains("startup-operations: 0"))
   assert_true(result.output.contains("lifecycle-steps: 0"))
+  let json_result = render_cli_async(["run", "linux", "--json"])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(json_result.output.contains("\"backend\":\"linux\""))
+  assert_true(json_result.output.contains("\"engine\":\"WebKitGTK\""))
+  assert_true(json_result.output.contains("\"status\":{\"name\":\"prepared\""))
+  assert_true(json_result.output.contains("\"webviews\":1"))
+  assert_true(
+    json_result.output.contains(
+      "\"firstWindowUrl\":\"lepusa://rabbita/main/index.html\"",
+    ),
+  )
+  assert_true(
+    json_result.output.contains("\"bridgeUrl\":\"lepusa://runtime/bridge.js\""),
+  )
+  assert_true(json_result.output.contains("\"targetCanLaunch\":true"))
 }
 
 ///|
@@ -255,6 +275,14 @@ async test "run launch rejects unwired native targets" {
   )
   assert_true(result.output.contains("target-can-launch: true"))
   assert_true(result.output.contains("startup-operations: 0"))
+  let json_result = render_cli_async(["run", "linux", "--launch", "--json"])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(
+    json_result.output.contains("\"status\":{\"name\":\"unsupported\""),
+  )
+  assert_true(json_result.output.contains("Linux WebKitGTK"))
+  assert_true(json_result.output.contains("\"targetCanLaunch\":true"))
 }
 
 ///|
@@ -614,6 +642,19 @@ async test "generated project config drives native runner smoke command" {
   assert_true(result.output.contains("engine: WebKitGTK"))
   assert_true(result.output.contains("startup-operations: 1"))
   assert_true(result.output.contains("lifecycle-steps: 1"))
+  let json_result = render_cli_async([
+    "run",
+    "linux",
+    "--json",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(json_result.output.contains("\"backend\":\"linux\""))
+  assert_true(json_result.output.contains("\"startupOperations\":1"))
+  assert_true(json_result.output.contains("\"lifecycleSteps\":1"))
+  assert_true(json_result.output.contains("\"serviceSupervisor\":false"))
 }
 
 ///|

@@ -145,7 +145,7 @@
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.
-  - `lepusa run`: prints a no-window native runner smoke summary with target launch readiness.
+  - `lepusa run [--json]`: prints a no-window native runner smoke summary with target launch readiness and the canonical `RunReport` for tooling.
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa asset`: prints the runtime asset protocol JSON envelope.
   - `lepusa lifecycle`: prints runtime lifecycle step JSON.

@@ -37,6 +37,7 @@ async fn render_native_plan_async(args : Array[String]) -> CliResult {
 ///|
 async fn render_run_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
+  let json = has_flag(args, "--json")
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_runtime_host(args) {
@@ -44,9 +45,9 @@ async fn render_run_async(args : Array[String]) -> CliResult {
           match native_runtime_for_target(target, host) {
             Ok(runtime) =>
               if has_flag(args, "--launch") {
-                render_native_launch(target, runtime)
+                render_native_launch(target, runtime, json~)
               } else {
-                render_native_run_summary(target, runtime)
+                render_native_run_summary(target, runtime, json~)
               }
             Err(problems) => fail(render_problems("Lepusa run", problems))
           }
@@ -375,6 +376,7 @@ fn native_runtime_for_target(
 fn render_native_launch(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
+  json~ : Bool,
 ) -> CliResult {
   match target {
     MacOS =>
@@ -383,6 +385,7 @@ fn render_native_launch(
           render_native_run_report(
             "Lepusa launch",
             macos_launch_report(target, runtime, result),
+            json~,
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -392,6 +395,7 @@ fn render_native_launch(
           render_native_run_report(
             "Lepusa launch",
             native_run_report(target, runtime, status=result.status()),
+            json~,
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -401,6 +405,7 @@ fn render_native_launch(
           render_native_run_report(
             "Lepusa launch",
             native_run_report(target, runtime, status=result.status()),
+            json~,
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -476,10 +481,14 @@ fn native_target_launch_status(
 fn render_native_run_report(
   title : String,
   report : @lepusa.RunReport,
+  json? : Bool = false,
   include_status? : Bool = true,
   include_bridge_url? : Bool = false,
   include_services? : Bool = false,
 ) -> CliResult {
+  if json {
+    return ok(report.to_json() + "\n")
+  }
   let status = if include_status {
     "status: \{report.status().name()}\n"
   } else {
@@ -543,10 +552,12 @@ fn render_native_run_report(
 fn render_native_run_summary(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
+  json~ : Bool,
 ) -> CliResult {
   render_native_run_report(
     "Lepusa run",
     native_run_report(target, runtime),
+    json~,
     include_status=false,
     include_bridge_url=true,
     include_services=true,

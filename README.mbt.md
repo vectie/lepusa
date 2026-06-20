@@ -161,6 +161,7 @@ moon run cmd/main --target native -- native-plan macos
 moon run cmd/main --target native -- launch-session linux
 moon run cmd/main --target native -- launch-session linux --async-bridge
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
+moon run cmd/main --target native -- run linux --json --project examples/gateway/lepusa.json
 moon run cmd/main --target native -- verify linux --project examples/static/lepusa.json
 moon run cmd/main --target native -- verify linux --strict --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
@@ -471,7 +472,9 @@ launch capability.
 WebView engine, first URL, bridge URL, local services, startup operations, and
 lifecycle steps. The summary also includes `target-can-launch` and a blocker
 message when the selected target is known to be missing a native WebView launch
-loop. It is intentionally a no-window command unless `--launch` is passed.
+loop. Passing `--json` emits the same canonical `RunReport` used by packaged
+runtime reports. It is intentionally a no-window command unless `--launch` is
+passed.
 
 `lepusa verify [macos|windows|linux] --project lepusa.json` runs the no-write
 foundation proof for an app: runtime plan, dev plan, launch manifest, bridge
