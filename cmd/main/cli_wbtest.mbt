@@ -222,6 +222,11 @@ async test "bundle plan supports target selection" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
   assert_true(result.output.contains("bundle: lepusa-example.cmd"))
+  assert_true(
+    result.output.contains(
+      "runtime-executable: lepusa-example/lepusa-runtime.exe",
+    ),
+  )
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 3"))

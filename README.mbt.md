@@ -648,9 +648,10 @@ by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
 When the selected bundle target matches an available host runtime backend and
 the local `cmd/runtime` native binary exists, `bundle-write` also embeds a
 target-named `lepusa-runtime` executable beside the launcher and verifies it
-with a `runtime-executable` check. Cross-target bundles keep a launcher fallback
-to `lepusa-runtime` on `PATH` until Lepusa owns cross-compiled runtime
-artifacts.
+with a `runtime-executable` check. `BundlePlan::runtime_executable_path()`
+exposes that target location before materialization. Cross-target bundles keep
+a launcher fallback to `lepusa-runtime` on `PATH` until Lepusa owns
+cross-compiled runtime artifacts.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
 into a target native launch session that passes the selected backend launch
 capability. Windows bundles and bundles with async bridge routes stay

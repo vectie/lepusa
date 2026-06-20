@@ -133,6 +133,8 @@ pub fn BundlePlan::icon_path(Self) -> String?
 pub fn BundlePlan::identifier(Self) -> String
 pub fn BundlePlan::registered_routes(Self) -> Array[String]
 pub fn BundlePlan::resources(Self) -> Array[BundleResource]
+pub fn BundlePlan::runtime_executable_name(Self) -> String
+pub fn BundlePlan::runtime_executable_path(Self) -> String
 pub fn BundlePlan::runtime_manifest(Self) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn BundlePlan::runtime_manifest_json(Self) -> Result[String, Array[String]]
 pub fn BundlePlan::signing(Self) -> SigningConfig

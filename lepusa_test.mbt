@@ -965,6 +965,11 @@ test "bundle plans derive executable and package names from metadata" {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "lepusa-example")
           assert_eq(plan.bundle_name(), "lepusa-example.app")
+          assert_eq(plan.runtime_executable_name(), "lepusa-runtime")
+          assert_eq(
+            plan.runtime_executable_path(),
+            "lepusa-example.app/Contents/MacOS/lepusa-runtime",
+          )
           assert_eq(plan.icon_path().unwrap(), "assets/app.icns")
           assert_true(plan.signing().configured())
           assert_eq(
@@ -1123,6 +1128,11 @@ test "bundle files include platform metadata" {
               assert_true(artifacts[1].kind() is DesktopEntryArtifact)
               assert_eq(artifacts[1].path(), "files-app/files-app.desktop")
               assert_eq(plan.signing_prerequisites().length(), 2)
+              assert_eq(plan.runtime_executable_name(), "lepusa-runtime")
+              assert_eq(
+                plan.runtime_executable_path(),
+                "files-app/lepusa-runtime",
+              )
               assert_eq(files.length(), 3)
               assert_eq(files[0].path(), "files-app/files-app.desktop")
               assert_true(files[0].content().contains("Name=Files App"))
@@ -1164,6 +1174,11 @@ test "windows bundle artifacts match generated command launcher" {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "windows-app")
           assert_eq(plan.bundle_name(), "windows-app.cmd")
+          assert_eq(plan.runtime_executable_name(), "lepusa-runtime.exe")
+          assert_eq(
+            plan.runtime_executable_path(),
+            "windows-app/lepusa-runtime.exe",
+          )
           let artifacts = plan.artifacts()
           assert_eq(artifacts.length(), 2)
           assert_true(artifacts[0].kind() is ExecutableArtifact)

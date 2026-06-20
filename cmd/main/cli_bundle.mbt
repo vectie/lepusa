@@ -29,6 +29,7 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
         "identifier: \{plan.identifier()}\n" +
         "executable: \{plan.executable_name()}\n" +
         "bundle: \{plan.bundle_name()}\n" +
+        "runtime-executable: \{plan.runtime_executable_path()}\n" +
         "local-services: \{local_service_count}\n" +
         "filesystem-scopes: \{filesystem_scope_count}\n" +
         "resources: \{plan.resources().length()}\n" +

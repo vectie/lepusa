@@ -365,11 +365,7 @@ fn bundled_runtime_destination_path(plan : @lepusa.BundlePlan) -> String? {
   if !bundle_target_matches_host_runtime(plan.target()) {
     return None
   }
-  match plan.target() {
-    MacOS => Some("\{plan.bundle_name()}/Contents/MacOS/lepusa-runtime")
-    Windows => Some("\{plan.executable_name()}/lepusa-runtime.exe")
-    Linux => Some("\{plan.executable_name()}/lepusa-runtime")
-  }
+  Some(plan.runtime_executable_path())
 }
 
 ///|

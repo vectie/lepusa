@@ -217,6 +217,24 @@ pub fn BundlePlan::executable_name(self : BundlePlan) -> String {
 }
 
 ///|
+pub fn BundlePlan::runtime_executable_name(self : BundlePlan) -> String {
+  match self.target {
+    Windows => "lepusa-runtime.exe"
+    _ => "lepusa-runtime"
+  }
+}
+
+///|
+pub fn BundlePlan::runtime_executable_path(self : BundlePlan) -> String {
+  match self.target {
+    MacOS =>
+      "\{self.bundle_name()}/Contents/MacOS/\{self.runtime_executable_name()}"
+    Windows => "\{self.executable_name()}/\{self.runtime_executable_name()}"
+    Linux => "\{self.executable_name()}/\{self.runtime_executable_name()}"
+  }
+}
+
+///|
 pub fn BundlePlan::icon_path(self : BundlePlan) -> String? {
   self.icon_path
 }

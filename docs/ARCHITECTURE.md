@@ -564,9 +564,11 @@ materialization through `write_plan`, which writes the planned files into an
 output directory and applies executable permissions where the plan asks for
 them. When the selected target matches an available host runtime backend,
 `write_plan` also copies the locally built `cmd/runtime` executable into the
-bundle next to the launcher and records a `runtime-executable` check. Cross
-target bundles intentionally fall back to resolving `lepusa-runtime` from
-`PATH` until a cross-compiled runtime artifact model exists.
+bundle next to the launcher and records a `runtime-executable` check.
+`BundlePlan::runtime_executable_path()` is the pure planning contract for that
+target location. Cross target bundles intentionally fall back to resolving
+`lepusa-runtime` from `PATH` until a cross-compiled runtime artifact model
+exists.
 Its post-write checks parse `lepusa/runtime.json`, prepare the bundled
 native launch session, and apply the target `NativeLaunchCapability`, so
 pre-install smoke verification cannot mark a Windows or async-bridge bundle
