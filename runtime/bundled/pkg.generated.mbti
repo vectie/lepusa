@@ -90,8 +90,19 @@ pub fn BundledBridgeLoopAdapter::is_empty(Self) -> Bool
 pub fn BundledBridgeLoopAdapter::new(BundledRuntime) -> Self
 pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn BundledBridgeLoopAdapter::queue(Self) -> BundledBridgeWorkQueue
+pub async fn BundledBridgeLoopAdapter::receive_message(Self, Bytes) -> BundledBridgeLoopResult
 pub fn BundledBridgeLoopAdapter::runtime(Self) -> BundledRuntime
 pub fn BundledBridgeLoopAdapter::to_json(Self) -> String
+
+pub struct BundledBridgeLoopResult {
+  immediate_script : String
+  completions : Array[BundledBridgeCompletion]
+} derive(Eq, @debug.Debug)
+pub fn BundledBridgeLoopResult::completions(Self) -> Array[BundledBridgeCompletion]
+pub fn BundledBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
+pub fn BundledBridgeLoopResult::has_immediate_script(Self) -> Bool
+pub fn BundledBridgeLoopResult::immediate_script(Self) -> String
+pub fn BundledBridgeLoopResult::to_json(Self) -> String
 
 pub struct BundledBridgeMessage {
   window_label : String

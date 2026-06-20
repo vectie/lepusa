@@ -769,6 +769,17 @@ async test "bundled runtime owns bridge message transport" {
         sync_adapter_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_adapter.is_empty())
+      let sync_result = manifest
+        .bridge_loop_adapter()
+        .receive_message(@utf8.encode(sync_message))
+      assert_true(sync_result.has_immediate_script())
+      assert_true(
+        sync_result
+        .immediate_script()
+        .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_eq(sync_result.completions().length(), 0)
+      assert_eq(sync_result.evaluation_scripts().length(), 1)
       let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
       match runtime.bridge_dispatch_task(async_message) {
         Ok(task) => {
@@ -820,6 +831,19 @@ async test "bundled runtime owns bridge message transport" {
             adapter_completions[0]
             .evaluation_script()
             .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          let loop_result = runtime
+            .bridge_loop_adapter()
+            .receive_message(@utf8.encode(async_message))
+          assert_false(loop_result.has_immediate_script())
+          assert_eq(loop_result.immediate_script(), "")
+          assert_eq(loop_result.completions().length(), 1)
+          assert_eq(loop_result.evaluation_scripts().length(), 1)
+          assert_true(loop_result.to_json().contains("\"completions\":[{"))
+          assert_true(
+            loop_result.evaluation_scripts()[0].contains(
+              "globalThis[\"__lepusaInvokeResponse\"]",
+            ),
           )
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)

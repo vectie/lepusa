@@ -169,6 +169,10 @@ packaged runtimes.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` wrap that queue with
 its owning runtime, callback, diagnostics, and drain operation so platform
 backends do not need to reassemble scheduling state around every WebView.
+Their async `receive_message` method is the next platform-loop boundary: it
+captures one bridge message, keeps sync routes immediate, drains async work into
+completion envelopes, and returns the full list of scripts the backend must
+evaluate in the WebView.
 
 Command rules:
 

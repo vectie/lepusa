@@ -126,8 +126,19 @@ pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool
 pub fn NativeBridgeLoopAdapter::new(NativeRuntime) -> Self
 pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn NativeBridgeLoopAdapter::queue(Self) -> NativeBridgeWorkQueue
+pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBridgeLoopResult
 pub fn NativeBridgeLoopAdapter::runtime(Self) -> NativeRuntime
 pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
+
+pub struct NativeBridgeLoopResult {
+  immediate_script : String
+  completions : Array[NativeBridgeCompletion]
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeLoopResult::completions(Self) -> Array[NativeBridgeCompletion]
+pub fn NativeBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
+pub fn NativeBridgeLoopResult::has_immediate_script(Self) -> Bool
+pub fn NativeBridgeLoopResult::immediate_script(Self) -> String
+pub fn NativeBridgeLoopResult::to_json(Self) -> String
 
 pub struct NativeBridgeMessage {
   window_label : String

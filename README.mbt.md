@@ -429,6 +429,9 @@ the same shape as `BundledBridgeWorkQueue`.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
 queue, native message callback, pending-state diagnostics, and drain operation
 into the object platform event loops should keep beside each WebView host.
+Their async `receive_message` method accepts one UTF-8 WebView bridge message
+and returns a loop result: immediate scripts for sync routes, drained completion
+scripts for async routes, and JSON diagnostics for backend tests.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

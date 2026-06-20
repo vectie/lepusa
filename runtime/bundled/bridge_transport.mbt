@@ -45,6 +45,12 @@ pub struct BundledBridgeLoopAdapter {
 }
 
 ///|
+pub struct BundledBridgeLoopResult {
+  immediate_script : String
+  completions : Array[BundledBridgeCompletion]
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -681,10 +687,69 @@ pub async fn BundledBridgeLoopAdapter::drain(
 }
 
 ///|
+pub async fn BundledBridgeLoopAdapter::receive_message(
+  self : BundledBridgeLoopAdapter,
+  message : Bytes,
+) -> BundledBridgeLoopResult {
+  let immediate_script = @utf8.decode(self.handoff_script_bytes(message)) catch {
+    _ => ""
+  }
+  { immediate_script, completions: self.drain() }
+}
+
+///|
 pub fn BundledBridgeLoopAdapter::to_json(
   self : BundledBridgeLoopAdapter,
 ) -> String {
   self.queue.to_json()
+}
+
+///|
+pub fn BundledBridgeLoopResult::immediate_script(
+  self : BundledBridgeLoopResult,
+) -> String {
+  self.immediate_script
+}
+
+///|
+pub fn BundledBridgeLoopResult::has_immediate_script(
+  self : BundledBridgeLoopResult,
+) -> Bool {
+  self.immediate_script != ""
+}
+
+///|
+pub fn BundledBridgeLoopResult::completions(
+  self : BundledBridgeLoopResult,
+) -> Array[BundledBridgeCompletion] {
+  self.completions.copy()
+}
+
+///|
+pub fn BundledBridgeLoopResult::evaluation_scripts(
+  self : BundledBridgeLoopResult,
+) -> Array[String] {
+  let scripts : Array[String] = []
+  if self.has_immediate_script() {
+    scripts.push(self.immediate_script)
+  }
+  for completion in self.completions {
+    scripts.push(completion.evaluation_script())
+  }
+  scripts
+}
+
+///|
+pub fn BundledBridgeLoopResult::to_json(
+  self : BundledBridgeLoopResult,
+) -> String {
+  [
+    "{",
+    "\"immediateScript\":\{self.immediate_script.json_string()},",
+    "\"completions\":[\{self.completions.map(fn(completion) { completion.to_json() }).join(",")}],",
+    "\"evaluationScripts\":[\{self.evaluation_scripts().map(fn(script) { script.json_string() }).join(",")}]",
+    "}",
+  ].join("")
 }
 
 ///|

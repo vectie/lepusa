@@ -51,6 +51,12 @@ pub struct NativeBridgeLoopAdapter {
 }
 
 ///|
+pub struct NativeBridgeLoopResult {
+  immediate_script : String
+  completions : Array[NativeBridgeCompletion]
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -734,10 +740,67 @@ pub async fn NativeBridgeLoopAdapter::drain(
 }
 
 ///|
+pub async fn NativeBridgeLoopAdapter::receive_message(
+  self : NativeBridgeLoopAdapter,
+  message : Bytes,
+) -> NativeBridgeLoopResult {
+  let immediate_script = @utf8.decode(self.handoff_script_bytes(message)) catch {
+    _ => ""
+  }
+  { immediate_script, completions: self.drain() }
+}
+
+///|
 pub fn NativeBridgeLoopAdapter::to_json(
   self : NativeBridgeLoopAdapter,
 ) -> String {
   self.queue.to_json()
+}
+
+///|
+pub fn NativeBridgeLoopResult::immediate_script(
+  self : NativeBridgeLoopResult,
+) -> String {
+  self.immediate_script
+}
+
+///|
+pub fn NativeBridgeLoopResult::has_immediate_script(
+  self : NativeBridgeLoopResult,
+) -> Bool {
+  self.immediate_script != ""
+}
+
+///|
+pub fn NativeBridgeLoopResult::completions(
+  self : NativeBridgeLoopResult,
+) -> Array[NativeBridgeCompletion] {
+  self.completions.copy()
+}
+
+///|
+pub fn NativeBridgeLoopResult::evaluation_scripts(
+  self : NativeBridgeLoopResult,
+) -> Array[String] {
+  let scripts : Array[String] = []
+  if self.has_immediate_script() {
+    scripts.push(self.immediate_script)
+  }
+  for completion in self.completions {
+    scripts.push(completion.evaluation_script())
+  }
+  scripts
+}
+
+///|
+pub fn NativeBridgeLoopResult::to_json(self : NativeBridgeLoopResult) -> String {
+  [
+    "{",
+    "\"immediateScript\":\{self.immediate_script.json_string()},",
+    "\"completions\":[\{self.completions.map(fn(completion) { completion.to_json() }).join(",")}],",
+    "\"evaluationScripts\":[\{self.evaluation_scripts().map(fn(script) { script.json_string() }).join(",")}]",
+    "}",
+  ].join("")
 }
 
 ///|
