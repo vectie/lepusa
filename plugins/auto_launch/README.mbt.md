@@ -1,8 +1,9 @@
 # @lepusa/plugins/auto_launch
 
 `@lepusa/plugins/auto_launch` defines Lepusa's official launch-at-login command
-contract. Native backends own the platform-specific login item, registry,
-service, or desktop-entry integration.
+contract. The portable registry validates startup metadata and tracks desired
+enabled/disabled state, then delegates platform-specific login item, registry,
+service, or desktop-entry integration to native backends.
 
 ```moonbit nocheck
 ///|

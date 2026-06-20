@@ -124,6 +124,10 @@ fn catalog_plugins() -> Array[CatalogPlugin] {
 fn catalog_registrations() -> Array[CatalogRegistration] {
   [
     {
+      name: "autoLaunch",
+      register: fn(registry, _) { @auto_launch.register(registry) },
+    },
+    {
       name: "fs",
       register: fn(registry, context) {
         @fs_plugin.register(

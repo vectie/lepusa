@@ -629,7 +629,8 @@ routes.
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes, plus delegated tray state handlers.
 `@lepusa/plugins/auto_launch` declares launch-at-login
-status and enablement routes. `@lepusa/plugins/window_state` declares window
+status and enablement routes, plus delegated enablement handlers.
+`@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes. `@lepusa/plugins/service_discovery`
 declares service lookup, status, watch, change-event routes, and portable

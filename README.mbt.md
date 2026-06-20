@@ -355,8 +355,10 @@ menu behavior to native backends.
 
 `@lepusa/plugins/auto_launch` defines launch-at-login routes such as
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
-`autoLaunch.setEnabled`, plus startup registration policy metadata. Native
-backends own platform login item, registry, service, or desktop-entry behavior.
+`autoLaunch.setEnabled`, plus startup registration policy metadata. Its
+portable registry validates startup metadata and tracks desired enablement
+state, then delegates platform login item, registry, service, or desktop-entry
+behavior to native backends.
 
 `@lepusa/plugins/window_state` defines window persistence routes such as
 `windowState.save`, `windowState.restore`, and `windowState.clear`, plus

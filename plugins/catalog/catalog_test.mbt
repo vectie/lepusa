@@ -97,6 +97,7 @@ test "catalog plugin names resolve to plugins" {
 ///|
 test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
+  let registry = register(registry, "autoLaunch")
   let registry = register(registry, "clipboard")
   let registry = register(registry, "deepLink")
   let registry = register(registry, "dialog")
@@ -113,6 +114,8 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "singleInstance")
   let registry = register(registry, "windowState")
   let registry = register(registry, "tray")
+  assert_true(registry.contains("autoLaunch.status"))
+  assert_true(registry.contains("autoLaunch.setEnabled"))
   assert_true(registry.contains("clipboard.readText"))
   assert_true(registry.contains("deepLink.openUrl"))
   assert_true(registry.contains("dialog.message"))
@@ -134,7 +137,8 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 16)
+  assert_eq(names.length(), 17)
+  assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
   assert_true(names.contains("dialog"))

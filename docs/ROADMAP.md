@@ -205,7 +205,8 @@ Stabilize the cross-platform core set first:
   primary-state handlers exist
 - tray: initial status icon/menu contract and delegated tray state handlers
   exist
-- autoLaunch: initial launch-at-login contract exists
+- autoLaunch: initial launch-at-login contract and delegated enablement
+  handlers exist
 - windowState: initial window geometry persistence contract exists
 - updater: initial update lifecycle contract exists
 - serviceDiscovery: initial service lookup/status contract and portable
