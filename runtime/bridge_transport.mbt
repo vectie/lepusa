@@ -54,6 +54,7 @@ pub struct NativeBridgeLoopAdapter {
 pub struct NativeBridgeLoopCallbacks {
   window_label : String
   handoff_callback : (Bytes) -> Bytes
+  handoff_packet_callback : (Bytes) -> Bytes
   drain_window_callback : async () -> NativeBridgeLoopDelivery
 }
 
@@ -747,6 +748,50 @@ pub fn NativeBridgeLoopAdapter::handoff_callback(
 }
 
 ///|
+pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(
+  self : NativeBridgeLoopAdapter,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match self.runtime.bridge_handoff(input) {
+    Ok(handoff) =>
+      match handoff.immediate_script() {
+        Some(script) =>
+          @utf8.encode(
+            native_bridge_handoff_packet(
+              "immediate",
+              handoff.task().window_label(),
+              script,
+            ),
+          )
+        None => {
+          let count = self.queue
+            .enqueue_handoff(handoff)
+            .unwrap_or(self.queue.pending_count())
+          @utf8.encode(
+            native_bridge_handoff_packet(
+              "deferred",
+              handoff.task().window_label(),
+              "\{count}",
+            ),
+          )
+        }
+      }
+    Err(problems) =>
+      @utf8.encode(
+        native_bridge_handoff_packet("error", "", problems.join("; ")),
+      )
+  }
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::handoff_packet_callback(
+  self : NativeBridgeLoopAdapter,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) { self.handoff_packet_bytes(message) }
+}
+
+///|
 pub fn NativeBridgeLoopAdapter::callbacks(
   self : NativeBridgeLoopAdapter,
   window_label~ : String,
@@ -754,6 +799,7 @@ pub fn NativeBridgeLoopAdapter::callbacks(
   {
     window_label,
     handoff_callback: self.handoff_callback(),
+    handoff_packet_callback: self.handoff_packet_callback(),
     drain_window_callback: () => self.drain_window(window_label~),
   }
 }
@@ -821,6 +867,13 @@ pub fn NativeBridgeLoopCallbacks::handoff_callback(
 }
 
 ///|
+pub fn NativeBridgeLoopCallbacks::handoff_packet_callback(
+  self : NativeBridgeLoopCallbacks,
+) -> (Bytes) -> Bytes {
+  self.handoff_packet_callback
+}
+
+///|
 pub async fn NativeBridgeLoopCallbacks::drain_window(
   self : NativeBridgeLoopCallbacks,
 ) -> NativeBridgeLoopDelivery {
@@ -849,11 +902,21 @@ pub fn NativeBridgeLoopCallbacks::to_json(
     "{",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"handoffCallback\":\"(Bytes)->Bytes\",",
+    "\"handoffPacketCallback\":\"(Bytes)->utf8-handoff-packet\",",
     "\"drainWindow\":\"async()->NativeBridgeLoopDelivery\",",
     "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
   ].join("")
+}
+
+///|
+fn native_bridge_handoff_packet(
+  status : String,
+  window_label : String,
+  body : String,
+) -> String {
+  "\{status}\n\{window_label}\n\{body}"
 }
 
 ///|

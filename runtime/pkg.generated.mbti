@@ -154,6 +154,8 @@ pub fn NativeBridgeLoopAdapter::callbacks(Self, window_label~ : String) -> Nativ
 pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
+pub fn NativeBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool
 pub fn NativeBridgeLoopAdapter::new(NativeRuntime) -> Self
@@ -167,12 +169,14 @@ pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
 pub struct NativeBridgeLoopCallbacks {
   window_label : String
   handoff_callback : (Bytes) -> Bytes
+  handoff_packet_callback : (Bytes) -> Bytes
   drain_window_callback : async () -> NativeBridgeLoopDelivery
 }
 pub async fn NativeBridgeLoopCallbacks::drain_window(Self) -> NativeBridgeLoopDelivery
 pub async fn NativeBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
 pub async fn NativeBridgeLoopCallbacks::drain_window_scripts(Self) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopCallbacks::to_json(Self) -> String
 pub fn NativeBridgeLoopCallbacks::window_label(Self) -> String
 
@@ -181,6 +185,7 @@ pub struct NativeBridgeLoopContract {
   available : Bool
   adapter : String
   handoff_callback : String
+  handoff_packet_callback : String
   receive_message : String
   receive_window_message : String
   drain_window : String
@@ -196,6 +201,7 @@ pub fn NativeBridgeLoopContract::delivery_type(Self) -> String
 pub fn NativeBridgeLoopContract::drain_window(Self) -> String
 pub fn NativeBridgeLoopContract::drain_window_scripts(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_callback(Self) -> String
+pub fn NativeBridgeLoopContract::handoff_packet_callback(Self) -> String
 pub fn NativeBridgeLoopContract::input_encoding(Self) -> String
 pub fn NativeBridgeLoopContract::new(required~ : Bool, available~ : Bool) -> Self
 pub fn NativeBridgeLoopContract::output_encoding(Self) -> String

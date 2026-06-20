@@ -837,6 +837,17 @@ async test "bundled runtime owns bridge message transport" {
         sync_adapter_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_adapter.is_empty())
+      let sync_packet = @utf8.decode(
+        manifest
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(sync_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled immediate handoff packet bytes")
+      }
+      assert_true(sync_packet.has_prefix("immediate\nmain\n"))
+      assert_true(
+        sync_packet.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
       let sync_result = manifest
         .bridge_loop_adapter()
         .receive_message(@utf8.encode(sync_message))
@@ -898,6 +909,13 @@ async test "bundled runtime owns bridge message transport" {
             callbacks
             .to_json()
             .contains(
+              "\"handoffPacketCallback\":\"(Bytes)->utf8-handoff-packet\"",
+            ),
+          )
+          assert_true(
+            callbacks
+            .to_json()
+            .contains(
               "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\"",
             ),
           )
@@ -909,6 +927,17 @@ async test "bundled runtime owns bridge message transport" {
           }
           assert_eq(callback_script, "")
           assert_eq(callback_adapter.pending_count(), 1)
+          let packet_adapter = runtime.bridge_loop_adapter()
+          let packet_callbacks = packet_adapter.callbacks(window_label="main")
+          let deferred_packet = @utf8.decode(
+            packet_callbacks.handoff_packet_callback()(
+              @utf8.encode(async_message),
+            ),
+          ) catch {
+            _ => abort("unexpected invalid bundled bridge handoff packet bytes")
+          }
+          assert_eq(deferred_packet, "deferred\nmain\n1")
+          assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bundled callback drain json bytes")
           }

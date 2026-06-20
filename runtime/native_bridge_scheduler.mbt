@@ -36,6 +36,7 @@ pub struct NativeBridgeLoopContract {
   available : Bool
   adapter : String
   handoff_callback : String
+  handoff_packet_callback : String
   receive_message : String
   receive_window_message : String
   drain_window : String
@@ -223,6 +224,7 @@ pub fn NativeBridgeLoopContract::new(
     available,
     adapter: "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
     handoff_callback: "bridge_loop_adapter().handoff_callback",
+    handoff_packet_callback: "bridge_loop_adapter().handoff_packet_callback",
     receive_message: "bridge_loop_adapter().receive_message",
     receive_window_message: "bridge_loop_adapter().receive_window_message",
     drain_window: "bridge_loop_adapter().drain_window",
@@ -260,6 +262,13 @@ pub fn NativeBridgeLoopContract::handoff_callback(
   self : NativeBridgeLoopContract,
 ) -> String {
   self.handoff_callback
+}
+
+///|
+pub fn NativeBridgeLoopContract::handoff_packet_callback(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.handoff_packet_callback
 }
 
 ///|
@@ -328,6 +337,7 @@ pub fn NativeBridgeLoopContract::to_json(
     "\"available\":\{self.available.json_bool()},",
     "\"adapter\":\{self.adapter.json_string()},",
     "\"handoffCallback\":\{self.handoff_callback.json_string()},",
+    "\"handoffPacketCallback\":\{self.handoff_packet_callback.json_string()},",
     "\"receiveMessage\":\{self.receive_message.json_string()},",
     "\"receiveWindowMessage\":\{self.receive_window_message.json_string()},",
     "\"drainWindow\":\{self.drain_window.json_string()},",

@@ -556,6 +556,10 @@ code cannot accidentally run a sync command twice.
 deferred async routes, and lets the loop drain completions later before
 evaluating each callback script in the target WebView. Packaged runtimes expose
 the same shape as `BundledBridgeWorkQueue`.
+`handoff_packet_callback` is the native C/WebView ABI for that handoff: it
+returns `immediate\n<window>\n<script>` for sync responses, `deferred\n<window>\n<count>`
+for queued async work, or `error\n\n<message>` for malformed bridge messages.
+macOS and Linux parse this packet and evaluate only `immediate` scripts today.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
 queue, native message callback, pending-state diagnostics, and drain operation
 into the object platform event loops should keep beside each WebView host.

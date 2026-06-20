@@ -360,6 +360,26 @@ static char *lepusa_linux_next_packet_line(char **cursor) {
   return line;
 }
 
+static moonbit_bytes_t lepusa_linux_immediate_script_from_handoff_packet(
+  moonbit_bytes_t packet
+) {
+  char *packet_text = lepusa_linux_cstr_from_bytes(packet);
+  char *cursor = packet_text;
+  char *status = lepusa_linux_next_packet_line(&cursor);
+  if (packet_text == NULL || status == NULL || strcmp(status, "immediate") != 0) {
+    free(packet_text);
+    return NULL;
+  }
+  char *window_label = lepusa_linux_next_packet_line(&cursor);
+  if (window_label == NULL || cursor == NULL) {
+    free(packet_text);
+    return NULL;
+  }
+  moonbit_bytes_t script = lepusa_linux_bytes_from_cstr(cursor);
+  free(packet_text);
+  return script;
+}
+
 static void lepusa_linux_uri_scheme_request(
   void *request,
   void *user_data
@@ -453,7 +473,10 @@ static void lepusa_linux_script_message_received(
   void *value = context->api->webkit_javascript_result_get_js_value(js_result);
   char *message = value == NULL ? NULL : context->api->jsc_value_to_string(value);
   moonbit_bytes_t request = lepusa_linux_bytes_from_cstr(message);
-  moonbit_bytes_t script = context->call_dispatch(context->dispatch, request);
+  moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
+  moonbit_bytes_t script = lepusa_linux_immediate_script_from_handoff_packet(
+    packet
+  );
   char *script_text = lepusa_linux_cstr_from_bytes(script);
   if (script_text != NULL) {
     context->api->webkit_web_view_run_javascript(

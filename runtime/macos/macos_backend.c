@@ -424,6 +424,33 @@ static const char *lepusa_find_newline(const char *start, const char *end) {
   return NULL;
 }
 
+static moonbit_bytes_t lepusa_immediate_script_from_handoff_packet(
+  moonbit_bytes_t packet
+) {
+  if (packet == NULL) {
+    return NULL;
+  }
+  const char *start = (const char *)packet;
+  const char *end = start + Moonbit_array_length(packet);
+  const char *first = lepusa_find_newline(start, end);
+  if (first == NULL ||
+      (first - start) != 9 ||
+      memcmp(start, "immediate", 9) != 0) {
+    return NULL;
+  }
+  const char *second = lepusa_find_newline(first + 1, end);
+  if (second == NULL) {
+    return NULL;
+  }
+  const char *body = second + 1;
+  int32_t body_len = (int32_t)(end - body);
+  moonbit_bytes_t script = moonbit_make_bytes(body_len, 0);
+  if (body_len > 0) {
+    memcpy(script, body, (size_t)body_len);
+  }
+  return script;
+}
+
 static void lepusa_send_scheme_data(
   void *task,
   void *url,
@@ -560,14 +587,18 @@ static void lepusa_script_message_handler(
         lepusa_sel("UTF8String")
       );
   moonbit_bytes_t request = lepusa_bytes_from_cstr(body_text);
-  moonbit_bytes_t script = context->call_dispatch(context->dispatch, request);
+  moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
+  moonbit_bytes_t script = lepusa_immediate_script_from_handoff_packet(packet);
   if (script == NULL) {
     return;
   }
   lepusa_msg_void_id_id(
     context->webview,
     "evaluateJavaScript:completionHandler:",
-    lepusa_ns_string(script),
+    lepusa_ns_string_from_range(
+      (const char *)script,
+      Moonbit_array_length(script)
+    ),
     NULL
   );
 }

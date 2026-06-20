@@ -638,6 +638,10 @@ test "native runner plans expose async bridge blockers" {
         "bridge_loop_adapter().handoff_callback",
       )
       assert_eq(
+        bridge_loop.handoff_packet_callback(),
+        "bridge_loop_adapter().handoff_packet_callback",
+      )
+      assert_eq(
         bridge_loop.receive_message(),
         "bridge_loop_adapter().receive_message",
       )
@@ -2084,6 +2088,13 @@ async test "native runtime owns bridge message transport" {
             callbacks
             .to_json()
             .contains(
+              "\"handoffPacketCallback\":\"(Bytes)->utf8-handoff-packet\"",
+            ),
+          )
+          assert_true(
+            callbacks
+            .to_json()
+            .contains(
               "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\"",
             ),
           )
@@ -2094,6 +2105,15 @@ async test "native runtime owns bridge message transport" {
           }
           assert_eq(callback_script, "")
           assert_eq(callback_adapter.pending_count(), 1)
+          let packet_adapter = runtime.bridge_loop_adapter()
+          let packet_callbacks = packet_adapter.callbacks(window_label="main")
+          let deferred_packet = @utf8.decode(
+            packet_callbacks.handoff_packet_callback()(@utf8.encode(message)),
+          ) catch {
+            _ => abort("unexpected invalid bridge handoff packet bytes")
+          }
+          assert_eq(deferred_packet, "deferred\nmain\n1")
+          assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bridge callback drain json bytes")
           }
@@ -2270,6 +2290,17 @@ async test "native runtime owns bridge message transport" {
         sync_adapter_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_adapter.is_empty())
+      let sync_packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(sync_handoff_message)),
+      ) catch {
+        _ => abort("unexpected invalid immediate bridge handoff packet bytes")
+      }
+      assert_true(sync_packet.has_prefix("immediate\nmain\n"))
+      assert_true(
+        sync_packet.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
       let sync_result = runtime
         .bridge_loop_adapter()
         .receive_message(@utf8.encode(sync_handoff_message))

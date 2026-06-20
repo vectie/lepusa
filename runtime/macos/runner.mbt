@@ -167,7 +167,7 @@ pub fn run(
         plan,
         mode~,
         dispatch_for_window=fn(window_label) {
-          adapter.callbacks(window_label~).handoff_callback()
+          adapter.callbacks(window_label~).handoff_packet_callback()
         },
         resolve_asset=runtime.asset_protocol_resolver_callback(),
       )
@@ -188,7 +188,7 @@ pub fn run_bundled(
         plan,
         mode~,
         dispatch_for_window=fn(window_label) {
-          adapter.callbacks(window_label~).handoff_callback()
+          adapter.callbacks(window_label~).handoff_packet_callback()
         },
         resolve_asset=manifest.asset_protocol_resolver_callback(),
       )
