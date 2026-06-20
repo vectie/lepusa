@@ -167,10 +167,20 @@ pub fn LinuxBundledRunResult::launch_session(
 pub fn LinuxBundledRunResult::report(
   self : LinuxBundledRunResult,
 ) -> @lepusa.RunReport {
+  let blocker = match
+    launch_capability().launch_blocker("Linux", self.plan.bridge_scheduler()) {
+    Some(message) => message
+    None => ""
+  }
   self.plan
   .bootstrap()
   .run_plan()
-  .report(status=self.status, load_url=self.plan.first_webview_load_url())
+  .report(
+    status=self.status,
+    load_url=self.plan.first_webview_load_url(),
+    target_can_launch=blocker == "",
+    target_launch_blocker=blocker,
+  )
 }
 
 ///|

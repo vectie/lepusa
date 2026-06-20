@@ -236,7 +236,7 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            runtime.run_report(target=target.name(), status=result.status()),
+            native_run_report(target, runtime, status=result.status()),
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -245,7 +245,7 @@ fn render_native_launch(
         Ok(result) =>
           render_native_run_report(
             "Lepusa launch",
-            runtime.run_report(target=target.name(), status=result.status()),
+            native_run_report(target, runtime, status=result.status()),
           )
         Err(problems) => fail(render_problems("Lepusa launch", problems))
       }
@@ -269,7 +269,52 @@ fn macos_launch_report(
     load_url~,
     bridge_sync_routes=plan.bridge().sync_command_routes().length(),
     bridge_async_routes=plan.bridge().async_command_routes().length(),
+    target_can_launch=native_status_target_can_launch(result.status()),
+    target_launch_blocker=native_status_target_launch_blocker(result.status()),
   )
+}
+
+///|
+fn native_run_report(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
+  status? : @lepusa.RunStatus = RunPrepared,
+) -> @lepusa.RunReport {
+  let (can_launch, blocker) = native_target_launch_status(target, runtime)
+  runtime.run_report(
+    target=target.name(),
+    status~,
+    target_can_launch=can_launch,
+    target_launch_blocker=blocker,
+  )
+}
+
+///|
+fn native_status_target_can_launch(status : @lepusa.RunStatus) -> Bool {
+  !(status is RunUnsupported(_))
+}
+
+///|
+fn native_status_target_launch_blocker(status : @lepusa.RunStatus) -> String {
+  match status {
+    RunUnsupported(message) => message
+    _ => ""
+  }
+}
+
+///|
+fn native_target_launch_status(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
+) -> (Bool, String) {
+  match verify_native_dry_run(target, runtime) {
+    Ok(session) =>
+      match doctor_native_launch_blocker(target, session) {
+        Some(problem) => (false, problem)
+        None => (true, "")
+      }
+    Err(problems) => (false, problems.join("; "))
+  }
 }
 
 ///|
@@ -318,6 +363,12 @@ fn render_native_run_report(
     status +
     "webviews: \{report.webviews()}\n" +
     "first-window-url: \{report.first_window_url()}\n" +
+    "target-can-launch: \{report.target_can_launch()}\n" +
+    (if report.target_launch_blocker() == "" {
+      ""
+    } else {
+      "target-launch-blocker: \{report.target_launch_blocker()}\n"
+    }) +
     load_url +
     bridge_url +
     services +
@@ -334,7 +385,7 @@ fn render_native_run_summary(
 ) -> CliResult {
   render_native_run_report(
     "Lepusa run",
-    runtime.run_report(target=target.name(), status=RunPrepared),
+    native_run_report(target, runtime),
     include_status=false,
     include_bridge_url=true,
     include_services=true,

@@ -717,7 +717,7 @@ lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a summary
 
 lepusa-runtime run --manifest <lepusa/runtime.json>
-  -> prepares a target-aware bundled runtime launch plan without opening a window
+  -> prepares a target-aware bundled runtime launch plan and reports launch readiness without opening a window
 
 lepusa-runtime launch --manifest <lepusa/runtime.json>
   -> opens the first bundled macOS WKWebView window or reports unsupported for other targets

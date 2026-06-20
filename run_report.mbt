@@ -24,6 +24,8 @@ pub struct RunReport {
   lifecycle_steps : Int
   bridge_sync_routes : Int
   bridge_async_routes : Int
+  target_can_launch : Bool
+  target_launch_blocker : String
 } derive(Debug, Eq)
 
 ///|
@@ -44,6 +46,8 @@ pub fn RunReport::new(
   lifecycle_steps? : Int = 0,
   bridge_sync_routes? : Int = 0,
   bridge_async_routes? : Int = 0,
+  target_can_launch? : Bool = true,
+  target_launch_blocker? : String = "",
 ) -> RunReport {
   {
     target,
@@ -62,6 +66,8 @@ pub fn RunReport::new(
     lifecycle_steps,
     bridge_sync_routes,
     bridge_async_routes,
+    target_can_launch,
+    target_launch_blocker,
   }
 }
 
@@ -174,6 +180,16 @@ pub fn RunReport::bridge_async_routes(self : RunReport) -> Int {
 }
 
 ///|
+pub fn RunReport::target_can_launch(self : RunReport) -> Bool {
+  self.target_can_launch
+}
+
+///|
+pub fn RunReport::target_launch_blocker(self : RunReport) -> String {
+  self.target_launch_blocker
+}
+
+///|
 pub fn RunReport::to_json(self : RunReport) -> String {
   [
     "{",
@@ -192,7 +208,9 @@ pub fn RunReport::to_json(self : RunReport) -> String {
     "\"startupOperations\":\{self.startup_operations},",
     "\"lifecycleSteps\":\{self.lifecycle_steps},",
     "\"bridgeSyncRoutes\":\{self.bridge_sync_routes},",
-    "\"bridgeAsyncRoutes\":\{self.bridge_async_routes}",
+    "\"bridgeAsyncRoutes\":\{self.bridge_async_routes},",
+    "\"targetCanLaunch\":\{self.target_can_launch.json_bool()},",
+    "\"targetLaunchBlocker\":\{self.target_launch_blocker.json_string()}",
     "}",
   ].join("")
 }

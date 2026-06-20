@@ -439,8 +439,9 @@ service supervisor plan, and target launch capability.
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,
 WebView engine, first URL, bridge URL, local services, startup operations, and
-lifecycle steps. It is intentionally a no-window command until the platform
-event loops are wired.
+lifecycle steps. The summary also includes `target-can-launch` and a blocker
+message when the selected target is known to be missing a native WebView launch
+loop. It is intentionally a no-window command unless `--launch` is passed.
 
 `lepusa verify [macos|windows|linux] --project lepusa.json` runs the no-write
 foundation proof for an app: runtime plan, dev plan, launch manifest, bridge
@@ -589,7 +590,9 @@ service supervisor plans/reports/executors, and lifecycle step JSON without
 making each backend rebuild those paths.
 `@lepusa.RunReport` is the shared launch summary returned by source and
 packaged runtime adapters, so CLI output and future native loops use one status
-vocabulary for prepared, launched, failed, and unsupported runs.
+vocabulary for prepared, launched, failed, and unsupported runs. It also carries
+target launch readiness separately from run status, so tooling can distinguish a
+valid prepared plan from a target whose WebView loop is not implemented yet.
 Native runner plans also report bridge sync and async route sets, giving
 platform loops an explicit scheduling contract before they open a WebView.
 They also expose executable operation views for frontend event scripts and

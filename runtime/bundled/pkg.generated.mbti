@@ -238,7 +238,7 @@ pub fn BundledRunPlan::backend(Self) -> String
 pub fn BundledRunPlan::bridge_url(Self) -> String
 pub fn BundledRunPlan::first_webview(Self) -> BundledWebView?
 pub fn BundledRunPlan::lifecycle_step_count(Self) -> Int
-pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String) -> @lepusa.RunReport
+pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn BundledRunPlan::service_plan(Self) -> BundledServicePlan
 pub fn BundledRunPlan::service_supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
 pub fn BundledRunPlan::startup_operation_count(Self) -> Int

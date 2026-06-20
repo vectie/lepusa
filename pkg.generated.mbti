@@ -563,6 +563,8 @@ pub struct RunReport {
   lifecycle_steps : Int
   bridge_sync_routes : Int
   bridge_async_routes : Int
+  target_can_launch : Bool
+  target_launch_blocker : String
 } derive(Eq, @debug.Debug)
 pub fn RunReport::backend(Self) -> String
 pub fn RunReport::bridge_async_routes(Self) -> Int
@@ -574,12 +576,14 @@ pub fn RunReport::first_window_url(Self) -> String
 pub fn RunReport::lifecycle_steps(Self) -> Int
 pub fn RunReport::load_url(Self) -> String
 pub fn RunReport::local_services(Self) -> Int
-pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int, first_window_title? : String, first_window_url? : String, load_url? : String, bridge_url? : String, local_services? : Int, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int, lifecycle_steps? : Int, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> Self
+pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int, first_window_title? : String, first_window_url? : String, load_url? : String, bridge_url? : String, local_services? : Int, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int, lifecycle_steps? : Int, bridge_sync_routes? : Int, bridge_async_routes? : Int, target_can_launch? : Bool, target_launch_blocker? : String) -> Self
 pub fn RunReport::service_start_order(Self) -> Array[String]
 pub fn RunReport::service_supervisor(Self) -> Bool
 pub fn RunReport::startup_operations(Self) -> Int
 pub fn RunReport::status(Self) -> RunStatus
 pub fn RunReport::target(Self) -> String
+pub fn RunReport::target_can_launch(Self) -> Bool
+pub fn RunReport::target_launch_blocker(Self) -> String
 pub fn RunReport::to_json(Self) -> String
 pub fn RunReport::webviews(Self) -> Int
 

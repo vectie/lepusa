@@ -131,7 +131,7 @@
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.
-  - `lepusa run`: prints a no-window native runner smoke summary.
+  - `lepusa run`: prints a no-window native runner smoke summary with target launch readiness.
   - `lepusa bridge`: prints the generated frontend IPC bridge.
   - `lepusa asset`: prints the runtime asset protocol JSON envelope.
   - `lepusa lifecycle`: prints runtime lifecycle step JSON.
@@ -151,7 +151,7 @@
   - `lepusa plugin new`: writes a standalone plugin package skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa dev [--json]`: lowers the project to a runtime development plan, with JSON output for native runners and tooling.
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
-  - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
+  - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans and reports launch readiness without opening windows.
   - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, opens bundled Linux WebKitGTK windows when GTK3/WebKit2GTK are available, and sends Windows bundled manifests through the package-owned WebView2 launch ABI until its COM loop lands.
   - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.

@@ -208,6 +208,13 @@ fn macos_runtime_run_report(
 ) -> @lepusa.RunReport {
   let plan = result.plan()
   let first_webview = plan.first_webview()
+  let blocker = match
+    plan
+    .launch_session()
+    .launch_blocker_with_capability("macOS", @macos.launch_capability()) {
+    Some(message) => message
+    None => ""
+  }
   let first_window_title = match first_webview {
     Ok(webview) => webview.title()
     Err(_) => ""
@@ -236,6 +243,8 @@ fn macos_runtime_run_report(
     lifecycle_steps=plan.execution().lifecycle_steps().length(),
     bridge_sync_routes=plan.bridge().sync_command_routes().length(),
     bridge_async_routes=plan.bridge().async_command_routes().length(),
+    target_can_launch=blocker == "",
+    target_launch_blocker=blocker,
   )
 }
 
@@ -284,6 +293,11 @@ fn render_runtime_run_report(
   } else {
     ""
   }
+  let target_blocker = if report.target_launch_blocker() == "" {
+    ""
+  } else {
+    "target-launch-blocker: \{report.target_launch_blocker()}\n"
+  }
   [
     "Lepusa runtime run",
     "mode: \{if launch { "launch" } else { "dry-run" }}",
@@ -293,7 +307,11 @@ fn render_runtime_run_report(
     "status: \{report.status().name()}",
     "webviews: \{report.webviews()}",
     title + "first-window-url: \{report.first_window_url()}",
-    load_url + bridge_url + "local-services: \{report.local_services()}",
+    "target-can-launch: \{report.target_can_launch()}",
+    target_blocker +
+    load_url +
+    bridge_url +
+    "local-services: \{report.local_services()}",
     "service-supervisor: \{report.service_supervisor()}",
     "service-start-order: \{report.service_start_order().join(",")}",
     "startup-operations: \{report.startup_operations()}",

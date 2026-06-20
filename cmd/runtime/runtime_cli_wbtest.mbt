@@ -303,6 +303,7 @@ test "runtime cli dry-runs bundled macos launch" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
+  assert_true(result.output.contains("target-can-launch: true"))
   assert_true(
     result.output.contains("load-url: lepusa://rabbita/main/index.html"),
   )
@@ -346,6 +347,7 @@ test "runtime cli dry-runs bundled linux manifest by target" {
   assert_true(dry_run.output.contains("backend: linux"))
   assert_true(dry_run.output.contains("engine: WebKitGTK"))
   assert_true(dry_run.output.contains("status: prepared"))
+  assert_true(dry_run.output.contains("target-can-launch: true"))
   assert_true(dry_run.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(dry_run.output.contains("startup-operations: 2"))
   assert_true(dry_run.output.contains("service-start-order: api"))
@@ -357,6 +359,7 @@ test "runtime cli dry-runs bundled linux manifest by target" {
   assert_eq(launch.exit_code, 0)
   assert_true(launch.output.contains("mode: launch"))
   assert_true(launch.output.contains("status: unsupported"))
+  assert_true(launch.output.contains("target-can-launch: true"))
   assert_true(launch.output.contains("engine: WebKitGTK"))
 }
 
@@ -387,6 +390,12 @@ test "runtime cli dry-runs bundled windows manifest by target" {
   assert_true(dry_run.output.contains("backend: windows"))
   assert_true(dry_run.output.contains("engine: WebView2"))
   assert_true(dry_run.output.contains("status: prepared"))
+  assert_true(dry_run.output.contains("target-can-launch: false"))
+  assert_true(
+    dry_run.output.contains(
+      "target-launch-blocker: Windows WebView2 creation loop is unavailable",
+    ),
+  )
   assert_true(dry_run.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(dry_run.output.contains("startup-operations: 1"))
   let launch = render_runtime_run_text(
@@ -397,6 +406,12 @@ test "runtime cli dry-runs bundled windows manifest by target" {
   assert_eq(launch.exit_code, 0)
   assert_true(launch.output.contains("mode: launch"))
   assert_true(launch.output.contains("status: unsupported"))
+  assert_true(launch.output.contains("target-can-launch: false"))
+  assert_true(
+    launch.output.contains(
+      "target-launch-blocker: Windows WebView2 creation loop is unavailable",
+    ),
+  )
   assert_true(launch.output.contains("engine: WebView2"))
 }
 

@@ -192,6 +192,7 @@ async test "run prints native runner smoke summary" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
+  assert_true(result.output.contains("target-can-launch: true"))
   assert_true(result.output.contains("bridge: lepusa://runtime/bridge.js"))
   assert_true(result.output.contains("startup-operations: 0"))
   assert_true(result.output.contains("lifecycle-steps: 0"))
@@ -210,6 +211,7 @@ async test "run launch rejects unwired native targets" {
   assert_true(
     result.output.contains("first-window-url: lepusa://rabbita/main/index.html"),
   )
+  assert_true(result.output.contains("target-can-launch: true"))
   assert_true(result.output.contains("startup-operations: 0"))
 }
 

@@ -167,10 +167,20 @@ pub fn WindowsBundledRunResult::launch_session(
 pub fn WindowsBundledRunResult::report(
   self : WindowsBundledRunResult,
 ) -> @lepusa.RunReport {
+  let blocker = match
+    launch_capability().launch_blocker("Windows", self.plan.bridge_scheduler()) {
+    Some(message) => message
+    None => ""
+  }
   self.plan
   .bootstrap()
   .run_plan()
-  .report(status=self.status, load_url=self.plan.first_webview_load_url())
+  .report(
+    status=self.status,
+    load_url=self.plan.first_webview_load_url(),
+    target_can_launch=blocker == "",
+    target_launch_blocker=blocker,
+  )
 }
 
 ///|

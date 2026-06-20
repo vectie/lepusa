@@ -487,7 +487,7 @@ pub fn NativeRuntime::prepare_bridge_message(Self, String, window_label? : Strin
 pub fn NativeRuntime::prepare_run_plan(Self, prepare_webview~ : (RuntimeWebViewSpec) -> Result[NativeWebViewPlan, String], missing_webview_message? : String) -> Result[NativePreparedRunPlan, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
 pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
-pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int) -> @lepusa.RunReport
+pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 pub fn NativeRuntime::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativeRuntime::service_supervisor_report(Self) -> NativeServiceSupervisorReport

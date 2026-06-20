@@ -160,6 +160,8 @@ pub fn BundledRunPlan::report(
   self : BundledRunPlan,
   status~ : @lepusa.RunStatus,
   load_url? : String = "",
+  target_can_launch? : Bool = true,
+  target_launch_blocker? : String = "",
 ) -> @lepusa.RunReport {
   let services = self.service_plan()
   let first_window_url = match self.first_webview() {
@@ -187,6 +189,8 @@ pub fn BundledRunPlan::report(
     lifecycle_steps=self.lifecycle_step_count,
     bridge_sync_routes=self.sync_route_count,
     bridge_async_routes=self.async_route_count,
+    target_can_launch~,
+    target_launch_blocker~,
   )
 }
 

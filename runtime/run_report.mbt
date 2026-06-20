@@ -6,6 +6,8 @@ pub fn NativeRuntime::run_report(
   load_url? : String = "",
   bridge_sync_routes? : Int = 0,
   bridge_async_routes? : Int = 0,
+  target_can_launch? : Bool = true,
+  target_launch_blocker? : String = "",
 ) -> @lepusa.RunReport {
   let plan = self.runner_plan()
   let services = plan.service_plan()
@@ -34,5 +36,7 @@ pub fn NativeRuntime::run_report(
     lifecycle_steps=plan.lifecycle_steps().length(),
     bridge_sync_routes~,
     bridge_async_routes~,
+    target_can_launch~,
+    target_launch_blocker~,
   )
 }

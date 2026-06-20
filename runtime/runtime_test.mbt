@@ -783,6 +783,8 @@ test "native run report normalizes launch summaries" {
         load_url="file:///tmp/index.html",
         bridge_sync_routes=1,
         bridge_async_routes=2,
+        target_can_launch=false,
+        target_launch_blocker="not wired",
       )
       assert_eq(report.target(), "test")
       assert_eq(report.backend(), "test")
@@ -798,11 +800,15 @@ test "native run report normalizes launch summaries" {
       assert_eq(report.lifecycle_steps(), 1)
       assert_eq(report.bridge_sync_routes(), 1)
       assert_eq(report.bridge_async_routes(), 2)
+      assert_false(report.target_can_launch())
+      assert_eq(report.target_launch_blocker(), "not wired")
       let json = report.to_json()
       assert_true(json.contains("\"target\":\"test\""))
       assert_true(json.contains("\"name\":\"unsupported\""))
       assert_true(json.contains("\"message\":\"not wired\""))
       assert_true(json.contains("\"bridgeAsyncRoutes\":2"))
+      assert_true(json.contains("\"targetCanLaunch\":false"))
+      assert_true(json.contains("\"targetLaunchBlocker\":\"not wired\""))
     }
     Err(_) => abort("unexpected invalid native runtime")
   }
