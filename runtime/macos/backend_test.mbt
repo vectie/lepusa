@@ -250,6 +250,11 @@ test "macos backend prepares first webview load url" {
           assert_eq(bridge.sync_command_routes().length(), 0)
           assert_eq(bridge.async_command_routes().length(), 0)
           assert_false(bridge.requires_async_dispatch())
+          let session = plan.launch_session()
+          assert_eq(session.webviews().length(), 1)
+          assert_eq(session.execution().startup_operations().length(), 3)
+          assert_eq(session.service_supervisor().backend_name(), "macos")
+          assert_true(session.can_launch())
         }
         Err(_) => abort("unexpected invalid macOS run plan")
       }
@@ -269,6 +274,14 @@ test "macos backend marks async bridge routes" {
           assert_eq(async_routes.length(), 1)
           assert_eq(async_routes[0], "fs.readText")
           assert_true(bridge.requires_async_dispatch())
+          let session = plan.launch_session()
+          assert_false(session.can_launch())
+          assert_true(
+            session
+            .launch_blocker("macOS")
+            .unwrap()
+            .contains("1 async command route"),
+          )
         }
         Err(_) => abort("unexpected invalid async macOS run plan")
       }
@@ -413,6 +426,10 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(async_routes.length(), 1)
           assert_eq(async_routes[0], "fs.writeText")
           assert_true(bridge.requires_async_dispatch())
+          let session = plan.launch_session()
+          assert_eq(session.webviews().length(), 1)
+          assert_eq(session.execution().startup_operations().length(), 3)
+          assert_false(session.can_launch())
           let supervisor = plan.service_supervisor_plan()
           assert_eq(supervisor.backend_name(), "macos")
           assert_eq(supervisor.webview_engine(), "WKWebView")

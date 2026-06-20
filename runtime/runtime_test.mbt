@@ -516,6 +516,17 @@ test "native runtime prepares shared run plans" {
               assert_eq(webview.initialization_script(), "/* prepared hook */")
             Err(problem) => abort(problem)
           }
+          let session = plan.launch_session()
+          assert_eq(session.webviews().length(), 1)
+          assert_eq(
+            session.first_webview().unwrap().initialization_script(),
+            "/* prepared hook */",
+          )
+          assert_eq(session.execution().startup_operations().length(), 1)
+          assert_false(session.bridge_scheduler().requires_async_dispatch())
+          assert_eq(session.service_supervisor().backend_name(), "test")
+          assert_true(session.can_launch())
+          assert_true(session.to_json().contains("\"bridgeScheduler\""))
         }
         Err(_) => abort("unexpected invalid native prepared run plan")
       }
@@ -566,6 +577,7 @@ test "native runner plans expose async bridge blockers" {
           assert_true(plan.requires_async_bridge_dispatch())
           assert_eq(plan.bridge_async_routes()[0], "core.invoke")
           assert_false(plan.bridge_scheduler().can_launch())
+          assert_false(plan.launch_session().can_launch())
           assert_true(
             plan
             .async_bridge_launch_message("Test")

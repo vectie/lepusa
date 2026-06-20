@@ -125,6 +125,14 @@ test "windows backend prepares run plan and reports unsupported launch" {
             execution.startup_operations()[0].effect_name().unwrap(),
             "boot",
           )
+          let session = result.launch_session()
+          assert_eq(session.webviews().length(), 1)
+          assert_eq(
+            session.execution().startup_operations()[0].kind(),
+            "run-effect",
+          )
+          assert_eq(session.service_supervisor().backend_name(), "windows")
+          assert_true(session.can_launch())
           assert_eq(
             result.plan().service_supervisor_plan().backend_name(),
             "windows",
@@ -264,6 +272,15 @@ test "windows backend prepares bundled runtime contract" {
                 "api",
               )
               assert_eq(execution.startup_operations()[1].kind(), "run-effect")
+            }
+            Err(problem) => abort(problem)
+          }
+          match result.launch_session() {
+            Ok(session) => {
+              assert_eq(session.webviews().length(), 1)
+              assert_eq(session.execution().startup_operations().length(), 2)
+              assert_true(session.service_supervisor().requires_supervisor())
+              assert_true(session.can_launch())
             }
             Err(problem) => abort(problem)
           }

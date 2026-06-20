@@ -179,3 +179,22 @@ pub fn BundledNativeRunPlan::async_bridge_launch_message(
 ) -> String {
   self.bridge_scheduler().async_bridge_launch_message(platform_name)
 }
+
+///|
+pub fn BundledNativeRunPlan::launch_session(
+  self : BundledNativeRunPlan,
+  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+) -> Result[@runtime.NativeLaunchSession, String] {
+  match self.native_execution_plan() {
+    Ok(execution) =>
+      Ok(
+        @runtime.NativeLaunchSession::new(
+          webviews=self.webviews(),
+          execution~,
+          bridge_scheduler=self.bridge_scheduler(mode=bridge_mode),
+          service_supervisor=self.service_supervisor_plan(),
+        ),
+      )
+    Err(problem) => Err(problem)
+  }
+}

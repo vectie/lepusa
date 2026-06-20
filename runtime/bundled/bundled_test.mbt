@@ -439,6 +439,16 @@ test "bundled native run plans expose executable operation views" {
             }
             Err(problem) => abort(problem)
           }
+          match plan.launch_session() {
+            Ok(session) => {
+              assert_eq(session.webviews().length(), 1)
+              assert_eq(session.execution().startup_operations().length(), 3)
+              assert_true(session.service_supervisor().requires_supervisor())
+              assert_false(session.bridge_scheduler().requires_async_dispatch())
+              assert_true(session.to_json().contains("\"serviceSupervisor\""))
+            }
+            Err(problem) => abort(problem)
+          }
           let scripts = plan.startup_evaluation_scripts()
           assert_eq(scripts.length(), 1)
           assert_eq(scripts[0].window_label(), "main")

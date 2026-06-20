@@ -144,6 +144,22 @@ pub fn NativeLaunchPlan::runtime_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn NativeLaunchPlan::webview_engine(Self) -> String
 pub fn NativeLaunchPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
 
+pub struct NativeLaunchSession {
+  webviews : Array[NativeWebViewPlan]
+  execution : NativeExecutionPlan
+  bridge_scheduler : NativeBridgeScheduler
+  service_supervisor : NativeServiceSupervisorPlan
+} derive(Eq, @debug.Debug)
+pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
+pub fn NativeLaunchSession::can_launch(Self) -> Bool
+pub fn NativeLaunchSession::execution(Self) -> NativeExecutionPlan
+pub fn NativeLaunchSession::first_webview(Self) -> Result[NativeWebViewPlan, String]
+pub fn NativeLaunchSession::launch_blocker(Self, String) -> String?
+pub fn NativeLaunchSession::new(webviews~ : Array[NativeWebViewPlan], execution~ : NativeExecutionPlan, bridge_scheduler~ : NativeBridgeScheduler, service_supervisor~ : NativeServiceSupervisorPlan) -> Self
+pub fn NativeLaunchSession::service_supervisor(Self) -> NativeServiceSupervisorPlan
+pub fn NativeLaunchSession::to_json(Self) -> String
+pub fn NativeLaunchSession::webviews(Self) -> Array[NativeWebViewPlan]
+
 pub struct NativeNavigation {
   window_label : String
   url : String
@@ -181,6 +197,7 @@ pub fn NativePreparedRunPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativePreparedRunPlan::first_webview_load_url(Self) -> String
 pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
+pub fn NativePreparedRunPlan::launch_session(Self, bridge_mode? : NativeBridgeSchedulerMode) -> NativeLaunchSession
 pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int
 pub fn NativePreparedRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan
@@ -381,6 +398,7 @@ pub fn NativeWebViewPlan::native_hook(Self) -> String
 pub fn NativeWebViewPlan::new(label~ : String, title~ : String, url~ : String, load_url~ : String, initialization_script~ : String, native_hook~ : String, asset_protocol~ : String, width~ : Int, height~ : Int, resizable~ : Bool) -> Self
 pub fn NativeWebViewPlan::resizable(Self) -> Bool
 pub fn NativeWebViewPlan::title(Self) -> String
+pub fn NativeWebViewPlan::to_json(Self) -> String
 pub fn NativeWebViewPlan::url(Self) -> String
 pub fn NativeWebViewPlan::width(Self) -> Int
 

@@ -127,6 +127,13 @@ pub fn WindowsRunResult::execution_plan(
 }
 
 ///|
+pub fn WindowsRunResult::launch_session(
+  self : WindowsRunResult,
+) -> @runtime.NativeLaunchSession {
+  self.plan.launch_session()
+}
+
+///|
 pub fn WindowsBundledRunResult::plan(
   self : WindowsBundledRunResult,
 ) -> @bundled.BundledNativeRunPlan {
@@ -145,6 +152,13 @@ pub fn WindowsBundledRunResult::execution_plan(
   self : WindowsBundledRunResult,
 ) -> Result[@runtime.NativeExecutionPlan, String] {
   self.plan.native_execution_plan()
+}
+
+///|
+pub fn WindowsBundledRunResult::launch_session(
+  self : WindowsBundledRunResult,
+) -> Result[@runtime.NativeLaunchSession, String] {
+  self.plan.launch_session()
 }
 
 ///|

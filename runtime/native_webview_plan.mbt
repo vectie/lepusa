@@ -116,3 +116,21 @@ pub fn NativeWebViewPlan::height(self : NativeWebViewPlan) -> Int {
 pub fn NativeWebViewPlan::resizable(self : NativeWebViewPlan) -> Bool {
   self.resizable
 }
+
+///|
+pub fn NativeWebViewPlan::to_json(self : NativeWebViewPlan) -> String {
+  [
+    "{",
+    "\"label\":\{self.label.json_string()},",
+    "\"title\":\{self.title.json_string()},",
+    "\"url\":\{self.url.json_string()},",
+    "\"loadUrl\":\{self.load_url.json_string()},",
+    "\"nativeHook\":\{self.native_hook.json_string()},",
+    "\"assetProtocol\":\{self.asset_protocol.json_string()},",
+    "\"width\":\{self.width},",
+    "\"height\":\{self.height},",
+    "\"resizable\":\{self.resizable.json_bool()},",
+    "\"initializationScript\":\{self.initialization_script.json_string()}",
+    "}",
+  ].join("")
+}

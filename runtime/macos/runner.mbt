@@ -239,6 +239,18 @@ pub fn MacOSRunPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn MacOSRunPlan::launch_session(
+  self : MacOSRunPlan,
+) -> @runtime.NativeLaunchSession {
+  @runtime.NativeLaunchSession::new(
+    webviews=self.webviews(),
+    execution=self.execution(),
+    bridge_scheduler=self.bridge().scheduler(),
+    service_supervisor=self.service_supervisor_plan(),
+  )
+}
+
+///|
 pub fn MacOSRunPlan::service_supervisor_report(
   self : MacOSRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
@@ -296,11 +308,12 @@ fn run_plan(
   match mode {
     MacOSDryRun => Ok({ plan, status: RunPrepared })
     MacOSOpenWindow => {
-      match plan.bridge().scheduler().launch_blocker("macOS") {
+      let session = plan.launch_session()
+      match session.launch_blocker("macOS") {
         Some(message) => return Ok({ plan, status: RunUnsupported(message) })
         None => ()
       }
-      let webview = match plan.first_webview() {
+      let webview = match session.first_webview() {
         Ok(webview) => webview
         Err(problem) => return Err([problem])
       }

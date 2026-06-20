@@ -127,6 +127,13 @@ pub fn LinuxRunResult::execution_plan(
 }
 
 ///|
+pub fn LinuxRunResult::launch_session(
+  self : LinuxRunResult,
+) -> @runtime.NativeLaunchSession {
+  self.plan.launch_session()
+}
+
+///|
 pub fn LinuxBundledRunResult::plan(
   self : LinuxBundledRunResult,
 ) -> @bundled.BundledNativeRunPlan {
@@ -145,6 +152,13 @@ pub fn LinuxBundledRunResult::execution_plan(
   self : LinuxBundledRunResult,
 ) -> Result[@runtime.NativeExecutionPlan, String] {
   self.plan.native_execution_plan()
+}
+
+///|
+pub fn LinuxBundledRunResult::launch_session(
+  self : LinuxBundledRunResult,
+) -> Result[@runtime.NativeLaunchSession, String] {
+  self.plan.launch_session()
 }
 
 ///|
