@@ -135,6 +135,7 @@
   - `lepusa bridge-loop`: feeds one source bridge message through the adapter loop and reports the window delivery envelope with immediate scripts, async completions, evaluation scripts, and executable evaluation operations. Runtime adapters also expose `drain_window` for async work captured by native message-handler callbacks.
   - `lepusa bridge-drain`: probes the source split native path by running the handoff callback before draining pending async bridge work into a window delivery envelope.
   - `lepusa launch-session [--async-bridge]`: emits native-loop source session JSON with optional async-capable bridge scheduler metadata.
+  - `lepusa verify [macos|windows|linux]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, and bundle contracts.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
@@ -228,6 +229,6 @@ desktop core is reliable.
   - Localhost gateway app with sidecar/service readiness exists under
     `examples/gateway`.
 - Verify each example can run in dev mode and bundle mode: CLI smoke tests
-  cover dev and bundle mode for all three examples.
+  cover dev, verify, and bundle mode for the foundation examples.
 - Document how third-party MoonBit projects create, bundle, sign, and publish
   desktop apps.

@@ -143,6 +143,7 @@ moon run cmd/main --target native -- native-plan macos
 moon run cmd/main --target native -- launch-session linux
 moon run cmd/main --target native -- launch-session linux --async-bridge
 moon run cmd/main --target native -- run linux --project examples/gateway/lepusa.json
+moon run cmd/main --target native -- verify linux --project examples/static/lepusa.json
 moon run cmd/main --target native -- run macos --launch --project examples/static/lepusa.json
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
@@ -415,6 +416,10 @@ scheduler policy, async bridge executor metadata, and service supervisor plan.
 WebView engine, first URL, bridge URL, local services, startup operations, and
 lifecycle steps. It is intentionally a no-window command until the platform
 event loops are wired.
+
+`lepusa verify [macos|windows|linux] --project lepusa.json` runs the no-write
+foundation proof for an app: runtime plan, dev plan, launch manifest, bridge
+asset, handler coverage, native launch session, and bundle runtime contract.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and

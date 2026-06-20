@@ -17,6 +17,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa launch-session"))
   assert_true(result.output.contains("lepusa run"))
+  assert_true(result.output.contains("lepusa verify"))
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
@@ -512,6 +513,31 @@ async test "generated project config drives native runner smoke command" {
 }
 
 ///|
+async test "generated project config verifies end to end contracts" {
+  let root = "/tmp/lepusa-project-verify-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let result = render_cli_async([
+    "verify",
+    "linux",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa verify"))
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("[ok] plan: windows=1"))
+  assert_true(result.output.contains("[ok] dev: webviews=1"))
+  assert_true(result.output.contains("[ok] manifest: webviews=1"))
+  assert_true(
+    result.output.contains("[ok] asset: bridge lepusa://runtime/bridge.js"),
+  )
+  assert_true(result.output.contains("[ok] handlers: registered=6 missing=0"))
+  assert_true(result.output.contains("[ok] native-session: webviews=1"))
+  assert_true(result.output.contains("[ok] bundle:"))
+}
+
+///|
 async test "checked examples cover rabbita static and gateway modes" {
   let rabbita = render_cli_async([
     "dev", "--project", "examples/rabbita/lepusa.json",
@@ -553,6 +579,13 @@ async test "checked examples cover rabbita static and gateway modes" {
   assert_true(gateway_run.output.contains("service-supervisor: true"))
   assert_true(gateway_run.output.contains("service-start-order: gateway"))
   assert_true(gateway_run.output.contains("startup-operations: 2"))
+  let static_verify = render_cli_async([
+    "verify", "linux", "--project", "examples/static/lepusa.json",
+  ])
+  assert_eq(static_verify.exit_code, 0)
+  assert_true(static_verify.output.contains("Lepusa verify"))
+  assert_true(static_verify.output.contains("[ok] bundle:"))
+  assert_true(static_verify.output.contains("resources=1"))
 }
 
 ///|
