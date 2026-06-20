@@ -586,6 +586,28 @@ test "native runner plans expose async bridge blockers" {
       assert_eq(executor.input_encoding(), "utf8-json-bridge-message")
       assert_eq(executor.output_encoding(), "utf8-javascript-callback-script")
       assert_true(executor.to_json().contains("\"available\":true"))
+      let bridge_loop = async_capable.bridge_loop_contract()
+      assert_true(bridge_loop.required())
+      assert_true(bridge_loop.available())
+      assert_eq(
+        bridge_loop.adapter(),
+        "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
+      )
+      assert_eq(
+        bridge_loop.handoff_callback(),
+        "bridge_loop_adapter().handoff_callback",
+      )
+      assert_eq(
+        bridge_loop.receive_message(),
+        "bridge_loop_adapter().receive_message",
+      )
+      assert_eq(
+        bridge_loop.result_type(),
+        "NativeBridgeLoopResult|BundledBridgeLoopResult",
+      )
+      assert_eq(bridge_loop.input_encoding(), "utf8-json-bridge-message")
+      assert_eq(bridge_loop.output_encoding(), "json-bridge-loop-result")
+      assert_true(bridge_loop.to_json().contains("\"available\":true"))
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
           runtime.webview_plan(spec, initialization_script="")
@@ -598,14 +620,25 @@ test "native runner plans expose async bridge blockers" {
           assert_false(
             plan.launch_session().async_bridge_executor().available(),
           )
+          assert_false(plan.launch_session().bridge_loop_contract().available())
           let async_session = plan.launch_session(
             bridge_mode=NativeBridgeAsyncCapable,
           )
           assert_true(async_session.can_launch())
           assert_true(async_session.async_bridge_executor().required())
           assert_true(async_session.async_bridge_executor().available())
+          assert_true(async_session.bridge_loop_contract().required())
+          assert_true(async_session.bridge_loop_contract().available())
           assert_true(
             async_session.to_json().contains("\"asyncBridgeExecutor\""),
+          )
+          assert_true(async_session.to_json().contains("\"bridgeLoop\""))
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"receiveMessage\":\"bridge_loop_adapter().receive_message\"",
+            ),
           )
           assert_true(
             async_session

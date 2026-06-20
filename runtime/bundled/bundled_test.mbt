@@ -459,8 +459,10 @@ test "bundled native run plans expose executable operation views" {
               assert_true(session.service_supervisor().requires_supervisor())
               assert_false(session.bridge_scheduler().requires_async_dispatch())
               assert_false(session.async_bridge_executor().required())
+              assert_false(session.bridge_loop_contract().required())
               assert_true(session.to_json().contains("\"serviceSupervisor\""))
               assert_true(session.to_json().contains("\"asyncBridgeExecutor\""))
+              assert_true(session.to_json().contains("\"bridgeLoop\""))
             }
             Err(problem) => abort(problem)
           }

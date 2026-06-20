@@ -89,8 +89,10 @@
   point that captures async work for later drain; source and bundled bridge
   loop adapters now package the runtime, queue, callback, pending diagnostics,
   and drain operation for platform event loops, with async message-turn results
-  that normalize immediate scripts and drained completions; native async bridge
-  scheduling in the C/WebView loops and the Windows WebView creation loop remain.
+  that normalize immediate scripts and drained completions; launch-session JSON
+  now advertises that adapter/result boundary as a `bridgeLoop` contract; native
+  async bridge scheduling in the C/WebView loops and the Windows WebView
+  creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

@@ -21,6 +21,18 @@ pub struct NativeBridgeAsyncExecutor {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeLoopContract {
+  required : Bool
+  available : Bool
+  adapter : String
+  handoff_callback : String
+  receive_message : String
+  result_type : String
+  input_encoding : String
+  output_encoding : String
+} derive(Debug, Eq)
+
+///|
 pub fn NativeBridgeScheduler::new(
   sync_routes~ : Array[String],
   async_routes~ : Array[String],
@@ -74,6 +86,16 @@ pub fn NativeBridgeScheduler::async_executor(
   self : NativeBridgeScheduler,
 ) -> NativeBridgeAsyncExecutor {
   NativeBridgeAsyncExecutor::new(
+    required=self.requires_async_dispatch(),
+    available=self.supports_async_dispatch(),
+  )
+}
+
+///|
+pub fn NativeBridgeScheduler::bridge_loop_contract(
+  self : NativeBridgeScheduler,
+) -> NativeBridgeLoopContract {
+  NativeBridgeLoopContract::new(
     required=self.requires_async_dispatch(),
     available=self.supports_async_dispatch(),
   )
@@ -175,6 +197,97 @@ pub fn NativeBridgeAsyncExecutor::to_json(
     "\"required\":\{self.required.json_bool()},",
     "\"available\":\{self.available.json_bool()},",
     "\"callback\":\{self.callback.json_string()},",
+    "\"inputEncoding\":\{self.input_encoding.json_string()},",
+    "\"outputEncoding\":\{self.output_encoding.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeBridgeLoopContract::new(
+  required~ : Bool,
+  available~ : Bool,
+) -> NativeBridgeLoopContract {
+  {
+    required,
+    available,
+    adapter: "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
+    handoff_callback: "bridge_loop_adapter().handoff_callback",
+    receive_message: "bridge_loop_adapter().receive_message",
+    result_type: "NativeBridgeLoopResult|BundledBridgeLoopResult",
+    input_encoding: "utf8-json-bridge-message",
+    output_encoding: "json-bridge-loop-result",
+  }
+}
+
+///|
+pub fn NativeBridgeLoopContract::required(
+  self : NativeBridgeLoopContract,
+) -> Bool {
+  self.required
+}
+
+///|
+pub fn NativeBridgeLoopContract::available(
+  self : NativeBridgeLoopContract,
+) -> Bool {
+  self.available
+}
+
+///|
+pub fn NativeBridgeLoopContract::adapter(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.adapter
+}
+
+///|
+pub fn NativeBridgeLoopContract::handoff_callback(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.handoff_callback
+}
+
+///|
+pub fn NativeBridgeLoopContract::receive_message(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.receive_message
+}
+
+///|
+pub fn NativeBridgeLoopContract::result_type(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.result_type
+}
+
+///|
+pub fn NativeBridgeLoopContract::input_encoding(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.input_encoding
+}
+
+///|
+pub fn NativeBridgeLoopContract::output_encoding(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.output_encoding
+}
+
+///|
+pub fn NativeBridgeLoopContract::to_json(
+  self : NativeBridgeLoopContract,
+) -> String {
+  [
+    "{",
+    "\"required\":\{self.required.json_bool()},",
+    "\"available\":\{self.available.json_bool()},",
+    "\"adapter\":\{self.adapter.json_string()},",
+    "\"handoffCallback\":\{self.handoff_callback.json_string()},",
+    "\"receiveMessage\":\{self.receive_message.json_string()},",
+    "\"resultType\":\{self.result_type.json_string()},",
     "\"inputEncoding\":\{self.input_encoding.json_string()},",
     "\"outputEncoding\":\{self.output_encoding.json_string()}",
     "}",

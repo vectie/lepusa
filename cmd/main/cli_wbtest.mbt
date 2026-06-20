@@ -111,6 +111,7 @@ async test "launch session prints source native handoff json" {
   assert_true(result.output.contains("\"execution\""))
   assert_true(result.output.contains("\"bridgeScheduler\""))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
+  assert_true(result.output.contains("\"bridgeLoop\""))
   assert_true(result.output.contains("\"serviceSupervisor\""))
   assert_true(result.output.contains("\"mode\":\"sync-only\""))
   assert_true(result.output.contains("\"loadUrl\""))
@@ -124,6 +125,11 @@ async test "launch session prints source native handoff json" {
   assert_true(
     async_bridge.output.contains(
       "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",
+    ),
+  )
+  assert_true(
+    async_bridge.output.contains(
+      "\"receiveMessage\":\"bridge_loop_adapter().receive_message\"",
     ),
   )
 }

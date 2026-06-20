@@ -55,6 +55,13 @@ pub fn NativeLaunchSession::async_bridge_executor(
 }
 
 ///|
+pub fn NativeLaunchSession::bridge_loop_contract(
+  self : NativeLaunchSession,
+) -> NativeBridgeLoopContract {
+  self.bridge_scheduler.bridge_loop_contract()
+}
+
+///|
 pub fn NativeLaunchSession::service_supervisor(
   self : NativeLaunchSession,
 ) -> NativeServiceSupervisorPlan {
@@ -82,6 +89,7 @@ pub fn NativeLaunchSession::to_json(self : NativeLaunchSession) -> String {
     "\"execution\":\{self.execution.to_json()},",
     "\"bridgeScheduler\":\{self.bridge_scheduler.to_json()},",
     "\"asyncBridgeExecutor\":\{self.async_bridge_executor().to_json()},",
+    "\"bridgeLoop\":\{self.bridge_loop_contract().to_json()},",
     "\"serviceSupervisor\":\{self.service_supervisor.to_json()}",
     "}",
   ].join("")

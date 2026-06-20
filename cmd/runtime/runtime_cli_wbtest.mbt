@@ -154,6 +154,7 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(result.output.contains("\"execution\""))
   assert_true(result.output.contains("\"bridgeScheduler\""))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
+  assert_true(result.output.contains("\"bridgeLoop\""))
   assert_true(result.output.contains("\"serviceSupervisor\""))
   assert_true(result.output.contains("\"kind\":\"start-service\""))
   assert_true(result.output.contains("\"kind\":\"run-effect\""))
@@ -169,6 +170,11 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(
     async_bridge.output.contains(
       "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",
+    ),
+  )
+  assert_true(
+    async_bridge.output.contains(
+      "\"receiveMessage\":\"bridge_loop_adapter().receive_message\"",
     ),
   )
 }

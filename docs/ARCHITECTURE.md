@@ -155,6 +155,10 @@ run the generated callback script. The same launch-session payload carries an
 `asyncBridgeExecutor` descriptor naming
 `NativeRuntime::bridge_async_dispatch_callback` and the UTF-8 bridge-message to
 JavaScript-callback-script byte contract.
+It also carries a `bridgeLoop` contract naming the shared
+`bridge_loop_adapter().handoff_callback` and async
+`bridge_loop_adapter().receive_message` result boundary for source and packaged
+runtime loops.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a

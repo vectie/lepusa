@@ -130,6 +130,27 @@ pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBrid
 pub fn NativeBridgeLoopAdapter::runtime(Self) -> NativeRuntime
 pub fn NativeBridgeLoopAdapter::to_json(Self) -> String
 
+pub struct NativeBridgeLoopContract {
+  required : Bool
+  available : Bool
+  adapter : String
+  handoff_callback : String
+  receive_message : String
+  result_type : String
+  input_encoding : String
+  output_encoding : String
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeLoopContract::adapter(Self) -> String
+pub fn NativeBridgeLoopContract::available(Self) -> Bool
+pub fn NativeBridgeLoopContract::handoff_callback(Self) -> String
+pub fn NativeBridgeLoopContract::input_encoding(Self) -> String
+pub fn NativeBridgeLoopContract::new(required~ : Bool, available~ : Bool) -> Self
+pub fn NativeBridgeLoopContract::output_encoding(Self) -> String
+pub fn NativeBridgeLoopContract::receive_message(Self) -> String
+pub fn NativeBridgeLoopContract::required(Self) -> Bool
+pub fn NativeBridgeLoopContract::result_type(Self) -> String
+pub fn NativeBridgeLoopContract::to_json(Self) -> String
+
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
@@ -159,6 +180,7 @@ pub struct NativeBridgeScheduler {
 pub fn NativeBridgeScheduler::async_bridge_launch_message(Self, String) -> String
 pub fn NativeBridgeScheduler::async_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeBridgeScheduler::async_routes(Self) -> Array[String]
+pub fn NativeBridgeScheduler::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeBridgeScheduler::can_launch(Self) -> Bool
 pub fn NativeBridgeScheduler::launch_blocker(Self, String) -> String?
 pub fn NativeBridgeScheduler::mode(Self) -> NativeBridgeSchedulerMode
@@ -252,6 +274,7 @@ pub struct NativeLaunchSession {
   service_supervisor : NativeServiceSupervisorPlan
 } derive(Eq, @debug.Debug)
 pub fn NativeLaunchSession::async_bridge_executor(Self) -> NativeBridgeAsyncExecutor
+pub fn NativeLaunchSession::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
 pub fn NativeLaunchSession::can_launch(Self) -> Bool
 pub fn NativeLaunchSession::execution(Self) -> NativeExecutionPlan
