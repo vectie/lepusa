@@ -27,6 +27,15 @@ pub async fn write_plugin(
   plugin_name : String,
   out_dir : String,
 ) -> Result[PluginScaffoldResult, Array[String]] {
+  write_plugin_with_workspace(plugin_name, out_dir, lepusa_root="")
+}
+
+///|
+pub async fn write_plugin_with_workspace(
+  plugin_name : String,
+  out_dir : String,
+  lepusa_root~ : String,
+) -> Result[PluginScaffoldResult, Array[String]] {
   let normalized_name = normalize_plugin_name(plugin_name)
   if normalized_name == "" {
     return Err(["plugin name is required"])
@@ -35,7 +44,7 @@ pub async fn write_plugin(
   let problems : Array[String] = []
   let files : Array[String] = []
   ensure_directory(root, problems)
-  for file in plugin_skeleton_files(normalized_name) {
+  for file in plugin_skeleton_files(normalized_name, lepusa_root~) {
     let path = join_path(root, file.path())
     ensure_directory(parent_directory(path), problems)
     if problems.is_empty() {
@@ -89,8 +98,11 @@ fn normalize_plugin_name(name : String) -> String {
 }
 
 ///|
-fn plugin_skeleton_files(plugin_name : String) -> Array[ScaffoldFile] {
-  [
+fn plugin_skeleton_files(
+  plugin_name : String,
+  lepusa_root? : String = "",
+) -> Array[ScaffoldFile] {
+  let files = [
     ScaffoldFile::new(path="moon.mod", content=plugin_moon_mod(plugin_name)),
     ScaffoldFile::new(path="src/moon.pkg", content=plugin_moon_pkg()),
     ScaffoldFile::new(
@@ -99,6 +111,13 @@ fn plugin_skeleton_files(plugin_name : String) -> Array[ScaffoldFile] {
     ),
     ScaffoldFile::new(path="README.mbt.md", content=plugin_readme(plugin_name)),
   ]
+  let root = lepusa_root.trim().to_owned()
+  if root != "" {
+    files.push(
+      ScaffoldFile::new(path="moon.work", content=project_moon_work(root)),
+    )
+  }
+  files
 }
 
 ///|

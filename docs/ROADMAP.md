@@ -135,10 +135,10 @@
   - `lepusa launch-session [--async-bridge]`: emits native-loop source session JSON with optional async-capable bridge scheduler metadata.
   - `lepusa bundle-plan`: prints a target bundle plan.
   - `lepusa bundle-write`: writes planned platform bundle files.
-  - `lepusa init`: writes a standalone MoonBit project skeleton.
+  - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.
   - `lepusa bundle`: alias for materializing the current bundle plan.
-  - `lepusa plugin new`: writes a standalone plugin package skeleton.
+  - `lepusa plugin new`: writes a standalone plugin package skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa dev`: lowers the project to a runtime development plan.
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
   - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans without opening windows.
@@ -162,7 +162,9 @@
 - Extract `@lepusa/bundle` as the reusable native bundle writer over
   `BundlePlan`, keeping filesystem materialization separate from CLI commands.
 - Extract `@lepusa/scaffold` as reusable app/plugin skeleton generation,
-  keeping ecosystem project creation separate from CLI commands.
+  keeping ecosystem project creation separate from CLI commands: reusable app
+  and plugin writers now support both publish-ready registry dependencies and
+  local `moon.work` manifests for pre-publish development.
 - Lower `lepusa.json` startup and lifecycle command trees into runtime actions.
 - Support MoonBit-authored UI apps and prebuilt frontend assets.
 - Make `doctor` report platform WebView dependencies and signing

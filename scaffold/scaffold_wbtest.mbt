@@ -15,9 +15,24 @@ test "app scaffold keeps code inside src package" {
 }
 
 ///|
+test "app scaffold can include local workspace manifest" {
+  let files = app_skeleton_files(lepusa_root="/workspace/lepusa")
+  let paths = files.map(fn(file) { file.path() })
+  assert_true(paths.contains("moon.work"))
+  let workspace = files
+    .filter(fn(file) { file.path() == "moon.work" })
+    .get(0)
+    .unwrap()
+    .content()
+  assert_true(workspace.contains("\".\""))
+  assert_true(workspace.contains("\"/workspace/lepusa\""))
+}
+
+///|
 test "app scaffold wires official plugin handlers" {
   let main = project_main_mbt()
   assert_true(main.contains("@catalog.register"))
+  assert_true(main.contains("ignore([Increment, Reset])"))
   assert_true(main.contains("@catalog.plugin(\"log\").unwrap()"))
   assert_true(main.contains("@catalog.plugin(\"store\").unwrap()"))
   assert_true(main.contains("handlers=\\{registry.routes().length()}"))
@@ -47,4 +62,18 @@ test "plugin scaffold keeps implementation inside src package" {
   assert_true(files.contains("src/plugin.mbt"))
   assert_true(!files.contains("moon.pkg"))
   assert_true(!files.contains("plugin.mbt"))
+}
+
+///|
+test "plugin scaffold can include local workspace manifest" {
+  let files = plugin_skeleton_files("demo", lepusa_root="/workspace/lepusa")
+  let paths = files.map(fn(file) { file.path() })
+  assert_true(paths.contains("moon.work"))
+  let workspace = files
+    .filter(fn(file) { file.path() == "moon.work" })
+    .get(0)
+    .unwrap()
+    .content()
+  assert_true(workspace.contains("\".\""))
+  assert_true(workspace.contains("\"/workspace/lepusa\""))
 }

@@ -129,6 +129,7 @@ moon run cmd/main --target native -- run macos --launch --project examples/stati
 moon run cmd/main --target native -- bridge
 moon run cmd/main --target native -- dev
 moon run cmd/main --target native -- init _build/lepusa-app
+moon run cmd/main --target native -- init _build/lepusa-app --workspace /Users/kq/Workspace/lepusa
 moon run cmd/main --target native -- plan --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- manifest --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- native-plan linux --project _build/lepusa-app/lepusa.json
@@ -143,6 +144,7 @@ moon run cmd/main --target native -- bridge-dispatch main log.write '{"message":
 moon run cmd/main --target native -- bridge-loop main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-drain main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
+moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog --workspace /Users/kq/Workspace/lepusa
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -202,7 +204,14 @@ a versioned `vectie/lepusa` module dependency. It is intentionally small:
 `moon.mod`, `lepusa.json`, `src/moon.pkg`, `src/main.mbt`, and
 `README.mbt.md`. The generated `src/main.mbt` starts with the same
 `cell_with_dispatch` model/update/view shape as the public authoring API.
-`lepusa init` is the CLI wrapper over that package.
+`write_app_with_workspace` also writes a `moon.work` file pointing at a local
+Lepusa checkout, which lets new apps compile against this repository before the
+framework is published to the MoonBit registry. `lepusa init` is the CLI wrapper
+over that package:
+
+```bash
+moon run cmd/main --target native -- init _build/lepusa-app --workspace /Users/kq/Workspace/lepusa
+```
 
 `lepusa.json` is the app-neutral project boundary. It describes metadata,
 runtime backend, windows, plugin command routes, command permission
@@ -245,7 +254,12 @@ localhost gateway with sidecar/readiness metadata.
 
 `@lepusa/scaffold.write_plugin` writes a standalone plugin skeleton with plugin
 metadata, native command registration, and a scoped capability helper.
-`lepusa plugin new` is the CLI wrapper over that package.
+`write_plugin_with_workspace` mirrors the same local `moon.work` support for
+plugin authors. `lepusa plugin new` is the CLI wrapper over that package:
+
+```bash
+moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog --workspace /Users/kq/Workspace/lepusa
+```
 
 `BundlePlan::signing_prerequisites()` exposes target-specific distribution
 requirements for macOS, Windows, and Linux. The generated bundle runtime file

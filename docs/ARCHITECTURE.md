@@ -729,7 +729,11 @@ Native run/build/bundle commands should consume the same `RuntimePlan` and
 `@lepusa/scaffold` owns standalone app and plugin skeleton generation. The CLI
 commands `lepusa init` and `lepusa plugin new` are wrappers over
 `write_app` and `write_plugin`, so editors, package managers, and future
-ecosystem tools can create Lepusa projects without invoking the CLI.
+ecosystem tools can create Lepusa projects without invoking the CLI. The
+workspace variants `write_app_with_workspace` and
+`write_plugin_with_workspace` add a local `moon.work` manifest that points at a
+Lepusa checkout, giving unpublished framework builds a compileable onboarding
+path without changing the publish-ready `moon.mod` dependency.
 
 Project manifests may declare official plugins by name only. The CLI expands
 official package names such as `autoLaunch`, `deepLink`, `singleInstance`,

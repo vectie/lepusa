@@ -28,3 +28,19 @@ fn parent_directory(path : String) -> String {
     None => "."
   }
 }
+
+///|
+fn moon_work_string(value : String) -> String {
+  let mut out = "\""
+  for char in value {
+    match char {
+      '"' => out += "\\\""
+      '\\' => out += "\\\\"
+      '\n' => out += "\\n"
+      '\r' => out += "\\r"
+      '\t' => out += "\\t"
+      _ => out += char.to_string()
+    }
+  }
+  out + "\""
+}

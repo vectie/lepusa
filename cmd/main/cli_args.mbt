@@ -18,19 +18,50 @@ fn Array::with_first(self : Array[String], value : String) -> Array[String] {
 
 ///|
 fn project_path_arg(args : Array[String]) -> String? {
+  option_arg(args, "--project")
+}
+
+///|
+fn project_flag_missing_value(args : Array[String]) -> Bool {
+  option_flag_missing_value(args, "--project")
+}
+
+///|
+fn workspace_path_arg(args : Array[String]) -> String? {
+  option_arg(args, "--workspace")
+}
+
+///|
+fn workspace_flag_missing_value(args : Array[String]) -> Bool {
+  option_flag_missing_value(args, "--workspace")
+}
+
+///|
+fn option_arg(args : Array[String], flag : String) -> String? {
   for i in 0..<args.length() {
-    if args[i] == "--project" {
-      return args.get(i + 1)
+    if args[i] == flag {
+      match args.get(i + 1) {
+        Some(value) =>
+          if value.has_prefix("--") {
+            return None
+          } else {
+            return Some(value)
+          }
+        None => return None
+      }
     }
   }
   None
 }
 
 ///|
-fn project_flag_missing_value(args : Array[String]) -> Bool {
+fn option_flag_missing_value(args : Array[String], flag : String) -> Bool {
   for i in 0..<args.length() {
-    if args[i] == "--project" && args.get(i + 1) is None {
-      return true
+    if args[i] == flag {
+      match args.get(i + 1) {
+        Some(value) => if value.has_prefix("--") { return true }
+        None => return true
+      }
     }
   }
   false
@@ -58,7 +89,7 @@ fn positional_args(args : Array[String]) -> Array[String] {
   for i in 1..<args.length() {
     if skip_next {
       skip_next = false
-    } else if args[i] == "--project" {
+    } else if args[i] == "--project" || args[i] == "--workspace" {
       skip_next = true
     } else {
       values.push(args[i])

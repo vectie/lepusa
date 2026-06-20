@@ -23,6 +23,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bundle-plan"))
   assert_true(result.output.contains("lepusa bundle-write"))
   assert_true(result.output.contains("--project <lepusa.json>"))
+  assert_true(result.output.contains("--workspace <lepusa-root>"))
 }
 
 ///|
@@ -244,6 +245,43 @@ async test "init writes standalone project skeleton" {
   assert_true(main_file.contains("cell_with_dispatch"))
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
+}
+
+///|
+async test "init can write local workspace scaffold" {
+  let root = "/tmp/lepusa-init-workspace-\{@async.now().to_int()}"
+  let result = render_cli_async([
+    "init", root, "--workspace", "/Users/kq/Workspace/lepusa",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("workspace: /Users/kq/Workspace/lepusa"))
+  assert_true(result.output.contains("files: 6"))
+  assert_true(@fs.exists(root + "/moon.work"))
+  let workspace_file = @fs.read_file(root + "/moon.work").text()
+  assert_true(workspace_file.contains("\".\""))
+  assert_true(workspace_file.contains("\"/Users/kq/Workspace/lepusa\""))
+}
+
+///|
+async test "init workspace option requires path" {
+  let result = render_cli_async([
+    "init", "/tmp/lepusa-init-missing-workspace", "--workspace",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(
+    result.output.contains("--workspace requires a Lepusa checkout path"),
+  )
+}
+
+///|
+async test "init workspace option rejects another flag as path" {
+  let result = render_cli_async([
+    "init", "/tmp/lepusa-init-bad-workspace", "--workspace", "--project",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(
+    result.output.contains("--workspace requires a Lepusa checkout path"),
+  )
 }
 
 ///|
@@ -1300,6 +1338,33 @@ async test "plugin new writes standalone plugin skeleton" {
   assert_true(plugin_file.contains("@lepusa.Plugin::new(\"file-dialog\")"))
   assert_true(plugin_file.contains("\"file-dialog.invoke\""))
   assert_true(plugin_file.contains("CommandRegistry"))
+}
+
+///|
+async test "plugin new can write local workspace scaffold" {
+  let root = "/tmp/lepusa-plugin-workspace-\{@async.now().to_int()}"
+  let result = render_cli_async([
+    "plugin", "new", "File Dialog", root, "--workspace", "/Users/kq/Workspace/lepusa",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("plugin: file-dialog"))
+  assert_true(result.output.contains("workspace: /Users/kq/Workspace/lepusa"))
+  assert_true(result.output.contains("files: 5"))
+  assert_true(@fs.exists(root + "/moon.work"))
+  let workspace_file = @fs.read_file(root + "/moon.work").text()
+  assert_true(workspace_file.contains("\".\""))
+  assert_true(workspace_file.contains("\"/Users/kq/Workspace/lepusa\""))
+}
+
+///|
+async test "plugin new workspace option requires path" {
+  let result = render_cli_async([
+    "plugin", "new", "demo", "/tmp/lepusa-plugin-missing-workspace", "--workspace",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(
+    result.output.contains("--workspace requires a Lepusa checkout path"),
+  )
 }
 
 ///|

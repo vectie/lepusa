@@ -39,11 +39,19 @@ fn ScaffoldFile::content(self : ScaffoldFile) -> String {
 pub async fn write_app(
   out_dir : String,
 ) -> Result[AppScaffoldResult, Array[String]] {
+  write_app_with_workspace(out_dir, lepusa_root="")
+}
+
+///|
+pub async fn write_app_with_workspace(
+  out_dir : String,
+  lepusa_root~ : String,
+) -> Result[AppScaffoldResult, Array[String]] {
   let root = normalize_project_root(out_dir)
   let problems : Array[String] = []
   let files : Array[String] = []
   ensure_directory(root, problems)
-  for file in app_skeleton_files() {
+  for file in app_skeleton_files(lepusa_root~) {
     let path = join_path(root, file.path())
     ensure_directory(parent_directory(path), problems)
     if problems.is_empty() {
@@ -79,14 +87,34 @@ fn normalize_project_root(path : String) -> String {
 }
 
 ///|
-fn app_skeleton_files() -> Array[ScaffoldFile] {
-  [
+fn app_skeleton_files(lepusa_root? : String = "") -> Array[ScaffoldFile] {
+  let files = [
     ScaffoldFile::new(path="moon.mod", content=project_moon_mod()),
     ScaffoldFile::new(path="lepusa.json", content=project_lepusa_json()),
     ScaffoldFile::new(path="src/moon.pkg", content=project_moon_pkg()),
     ScaffoldFile::new(path="src/main.mbt", content=project_main_mbt()),
     ScaffoldFile::new(path="README.mbt.md", content=project_readme()),
   ]
+  let root = lepusa_root.trim().to_owned()
+  if root != "" {
+    files.push(
+      ScaffoldFile::new(path="moon.work", content=project_moon_work(root)),
+    )
+  }
+  files
+}
+
+///|
+fn project_moon_work(lepusa_root : String) -> String {
+  (
+    #|members = [
+    #|  ".",
+  ) +
+  "  \{moon_work_string(lepusa_root)},\n" +
+  (
+    #|]
+    #|
+  )
 }
 
 ///|
@@ -212,6 +240,7 @@ fn project_main_mbt() -> String {
     #|
     #|///|
     #|fn main {
+    #|  ignore([Increment, Reset])
     #|  let (_, root) = @lepusa.cell_with_dispatch(
     #|    model={ count: 0 },
     #|    update=update,

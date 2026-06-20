@@ -76,8 +76,8 @@ fn help_text() -> String {
     #|  lepusa invoke <window> <plugin.command> [payload]
     #|  lepusa asset <url>
     #|  lepusa lifecycle <event> [window]
-    #|  lepusa init [out-dir]
-    #|  lepusa plugin new <name> [out-dir]
+    #|  lepusa init [out-dir] [--workspace <lepusa-root>]
+    #|  lepusa plugin new <name> [out-dir] [--workspace <lepusa-root>]
     #|  lepusa bundle-plan [macos|windows|linux]
     #|  lepusa bundle-write [macos|windows|linux] [out-dir]
     #|  lepusa build [macos|windows|linux] [out-dir]
@@ -85,6 +85,7 @@ fn help_text() -> String {
     #|
     #|Options:
     #|  --project <lepusa.json>
+    #|  --workspace <lepusa-root>
     #|
   )
 }
