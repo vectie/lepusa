@@ -36,6 +36,7 @@ test "linux backend exposes webkitgtk descriptor" {
   assert_eq(descriptor.webview_engine(), "WebKitGTK")
   let capability = launch_capability()
   assert_true(capability.webview_creation())
+  assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
 }
 

@@ -30,8 +30,10 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
 pub fn launch_capability() -> @runtime.NativeLaunchCapability {
   @runtime.NativeLaunchCapability::new(
     webview_creation=true,
+    sync_bridge_evaluate=true,
     async_bridge_drain=false,
     webview_creation_message="Linux WebKitGTK launch loop is unavailable",
+    sync_bridge_evaluate_message="Linux WebKitGTK sync bridge response evaluation is unavailable",
   )
 }
 
@@ -43,9 +45,11 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     dependency_name="webkitgtk",
     dependency_available=available(),
     webview_creation_loop=true,
+    sync_bridge_evaluate=true,
     async_bridge_drain=false,
     dependency_message="Linux WebKitGTK backend is not available",
     webview_creation_message="Linux WebKitGTK launch loop is unavailable",
+    sync_bridge_evaluate_message="Linux WebKitGTK sync bridge response evaluation is unavailable",
     async_bridge_drain_message="Linux WebKitGTK async bridge drain/evaluate support is unavailable",
   )
 }

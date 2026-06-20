@@ -753,6 +753,7 @@ test "native launch capability gates webview and async bridge loops" {
     async_bridge_drain=false,
   )
   assert_true(sync_only.webview_creation())
+  assert_true(sync_only.sync_bridge_evaluate())
   assert_false(sync_only.async_bridge_drain())
   assert_true(sync_only.bridge_mode() is NativeBridgeSyncOnly)
   assert_true(sync_only.launch_blocker("Test", sync_scheduler) is None)
@@ -771,12 +772,23 @@ test "native launch capability gates webview and async bridge loops" {
     unavailable.launch_blocker("Test", sync_scheduler).unwrap(),
     "Test WebView loop missing",
   )
+  let no_sync_bridge = NativeLaunchCapability::new(
+    webview_creation=true,
+    sync_bridge_evaluate=false,
+    async_bridge_drain=true,
+    sync_bridge_evaluate_message="sync bridge missing",
+  )
+  assert_eq(
+    no_sync_bridge.launch_blocker("Test", sync_scheduler).unwrap(),
+    "sync bridge missing",
+  )
   let async_capable = NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=true,
   )
   assert_true(async_capable.bridge_mode() is NativeBridgeAsyncCapable)
   assert_true(async_capable.launch_blocker("Test", async_scheduler) is None)
+  assert_true(async_capable.to_json().contains("\"syncBridgeEvaluate\":true"))
   assert_true(async_capable.to_json().contains("\"asyncBridgeDrain\":true"))
 }
 
@@ -795,21 +807,26 @@ test "native backend preflight reports dependency and launch readiness" {
   assert_eq(ready.dependency_name(), "system-webview")
   assert_true(ready.dependency_available())
   assert_true(ready.webview_creation_loop())
+  assert_true(ready.sync_bridge_evaluate())
   assert_false(ready.async_bridge_drain())
   assert_true(ready.can_launch())
   assert_eq(ready.problem(), "")
   assert_eq(ready.problem_kind(), "none")
   assert_true(ready.dependency_problem() is None)
   assert_true(ready.webview_creation_problem() is None)
+  assert_true(ready.sync_bridge_evaluate_problem() is None)
   assert_eq(
     ready.async_bridge_drain_problem().unwrap(),
     "native async bridge drain/evaluate support is unavailable",
   )
   assert_true(ready.launch_capability().webview_creation())
+  assert_true(ready.launch_capability().sync_bridge_evaluate())
   assert_true(ready.to_json().contains("\"canLaunch\":true"))
+  assert_true(ready.to_json().contains("\"syncBridgeEvaluate\":true"))
   assert_true(ready.to_json().contains("\"problemKind\":\"none\""))
   assert_true(ready.to_json().contains("\"dependencyProblem\":null"))
   assert_true(ready.to_json().contains("\"webviewCreationProblem\":null"))
+  assert_true(ready.to_json().contains("\"syncBridgeEvaluateProblem\":null"))
   assert_true(
     ready
     .to_json()

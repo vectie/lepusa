@@ -114,9 +114,10 @@
   for platform runners;
   WebView launch contexts now carry the byte packet plus scheduler, executor,
   and bridge-loop contracts into platform runner code; platform packages now
-  declare `NativeLaunchCapability` for WebView creation and async bridge
-  drain/evaluate support, and open-window runners pass the queue-backed handoff
-  callback into native message handlers only after that gate passes;
+  declare `NativeLaunchCapability` for WebView creation, sync bridge response
+  evaluation, and async bridge drain/evaluate support, and open-window runners
+  pass the queue-backed handoff callback into native message handlers only after
+  that gate passes;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, and bridge-drain operations, and canonical
   `RunReport` values expose those execution counts for source and packaged

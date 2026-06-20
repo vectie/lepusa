@@ -46,6 +46,7 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(preflight.dependency_name(), "webview2-loader")
   assert_eq(preflight.dependency_available(), available())
   assert_false(preflight.webview_creation_loop())
+  assert_false(preflight.sync_bridge_evaluate())
   assert_false(preflight.async_bridge_drain())
   assert_false(preflight.can_launch())
   assert_true(preflight.problem().contains("WebView2"))
@@ -65,15 +66,20 @@ test "windows backend exposes webview2 descriptor" {
     )
   }
   assert_true(
+    preflight.sync_bridge_evaluate_problem().unwrap().contains("WebView2"),
+  )
+  assert_true(
     preflight.async_bridge_drain_problem().unwrap().contains("WebView2"),
   )
   assert_true(preflight.to_json().contains("\"canLaunch\":false"))
   assert_true(preflight.to_json().contains("\"problemKind\":"))
   assert_true(preflight.to_json().contains("\"dependencyProblem\":"))
   assert_true(preflight.to_json().contains("\"webviewCreationProblem\":"))
+  assert_true(preflight.to_json().contains("\"syncBridgeEvaluateProblem\":"))
   assert_true(preflight.to_json().contains("\"asyncBridgeDrainProblem\":"))
   let capability = launch_capability()
   assert_false(capability.webview_creation())
+  assert_false(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
   assert_true(capability.webview_creation_message().contains("WebView2"))
 }
@@ -196,14 +202,13 @@ test "windows backend prepares run plan and reports unsupported launch" {
 }
 
 ///|
-test "windows launch reports async bridge scheduler requirement" {
+test "windows async launch reports target blocker first" {
   match runtime(async_test_host()) {
     Ok(runtime) =>
       match launch(runtime) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
+            RunUnsupported(message) => assert_true(message.contains("WebView2"))
             _ => abort("unexpected Windows async launch status")
           }
         Err(_) => abort("unexpected invalid Windows async launch plan")
@@ -219,8 +224,7 @@ test "windows launch reports async bridge scheduler requirement" {
       match launch_bundled(manifest) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
+            RunUnsupported(message) => assert_true(message.contains("WebView2"))
             _ => abort("unexpected Windows bundled async launch status")
           }
         Err(_) => abort("unexpected invalid Windows bundled async launch plan")

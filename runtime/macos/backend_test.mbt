@@ -101,6 +101,7 @@ test "macos backend exposes wkwebview descriptor" {
   assert_eq(descriptor.webview_engine(), "WKWebView")
   let capability = launch_capability()
   assert_true(capability.webview_creation())
+  assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
 }
 

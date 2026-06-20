@@ -49,9 +49,11 @@ pub struct NativeBackendPreflight {
   dependency_name : String
   dependency_available : Bool
   webview_creation_loop : Bool
+  sync_bridge_evaluate : Bool
   async_bridge_drain : Bool
   dependency_message : String
   webview_creation_message : String
+  sync_bridge_evaluate_message : String
   async_bridge_drain_message : String
 } derive(Eq, @debug.Debug)
 pub fn NativeBackendPreflight::async_bridge_drain(Self) -> Bool
@@ -61,10 +63,12 @@ pub fn NativeBackendPreflight::dependency_available(Self) -> Bool
 pub fn NativeBackendPreflight::dependency_name(Self) -> String
 pub fn NativeBackendPreflight::dependency_problem(Self) -> String?
 pub fn NativeBackendPreflight::launch_capability(Self) -> NativeLaunchCapability
-pub fn NativeBackendPreflight::new(platform~ : String, webview_engine~ : String, dependency_name~ : String, dependency_available~ : Bool, webview_creation_loop~ : Bool, async_bridge_drain~ : Bool, dependency_message? : String, webview_creation_message? : String, async_bridge_drain_message? : String) -> Self
+pub fn NativeBackendPreflight::new(platform~ : String, webview_engine~ : String, dependency_name~ : String, dependency_available~ : Bool, webview_creation_loop~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, dependency_message? : String, webview_creation_message? : String, sync_bridge_evaluate_message? : String, async_bridge_drain_message? : String) -> Self
 pub fn NativeBackendPreflight::platform(Self) -> String
 pub fn NativeBackendPreflight::problem(Self) -> String
 pub fn NativeBackendPreflight::problem_kind(Self) -> String
+pub fn NativeBackendPreflight::sync_bridge_evaluate(Self) -> Bool
+pub fn NativeBackendPreflight::sync_bridge_evaluate_problem(Self) -> String?
 pub fn NativeBackendPreflight::to_json(Self) -> String
 pub fn NativeBackendPreflight::webview_creation_loop(Self) -> Bool
 pub fn NativeBackendPreflight::webview_creation_problem(Self) -> String?
@@ -339,14 +343,18 @@ pub fn NativeExecutionStep::to_json(Self) -> String
 
 pub struct NativeLaunchCapability {
   webview_creation : Bool
+  sync_bridge_evaluate : Bool
   async_bridge_drain : Bool
   webview_creation_message : String
+  sync_bridge_evaluate_message : String
 } derive(Eq, @debug.Debug)
 pub fn NativeLaunchCapability::async_bridge_drain(Self) -> Bool
 pub fn NativeLaunchCapability::bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchCapability::can_launch(Self, NativeBridgeScheduler) -> Bool
 pub fn NativeLaunchCapability::launch_blocker(Self, String, NativeBridgeScheduler) -> String?
-pub fn NativeLaunchCapability::new(webview_creation~ : Bool, async_bridge_drain~ : Bool, webview_creation_message? : String) -> Self
+pub fn NativeLaunchCapability::new(webview_creation~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, webview_creation_message? : String, sync_bridge_evaluate_message? : String) -> Self
+pub fn NativeLaunchCapability::sync_bridge_evaluate(Self) -> Bool
+pub fn NativeLaunchCapability::sync_bridge_evaluate_message(Self) -> String
 pub fn NativeLaunchCapability::to_json(Self) -> String
 pub fn NativeLaunchCapability::webview_creation(Self) -> Bool
 pub fn NativeLaunchCapability::webview_creation_message(Self) -> String

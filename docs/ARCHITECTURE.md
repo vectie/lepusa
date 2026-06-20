@@ -188,8 +188,8 @@ because its native loop cannot drain async completions yet. The envelope also
 carries `launchCapability`, `targetCanLaunch`, and `targetLaunchBlocker`, so
 tooling can distinguish prepared launch plans from platform backends that can
 actually open them. `backendPreflight` carries the host dependency, WebView
-loop, and async bridge support state through the same machine-readable
-envelope. The same session payload carries an
+loop, sync bridge response evaluation, and async bridge support state through
+the same machine-readable envelope. The same session payload carries an
 `asyncBridgeExecutor` descriptor naming
 `NativeRuntime::bridge_async_dispatch_callback` and the UTF-8 bridge-message to
 JavaScript-callback-script byte contract.
@@ -553,10 +553,10 @@ for async commands. `MacOSOpenWindow` reports the shared
 `RunUnsupported` status when the plan contains async command routes, so the
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
-The platform packages expose `NativeLaunchCapability` so WebView creation and
-async bridge drain/evaluate support are declared in one place and consumed by
-`doctor`, `verify --strict`, launch-session readiness rendering, and open-window
-launch paths.
+The platform packages expose `NativeLaunchCapability` so WebView creation, sync
+bridge response evaluation, and async bridge drain/evaluate support are
+declared in one place and consumed by `doctor`, `verify --strict`,
+launch-session readiness rendering, and open-window launch paths.
 `lepusa run macos --launch` is the first protocol-complete GUI entry point. The
 Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge
@@ -572,10 +572,11 @@ routes launch attempts through the same capability gate. Windows currently
 declares the WebView2 creation loop unavailable until the COM creation path
 lands. Each platform package exposes a shared
 `runtime.NativeBackendPreflight`, so diagnostics separate host dependency
-availability, WebView creation-loop support, and async bridge drain support
-without duplicating CLI-specific checks. Its JSON reports the collapsed human
-`problem` plus `problemKind`, `dependencyProblem`, `webviewCreationProblem`,
-and `asyncBridgeDrainProblem`, which lets CI distinguish machine setup issues
+availability, WebView creation-loop support, sync bridge response evaluation,
+and async bridge drain support without duplicating CLI-specific checks. Its JSON
+reports the collapsed human `problem` plus `problemKind`, `dependencyProblem`,
+`webviewCreationProblem`, `syncBridgeEvaluateProblem`, and
+`asyncBridgeDrainProblem`, which lets CI distinguish machine setup issues
 from framework backend implementation gaps.
 
 ## Bundling

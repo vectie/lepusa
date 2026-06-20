@@ -218,10 +218,12 @@ plans, reports the selected target's native launch gate and signing
 prerequisites, and reports host WebView availability for the platform backend
 descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
 It also prints typed backend preflight lines that separate host dependency
-availability, WebView creation loops, and async bridge drain support.
+availability, WebView creation loops, sync bridge response evaluation, and
+async bridge drain support.
 The underlying `NativeBackendPreflight` JSON classifies the active blocker as
 `dependency`, `webview-creation`, or `none`, and carries separate dependency,
-WebView creation, and async bridge drain problem fields for tooling.
+WebView creation, sync bridge evaluation, and async bridge drain problem fields
+for tooling.
 Passing `--json` emits one machine-readable health report with runtime,
 manifest, handler coverage, bundle, native launch, signing, and platform
 preflight sections.

@@ -358,7 +358,7 @@ fn render_native_preflight_line(
   } else {
     " reason=\{preflight.problem()}"
   }
-  "[\{status}] platform-detail: \{preflight.platform()} \{preflight.dependency_name()}=\{preflight.dependency_available().to_string()} creation-loop=\{preflight.webview_creation_loop().to_string()} async-bridge=\{preflight.async_bridge_drain().to_string()} can-launch=\{preflight.can_launch().to_string()}\{reason}\n"
+  "[\{status}] platform-detail: \{preflight.platform()} \{preflight.dependency_name()}=\{preflight.dependency_available().to_string()} creation-loop=\{preflight.webview_creation_loop().to_string()} sync-bridge=\{preflight.sync_bridge_evaluate().to_string()} async-bridge=\{preflight.async_bridge_drain().to_string()} can-launch=\{preflight.can_launch().to_string()}\{reason}\n"
 }
 
 ///|

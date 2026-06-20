@@ -30,8 +30,10 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
 pub fn launch_capability() -> @runtime.NativeLaunchCapability {
   @runtime.NativeLaunchCapability::new(
     webview_creation=true,
+    sync_bridge_evaluate=true,
     async_bridge_drain=false,
     webview_creation_message="macOS WKWebView creation loop is unavailable",
+    sync_bridge_evaluate_message="macOS WKWebView sync bridge response evaluation is unavailable",
   )
 }
 
@@ -43,9 +45,11 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     dependency_name="wkwebview",
     dependency_available=available(),
     webview_creation_loop=true,
+    sync_bridge_evaluate=true,
     async_bridge_drain=false,
     dependency_message="macOS Cocoa/WebKit backend is not available",
     webview_creation_message="macOS WKWebView creation loop is unavailable",
+    sync_bridge_evaluate_message="macOS WKWebView sync bridge response evaluation is unavailable",
     async_bridge_drain_message="macOS WKWebView async bridge drain/evaluate support is unavailable",
   )
 }
