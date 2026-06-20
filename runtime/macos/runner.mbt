@@ -635,44 +635,7 @@ fn initial_load_url(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[String, String] {
-  if is_protocol_load_url(spec.url(), spec.asset_protocol()) ||
-    is_direct_load_url(spec.url()) {
-    Ok(spec.url())
-  } else {
-    match runtime.host().snapshot() {
-      Err(problems) =>
-        Err(problems.get(0).unwrap_or("runtime session is invalid"))
-      Ok(session) =>
-        match session.resolve_asset(spec.url()) {
-          Ok(asset) => macos_load_url_from_asset(asset)
-          Err(problem) => Err(problem)
-        }
-    }
-  }
-}
-
-///|
-fn macos_load_url_from_asset(
-  asset : @runtime.RuntimeAssetResponse,
-) -> Result[String, String] {
-  match asset.body() {
-    VirtualContent(content) =>
-      Ok(
-        "data:\{asset.mime_type()};base64,\{@base64.encode(@utf8.encode(content).view())}",
-      )
-    LocalFile(path) | PackagedFile(path) => Ok(file_url(path))
-  }
-}
-
-///|
-fn file_url(path : String) -> String {
-  if path.has_prefix("file://") {
-    path
-  } else if path.has_prefix("/") {
-    "file://\{path}"
-  } else {
-    "file://\{path}"
-  }
+  runtime.initial_load_url(spec)
 }
 
 ///|
@@ -780,70 +743,13 @@ fn bundled_initial_load_url(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
 ) -> Result[String, String] {
-  if is_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
-    is_direct_load_url(webview.url()) {
+  if @runtime.native_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
+    @runtime.native_direct_load_url(webview.url()) {
     Ok(webview.url())
   } else {
-    bundled_load_url_from_asset_json(manifest.resolve_asset_json(webview.url()))
-  }
-}
-
-///|
-fn bundled_load_url_from_asset_json(json : String) -> Result[String, String] {
-  try @json.parse(json) catch {
-    error => Err("invalid bundled asset response: \{error}")
-  } noraise {
-    Object(response) =>
-      if optional_response_bool(response, "ok").unwrap_or(false) {
-        match optional_response_object(response, "body") {
-          Some(body) => {
-            let kind = optional_response_string(body, "kind").unwrap_or("")
-            match kind {
-              "virtual" =>
-                Ok(
-                  "data:\{optional_response_string(response, "mimeType").unwrap_or("text/plain")};base64,\{@base64.encode(@utf8.encode(optional_response_string(body, "content").unwrap_or("")).view())}",
-                )
-              "local-file" | "packaged-file" =>
-                Ok(
-                  file_url(optional_response_string(body, "path").unwrap_or("")),
-                )
-              _ => Err("unsupported bundled asset kind: \{kind}")
-            }
-          }
-          None => Err("bundled asset response body is required")
-        }
-      } else {
-        Err(
-          optional_response_string(response, "error").unwrap_or(
-            "bundled asset resolution failed",
-          ),
-        )
-      }
-    _ => Err("bundled asset response must be a json object")
-  }
-}
-
-///|
-fn is_direct_load_url(url : String) -> Bool {
-  url.has_prefix("http://") ||
-  url.has_prefix("https://") ||
-  url.has_prefix("file://") ||
-  url.has_prefix("data:")
-}
-
-///|
-fn is_protocol_load_url(url : String, protocol : String) -> Bool {
-  protocol != "" && url.has_prefix("\{protocol}://")
-}
-
-///|
-fn optional_response_object(
-  object : Map[String, Json],
-  key : String,
-) -> Map[String, Json]? {
-  match object.get(key) {
-    Some(Object(value)) => Some(value)
-    _ => None
+    @runtime.native_asset_load_url_from_json(
+      manifest.resolve_asset_json(webview.url()),
+    )
   }
 }
 
@@ -854,15 +760,6 @@ fn optional_response_string(
 ) -> String? {
   match object.get(key) {
     Some(String(value)) => Some(value)
-    _ => None
-  }
-}
-
-///|
-fn optional_response_bool(object : Map[String, Json], key : String) -> Bool? {
-  match object.get(key) {
-    Some(True) => Some(true)
-    Some(False) => Some(false)
     _ => None
   }
 }

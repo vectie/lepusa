@@ -456,20 +456,7 @@ fn windows_initial_load_url(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
 ) -> Result[String, String] {
-  if windows_is_protocol_load_url(spec.url(), spec.asset_protocol()) ||
-    windows_is_direct_load_url(spec.url()) {
-    Ok(spec.url())
-  } else {
-    match runtime.host().snapshot() {
-      Err(problems) =>
-        Err(problems.get(0).unwrap_or("runtime session is invalid"))
-      Ok(session) =>
-        match session.resolve_asset(spec.url()) {
-          Ok(asset) => windows_load_url_from_asset(asset)
-          Err(problem) => Err(problem)
-        }
-    }
-  }
+  runtime.initial_load_url(spec)
 }
 
 ///|
@@ -477,63 +464,13 @@ fn windows_bundled_initial_load_url(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
 ) -> Result[String, String] {
-  if windows_is_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
-    windows_is_direct_load_url(webview.url()) {
+  if @runtime.native_protocol_load_url(webview.url(), manifest.asset_protocol()) ||
+    @runtime.native_direct_load_url(webview.url()) {
     Ok(webview.url())
   } else {
-    windows_load_url_from_asset_json(manifest.resolve_asset_json(webview.url()))
-  }
-}
-
-///|
-fn windows_load_url_from_asset(
-  asset : @runtime.RuntimeAssetResponse,
-) -> Result[String, String] {
-  match asset.body() {
-    VirtualContent(content) =>
-      Ok(
-        "data:\{asset.mime_type()};base64,\{@base64.encode(@utf8.encode(content).view())}",
-      )
-    LocalFile(path) | PackagedFile(path) => Ok(windows_file_url(path))
-  }
-}
-
-///|
-fn windows_load_url_from_asset_json(json : String) -> Result[String, String] {
-  try @json.parse(json) catch {
-    error => Err("invalid bundled asset response: \{error}")
-  } noraise {
-    Object(response) =>
-      if windows_optional_response_bool(response, "ok").unwrap_or(false) {
-        match windows_optional_response_object(response, "body") {
-          Some(body) => {
-            let kind = windows_optional_response_string(body, "kind").unwrap_or(
-              "",
-            )
-            match kind {
-              "virtual" =>
-                Ok(
-                  "data:\{windows_optional_response_string(response, "mimeType").unwrap_or("text/plain")};base64,\{@base64.encode(@utf8.encode(windows_optional_response_string(body, "content").unwrap_or("")).view())}",
-                )
-              "local-file" | "packaged-file" =>
-                Ok(
-                  windows_file_url(
-                    windows_optional_response_string(body, "path").unwrap_or(""),
-                  ),
-                )
-              _ => Err("unsupported bundled asset kind: \{kind}")
-            }
-          }
-          None => Err("bundled asset response body is required")
-        }
-      } else {
-        Err(
-          windows_optional_response_string(response, "error").unwrap_or(
-            "bundled asset resolution failed",
-          ),
-        )
-      }
-    _ => Err("bundled asset response must be a json object")
+    @runtime.native_asset_load_url_from_json(
+      manifest.resolve_asset_json(webview.url()),
+    )
   }
 }
 
@@ -637,7 +574,9 @@ fn windows_runtime_asset_resolver(
 ) -> (Bytes) -> Bytes {
   fn(url : Bytes) -> Bytes {
     let input = @utf8.decode(url) catch { _ => "" }
-    @utf8.encode(runtime.resolve_asset_json(input))
+    @runtime.native_asset_protocol_packet_from_json(
+      runtime.resolve_asset_json(input),
+    )
   }
 }
 
@@ -647,7 +586,9 @@ fn windows_bundled_asset_resolver(
 ) -> (Bytes) -> Bytes {
   fn(url : Bytes) -> Bytes {
     let input = @utf8.decode(url) catch { _ => "" }
-    @utf8.encode(manifest.resolve_asset_json(input))
+    @runtime.native_asset_protocol_packet_from_json(
+      manifest.resolve_asset_json(input),
+    )
   }
 }
 
@@ -666,60 +607,4 @@ fn windows_initialization_script(
 ///|
 fn windows_native_hook_script(hook : String) -> String {
   @runtime.native_webview2_bridge_hook_script(hook)
-}
-
-///|
-fn windows_file_url(path : String) -> String {
-  if path.has_prefix("file://") {
-    path
-  } else {
-    "file://\{path}"
-  }
-}
-
-///|
-fn windows_is_direct_load_url(url : String) -> Bool {
-  url.has_prefix("http://") ||
-  url.has_prefix("https://") ||
-  url.has_prefix("file://") ||
-  url.has_prefix("data:")
-}
-
-///|
-fn windows_is_protocol_load_url(url : String, protocol : String) -> Bool {
-  protocol != "" && url.has_prefix("\{protocol}://")
-}
-
-///|
-fn windows_optional_response_object(
-  object : Map[String, Json],
-  key : String,
-) -> Map[String, Json]? {
-  match object.get(key) {
-    Some(Object(value)) => Some(value)
-    _ => None
-  }
-}
-
-///|
-fn windows_optional_response_string(
-  object : Map[String, Json],
-  key : String,
-) -> String? {
-  match object.get(key) {
-    Some(String(value)) => Some(value)
-    _ => None
-  }
-}
-
-///|
-fn windows_optional_response_bool(
-  object : Map[String, Json],
-  key : String,
-) -> Bool? {
-  match object.get(key) {
-    Some(True) => Some(true)
-    Some(False) => Some(false)
-    _ => None
-  }
 }

@@ -241,6 +241,70 @@ test "native asset protocol packet encodes json envelopes" {
 }
 
 ///|
+test "native asset load urls are runtime-owned" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+    Ok(runtime) =>
+      match runtime.initial_load_url(runtime.runner_plan().webview_specs()[0]) {
+        Ok(load_url) => assert_eq(load_url, "lepusa://inline/main/index.html")
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+  match RuntimeHost::new(test_plan()).snapshot() {
+    Ok(session) =>
+      match session.resolve_asset("lepusa://inline/main/index.html") {
+        Ok(asset) => {
+          let load_url = asset.to_native_load_url()
+          assert_true(load_url.has_prefix("data:text/html;base64,"))
+          assert_false(load_url.contains("<main>runtime</main>"))
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid runtime session")
+  }
+  assert_true(native_direct_load_url("https://example.test/app"))
+  assert_true(
+    native_protocol_load_url("lepusa://inline/main/index.html", "lepusa"),
+  )
+  assert_false(native_protocol_load_url("https://example.test/app", "lepusa"))
+}
+
+///|
+test "native asset load urls decode json envelopes" {
+  let virtual_json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://inline/main/index.html",
+    #|  "mimeType": "text/html",
+    #|  "body": { "kind": "virtual", "content": "<main>runtime</main>" }
+    #|}
+  match native_asset_load_url_from_json(virtual_json) {
+    Ok(load_url) => {
+      assert_true(load_url.has_prefix("data:text/html;base64,"))
+      assert_false(load_url.contains("<main>runtime</main>"))
+    }
+    Err(problem) => abort(problem)
+  }
+  let file_json =
+    #|{
+    #|  "ok": true,
+    #|  "url": "lepusa://packaged/main/app.css",
+    #|  "mimeType": "text/css",
+    #|  "body": { "kind": "packaged-file", "path": "/tmp/app.css" }
+    #|}
+  match native_asset_load_url_from_json(file_json) {
+    Ok(load_url) => assert_eq(load_url, "file:///tmp/app.css")
+    Err(problem) => abort(problem)
+  }
+  match
+    native_asset_load_url_from_json("{\"ok\":false,\"error\":\"missing\"}") {
+    Err(problem) => assert_eq(problem, "missing")
+    Ok(_) => abort("expected asset load url failure")
+  }
+}
+
+///|
 test "native run report normalizes launch summaries" {
   let host = RuntimeHost::new(test_plan())
   let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
