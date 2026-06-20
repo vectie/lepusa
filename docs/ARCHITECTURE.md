@@ -633,9 +633,11 @@ geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes. `@lepusa/plugins/service_discovery`
 declares service lookup, status, watch, change-event routes, and portable
 metadata handlers for configured endpoints.
-`@lepusa/plugins/dialog` declares message, confirm, and prompt routes.
+`@lepusa/plugins/dialog` declares message, confirm, and prompt routes, plus
+portable deterministic async handlers for runtime-owned dialogs.
 `@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare
-clipboard and notification routes.
+clipboard and notification routes and provide in-process async handlers for
+text clipboard state, notification permission, and notification show requests.
 `@lepusa/plugins/shell` declares shell execution and process lifecycle routes.
 `@lepusa/plugins/process` declares process metadata, environment, and control
 routes behind split process permissions.

@@ -12,9 +12,20 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, store? : ClipboardStore) -> @lepusa.CommandRegistry
+
+pub fn registry(store? : ClipboardStore) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
+pub struct ClipboardStore {
+  values : Map[String, String]
+}
+pub fn ClipboardStore::clear(Self) -> Bool
+pub fn ClipboardStore::new() -> Self
+pub fn ClipboardStore::read_text(Self) -> String?
+pub fn ClipboardStore::write_text(Self, String) -> Unit
 
 // Type aliases
 

@@ -371,12 +371,14 @@ configured endpoints, including endpoints derived from local services; native
 backends own resolver integration, health checks, and change watching.
 
 `@lepusa/plugins/dialog` defines platform-neutral dialog routes:
-`dialog.message`, `dialog.confirm`, and `dialog.prompt`. Native backends own the
-actual OS dialog implementation.
+`dialog.message`, `dialog.confirm`, and `dialog.prompt`. Its portable registry
+validates payloads and returns deterministic runtime-owned responses; native
+backends own the actual OS dialog implementation.
 
-`@lepusa/plugins/clipboard` and `@lepusa/plugins/notification` declare the
-platform-neutral clipboard and notification routes. Native backends own system
-clipboard and OS notification integration.
+`@lepusa/plugins/clipboard` provides async text clipboard handlers backed by an
+in-process `ClipboardStore`, and `@lepusa/plugins/notification` provides async
+permission and show handlers backed by an in-process `NotificationCenter`.
+Native backends own system clipboard and OS notification integration.
 
 `@lepusa/plugins/opener` declares platform-neutral URL and path opener routes:
 `opener.openUrl`, `opener.openPath`, and `opener.revealPath`. Its portable

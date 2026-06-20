@@ -180,7 +180,8 @@
 
 Stabilize the cross-platform core set first:
 
-- dialog: initial platform-neutral command contract exists
+- dialog: initial platform-neutral command contract and portable async handlers
+  exist
 - opener: platform-neutral command contract plus native open/reveal handlers
   exist for macOS, Linux, and Windows
 - fs: scoped permission contract, runtime scope manifest, and async scoped
@@ -188,8 +189,10 @@ Stabilize the cross-platform core set first:
 - fileDialog: initial scoped default-directory contract exists
 - shell: initial platform-neutral command contract exists
 - process: initial explicit process permission contract exists
-- clipboard: initial platform-neutral command contract exists
-- notification: initial platform-neutral command contract exists
+- clipboard: initial platform-neutral command contract and in-process async
+  text handlers exist
+- notification: initial platform-neutral command contract and in-process async
+  permission/show handlers exist
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists
 - localhost: initial local service lifecycle contract and portable metadata

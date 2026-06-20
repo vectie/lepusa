@@ -132,6 +132,11 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
         )
       },
     },
+    {
+      name: "clipboard",
+      register: fn(registry, _) { @clipboard.register(registry) },
+    },
+    { name: "dialog", register: fn(registry, _) { @dialog.register(registry) } },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },
     {
       name: "localhost",
@@ -143,6 +148,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
           ),
         )
       },
+    },
+    {
+      name: "notification",
+      register: fn(registry, _) { @notification.register(registry) },
     },
     { name: "opener", register: fn(registry, _) { @opener.register(registry) } },
     {

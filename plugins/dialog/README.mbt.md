@@ -1,7 +1,8 @@
 # @lepusa/plugins/dialog
 
 `@lepusa/plugins/dialog` defines Lepusa's official user dialog command
-contract. It is a platform-neutral declaration package; native runtimes own the
+contract. It includes portable async handlers that validate payloads and return
+deterministic message, confirm, and prompt responses. Native runtimes own the
 actual OS dialog implementation.
 
 ```moonbit nocheck
@@ -13,5 +14,8 @@ test "declare dialog access" {
 
   let grant = @dialog.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=@lepusa.Dialog))
+
+  let registry = @dialog.registry()
+  assert_true(registry.contains("dialog.prompt"))
 }
 ```

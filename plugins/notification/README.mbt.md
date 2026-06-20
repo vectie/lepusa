@@ -1,8 +1,9 @@
 # @lepusa/plugins/notification
 
 `@lepusa/plugins/notification` defines Lepusa's official notification command
-contract. It is a platform-neutral declaration package; native runtimes own the
-actual OS notification implementation.
+contract. It includes async permission/show handlers backed by an in-process
+`NotificationCenter`. Native runtimes can replace that registry with OS
+notification integration.
 
 ```moonbit nocheck
 ///|
@@ -17,5 +18,8 @@ test "declare notification access" {
   assert_true(
     grant.allows(window_label="main", permission=@lepusa.Notification),
   )
+
+  let registry = @notification.registry()
+  assert_true(registry.contains("notification.permissionState"))
 }
 ```

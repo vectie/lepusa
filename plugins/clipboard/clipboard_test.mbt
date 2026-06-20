@@ -19,3 +19,38 @@ test "clipboard capabilities grant clipboard permission by window" {
   assert_false(grant.allows(window_label="settings", permission=Clipboard))
   assert_false(grant.allows(window_label="main", permission=Dialog))
 }
+
+///|
+async test "clipboard registry stores text in process" {
+  let registry = registry()
+  assert_true(registry.contains("clipboard.readText"))
+  assert_true(registry.contains("clipboard.writeText"))
+  assert_true(registry.contains("clipboard.clear"))
+  assert_eq(registry.async_routes().length(), 3)
+  let grant = capability_for_window("main")
+  let write_request = @lepusa.InvokeRequest::new(
+    id="1",
+    window_label="main",
+    plugin="clipboard",
+    command="writeText",
+    payload="\"hello\"",
+  )
+  let write = registry.dispatch_async(write_request, capabilities=[grant])
+  assert_true(write.payload().unwrap_or("").contains("\"written\":true"))
+  let read_request = @lepusa.InvokeRequest::new(
+    id="2",
+    window_label="main",
+    plugin="clipboard",
+    command="readText",
+  )
+  let read = registry.dispatch_async(read_request, capabilities=[grant])
+  assert_true(read.payload().unwrap_or("").contains("\"text\":\"hello\""))
+  let clear_request = @lepusa.InvokeRequest::new(
+    id="3",
+    window_label="main",
+    plugin="clipboard",
+    command="clear",
+  )
+  let clear = registry.dispatch_async(clear_request, capabilities=[grant])
+  assert_true(clear.payload().unwrap_or("").contains("\"cleared\":true"))
+}

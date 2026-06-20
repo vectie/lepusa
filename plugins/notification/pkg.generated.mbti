@@ -2,6 +2,7 @@
 package "vectie/lepusa/plugins/notification"
 
 import {
+  "moonbitlang/core/debug",
   "vectie/lepusa",
 }
 
@@ -12,9 +13,27 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, center? : NotificationCenter) -> @lepusa.CommandRegistry
+
+pub fn registry(center? : NotificationCenter) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
+pub struct NotificationCenter {
+  mut permission : NotificationPermissionState
+  delivered : Array[String]
+}
+pub fn NotificationCenter::delivered(Self) -> Array[String]
+pub fn NotificationCenter::new(permission? : NotificationPermissionState) -> Self
+pub fn NotificationCenter::permission(Self) -> NotificationPermissionState
+pub fn NotificationCenter::set_permission(Self, NotificationPermissionState) -> Unit
+
+pub(all) enum NotificationPermissionState {
+  Default
+  Granted
+  Denied
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

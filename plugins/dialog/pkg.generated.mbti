@@ -12,9 +12,20 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : DialogPolicy) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : DialogPolicy) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
+pub struct DialogPolicy {
+  confirm_default : Bool
+  prompt_default : String
+}
+pub fn DialogPolicy::confirm_default(Self) -> Bool
+pub fn DialogPolicy::new(confirm_default? : Bool, prompt_default? : String) -> Self
+pub fn DialogPolicy::prompt_default(Self) -> String
 
 // Type aliases
 
