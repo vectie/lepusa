@@ -5,12 +5,38 @@ pub(all) enum NativeBridgeSchedulerMode {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum NativeBridgeDrainStrategy {
+  NativeBridgeDrainUnavailable
+  NativeBridgeDrainEventLoop
+} derive(Debug, Eq)
+
+///|
 pub fn NativeBridgeSchedulerMode::name(
   self : NativeBridgeSchedulerMode,
 ) -> String {
   match self {
     NativeBridgeSyncOnly => "sync-only"
     NativeBridgeAsyncCapable => "async-capable"
+  }
+}
+
+///|
+pub fn NativeBridgeDrainStrategy::name(
+  self : NativeBridgeDrainStrategy,
+) -> String {
+  match self {
+    NativeBridgeDrainUnavailable => "unavailable"
+    NativeBridgeDrainEventLoop => "event-loop"
+  }
+}
+
+///|
+pub fn NativeBridgeSchedulerMode::drain_strategy(
+  self : NativeBridgeSchedulerMode,
+) -> NativeBridgeDrainStrategy {
+  match self {
+    NativeBridgeSyncOnly => NativeBridgeDrainUnavailable
+    NativeBridgeAsyncCapable => NativeBridgeDrainEventLoop
   }
 }
 
@@ -34,6 +60,7 @@ pub struct NativeBridgeAsyncExecutor {
 pub struct NativeBridgeLoopContract {
   required : Bool
   available : Bool
+  drain_strategy : NativeBridgeDrainStrategy
   adapter : String
   handoff_callback : String
   handoff_packet_callback : String
@@ -92,6 +119,13 @@ pub fn NativeBridgeScheduler::supports_async_dispatch(
 }
 
 ///|
+pub fn NativeBridgeScheduler::drain_strategy(
+  self : NativeBridgeScheduler,
+) -> NativeBridgeDrainStrategy {
+  self.mode.drain_strategy()
+}
+
+///|
 pub fn NativeBridgeScheduler::can_launch(self : NativeBridgeScheduler) -> Bool {
   !self.requires_async_dispatch() || self.supports_async_dispatch()
 }
@@ -113,6 +147,7 @@ pub fn NativeBridgeScheduler::bridge_loop_contract(
   NativeBridgeLoopContract::new(
     required=self.requires_async_dispatch(),
     available=self.supports_async_dispatch(),
+    drain_strategy=self.drain_strategy(),
   )
 }
 
@@ -144,6 +179,7 @@ pub fn NativeBridgeScheduler::to_json(self : NativeBridgeScheduler) -> String {
     "\"mode\":\{self.mode.name().json_string()},",
     "\"syncRoutes\":[\{self.sync_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"asyncRoutes\":[\{self.async_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"drainStrategy\":\{self.drain_strategy().name().json_string()},",
     "\"requiresAsyncDispatch\":\{self.requires_async_dispatch().json_bool()},",
     "\"canLaunch\":\{self.can_launch().json_bool()}",
     "}",
@@ -218,10 +254,16 @@ pub fn NativeBridgeAsyncExecutor::to_json(
 pub fn NativeBridgeLoopContract::new(
   required~ : Bool,
   available~ : Bool,
+  drain_strategy? : NativeBridgeDrainStrategy = if available {
+    NativeBridgeDrainEventLoop
+  } else {
+    NativeBridgeDrainUnavailable
+  },
 ) -> NativeBridgeLoopContract {
   {
     required,
     available,
+    drain_strategy,
     adapter: "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
     handoff_callback: "bridge_loop_adapter().handoff_callback",
     handoff_packet_callback: "bridge_loop_adapter().handoff_packet_callback",
@@ -248,6 +290,13 @@ pub fn NativeBridgeLoopContract::available(
   self : NativeBridgeLoopContract,
 ) -> Bool {
   self.available
+}
+
+///|
+pub fn NativeBridgeLoopContract::drain_strategy(
+  self : NativeBridgeLoopContract,
+) -> NativeBridgeDrainStrategy {
+  self.drain_strategy
 }
 
 ///|
@@ -335,6 +384,7 @@ pub fn NativeBridgeLoopContract::to_json(
     "{",
     "\"required\":\{self.required.json_bool()},",
     "\"available\":\{self.available.json_bool()},",
+    "\"drainStrategy\":\{self.drain_strategy.name().json_string()},",
     "\"adapter\":\{self.adapter.json_string()},",
     "\"handoffCallback\":\{self.handoff_callback.json_string()},",
     "\"handoffPacketCallback\":\{self.handoff_packet_callback.json_string()},",

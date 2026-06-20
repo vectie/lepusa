@@ -81,6 +81,13 @@ pub fn NativeLaunchCapability::bridge_mode(
 }
 
 ///|
+pub fn NativeLaunchCapability::async_bridge_drain_strategy(
+  self : NativeLaunchCapability,
+) -> NativeBridgeDrainStrategy {
+  self.bridge_mode().drain_strategy()
+}
+
+///|
 pub fn NativeLaunchCapability::launch_blocker(
   self : NativeLaunchCapability,
   platform_name : String,
@@ -127,6 +134,7 @@ pub fn NativeLaunchCapability::to_json(self : NativeLaunchCapability) -> String 
     "\"webviewCreation\":\{self.webview_creation.json_bool()},",
     "\"syncBridgeEvaluate\":\{self.sync_bridge_evaluate.json_bool()},",
     "\"asyncBridgeDrain\":\{self.async_bridge_drain.json_bool()},",
+    "\"asyncBridgeDrainStrategy\":\{self.async_bridge_drain_strategy().name().json_string()},",
     "\"maxWebviews\":\{self.max_webviews},",
     "\"bridgeMode\":\{self.bridge_mode().name().json_string()},",
     "\"webviewCreationMessage\":\{self.webview_creation_message.json_string()},",

@@ -603,6 +603,7 @@ test "native runner plans expose async bridge blockers" {
       let scheduler = runner.bridge_scheduler()
       assert_true(scheduler.requires_async_dispatch())
       assert_false(scheduler.supports_async_dispatch())
+      assert_true(scheduler.drain_strategy() is NativeBridgeDrainUnavailable)
       assert_false(scheduler.can_launch())
       assert_true(
         scheduler
@@ -612,9 +613,13 @@ test "native runner plans expose async bridge blockers" {
       )
       let async_capable = runner.bridge_scheduler(mode=NativeBridgeAsyncCapable)
       assert_true(async_capable.supports_async_dispatch())
+      assert_true(async_capable.drain_strategy() is NativeBridgeDrainEventLoop)
       assert_true(async_capable.can_launch())
       assert_true(
         async_capable.to_json().contains("\"mode\":\"async-capable\""),
+      )
+      assert_true(
+        async_capable.to_json().contains("\"drainStrategy\":\"event-loop\""),
       )
       let executor = async_capable.async_executor()
       assert_true(executor.required())
@@ -629,6 +634,7 @@ test "native runner plans expose async bridge blockers" {
       let bridge_loop = async_capable.bridge_loop_contract()
       assert_true(bridge_loop.required())
       assert_true(bridge_loop.available())
+      assert_true(bridge_loop.drain_strategy() is NativeBridgeDrainEventLoop)
       assert_eq(
         bridge_loop.adapter(),
         "NativeBridgeLoopAdapter|BundledBridgeLoopAdapter",
@@ -668,6 +674,9 @@ test "native runner plans expose async bridge blockers" {
       assert_eq(bridge_loop.input_encoding(), "utf8-json-bridge-message")
       assert_eq(bridge_loop.output_encoding(), "json-bridge-loop-delivery")
       assert_true(bridge_loop.to_json().contains("\"available\":true"))
+      assert_true(
+        bridge_loop.to_json().contains("\"drainStrategy\":\"event-loop\""),
+      )
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
           runtime.webview_plan(spec, initialization_script="")
@@ -681,6 +690,10 @@ test "native runner plans expose async bridge blockers" {
             plan.launch_session().async_bridge_executor().available(),
           )
           assert_false(plan.launch_session().bridge_loop_contract().available())
+          assert_true(
+            plan.launch_session().bridge_loop_contract().drain_strategy()
+            is NativeBridgeDrainUnavailable,
+          )
           let async_session = plan.launch_session(
             bridge_mode=NativeBridgeAsyncCapable,
           )
@@ -690,9 +703,16 @@ test "native runner plans expose async bridge blockers" {
           assert_true(async_session.bridge_loop_contract().required())
           assert_true(async_session.bridge_loop_contract().available())
           assert_true(
+            async_session.bridge_loop_contract().drain_strategy()
+            is NativeBridgeDrainEventLoop,
+          )
+          assert_true(
             async_session.to_json().contains("\"asyncBridgeExecutor\""),
           )
           assert_true(async_session.to_json().contains("\"bridgeLoop\""))
+          assert_true(
+            async_session.to_json().contains("\"drainStrategy\":\"event-loop\""),
+          )
           assert_true(
             async_session
             .to_json()
@@ -793,6 +813,9 @@ test "native launch capability gates webview and async bridge loops" {
   assert_false(sync_only.async_bridge_drain())
   assert_eq(sync_only.max_webviews(), 1)
   assert_true(sync_only.bridge_mode() is NativeBridgeSyncOnly)
+  assert_true(
+    sync_only.async_bridge_drain_strategy() is NativeBridgeDrainUnavailable,
+  )
   assert_true(sync_only.launch_blocker("Test", sync_scheduler) is None)
   assert_true(sync_only.webview_count_blocker("Test", 1) is None)
   assert_eq(
@@ -829,9 +852,17 @@ test "native launch capability gates webview and async bridge loops" {
     async_bridge_drain=true,
   )
   assert_true(async_capable.bridge_mode() is NativeBridgeAsyncCapable)
+  assert_true(
+    async_capable.async_bridge_drain_strategy() is NativeBridgeDrainEventLoop,
+  )
   assert_true(async_capable.launch_blocker("Test", async_scheduler) is None)
   assert_true(async_capable.to_json().contains("\"syncBridgeEvaluate\":true"))
   assert_true(async_capable.to_json().contains("\"asyncBridgeDrain\":true"))
+  assert_true(
+    async_capable
+    .to_json()
+    .contains("\"asyncBridgeDrainStrategy\":\"event-loop\""),
+  )
   assert_true(async_capable.to_json().contains("\"maxWebviews\":1"))
   let multi_window_capable = NativeLaunchCapability::new(
     webview_creation=true,

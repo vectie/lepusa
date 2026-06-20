@@ -149,6 +149,12 @@ pub fn NativeBridgeDrain::new(window_label~ : String, callback~ : String) -> Sel
 pub fn NativeBridgeDrain::to_json(Self) -> String
 pub fn NativeBridgeDrain::window_label(Self) -> String
 
+pub(all) enum NativeBridgeDrainStrategy {
+  NativeBridgeDrainUnavailable
+  NativeBridgeDrainEventLoop
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeDrainStrategy::name(Self) -> String
+
 pub struct NativeBridgeHandoff {
   task : NativeBridgeDispatchTask
   immediate_dispatch : NativeBridgeDispatch?
@@ -200,6 +206,7 @@ pub fn NativeBridgeLoopCallbacks::window_label(Self) -> String
 pub struct NativeBridgeLoopContract {
   required : Bool
   available : Bool
+  drain_strategy : NativeBridgeDrainStrategy
   adapter : String
   handoff_callback : String
   handoff_packet_callback : String
@@ -215,12 +222,13 @@ pub struct NativeBridgeLoopContract {
 pub fn NativeBridgeLoopContract::adapter(Self) -> String
 pub fn NativeBridgeLoopContract::available(Self) -> Bool
 pub fn NativeBridgeLoopContract::delivery_type(Self) -> String
+pub fn NativeBridgeLoopContract::drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeBridgeLoopContract::drain_window(Self) -> String
 pub fn NativeBridgeLoopContract::drain_window_scripts(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_callback(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_packet_callback(Self) -> String
 pub fn NativeBridgeLoopContract::input_encoding(Self) -> String
-pub fn NativeBridgeLoopContract::new(required~ : Bool, available~ : Bool) -> Self
+pub fn NativeBridgeLoopContract::new(required~ : Bool, available~ : Bool, drain_strategy? : NativeBridgeDrainStrategy) -> Self
 pub fn NativeBridgeLoopContract::output_encoding(Self) -> String
 pub fn NativeBridgeLoopContract::receive_message(Self) -> String
 pub fn NativeBridgeLoopContract::receive_window_message(Self) -> String
@@ -287,6 +295,7 @@ pub fn NativeBridgeScheduler::async_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeBridgeScheduler::async_routes(Self) -> Array[String]
 pub fn NativeBridgeScheduler::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeBridgeScheduler::can_launch(Self) -> Bool
+pub fn NativeBridgeScheduler::drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeBridgeScheduler::launch_blocker(Self, String) -> String?
 pub fn NativeBridgeScheduler::mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeBridgeScheduler::new(sync_routes~ : Array[String], async_routes~ : Array[String], mode? : NativeBridgeSchedulerMode) -> Self
@@ -299,6 +308,7 @@ pub(all) enum NativeBridgeSchedulerMode {
   NativeBridgeSyncOnly
   NativeBridgeAsyncCapable
 } derive(Eq, @debug.Debug)
+pub fn NativeBridgeSchedulerMode::drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeBridgeSchedulerMode::name(Self) -> String
 
 pub struct NativeBridgeWorkQueue {
@@ -382,6 +392,7 @@ pub struct NativeLaunchCapability {
   sync_bridge_evaluate_message : String
 } derive(Eq, @debug.Debug)
 pub fn NativeLaunchCapability::async_bridge_drain(Self) -> Bool
+pub fn NativeLaunchCapability::async_bridge_drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeLaunchCapability::bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchCapability::can_launch(Self, NativeBridgeScheduler) -> Bool
 pub fn NativeLaunchCapability::launch_blocker(Self, String, NativeBridgeScheduler) -> String?

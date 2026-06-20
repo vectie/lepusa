@@ -240,7 +240,11 @@ drain contract. The envelope also records `requestedBridgeMode`,
 through `launchCapability`, `backendPreflight`, `targetCanLaunch`, and
 `targetLaunchBlocker`. Passing `--async-bridge` records an async-capable request;
 platforms that cannot drain async completions keep the effective session
-sync-only and report `bridgeModeGranted: false`.
+sync-only, report `bridgeModeGranted: false`, and expose a `drainStrategy` of
+`unavailable`. Async-capable sessions advertise an `event-loop` drain strategy:
+the native message handler may queue deferred work synchronously, then the host
+event loop must drain and evaluate completion scripts after leaving the WebView
+callback.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
@@ -582,6 +586,9 @@ into the object platform event loops should keep beside each WebView host.
 Their async `receive_message` method accepts one UTF-8 WebView bridge message
 and returns a loop result: immediate scripts for sync routes, drained completion
 scripts for async routes, and JSON diagnostics for backend tests.
+`NativeBridgeScheduler` and `NativeBridgeLoopContract` now surface
+`drainStrategy`, so target readiness distinguishes sync-only loops from native
+loops that can schedule the queued async drain on their event loop.
 `NativeBridgeLoopEvaluationPlan` lowers those scripts into target-window
 `evaluate-script` operations, giving every platform runner the same operation
 shape for its drain/evaluate step.

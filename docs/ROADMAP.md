@@ -118,10 +118,13 @@
   WebView launch contexts now carry the byte packet plus scheduler, executor,
   and bridge-loop contracts into platform runner code; platform packages now
   declare `NativeLaunchCapability` for WebView creation, sync bridge response
-  evaluation, and async bridge drain/evaluate support; source and packaged run
-  plans now build capability-aware launch sessions for open-window runners
-  before they pass the queue-backed handoff callback into native message
-  handlers; source and bundled bridge adapters now expose a structured
+  evaluation, and async bridge drain/evaluate support; scheduler, launch
+  capability, and bridge-loop JSON now expose the concrete async drain strategy
+  (`unavailable` or `event-loop`) so platform readiness can distinguish the
+  callback shape from the remaining native pump; source and packaged run plans
+  now build capability-aware launch sessions for open-window runners before
+  they pass the queue-backed handoff callback into native message handlers;
+  source and bundled bridge adapters now expose a structured
   length-prefixed handoff-packet callback with executable-operation JSON, and
   macOS/Linux C handlers parse that packet so immediate scripts are evaluated
   while deferred async work remains explicit;

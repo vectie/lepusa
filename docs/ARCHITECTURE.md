@@ -233,6 +233,10 @@ Their async `receive_message` method is the next platform-loop boundary: it
 captures one bridge message, keeps sync routes immediate, drains async work into
 completion envelopes, and returns the full list of scripts the backend must
 evaluate in the WebView.
+The scheduler and loop contract both expose `drainStrategy`: sync-only sessions
+report `unavailable`, while async-capable sessions report `event-loop`, meaning
+the platform host must leave the synchronous WebView message callback before
+draining queued completions and evaluating their scripts.
 `NativeBridgeLoopEvaluationPlan` converts that script list into window-scoped
 `NativeExecutableOperation::evaluate_script` operations, so source and packaged
 runtime loops share one executable drain/evaluate model before platform code
@@ -257,7 +261,7 @@ delivery callback, one executable drain-script payload callback, and one
 `drain-bridge-window` operation descriptor for the WebView it launched.
 `NativeWebViewLaunchPacket` carries that window label with the rest of the
 C/WebView launch ABI; platform C loops still need an async pump before they can
-consume the async drain-script callback directly.
+consume the event-loop drain strategy directly.
 
 Command rules:
 
