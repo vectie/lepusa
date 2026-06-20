@@ -57,6 +57,19 @@ pub fn BundleWriteResult::verified(self : BundleWriteResult) -> Bool {
 }
 
 ///|
+pub fn BundleWriteResult::to_json(self : BundleWriteResult) -> String {
+  [
+    "{",
+    "\"root\":\{self.root.json_string()},",
+    "\"files\":[\{self.files.map(fn(file) { file.json_string() }).join(",")}],",
+    "\"resources\":[\{self.resources.map(fn(resource) { resource.json_string() }).join(",")}],",
+    "\"verified\":\{self.verified().json_bool()},",
+    "\"checks\":[\{self.checks.map(fn(check) { check.to_json() }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn BundleWriteCheck::new(
   kind~ : BundleWriteCheckKind,
   path~ : String,
@@ -84,6 +97,18 @@ pub fn BundleWriteCheck::ok(self : BundleWriteCheck) -> Bool {
 ///|
 pub fn BundleWriteCheck::message(self : BundleWriteCheck) -> String {
   self.message
+}
+
+///|
+pub fn BundleWriteCheck::to_json(self : BundleWriteCheck) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind().name().json_string()},",
+    "\"path\":\{self.path.json_string()},",
+    "\"ok\":\{self.ok.json_bool()},",
+    "\"message\":\{self.message.json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|

@@ -255,7 +255,8 @@ desktop core is reliable.
 - `@lepusa/bundle` verifies materialized bundle files, resources, runtime
   manifests, nonblank initial WebView content, host-compatible runtime
   executable copies, and target launch capability after `bundle-write` as the
-  pre-install smoke boundary.
+  pre-install smoke boundary, with `bundle-write --json` exposing the same
+  checks as a machine-readable CI report.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof

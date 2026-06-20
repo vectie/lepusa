@@ -23,7 +23,11 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bundle"))
   assert_true(result.output.contains("lepusa plugin new"))
   assert_true(result.output.contains("lepusa bundle-plan"))
-  assert_true(result.output.contains("lepusa bundle-write"))
+  assert_true(
+    result.output.contains(
+      "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
+    ),
+  )
   assert_true(result.output.contains("--project <lepusa.json>"))
   assert_true(result.output.contains("--workspace <lepusa-root>"))
 }
@@ -1673,6 +1677,29 @@ async test "bundle write materializes planned files" {
   assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
+  let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
+  let json_result = render_cli_async([
+    "bundle-write", "linux", json_root, "--json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(
+    json_result.output.contains("\"identifier\":\"dev.vectie.lepusa.example\""),
+  )
+  assert_true(json_result.output.contains("\"bundle\":{"))
+  assert_true(json_result.output.contains("\"root\":\"\{json_root}\""))
+  assert_true(json_result.output.contains("\"verified\":true"))
+  assert_true(json_result.output.contains("\"checks\":["))
+  assert_true(json_result.output.contains("\"kind\":\"planned-file\""))
+  assert_true(json_result.output.contains("\"kind\":\"runtime-manifest\""))
+  assert_true(json_result.output.contains("\"kind\":\"initial-content\""))
+  assert_true(json_result.output.contains("\"kind\":\"native-launch-session\""))
+  assert_true(
+    json_result.output.contains(
+      "\"message\":\"native launch session prepares\"",
+    ),
+  )
+  assert_true(json_result.output.contains("\"signingPrerequisites\":2"))
 }
 
 ///|
@@ -1710,6 +1737,17 @@ async test "bundle write gates target launch capability" {
   assert_true(result.output.contains("Windows WebView2"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
+  let json_root = "/tmp/lepusa-windows-bundle-write-json-\{@async.now().to_int()}"
+  let json_result = render_cli_async([
+    "bundle-write", "windows", json_root, "--json",
+  ])
+  assert_eq(json_result.exit_code, 1)
+  assert_true(json_result.output.contains("\"target\":\"windows\""))
+  assert_true(json_result.output.contains("\"verified\":false"))
+  assert_true(json_result.output.contains("\"kind\":\"native-launch-session\""))
+  assert_true(json_result.output.contains("\"ok\":false"))
+  assert_true(json_result.output.contains("Windows WebView2"))
+  assert_true(@fs.exists(json_root + "/lepusa-example/lepusa/runtime.json"))
 }
 
 ///|

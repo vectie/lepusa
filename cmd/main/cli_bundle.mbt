@@ -51,26 +51,11 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
         Ok(plan) =>
           match @bundle.write_plan(plan, out_dir) {
             Ok(result) => {
-              let local_service_count = match plan.runtime_manifest() {
-                Ok(manifest) => manifest.local_services().length()
-                Err(_) => 0
+              let output = if has_flag(args, "--json") {
+                render_bundle_write_json(plan, result) + "\n"
+              } else {
+                render_bundle_write_summary(plan, result)
               }
-              let filesystem_scope_count = match plan.runtime_manifest() {
-                Ok(manifest) => manifest.file_system_scopes().length()
-                Err(_) => 0
-              }
-              let output = "Lepusa bundle write\n" +
-                "target: \{plan.target().name()}\n" +
-                "root: \{result.root()}\n" +
-                "local-services: \{local_service_count}\n" +
-                "filesystem-scopes: \{filesystem_scope_count}\n" +
-                "resources: \{plan.resources().length()}\n" +
-                "resources-written: \{result.resources().length()}\n" +
-                "verification-checks: \{result.checks().length()}\n" +
-                "verified: \{result.verified().to_string()}\n" +
-                "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
-                "files: \{result.files().length()}\n" +
-                render_bundle_write_checks(result.checks())
               if result.verified() {
                 ok(output)
               } else {
@@ -85,6 +70,48 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
     }
     Err(problem) => fail(problem + "\n")
   }
+}
+
+///|
+fn render_bundle_write_summary(
+  plan : @lepusa.BundlePlan,
+  result : @bundle.BundleWriteResult,
+) -> String {
+  let local_service_count = match plan.runtime_manifest() {
+    Ok(manifest) => manifest.local_services().length()
+    Err(_) => 0
+  }
+  let filesystem_scope_count = match plan.runtime_manifest() {
+    Ok(manifest) => manifest.file_system_scopes().length()
+    Err(_) => 0
+  }
+  "Lepusa bundle write\n" +
+  "target: \{plan.target().name()}\n" +
+  "root: \{result.root()}\n" +
+  "local-services: \{local_service_count}\n" +
+  "filesystem-scopes: \{filesystem_scope_count}\n" +
+  "resources: \{plan.resources().length()}\n" +
+  "resources-written: \{result.resources().length()}\n" +
+  "verification-checks: \{result.checks().length()}\n" +
+  "verified: \{result.verified().to_string()}\n" +
+  "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
+  "files: \{result.files().length()}\n" +
+  render_bundle_write_checks(result.checks())
+}
+
+///|
+fn render_bundle_write_json(
+  plan : @lepusa.BundlePlan,
+  result : @bundle.BundleWriteResult,
+) -> String {
+  [
+    "{",
+    "\"target\":\{cli_json_string(plan.target().name())},",
+    "\"identifier\":\{cli_json_string(plan.identifier())},",
+    "\"bundle\":\{result.to_json()},",
+    "\"signingPrerequisites\":\{plan.signing_prerequisites().length()}",
+    "}",
+  ].join("")
 }
 
 ///|

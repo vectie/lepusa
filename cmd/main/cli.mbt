@@ -81,7 +81,7 @@ fn help_text() -> String {
     #|  lepusa init [out-dir] [--workspace <lepusa-root>]
     #|  lepusa plugin new <name> [out-dir] [--workspace <lepusa-root>]
     #|  lepusa bundle-plan [macos|windows|linux]
-    #|  lepusa bundle-write [macos|windows|linux] [out-dir]
+    #|  lepusa bundle-write [macos|windows|linux] [out-dir] [--json]
     #|  lepusa build [macos|windows|linux] [out-dir]
     #|  lepusa bundle [macos|windows|linux] [out-dir]
     #|
