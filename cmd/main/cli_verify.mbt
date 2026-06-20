@@ -2,12 +2,14 @@
 async fn render_verify_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let strict = has_flag(args, "--strict")
+  let json = has_flag(args, "--json")
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
           match project_bundle_plan(args, target) {
-            Ok(bundle) => render_verify_project(target, host, bundle, strict~)
+            Ok(bundle) =>
+              render_verify_project(target, host, bundle, strict~, json~)
             Err(problems) => fail(render_problems("Lepusa verify", problems))
           }
         Err(problems) => fail(render_problems("Lepusa verify", problems))
@@ -22,6 +24,7 @@ async fn render_verify_project(
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
   strict~ : Bool,
+  json~ : Bool,
 ) -> CliResult {
   let lines : Array[String] = ["Lepusa verify\n", "target: \{target.name()}\n"]
   if strict {
@@ -35,10 +38,41 @@ async fn render_verify_project(
   passed = verify_handler_coverage(host, lines, strict~) && passed
   passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
-  if passed {
-    ok(lines.join(""))
+  let output = if json {
+    render_verify_json(target, strict~, passed~, lines~) + "\n"
   } else {
-    fail(lines.join(""))
+    lines.join("")
+  }
+  if passed {
+    ok(output)
+  } else {
+    fail(output)
+  }
+}
+
+///|
+fn render_verify_json(
+  target : @lepusa.BundleTarget,
+  strict~ : Bool,
+  passed~ : Bool,
+  lines~ : Array[String],
+) -> String {
+  [
+    "{",
+    "\"target\":\{cli_json_string(target.name())},",
+    "\"strict\":\{cli_json_bool(strict)},",
+    "\"ok\":\{cli_json_bool(passed)},",
+    "\"lines\":[\{lines.map(fn(line) { cli_json_string(line.trim().to_owned()) }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
+fn cli_json_bool(value : Bool) -> String {
+  if value {
+    "true"
+  } else {
+    "false"
   }
 }
 

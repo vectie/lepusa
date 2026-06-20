@@ -17,7 +17,11 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa native-plan"))
   assert_true(result.output.contains("lepusa launch-session"))
   assert_true(result.output.contains("lepusa run"))
-  assert_true(result.output.contains("lepusa verify"))
+  assert_true(
+    result.output.contains(
+      "lepusa verify [macos|windows|linux] [--strict] [--json]",
+    ),
+  )
   assert_true(result.output.contains("lepusa init"))
   assert_true(result.output.contains("lepusa build"))
   assert_true(result.output.contains("lepusa bundle"))
@@ -673,6 +677,36 @@ async test "generated project config verifies end to end contracts" {
   ])
   assert_eq(strict_windows.exit_code, 1)
   assert_true(strict_windows.output.contains("[fail] strict: Windows WebView2"))
+  let json_result = render_cli_async([
+    "verify",
+    "linux",
+    "--json",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(json_result.output.contains("\"strict\":false"))
+  assert_true(json_result.output.contains("\"ok\":true"))
+  assert_true(json_result.output.contains("\"lines\":["))
+  assert_true(json_result.output.contains("\"[ok] plan: windows=1"))
+  assert_true(json_result.output.contains("[ok] native-session: webviews=1"))
+  assert_true(json_result.output.contains("[ok] bundle: files="))
+  let strict_windows_json = render_cli_async([
+    "verify",
+    "windows",
+    "--strict",
+    "--json",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(strict_windows_json.exit_code, 1)
+  assert_true(strict_windows_json.output.contains("\"target\":\"windows\""))
+  assert_true(strict_windows_json.output.contains("\"strict\":true"))
+  assert_true(strict_windows_json.output.contains("\"ok\":false"))
+  assert_true(
+    strict_windows_json.output.contains("[fail] strict: Windows WebView2"),
+  )
 }
 
 ///|

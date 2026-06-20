@@ -475,6 +475,8 @@ Add `--strict` when the command should act as a release gate: missing concrete
 handlers and known target launch blockers become failures instead of warnings.
 This keeps framework-development proofs useful while still giving CI a direct
 answer for "can this target ship?"
+Passing `--json` emits the selected target, strict mode, final pass/fail, and
+the canonical verifier lines as a machine-readable report.
 The native-session line reports scheduler readiness separately from selected
 target launch readiness, so Windows and async-bridge blockers are visible even
 outside strict mode.
