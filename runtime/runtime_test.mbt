@@ -271,6 +271,33 @@ test "native asset load urls are runtime-owned" {
 }
 
 ///|
+test "native runtime prepares shared webview plans" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+    Ok(runtime) =>
+      match
+        runtime.webview_plan(
+          runtime.runner_plan().webview_specs()[0],
+          initialization_script="/* native hook */",
+        ) {
+        Ok(webview) => {
+          assert_eq(webview.label(), "main")
+          assert_eq(webview.title(), "Runtime")
+          assert_eq(webview.url(), "lepusa://inline/main/index.html")
+          assert_eq(webview.load_url(), "lepusa://inline/main/index.html")
+          assert_eq(webview.initialization_script(), "/* native hook */")
+          assert_eq(webview.asset_protocol(), "lepusa")
+          assert_eq(webview.width(), 900)
+          assert_eq(webview.height(), 640)
+          assert_true(webview.resizable())
+        }
+        Err(problem) => abort(problem)
+      }
+    Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
 test "native asset load urls decode json envelopes" {
   let virtual_json =
     #|{

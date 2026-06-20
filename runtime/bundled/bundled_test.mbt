@@ -265,6 +265,23 @@ test "bundled runtime manifest resolves protocol assets" {
           }
         Err(problem) => abort(problem)
       }
+      match runtime.webviews() {
+        Ok(webviews) =>
+          match
+            runtime.webview_plan(
+              webviews[0],
+              initialization_script="/* bundled hook */",
+            ) {
+            Ok(webview) => {
+              assert_eq(webview.label(), "main")
+              assert_eq(webview.load_url(), "lepusa://rabbita/main/index.html")
+              assert_eq(webview.initialization_script(), "/* bundled hook */")
+              assert_eq(webview.asset_protocol(), "lepusa")
+            }
+            Err(problem) => abort(problem)
+          }
+        Err(problem) => abort(problem)
+      }
       let local_asset = runtime.resolve_asset_json(
         "lepusa://local/static/app.css",
       )

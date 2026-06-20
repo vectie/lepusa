@@ -140,6 +140,7 @@ pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunSt
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 pub fn NativeRuntime::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativeRuntime::service_supervisor_report(Self) -> NativeServiceSupervisorReport
+pub fn NativeRuntime::webview_plan(Self, RuntimeWebViewSpec, initialization_script~ : String) -> Result[NativeWebViewPlan, String]
 
 pub struct NativeServiceActionReport {
   action : @lepusa.LocalServiceSupervisorAction
@@ -213,6 +214,30 @@ pub fn NativeServiceSupervisorReport::new(backend_name~ : String, webview_engine
 pub fn NativeServiceSupervisorReport::ok(Self) -> Bool
 pub fn NativeServiceSupervisorReport::to_json(Self) -> String
 pub fn NativeServiceSupervisorReport::webview_engine(Self) -> String
+
+pub struct NativeWebViewPlan {
+  label : String
+  title : String
+  url : String
+  load_url : String
+  initialization_script : String
+  native_hook : String
+  asset_protocol : String
+  width : Int
+  height : Int
+  resizable : Bool
+} derive(Eq, @debug.Debug)
+pub fn NativeWebViewPlan::asset_protocol(Self) -> String
+pub fn NativeWebViewPlan::height(Self) -> Int
+pub fn NativeWebViewPlan::initialization_script(Self) -> String
+pub fn NativeWebViewPlan::label(Self) -> String
+pub fn NativeWebViewPlan::load_url(Self) -> String
+pub fn NativeWebViewPlan::native_hook(Self) -> String
+pub fn NativeWebViewPlan::new(label~ : String, title~ : String, url~ : String, load_url~ : String, initialization_script~ : String, native_hook~ : String, asset_protocol~ : String, width~ : Int, height~ : Int, resizable~ : Bool) -> Self
+pub fn NativeWebViewPlan::resizable(Self) -> Bool
+pub fn NativeWebViewPlan::title(Self) -> String
+pub fn NativeWebViewPlan::url(Self) -> String
+pub fn NativeWebViewPlan::width(Self) -> Int
 
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 

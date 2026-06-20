@@ -23,3 +23,29 @@ pub fn BundledRuntimeManifest::resolve_asset_protocol_packet_bytes(
     self.resolve_asset_json(input),
   )
 }
+
+///|
+pub fn BundledRuntimeManifest::webview_plan(
+  self : BundledRuntimeManifest,
+  webview : BundledWebView,
+  initialization_script~ : String,
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  match self.initial_load_url(webview) {
+    Err(problem) => Err(problem)
+    Ok(load_url) =>
+      Ok(
+        @runtime.NativeWebViewPlan::new(
+          label=webview.label(),
+          title=webview.title(),
+          url=webview.url(),
+          load_url~,
+          initialization_script~,
+          native_hook=webview.native_hook(),
+          asset_protocol=self.asset_protocol(),
+          width=webview.width(),
+          height=webview.height(),
+          resizable=webview.resizable(),
+        ),
+      )
+  }
+}

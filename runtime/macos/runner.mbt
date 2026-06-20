@@ -5,20 +5,6 @@ pub(all) enum MacOSRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub struct MacOSWebViewPlan {
-  label : String
-  title : String
-  url : String
-  load_url : String
-  initialization_script : String
-  native_hook : String
-  asset_protocol : String
-  width : Int
-  height : Int
-  resizable : Bool
-} derive(Debug, Eq)
-
-///|
 pub struct MacOSExecutionPlan {
   startup_operations : Array[String]
   lifecycle_steps : Array[MacOSLifecycleStepPlan]
@@ -38,7 +24,7 @@ pub struct MacOSBridgePlan {
 
 ///|
 pub struct MacOSRunPlan {
-  webviews : Array[MacOSWebViewPlan]
+  webviews : Array[@runtime.NativeWebViewPlan]
   execution : MacOSExecutionPlan
   bridge : MacOSBridgePlan
   service_supervisor : @runtime.NativeServiceSupervisorPlan
@@ -72,7 +58,7 @@ pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[MacOSRunPlan, Array[String]] {
   let runner = runtime.runner_plan()
-  let webviews : Array[MacOSWebViewPlan] = []
+  let webviews : Array[@runtime.NativeWebViewPlan] = []
   let problems : Array[String] = []
   for spec in runner.webview_specs() {
     match macos_webview_plan_from_spec(runtime, spec) {
@@ -99,26 +85,14 @@ pub fn prepare_run(
 fn macos_webview_plan_from_spec(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
-) -> Result[MacOSWebViewPlan, String] {
-  match runtime.initial_load_url(spec) {
-    Ok(load_url) =>
-      Ok({
-        label: spec.label(),
-        title: spec.title(),
-        url: spec.url(),
-        load_url,
-        initialization_script: macos_initialization_script(
-          spec.native_hook(),
-          spec.initialization_scripts(),
-        ),
-        native_hook: spec.native_hook(),
-        asset_protocol: spec.asset_protocol(),
-        width: spec.width(),
-        height: spec.height(),
-        resizable: spec.resizable(),
-      })
-    Err(problem) => Err(problem)
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  runtime.webview_plan(
+    spec,
+    initialization_script=macos_initialization_script(
+      spec.native_hook(),
+      spec.initialization_scripts(),
+    ),
+  )
 }
 
 ///|
@@ -128,7 +102,7 @@ pub fn prepare_bundled_run(
   match manifest.webviews() {
     Err(problem) => Err([problem])
     Ok(bundled_webviews) => {
-      let webviews : Array[MacOSWebViewPlan] = []
+      let webviews : Array[@runtime.NativeWebViewPlan] = []
       let problems : Array[String] = []
       for webview in bundled_webviews {
         match macos_webview_plan_from_bundled(manifest, webview) {
@@ -172,26 +146,14 @@ pub fn prepare_bundled_run(
 fn macos_webview_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
-) -> Result[MacOSWebViewPlan, String] {
-  match manifest.initial_load_url(webview) {
-    Err(problem) => Err(problem)
-    Ok(load_url) =>
-      Ok({
-        label: webview.label(),
-        title: webview.title(),
-        url: webview.url(),
-        load_url,
-        initialization_script: macos_initialization_script(
-          webview.native_hook(),
-          webview.initialization_scripts(),
-        ),
-        native_hook: webview.native_hook(),
-        asset_protocol: manifest.asset_protocol(),
-        width: webview.width(),
-        height: webview.height(),
-        resizable: webview.resizable(),
-      })
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  manifest.webview_plan(
+    webview,
+    initialization_script=macos_initialization_script(
+      webview.native_hook(),
+      webview.initialization_scripts(),
+    ),
+  )
 }
 
 ///|
@@ -483,14 +445,16 @@ pub fn launch_bundled(
 }
 
 ///|
-pub fn MacOSRunPlan::webviews(self : MacOSRunPlan) -> Array[MacOSWebViewPlan] {
+pub fn MacOSRunPlan::webviews(
+  self : MacOSRunPlan,
+) -> Array[@runtime.NativeWebViewPlan] {
   self.webviews.copy()
 }
 
 ///|
 pub fn MacOSRunPlan::first_webview(
   self : MacOSRunPlan,
-) -> Result[MacOSWebViewPlan, String] {
+) -> Result[@runtime.NativeWebViewPlan, String] {
   match self.webviews.get(0) {
     Some(webview) => Ok(webview)
     None => Err("macOS run plan requires at least one webview")
@@ -569,58 +533,6 @@ pub fn MacOSLifecycleStepPlan::operations(
 }
 
 ///|
-pub fn MacOSWebViewPlan::label(self : MacOSWebViewPlan) -> String {
-  self.label
-}
-
-///|
-pub fn MacOSWebViewPlan::title(self : MacOSWebViewPlan) -> String {
-  self.title
-}
-
-///|
-pub fn MacOSWebViewPlan::url(self : MacOSWebViewPlan) -> String {
-  self.url
-}
-
-///|
-pub fn MacOSWebViewPlan::load_url(self : MacOSWebViewPlan) -> String {
-  self.load_url
-}
-
-///|
-pub fn MacOSWebViewPlan::initialization_script(
-  self : MacOSWebViewPlan,
-) -> String {
-  self.initialization_script
-}
-
-///|
-pub fn MacOSWebViewPlan::native_hook(self : MacOSWebViewPlan) -> String {
-  self.native_hook
-}
-
-///|
-pub fn MacOSWebViewPlan::asset_protocol(self : MacOSWebViewPlan) -> String {
-  self.asset_protocol
-}
-
-///|
-pub fn MacOSWebViewPlan::width(self : MacOSWebViewPlan) -> Int {
-  self.width
-}
-
-///|
-pub fn MacOSWebViewPlan::height(self : MacOSWebViewPlan) -> Int {
-  self.height
-}
-
-///|
-pub fn MacOSWebViewPlan::resizable(self : MacOSWebViewPlan) -> Bool {
-  self.resizable
-}
-
-///|
 pub fn MacOSRunResult::plan(self : MacOSRunResult) -> MacOSRunPlan {
   self.plan
 }
@@ -651,14 +563,14 @@ fn run_plan(
         Err(problem) => return Err([problem])
       }
       let exit_code = run_webview_with_bridge(
-        @utf8.encode(webview.title),
-        @utf8.encode(webview.load_url),
-        @utf8.encode(webview.initialization_script),
-        @utf8.encode(webview.native_hook),
-        @utf8.encode(webview.asset_protocol),
-        webview.width,
-        webview.height,
-        if webview.resizable {
+        @utf8.encode(webview.title()),
+        @utf8.encode(webview.load_url()),
+        @utf8.encode(webview.initialization_script()),
+        @utf8.encode(webview.native_hook()),
+        @utf8.encode(webview.asset_protocol()),
+        webview.width(),
+        webview.height(),
+        if webview.resizable() {
           1
         } else {
           0

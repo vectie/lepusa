@@ -5,23 +5,9 @@ pub(all) enum WindowsRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub struct WindowsWebViewPlan {
-  label : String
-  title : String
-  url : String
-  load_url : String
-  initialization_script : String
-  native_hook : String
-  asset_protocol : String
-  width : Int
-  height : Int
-  resizable : Bool
-} derive(Debug, Eq)
-
-///|
 pub struct WindowsRunPlan {
   runner : @runtime.NativeRunnerPlan
-  webviews : Array[WindowsWebViewPlan]
+  webviews : Array[@runtime.NativeWebViewPlan]
 } derive(Debug, Eq)
 
 ///|
@@ -33,7 +19,7 @@ pub struct WindowsRunResult {
 ///|
 pub struct WindowsBundledRunPlan {
   bootstrap : @bundled.BundledBootstrapPlan
-  webviews : Array[WindowsWebViewPlan]
+  webviews : Array[@runtime.NativeWebViewPlan]
 } derive(Debug)
 
 ///|
@@ -64,7 +50,7 @@ pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[WindowsRunPlan, Array[String]] {
   let runner = runtime.runner_plan()
-  let webviews : Array[WindowsWebViewPlan] = []
+  let webviews : Array[@runtime.NativeWebViewPlan] = []
   let problems : Array[String] = []
   for spec in runner.webview_specs() {
     match windows_webview_plan_from_spec(runtime, spec) {
@@ -124,7 +110,7 @@ pub fn prepare_bundled_run(
     Ok(webviews) => webviews
     Err(problem) => return Err([problem])
   }
-  let webviews : Array[WindowsWebViewPlan] = []
+  let webviews : Array[@runtime.NativeWebViewPlan] = []
   let problems : Array[String] = []
   for webview in bundled_webviews {
     match windows_webview_plan_from_bundled(manifest, webview) {
@@ -198,7 +184,7 @@ pub fn WindowsRunPlan::first_webview_load_url(self : WindowsRunPlan) -> String {
 ///|
 pub fn WindowsRunPlan::first_webview(
   self : WindowsRunPlan,
-) -> Result[WindowsWebViewPlan, String] {
+) -> Result[@runtime.NativeWebViewPlan, String] {
   match self.webviews.get(0) {
     Some(webview) => Ok(webview)
     None => Err("Windows run plan requires at least one webview")
@@ -237,58 +223,6 @@ pub fn WindowsRunResult::plan(self : WindowsRunResult) -> WindowsRunPlan {
 ///|
 pub fn WindowsRunResult::status(self : WindowsRunResult) -> @lepusa.RunStatus {
   self.status
-}
-
-///|
-pub fn WindowsWebViewPlan::label(self : WindowsWebViewPlan) -> String {
-  self.label
-}
-
-///|
-pub fn WindowsWebViewPlan::title(self : WindowsWebViewPlan) -> String {
-  self.title
-}
-
-///|
-pub fn WindowsWebViewPlan::url(self : WindowsWebViewPlan) -> String {
-  self.url
-}
-
-///|
-pub fn WindowsWebViewPlan::load_url(self : WindowsWebViewPlan) -> String {
-  self.load_url
-}
-
-///|
-pub fn WindowsWebViewPlan::initialization_script(
-  self : WindowsWebViewPlan,
-) -> String {
-  self.initialization_script
-}
-
-///|
-pub fn WindowsWebViewPlan::native_hook(self : WindowsWebViewPlan) -> String {
-  self.native_hook
-}
-
-///|
-pub fn WindowsWebViewPlan::asset_protocol(self : WindowsWebViewPlan) -> String {
-  self.asset_protocol
-}
-
-///|
-pub fn WindowsWebViewPlan::width(self : WindowsWebViewPlan) -> Int {
-  self.width
-}
-
-///|
-pub fn WindowsWebViewPlan::height(self : WindowsWebViewPlan) -> Int {
-  self.height
-}
-
-///|
-pub fn WindowsWebViewPlan::resizable(self : WindowsWebViewPlan) -> Bool {
-  self.resizable
 }
 
 ///|
@@ -335,7 +269,7 @@ pub fn WindowsBundledRunPlan::first_webview_load_url(
 ///|
 pub fn WindowsBundledRunPlan::first_webview(
   self : WindowsBundledRunPlan,
-) -> Result[WindowsWebViewPlan, String] {
+) -> Result[@runtime.NativeWebViewPlan, String] {
   match self.webviews.get(0) {
     Some(webview) => Ok(webview)
     None => Err("Windows bundled run plan requires at least one webview")
@@ -403,52 +337,28 @@ pub fn WindowsBundledRunResult::report(
 fn windows_webview_plan_from_spec(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
-) -> Result[WindowsWebViewPlan, String] {
-  match runtime.initial_load_url(spec) {
-    Ok(load_url) =>
-      Ok({
-        label: spec.label(),
-        title: spec.title(),
-        url: spec.url(),
-        load_url,
-        initialization_script: windows_initialization_script(
-          spec.native_hook(),
-          spec.initialization_scripts(),
-        ),
-        native_hook: spec.native_hook(),
-        asset_protocol: spec.asset_protocol(),
-        width: spec.width(),
-        height: spec.height(),
-        resizable: spec.resizable(),
-      })
-    Err(problem) => Err(problem)
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  runtime.webview_plan(
+    spec,
+    initialization_script=windows_initialization_script(
+      spec.native_hook(),
+      spec.initialization_scripts(),
+    ),
+  )
 }
 
 ///|
 fn windows_webview_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
-) -> Result[WindowsWebViewPlan, String] {
-  match manifest.initial_load_url(webview) {
-    Err(problem) => Err(problem)
-    Ok(load_url) =>
-      Ok({
-        label: webview.label(),
-        title: webview.title(),
-        url: webview.url(),
-        load_url,
-        initialization_script: windows_initialization_script(
-          webview.native_hook(),
-          webview.initialization_scripts(),
-        ),
-        native_hook: webview.native_hook(),
-        asset_protocol: manifest.asset_protocol(),
-        width: webview.width(),
-        height: webview.height(),
-        resizable: webview.resizable(),
-      })
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  manifest.webview_plan(
+    webview,
+    initialization_script=windows_initialization_script(
+      webview.native_hook(),
+      webview.initialization_scripts(),
+    ),
+  )
 }
 
 ///|

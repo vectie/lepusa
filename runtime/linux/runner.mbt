@@ -5,23 +5,9 @@ pub(all) enum LinuxRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub struct LinuxWebViewPlan {
-  label : String
-  title : String
-  url : String
-  load_url : String
-  initialization_script : String
-  native_hook : String
-  asset_protocol : String
-  width : Int
-  height : Int
-  resizable : Bool
-} derive(Debug, Eq)
-
-///|
 pub struct LinuxRunPlan {
   runner : @runtime.NativeRunnerPlan
-  webviews : Array[LinuxWebViewPlan]
+  webviews : Array[@runtime.NativeWebViewPlan]
 } derive(Debug, Eq)
 
 ///|
@@ -33,7 +19,7 @@ pub struct LinuxRunResult {
 ///|
 pub struct LinuxBundledRunPlan {
   bootstrap : @bundled.BundledBootstrapPlan
-  webviews : Array[LinuxWebViewPlan]
+  webviews : Array[@runtime.NativeWebViewPlan]
 } derive(Debug)
 
 ///|
@@ -64,7 +50,7 @@ pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[LinuxRunPlan, Array[String]] {
   let runner = runtime.runner_plan()
-  let webviews : Array[LinuxWebViewPlan] = []
+  let webviews : Array[@runtime.NativeWebViewPlan] = []
   let problems : Array[String] = []
   for spec in runner.webview_specs() {
     match linux_webview_plan_from_spec(runtime, spec) {
@@ -122,7 +108,7 @@ pub fn prepare_bundled_run(
     Ok(webviews) => webviews
     Err(problem) => return Err([problem])
   }
-  let webviews : Array[LinuxWebViewPlan] = []
+  let webviews : Array[@runtime.NativeWebViewPlan] = []
   let problems : Array[String] = []
   for webview in bundled_webviews {
     match linux_webview_plan_from_bundled(manifest, webview) {
@@ -171,14 +157,16 @@ pub fn LinuxRunPlan::runner(self : LinuxRunPlan) -> @runtime.NativeRunnerPlan {
 }
 
 ///|
-pub fn LinuxRunPlan::webviews(self : LinuxRunPlan) -> Array[LinuxWebViewPlan] {
+pub fn LinuxRunPlan::webviews(
+  self : LinuxRunPlan,
+) -> Array[@runtime.NativeWebViewPlan] {
   self.webviews.copy()
 }
 
 ///|
 pub fn LinuxRunPlan::first_webview(
   self : LinuxRunPlan,
-) -> Result[LinuxWebViewPlan, String] {
+) -> Result[@runtime.NativeWebViewPlan, String] {
   match self.webviews.get(0) {
     Some(webview) => Ok(webview)
     None => Err("Linux run plan requires at least one webview")
@@ -241,58 +229,6 @@ pub fn LinuxRunResult::status(self : LinuxRunResult) -> @lepusa.RunStatus {
 }
 
 ///|
-pub fn LinuxWebViewPlan::label(self : LinuxWebViewPlan) -> String {
-  self.label
-}
-
-///|
-pub fn LinuxWebViewPlan::title(self : LinuxWebViewPlan) -> String {
-  self.title
-}
-
-///|
-pub fn LinuxWebViewPlan::url(self : LinuxWebViewPlan) -> String {
-  self.url
-}
-
-///|
-pub fn LinuxWebViewPlan::load_url(self : LinuxWebViewPlan) -> String {
-  self.load_url
-}
-
-///|
-pub fn LinuxWebViewPlan::initialization_script(
-  self : LinuxWebViewPlan,
-) -> String {
-  self.initialization_script
-}
-
-///|
-pub fn LinuxWebViewPlan::native_hook(self : LinuxWebViewPlan) -> String {
-  self.native_hook
-}
-
-///|
-pub fn LinuxWebViewPlan::asset_protocol(self : LinuxWebViewPlan) -> String {
-  self.asset_protocol
-}
-
-///|
-pub fn LinuxWebViewPlan::width(self : LinuxWebViewPlan) -> Int {
-  self.width
-}
-
-///|
-pub fn LinuxWebViewPlan::height(self : LinuxWebViewPlan) -> Int {
-  self.height
-}
-
-///|
-pub fn LinuxWebViewPlan::resizable(self : LinuxWebViewPlan) -> Bool {
-  self.resizable
-}
-
-///|
 pub fn LinuxBundledRunPlan::bootstrap(
   self : LinuxBundledRunPlan,
 ) -> @bundled.BundledBootstrapPlan {
@@ -334,7 +270,7 @@ pub fn LinuxBundledRunPlan::first_webview_load_url(
 ///|
 pub fn LinuxBundledRunPlan::first_webview(
   self : LinuxBundledRunPlan,
-) -> Result[LinuxWebViewPlan, String] {
+) -> Result[@runtime.NativeWebViewPlan, String] {
   match self.webviews.get(0) {
     Some(webview) => Ok(webview)
     None => Err("Linux bundled run plan requires at least one webview")
@@ -402,26 +338,14 @@ pub fn LinuxBundledRunResult::report(
 fn linux_webview_plan_from_spec(
   runtime : @runtime.NativeRuntime,
   spec : @runtime.RuntimeWebViewSpec,
-) -> Result[LinuxWebViewPlan, String] {
-  match runtime.initial_load_url(spec) {
-    Ok(load_url) =>
-      Ok({
-        label: spec.label(),
-        title: spec.title(),
-        url: spec.url(),
-        load_url,
-        initialization_script: linux_initialization_script(
-          spec.native_hook(),
-          spec.initialization_scripts(),
-        ),
-        native_hook: spec.native_hook(),
-        asset_protocol: spec.asset_protocol(),
-        width: spec.width(),
-        height: spec.height(),
-        resizable: spec.resizable(),
-      })
-    Err(problem) => Err(problem)
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  runtime.webview_plan(
+    spec,
+    initialization_script=linux_initialization_script(
+      spec.native_hook(),
+      spec.initialization_scripts(),
+    ),
+  )
 }
 
 ///|
@@ -523,26 +447,14 @@ fn linux_bundled_asset_resolver(
 fn linux_webview_plan_from_bundled(
   manifest : @bundled.BundledRuntimeManifest,
   webview : @bundled.BundledWebView,
-) -> Result[LinuxWebViewPlan, String] {
-  match manifest.initial_load_url(webview) {
-    Err(problem) => Err(problem)
-    Ok(load_url) =>
-      Ok({
-        label: webview.label(),
-        title: webview.title(),
-        url: webview.url(),
-        load_url,
-        initialization_script: linux_initialization_script(
-          webview.native_hook(),
-          webview.initialization_scripts(),
-        ),
-        native_hook: webview.native_hook(),
-        asset_protocol: manifest.asset_protocol(),
-        width: webview.width(),
-        height: webview.height(),
-        resizable: webview.resizable(),
-      })
-  }
+) -> Result[@runtime.NativeWebViewPlan, String] {
+  manifest.webview_plan(
+    webview,
+    initialization_script=linux_initialization_script(
+      webview.native_hook(),
+      webview.initialization_scripts(),
+    ),
+  )
 }
 
 ///|

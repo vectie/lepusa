@@ -4,6 +4,7 @@ package "vectie/lepusa/runtime/bundled"
 import {
   "moonbitlang/core/debug",
   "vectie/lepusa",
+  "vectie/lepusa/runtime",
 }
 
 // Values
@@ -158,6 +159,7 @@ pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::target(Self) -> String
 pub fn BundledRuntimeManifest::webview_count(Self) -> Int
+pub fn BundledRuntimeManifest::webview_plan(Self, BundledWebView, initialization_script~ : String) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledRuntimeManifest::webviews(Self) -> Result[Array[BundledWebView], String]
 
 pub struct BundledServicePlan {
