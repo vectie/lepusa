@@ -35,7 +35,12 @@ async fn render_dev_async(args : Array[String]) -> CliResult {
   match project_runtime_host(args) {
     Ok(host) =>
       match host.dev_plan() {
-        Ok(dev) => render_dev_plan(dev)
+        Ok(dev) =>
+          if has_flag(args, "--json") {
+            ok(dev.to_json() + "\n")
+          } else {
+            render_dev_plan(dev)
+          }
         Err(problems) => fail(render_problems("Lepusa dev", problems))
       }
     Err(problems) => fail(render_problems("Lepusa dev", problems))
@@ -478,10 +483,13 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "asset-protocol: \{session.asset_protocol()}\n" +
     "routes: \{routes}\n" +
     "registered-routes: \{registered_routes}\n" +
+    "bridge-sync-routes: \{dev.bridge_sync_routes().length()}\n" +
+    "bridge-async-routes: \{dev.bridge_async_routes().length()}\n" +
     "local-services: \{services.services().length()}\n" +
     "service-supervisor: \{services.requires_supervisor()}\n" +
     "service-start-order: \{services.startup_service_names().join(",")}\n" +
     "filesystem-scopes: \{session.file_system_scopes().length()}\n" +
-    "startup-operations: \{dev.startup_operations().length()}\n",
+    "startup-operations: \{dev.startup_operations().length()}\n" +
+    "lifecycle-steps: \{dev.lifecycle_steps().length()}\n",
   )
 }

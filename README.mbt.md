@@ -512,7 +512,9 @@ start scripts.
 
 `lepusa dev` lowers the current project into a runtime development plan:
 resolved WebViews, asset protocol, capability grants, capability-filtered
-routes, runtime session, and startup operations. This is the stable boundary
+routes, runtime session, startup operations, lifecycle steps, and bridge
+scheduling routes. `lepusa dev --json` emits the same plan as a structured
+artifact for native runners and external tooling. This is the stable boundary
 the platform-specific window loops will execute.
 
 `RuntimeHost::runner_plan()` is the platform-neutral native-loop contract:

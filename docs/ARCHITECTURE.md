@@ -653,8 +653,8 @@ lepusa plan
 lepusa manifest
   -> prints the portable native-runner JSON manifest
 
-lepusa dev
-  -> prints the runtime development plan consumed by platform runners
+lepusa dev [--json]
+  -> prints the runtime development plan consumed by platform runners, with structured JSON for tooling
 
 lepusa run <target>
   -> prints a no-window native runner smoke summary from NativeRunnerPlan

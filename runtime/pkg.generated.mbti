@@ -626,13 +626,22 @@ pub fn RuntimeAssetResponse::to_native_protocol_packet(Self) -> Bytes
 pub fn RuntimeAssetResponse::url(Self) -> String
 
 pub struct RuntimeDevPlan {
+  launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
+  lifecycle_steps : Array[RuntimeRunnerStep]
+  bridge_sync_routes : Array[String]
+  bridge_async_routes : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn RuntimeDevPlan::bridge_async_routes(Self) -> Array[String]
+pub fn RuntimeDevPlan::bridge_sync_routes(Self) -> Array[String]
+pub fn RuntimeDevPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
+pub fn RuntimeDevPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
 pub fn RuntimeDevPlan::service_plan(Self) -> RuntimeServicePlan
 pub fn RuntimeDevPlan::session(Self) -> RuntimeSession
 pub fn RuntimeDevPlan::startup_operations(Self) -> Array[RuntimeOperation]
+pub fn RuntimeDevPlan::to_json(Self) -> String
 pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
 
 pub struct RuntimeHost {

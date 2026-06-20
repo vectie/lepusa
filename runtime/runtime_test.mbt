@@ -1299,6 +1299,7 @@ test "runtime host builds dev plan for backend runners" {
     Ok(plan) =>
       match RuntimeHost::new(plan).dev_plan() {
         Ok(dev) => {
+          assert_eq(dev.launch_manifest().webviews().length(), 1)
           assert_eq(dev.webviews().length(), 1)
           assert_eq(dev.webviews()[0].url(), "lepusa://inline/main/index.html")
           assert_eq(
@@ -1307,6 +1308,14 @@ test "runtime host builds dev plan for backend runners" {
           )
           assert_eq(dev.startup_operations().length(), 1)
           assert_true(dev.startup_operations()[0] is RuntimeRunEffect("boot"))
+          assert_eq(dev.lifecycle_steps().length(), 0)
+          assert_eq(dev.bridge_sync_routes().length(), 0)
+          assert_eq(dev.bridge_async_routes().length(), 0)
+          assert_true(dev.to_json().contains("\"kind\":\"runtime-dev-plan\""))
+          assert_true(dev.to_json().contains("\"launchManifest\":{"))
+          assert_true(dev.to_json().contains("\"startupOperations\":[{"))
+          assert_true(dev.to_json().contains("\"lifecycleSteps\":[]"))
+          assert_true(dev.to_json().contains("\"bridgeRoutes\":{"))
           let services = dev.service_plan()
           assert_eq(services.services().length(), 0)
           assert_false(services.requires_supervisor())

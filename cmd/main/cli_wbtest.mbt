@@ -5,6 +5,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa doctor"))
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
+  assert_true(result.output.contains("lepusa dev [--json]"))
   assert_true(result.output.contains("lepusa bridge-task"))
   assert_true(result.output.contains("lepusa bridge-complete"))
   assert_true(result.output.contains("lepusa bridge-loop"))
@@ -370,10 +371,26 @@ async test "generated project config drives dev plan" {
   assert_false(result.output.contains("core.invoke"))
   assert_false(result.output.contains("core.events"))
   assert_true(result.output.contains("registered-routes:"))
+  assert_true(result.output.contains("bridge-sync-routes: 6"))
+  assert_true(result.output.contains("bridge-async-routes: 0"))
   assert_true(result.output.contains("log.write"))
   assert_true(result.output.contains("store.set"))
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("startup-operations: 1"))
+  assert_true(result.output.contains("lifecycle-steps: 1"))
+  let json_result = render_cli_async([
+    "dev",
+    "--json",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"kind\":\"runtime-dev-plan\""))
+  assert_true(json_result.output.contains("\"launchManifest\":{"))
+  assert_true(json_result.output.contains("\"bridgeRoutes\":{"))
+  assert_true(json_result.output.contains("\"sync\":[\"log.write\""))
+  assert_true(json_result.output.contains("\"async\":[]"))
+  assert_true(json_result.output.contains("\"lifecycleSteps\":[{"))
 }
 
 ///|
