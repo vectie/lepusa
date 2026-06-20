@@ -159,9 +159,15 @@ test "runtime cli renders bundled launch-session json" {
     "/app/lepusa/runtime.json", manifest,
   )
   assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"target\":\"linux\""))
+  assert_true(result.output.contains("\"platformName\":\"Linux\""))
+  assert_true(result.output.contains("\"session\":{"))
   assert_true(result.output.contains("\"webviews\""))
   assert_true(result.output.contains("\"execution\""))
   assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"launchCapability\":{"))
+  assert_true(result.output.contains("\"targetCanLaunch\":true"))
+  assert_true(result.output.contains("\"targetLaunchBlocker\":null"))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
   assert_true(result.output.contains("\"bridgeLoop\""))
   assert_true(result.output.contains("\"serviceSupervisor\""))
@@ -200,6 +206,33 @@ test "runtime cli renders bundled launch-session json" {
   assert_true(
     async_bridge.output.contains(
       "\"deliveryType\":\"NativeBridgeLoopDelivery|BundledBridgeLoopDelivery\"",
+    ),
+  )
+  let windows_manifest =
+    #|{
+    #|  "identifier": "dev.vectie.runtime",
+    #|  "productName": "Runtime App",
+    #|  "target": "windows",
+    #|  "runtime": {
+    #|    "assetProtocol": "lepusa",
+    #|    "backend": "headless",
+    #|    "bridgeUrl": "lepusa://runtime/bridge.js",
+    #|    "webviews": [{
+    #|      "label": "main",
+    #|      "title": "Runtime App",
+    #|      "url": "lepusa://rabbita/main/index.html"
+    #|    }]
+    #|  }
+    #|}
+  let windows = render_runtime_launch_session_text(
+    "/app/lepusa/runtime.json", windows_manifest,
+  )
+  assert_eq(windows.exit_code, 0)
+  assert_true(windows.output.contains("\"target\":\"windows\""))
+  assert_true(windows.output.contains("\"targetCanLaunch\":false"))
+  assert_true(
+    windows.output.contains(
+      "\"targetLaunchBlocker\":\"Windows WebView2 creation loop is unavailable\"",
     ),
   )
 }

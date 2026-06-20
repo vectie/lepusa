@@ -351,23 +351,50 @@ fn render_native_launch_session(
     MacOS =>
       match @macos_backend.run(runtime) {
         Ok(result) =>
-          ok(result.plan().launch_session(bridge_mode~).to_json() + "\n")
+          ok(
+            native_launch_readiness(
+              target,
+              result.plan().launch_session(bridge_mode~),
+            ).to_json() +
+            "\n",
+          )
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
     Windows =>
       match @windows_backend.run(runtime) {
-        Ok(result) => ok(result.launch_session(bridge_mode~).to_json() + "\n")
+        Ok(result) =>
+          ok(
+            native_launch_readiness(target, result.launch_session(bridge_mode~)).to_json() +
+            "\n",
+          )
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
     Linux =>
       match @linux_backend.run(runtime) {
-        Ok(result) => ok(result.launch_session(bridge_mode~).to_json() + "\n")
+        Ok(result) =>
+          ok(
+            native_launch_readiness(target, result.launch_session(bridge_mode~)).to_json() +
+            "\n",
+          )
         Err(problems) =>
           fail(render_problems("Lepusa launch session", problems))
       }
   }
+}
+
+///|
+fn native_launch_readiness(
+  target : @lepusa.BundleTarget,
+  session : @runtime.NativeLaunchSession,
+) -> @runtime.NativeLaunchReadiness {
+  @runtime.NativeLaunchReadiness::new(
+    target=target.name(),
+    platform_name=verify_target_display_name(target),
+    session~,
+    capability=native_launch_capability_for_target(target),
+  )
 }
 
 ///|

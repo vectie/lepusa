@@ -153,11 +153,14 @@ backend-provided `globalThis.__lepusaInvoke(request)` hook, and exposes
 namespace helpers for those granted routes. This bridge is framework-neutral and
 can be used from Rabbita, React, Vue, Svelte, or plain JavaScript.
 
-Native launch-session JSON carries bridge scheduler metadata. Sync-only mode is
-the conservative default, while `--async-bridge` marks the session as
-async-capable for platform loops that schedule deferred command tasks and later
-run the generated callback script. The same launch-session payload carries an
-`asyncBridgeExecutor` descriptor naming
+Native launch-session JSON is a target-aware readiness envelope. Its `session`
+field carries bridge scheduler metadata: sync-only mode is the conservative
+default, while `--async-bridge` marks the session as async-capable for platform
+loops that schedule deferred command tasks and later run the generated callback
+script. The envelope also carries `launchCapability`, `targetCanLaunch`, and
+`targetLaunchBlocker`, so tooling can distinguish prepared launch plans from
+platform backends that can actually open them. The same session payload carries
+an `asyncBridgeExecutor` descriptor naming
 `NativeRuntime::bridge_async_dispatch_callback` and the UTF-8 bridge-message to
 JavaScript-callback-script byte contract.
 It also carries a `bridgeLoop` contract naming the shared
@@ -505,8 +508,8 @@ current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
 The platform packages expose `NativeLaunchCapability` so WebView creation and
 async bridge drain/evaluate support are declared in one place and consumed by
-`doctor`, `verify --strict`, launch-session rendering, and open-window launch
-paths.
+`doctor`, `verify --strict`, launch-session readiness rendering, and open-window
+launch paths.
 `lepusa run macos --launch` is the first protocol-complete GUI entry point. The
 Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge

@@ -122,9 +122,15 @@ async test "native plan prints backend bootstrap json" {
 async test "launch session prints source native handoff json" {
   let result = render_cli_async(["launch-session", "linux"])
   assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("\"target\":\"linux\""))
+  assert_true(result.output.contains("\"platformName\":\"Linux\""))
+  assert_true(result.output.contains("\"session\":{"))
   assert_true(result.output.contains("\"webviews\""))
   assert_true(result.output.contains("\"execution\""))
   assert_true(result.output.contains("\"bridgeScheduler\""))
+  assert_true(result.output.contains("\"launchCapability\":{"))
+  assert_true(result.output.contains("\"targetCanLaunch\":true"))
+  assert_true(result.output.contains("\"targetLaunchBlocker\":null"))
   assert_true(result.output.contains("\"asyncBridgeExecutor\""))
   assert_true(result.output.contains("\"bridgeLoop\""))
   assert_true(result.output.contains("\"serviceSupervisor\""))
@@ -161,6 +167,15 @@ async test "launch session prints source native handoff json" {
   assert_true(
     async_bridge.output.contains(
       "\"deliveryType\":\"NativeBridgeLoopDelivery|BundledBridgeLoopDelivery\"",
+    ),
+  )
+  let windows = render_cli_async(["launch-session", "windows"])
+  assert_eq(windows.exit_code, 0)
+  assert_true(windows.output.contains("\"target\":\"windows\""))
+  assert_true(windows.output.contains("\"targetCanLaunch\":false"))
+  assert_true(
+    windows.output.contains(
+      "\"targetLaunchBlocker\":\"Windows WebView2 creation loop is unavailable\"",
     ),
   )
 }

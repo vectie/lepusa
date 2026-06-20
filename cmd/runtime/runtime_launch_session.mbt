@@ -77,7 +77,13 @@ fn render_macos_launch_session(
 ) -> RuntimeCliResult {
   match @macos.run_bundled(manifest) {
     Ok(result) =>
-      runtime_ok(result.plan().launch_session(bridge_mode~).to_json() + "\n")
+      runtime_ok(
+        runtime_launch_readiness(
+          "macos",
+          result.plan().launch_session(bridge_mode~),
+        ).to_json() +
+        "\n",
+      )
     Err(problems) =>
       runtime_fail(
         render_runtime_run_problems("Lepusa runtime launch-session", problems),
@@ -93,7 +99,10 @@ fn render_linux_launch_session(
   match @linux.run_bundled(manifest) {
     Ok(result) =>
       match result.launch_session(bridge_mode~) {
-        Ok(session) => runtime_ok(session.to_json() + "\n")
+        Ok(session) =>
+          runtime_ok(
+            runtime_launch_readiness("linux", session).to_json() + "\n",
+          )
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
       }
@@ -112,7 +121,10 @@ fn render_windows_launch_session(
   match @windows.run_bundled(manifest) {
     Ok(result) =>
       match result.launch_session(bridge_mode~) {
-        Ok(session) => runtime_ok(session.to_json() + "\n")
+        Ok(session) =>
+          runtime_ok(
+            runtime_launch_readiness("windows", session).to_json() + "\n",
+          )
         Err(problem) =>
           runtime_fail("Lepusa runtime launch-session\n[fail] \{problem}\n")
       }
@@ -120,5 +132,45 @@ fn render_windows_launch_session(
       runtime_fail(
         render_runtime_run_problems("Lepusa runtime launch-session", problems),
       )
+  }
+}
+
+///|
+fn runtime_launch_readiness(
+  target : String,
+  session : @runtime_core.NativeLaunchSession,
+) -> @runtime_core.NativeLaunchReadiness {
+  @runtime_core.NativeLaunchReadiness::new(
+    target~,
+    platform_name=runtime_target_display_name(target),
+    session~,
+    capability=runtime_launch_capability_for_target(target),
+  )
+}
+
+///|
+fn runtime_launch_capability_for_target(
+  target : String,
+) -> @runtime_core.NativeLaunchCapability {
+  match target {
+    "macos" => @macos.launch_capability()
+    "linux" => @linux.launch_capability()
+    "windows" => @windows.launch_capability()
+    _ =>
+      @runtime_core.NativeLaunchCapability::new(
+        webview_creation=false,
+        async_bridge_drain=false,
+        webview_creation_message="unknown native launch target: \{target}",
+      )
+  }
+}
+
+///|
+fn runtime_target_display_name(target : String) -> String {
+  match target {
+    "macos" => "macOS"
+    "linux" => "Linux"
+    "windows" => "Windows"
+    _ => target
   }
 }

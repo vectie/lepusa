@@ -196,10 +196,13 @@ descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.
 
-`lepusa launch-session` and `lepusa-runtime launch-session` emit native-loop
-handoff JSON for WebViews, protocol assets, lifecycle actions, service
-supervision, bridge scheduling, the async bridge executor descriptor, and the
-`bridgeLoop` adapter, delivery, and drain contract.
+`lepusa launch-session` and `lepusa-runtime launch-session` emit a target-aware
+native-loop readiness envelope. Its `session` field carries the WebViews,
+protocol assets, lifecycle actions, service supervision, bridge scheduling, the
+async bridge executor descriptor, and the `bridgeLoop` adapter, delivery, and
+drain contract; its `launchCapability`, `targetCanLaunch`, and
+`targetLaunchBlocker` fields report whether the selected platform backend can
+actually open that session.
 Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
 the executor and bridge-loop contract as available for platform loops that wire
 deferred command completion through the queue-backed adapter APIs; it does not
@@ -426,9 +429,10 @@ operations that a platform runner needs. The bootstrap also includes
 from registered bridge routes.
 
 `lepusa launch-session [macos|windows|linux]` prepares the selected backend and
-emits the same canonical `NativeLaunchSession` shape used by packaged runtime
-manifests: concrete WebView launch plans, executable operations, bridge
-scheduler policy, async bridge executor metadata, and service supervisor plan.
+emits a readiness envelope around the same canonical `NativeLaunchSession`
+shape used by packaged runtime manifests: concrete WebView launch plans,
+executable operations, bridge scheduler policy, async bridge executor metadata,
+service supervisor plan, and target launch capability.
 
 `lepusa run [macos|windows|linux] --project lepusa.json` lowers the same
 `NativeRunnerPlan` and prints a compact runner smoke summary: selected backend,
@@ -636,10 +640,11 @@ for platform loops: manifest path, bundle root, app metadata, native backend,
 WebView engine, WebView specs, service supervisor plan, startup operations,
 lifecycle operations, bridge routes, bridge scheduler policy, and the canonical
 runtime object that a backend consumes.
-`lepusa-runtime launch-session --manifest <runtime.json>` emits the narrower
-native host handoff: prepared WebView launch plans, executable startup and
-lifecycle operations, bridge scheduler policy, and service supervisor plan in a
-single `launchSession` object.
+`lepusa-runtime launch-session --manifest <runtime.json>` emits the packaged
+native host readiness envelope: prepared WebView launch plans, executable
+startup and lifecycle operations, bridge scheduler policy, and service
+supervisor plan under `session`, plus target launch capability and blocker
+fields for packaged native loops.
 `lepusa-runtime --manifest <runtime.json>` remains a manifest summary probe and
 reports the bundled service supervisor requirement plus sidecar start order.
 `lepusa-runtime asset <url> --manifest <runtime.json>` resolves the bundled
@@ -687,8 +692,9 @@ Bundled native run plans expose startup and lifecycle event scripts plus window
 navigations as typed runtime values, so packaged app loops can consume the same
 native-operation boundary as source-project runs.
 Source and bundled native run plans also serialize to compact handoff artifacts
-that carry native metadata plus the canonical launch session, giving future host
-adapters a stable JSON boundary without depending on bootstrap-only fields.
+that carry native metadata plus the canonical launch session, while the
+launch-session CLIs wrap that session with target readiness metadata for tools
+that need to distinguish prepared plans from launchable platform backends.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
