@@ -41,6 +41,20 @@ pub fn BundledBridgeDispatch::response_hook(Self) -> String
 pub fn BundledBridgeDispatch::response_json(Self) -> String
 pub fn BundledBridgeDispatch::window_label(Self) -> String
 
+pub struct BundledBridgeDispatchTask {
+  message : BundledBridgeMessage
+  route : String
+  mode : @runtime.NativeBridgeDispatchMode
+} derive(Eq, @debug.Debug)
+pub async fn BundledBridgeDispatchTask::dispatch(Self, BundledRuntime) -> BundledBridgeDispatch
+pub fn BundledBridgeDispatchTask::message(Self) -> BundledBridgeMessage
+pub fn BundledBridgeDispatchTask::mode(Self) -> @runtime.NativeBridgeDispatchMode
+pub fn BundledBridgeDispatchTask::requires_async_dispatch(Self) -> Bool
+pub fn BundledBridgeDispatchTask::response_hook(Self) -> String
+pub fn BundledBridgeDispatchTask::route(Self) -> String
+pub fn BundledBridgeDispatchTask::to_json(Self) -> String
+pub fn BundledBridgeDispatchTask::window_label(Self) -> String
+
 pub struct BundledBridgeMessage {
   window_label : String
   response_hook : String
@@ -154,6 +168,7 @@ pub struct BundledRuntime {
   manifest : BundledRuntimeManifest
   registry : @lepusa.CommandRegistry
 }
+pub fn BundledRuntime::bridge_dispatch_task(Self, String, window_label? : String) -> Result[BundledBridgeDispatchTask, Array[String]]
 pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
@@ -176,6 +191,7 @@ pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
 pub fn BundledRuntimeManifest::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
+pub fn BundledRuntimeManifest::bridge_dispatch_task(Self, String, window_label? : String) -> Result[BundledBridgeDispatchTask, Array[String]]
 pub fn BundledRuntimeManifest::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub fn BundledRuntimeManifest::bridge_scheduler(Self, mode? : @runtime.NativeBridgeSchedulerMode) -> @runtime.NativeBridgeScheduler
 pub fn BundledRuntimeManifest::bridge_url(Self) -> String

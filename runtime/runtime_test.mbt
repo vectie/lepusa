@@ -1607,6 +1607,25 @@ async test "native runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bridge prepare failure")
       }
+      match runtime.bridge_dispatch_task(message) {
+        Ok(task) => {
+          assert_eq(task.window_label(), "main")
+          assert_eq(task.response_hook(), "__lepusaInvokeResponse")
+          assert_eq(task.route(), "core.invoke")
+          assert_true(task.mode() == NativeBridgeDispatchAsync)
+          assert_true(task.requires_async_dispatch())
+          assert_true(task.to_json().contains("\"mode\":\"async\""))
+          assert_true(task.to_json().contains("\"route\":\"core.invoke\""))
+          let dispatch = task.dispatch(runtime)
+          assert_true(dispatch.response_json().contains("\"id\":\"9\""))
+          assert_true(
+            dispatch
+            .response_json()
+            .contains("\"payload\":\"{\\\"async\\\":true}\""),
+          )
+        }
+        Err(_) => abort("unexpected bridge task failure")
+      }
       match runtime.dispatch_bridge_message_sync(message) {
         Ok(dispatch) => {
           assert_true(dispatch.response_json().contains("\"id\":\"9\""))

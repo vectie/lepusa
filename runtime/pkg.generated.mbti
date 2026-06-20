@@ -54,6 +54,26 @@ pub fn NativeBridgeDispatch::response_hook(Self) -> String
 pub fn NativeBridgeDispatch::response_json(Self) -> String
 pub fn NativeBridgeDispatch::window_label(Self) -> String
 
+pub(all) enum NativeBridgeDispatchMode {
+  NativeBridgeDispatchSync
+  NativeBridgeDispatchAsync
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeDispatchMode::name(Self) -> String
+
+pub struct NativeBridgeDispatchTask {
+  message : NativeBridgeMessage
+  route : String
+  mode : NativeBridgeDispatchMode
+} derive(Eq, @debug.Debug)
+pub async fn NativeBridgeDispatchTask::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
+pub fn NativeBridgeDispatchTask::message(Self) -> NativeBridgeMessage
+pub fn NativeBridgeDispatchTask::mode(Self) -> NativeBridgeDispatchMode
+pub fn NativeBridgeDispatchTask::requires_async_dispatch(Self) -> Bool
+pub fn NativeBridgeDispatchTask::response_hook(Self) -> String
+pub fn NativeBridgeDispatchTask::route(Self) -> String
+pub fn NativeBridgeDispatchTask::to_json(Self) -> String
+pub fn NativeBridgeDispatchTask::window_label(Self) -> String
+
 pub struct NativeBridgeMessage {
   window_label : String
   response_hook : String
@@ -264,6 +284,7 @@ pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeRuntime::bridge_dispatch_task(Self, String, window_label? : String) -> Result[NativeBridgeDispatchTask, Array[String]]
 pub fn NativeRuntime::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]
 pub async fn NativeRuntime::dispatch_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]
 pub fn NativeRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[NativeBridgeDispatch, Array[String]]

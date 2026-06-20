@@ -15,6 +15,13 @@ pub struct BundledBridgeDispatch {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeDispatchTask {
+  message : BundledBridgeMessage
+  route : String
+  mode : @runtime.NativeBridgeDispatchMode
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -38,6 +45,39 @@ pub fn BundledRuntime::prepare_bridge_message(
   window_label? : String = "",
 ) -> Result[BundledBridgeMessage, Array[String]] {
   self.manifest.prepare_bridge_message(message, window_label~)
+}
+
+///|
+pub fn BundledRuntimeManifest::bridge_dispatch_task(
+  self : BundledRuntimeManifest,
+  message : String,
+  window_label? : String = "",
+) -> Result[BundledBridgeDispatchTask, Array[String]] {
+  BundledRuntime::new(self).bridge_dispatch_task(message, window_label~)
+}
+
+///|
+pub fn BundledRuntime::bridge_dispatch_task(
+  self : BundledRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[BundledBridgeDispatchTask, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) =>
+      match @runtime.decode_invoke_request_json(message) {
+        Err(problem) => Err([problem])
+        Ok(request) => {
+          let route = request.route()
+          let mode = if self.manifest.registered_async_routes().contains(route) {
+            @runtime.NativeBridgeDispatchAsync
+          } else {
+            NativeBridgeDispatchSync
+          }
+          Ok({ message: prepared, route, mode })
+        }
+      }
+  }
 }
 
 ///|
@@ -207,6 +247,73 @@ pub fn BundledBridgeMessage::response_hook(
 ///|
 pub fn BundledBridgeMessage::message(self : BundledBridgeMessage) -> String {
   self.message
+}
+
+///|
+pub fn BundledBridgeDispatchTask::message(
+  self : BundledBridgeDispatchTask,
+) -> BundledBridgeMessage {
+  self.message
+}
+
+///|
+pub fn BundledBridgeDispatchTask::window_label(
+  self : BundledBridgeDispatchTask,
+) -> String {
+  self.message.window_label()
+}
+
+///|
+pub fn BundledBridgeDispatchTask::response_hook(
+  self : BundledBridgeDispatchTask,
+) -> String {
+  self.message.response_hook()
+}
+
+///|
+pub fn BundledBridgeDispatchTask::route(
+  self : BundledBridgeDispatchTask,
+) -> String {
+  self.route
+}
+
+///|
+pub fn BundledBridgeDispatchTask::mode(
+  self : BundledBridgeDispatchTask,
+) -> @runtime.NativeBridgeDispatchMode {
+  self.mode
+}
+
+///|
+pub fn BundledBridgeDispatchTask::requires_async_dispatch(
+  self : BundledBridgeDispatchTask,
+) -> Bool {
+  self.mode == NativeBridgeDispatchAsync
+}
+
+///|
+pub async fn BundledBridgeDispatchTask::dispatch(
+  self : BundledBridgeDispatchTask,
+  runtime : BundledRuntime,
+) -> BundledBridgeDispatch {
+  match self.mode {
+    NativeBridgeDispatchSync => self.message.dispatch_sync(runtime)
+    NativeBridgeDispatchAsync => self.message.dispatch(runtime)
+  }
+}
+
+///|
+pub fn BundledBridgeDispatchTask::to_json(
+  self : BundledBridgeDispatchTask,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label().json_string()},",
+    "\"responseHook\":\{self.response_hook().json_string()},",
+    "\"route\":\{self.route.json_string()},",
+    "\"mode\":\{self.mode.name().json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|

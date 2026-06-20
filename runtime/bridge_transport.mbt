@@ -15,6 +15,19 @@ pub struct NativeBridgeDispatch {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum NativeBridgeDispatchMode {
+  NativeBridgeDispatchSync
+  NativeBridgeDispatchAsync
+} derive(Debug, Eq)
+
+///|
+pub struct NativeBridgeDispatchTask {
+  message : NativeBridgeMessage
+  route : String
+  mode : NativeBridgeDispatchMode
+} derive(Debug, Eq)
+
+///|
 pub fn NativeRuntime::prepare_bridge_message(
   self : NativeRuntime,
   message : String,
@@ -28,6 +41,30 @@ pub fn NativeRuntime::prepare_bridge_message(
     Ok((window_label, response_hook)) =>
       Ok({ window_label, response_hook, message })
     Err(problem) => Err([problem])
+  }
+}
+
+///|
+pub fn NativeRuntime::bridge_dispatch_task(
+  self : NativeRuntime,
+  message : String,
+  window_label? : String = "",
+) -> Result[NativeBridgeDispatchTask, Array[String]] {
+  match self.prepare_bridge_message(message, window_label~) {
+    Err(problems) => Err(problems)
+    Ok(prepared) =>
+      match decode_invoke_request_json(message) {
+        Err(problem) => Err([problem])
+        Ok(request) => {
+          let route = request.route()
+          let mode = if self.host.async_command_routes().contains(route) {
+            NativeBridgeDispatchAsync
+          } else {
+            NativeBridgeDispatchSync
+          }
+          Ok({ message: prepared, route, mode })
+        }
+      }
   }
 }
 
@@ -136,6 +173,83 @@ pub fn NativeBridgeMessage::response_hook(self : NativeBridgeMessage) -> String 
 ///|
 pub fn NativeBridgeMessage::message(self : NativeBridgeMessage) -> String {
   self.message
+}
+
+///|
+pub fn NativeBridgeDispatchMode::name(
+  self : NativeBridgeDispatchMode,
+) -> String {
+  match self {
+    NativeBridgeDispatchSync => "sync"
+    NativeBridgeDispatchAsync => "async"
+  }
+}
+
+///|
+pub fn NativeBridgeDispatchTask::message(
+  self : NativeBridgeDispatchTask,
+) -> NativeBridgeMessage {
+  self.message
+}
+
+///|
+pub fn NativeBridgeDispatchTask::window_label(
+  self : NativeBridgeDispatchTask,
+) -> String {
+  self.message.window_label()
+}
+
+///|
+pub fn NativeBridgeDispatchTask::response_hook(
+  self : NativeBridgeDispatchTask,
+) -> String {
+  self.message.response_hook()
+}
+
+///|
+pub fn NativeBridgeDispatchTask::route(
+  self : NativeBridgeDispatchTask,
+) -> String {
+  self.route
+}
+
+///|
+pub fn NativeBridgeDispatchTask::mode(
+  self : NativeBridgeDispatchTask,
+) -> NativeBridgeDispatchMode {
+  self.mode
+}
+
+///|
+pub fn NativeBridgeDispatchTask::requires_async_dispatch(
+  self : NativeBridgeDispatchTask,
+) -> Bool {
+  self.mode == NativeBridgeDispatchAsync
+}
+
+///|
+pub async fn NativeBridgeDispatchTask::dispatch(
+  self : NativeBridgeDispatchTask,
+  runtime : NativeRuntime,
+) -> NativeBridgeDispatch {
+  match self.mode {
+    NativeBridgeDispatchSync => self.message.dispatch_sync(runtime)
+    NativeBridgeDispatchAsync => self.message.dispatch(runtime)
+  }
+}
+
+///|
+pub fn NativeBridgeDispatchTask::to_json(
+  self : NativeBridgeDispatchTask,
+) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label().json_string()},",
+    "\"responseHook\":\{self.response_hook().json_string()},",
+    "\"route\":\{self.route.json_string()},",
+    "\"mode\":\{self.mode.name().json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|

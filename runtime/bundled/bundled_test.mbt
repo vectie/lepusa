@@ -666,6 +666,19 @@ async test "bundled runtime owns bridge message transport" {
       }
       let runtime = BundledRuntime::new(manifest)
       let sync_message = "{\"id\":\"log\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
+      match runtime.bridge_dispatch_task(sync_message) {
+        Ok(task) => {
+          assert_eq(task.window_label(), "main")
+          assert_eq(task.response_hook(), "__lepusaInvokeResponse")
+          assert_eq(task.route(), "log.write")
+          assert_true(task.mode() == NativeBridgeDispatchSync)
+          assert_false(task.requires_async_dispatch())
+          assert_true(task.to_json().contains("\"mode\":\"sync\""))
+          let dispatch = task.dispatch(runtime)
+          assert_true(dispatch.response_json().contains("\"id\":\"log\""))
+        }
+        Err(_) => abort("unexpected bundled sync bridge task failure")
+      }
       match runtime.dispatch_bridge_message_sync(sync_message) {
         Ok(dispatch) => {
           assert_eq(dispatch.window_label(), "main")
@@ -688,6 +701,17 @@ async test "bundled runtime owns bridge message transport" {
         sync_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
       )
       assert_true(sync_script.contains("\"id\":\"log\""))
+      let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
+      match runtime.bridge_dispatch_task(async_message) {
+        Ok(task) => {
+          assert_eq(task.route(), "fs.writeText")
+          assert_true(task.mode() == NativeBridgeDispatchAsync)
+          assert_true(task.requires_async_dispatch())
+          assert_true(task.to_json().contains("\"mode\":\"async\""))
+          assert_true(task.to_json().contains("\"route\":\"fs.writeText\""))
+        }
+        Err(_) => abort("unexpected bundled async bridge task failure")
+      }
       let set_message = "{\"id\":\"set\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"set\",\"payload\":\"{\\\"key\\\":\\\"theme\\\",\\\"value\\\":\\\"dark\\\"}\"}"
       let get_message = "{\"id\":\"get\",\"window_label\":\"main\",\"plugin\":\"store\",\"command\":\"get\",\"payload\":\"{\\\"key\\\":\\\"theme\\\"}\"}"
       let set_script = @utf8.decode(

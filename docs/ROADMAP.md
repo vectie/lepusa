@@ -63,6 +63,8 @@
   expose sync versus async bridge route metadata; runtime-owned bridge message
   preparation separates native capture from sync/async dispatch and shares hook
   bootstrap plus callback script generation across macOS, Linux, and Windows;
+  source and bundled runtime bridge tasks now expose route-level sync/async
+  scheduling metadata for backend event loops;
   bundled runtime bridge transport now preserves packaged plugin registry state
   across repeated bridge calls; open-window macOS launches now report
   unsupported when async routes require native scheduling; Linux now has a

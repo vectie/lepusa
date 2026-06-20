@@ -386,6 +386,11 @@ runtime plan, checks capabilities through the command registry, and returns the
 JSON response shape expected by `window.lepusa`.
 `RuntimeHost::dispatch_json_async(input)` is the native loop path for async
 plugin handlers; sync handlers still run through the same permission checks.
+`NativeRuntime::bridge_dispatch_task(message)` wraps the same bridge request as
+a target-window response task with route metadata and a sync/async mode, so
+native loops can immediately answer sync commands or schedule async commands
+and later evaluate the generated response script. Bundled manifests expose the
+same contract through `BundledRuntime::bridge_dispatch_task(message)`.
 
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
@@ -517,11 +522,12 @@ scheduler requirement until a backend event loop can dispatch them without
 blocking the WebView callback. The same `bridgeScheduler` field appears in
 source and bundled bootstrap JSON so platform loops and CLI diagnostics read
 one launch policy.
-`NativeRuntime.prepare_bridge_message` and `dispatch_bridge_message` own the
-MoonBit side of that path by resolving the target window, response hook,
-sync/async dispatch, and response-callback script. macOS, Linux, and Windows
-share the same runtime hook-bootstrap and response-script helpers instead of
-duplicating bridge callback semantics in each backend.
+`NativeRuntime.prepare_bridge_message`, `bridge_dispatch_task`, and
+`dispatch_bridge_message` own the MoonBit side of that path by resolving the
+target window, response hook, route scheduling mode, sync/async dispatch, and
+response-callback script. macOS, Linux, and Windows share the same runtime
+hook-bootstrap and response-script helpers instead of duplicating bridge
+callback semantics in each backend.
 The same runner registers a `WKURLSchemeHandler` for the Lepusa asset protocol.
 MoonBit still owns asset resolution; the Objective-C stub only turns the
 runtime asset packet into WebKit response/data/finish calls.

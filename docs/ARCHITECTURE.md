@@ -426,17 +426,22 @@ either in-memory content or a file path; Objective-C only adapts that packet to
 WebKit response calls.
 `NativeRuntime::prepare_bridge_message(message)` is the MoonBit-owned
 capture boundary shared by platform packages: it resolves the target WebView
-and response hook without executing the command. The prepared message can then
-dispatch through `NativeRuntime.dispatch_bridge_message_sync` or
-`NativeRuntime.dispatch_bridge_message` and return the JavaScript source that calls
-the matching response hook in the page. macOS, Linux, and Windows use the same
-runtime WebKit/WebView2 hook-bootstrap helpers and response-script helper, so
-platform code does not duplicate callback semantics.
+and response hook without executing the command.
+`NativeRuntime::bridge_dispatch_task(message)` adds the decoded route and
+sync/async scheduling mode to that prepared message, so platform loops can
+answer sync routes inline or move async routes onto their event loop before
+evaluating the generated response script. The prepared message can also dispatch
+through `NativeRuntime.dispatch_bridge_message_sync` or
+`NativeRuntime.dispatch_bridge_message` and return the JavaScript source that
+calls the matching response hook in the page. macOS, Linux, and Windows use the
+same runtime WebKit/WebView2 hook-bootstrap helpers and response-script helper,
+so platform code does not duplicate callback semantics.
 `@lepusa/runtime/bundled` exposes the matching `BundledRuntime` bridge
 transport for packaged `lepusa/runtime.json` launches, preserving official
-plugin state across repeated bridge calls. Scheduling that prepared message from
-the native message handler onto the runtime event loop is the remaining native
-integration step for async commands. `MacOSOpenWindow` reports the shared
+plugin state across repeated bridge calls and the same dispatch task contract
+for packaged manifests. Wiring that dispatch task from the native message
+handler onto each backend event loop is the remaining native integration step
+for async commands. `MacOSOpenWindow` reports the shared
 `RunUnsupported` status when the plan contains async command routes, so the
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
