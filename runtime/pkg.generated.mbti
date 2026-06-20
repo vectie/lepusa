@@ -148,6 +148,18 @@ pub(all) enum NativeBridgeSchedulerMode {
   NativeBridgeAsyncCapable
 } derive(Eq, @debug.Debug)
 
+pub struct NativeBridgeWorkQueue {
+  tasks : Array[NativeBridgeDispatchTask]
+} derive(Eq, @debug.Debug)
+pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
+pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
+pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]
+pub fn NativeBridgeWorkQueue::is_empty(Self) -> Bool
+pub fn NativeBridgeWorkQueue::new() -> Self
+pub fn NativeBridgeWorkQueue::pending_count(Self) -> Int
+pub fn NativeBridgeWorkQueue::tasks(Self) -> Array[NativeBridgeDispatchTask]
+pub fn NativeBridgeWorkQueue::to_json(Self) -> String
+
 pub struct NativeEvaluationScript {
   window_label : String
   script : String

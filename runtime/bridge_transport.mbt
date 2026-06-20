@@ -40,6 +40,11 @@ pub struct NativeBridgeCompletion {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeWorkQueue {
+  tasks : Array[NativeBridgeDispatchTask]
+} derive(Debug, Eq)
+
+///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
@@ -553,6 +558,79 @@ pub fn NativeBridgeCompletion::to_json(self : NativeBridgeCompletion) -> String 
     "\"task\":\{self.task.to_json()},",
     "\"dispatch\":\{self.dispatch.to_json()},",
     "\"evaluationScript\":\{self.evaluation_script().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeBridgeWorkQueue::new() -> NativeBridgeWorkQueue {
+  { tasks: [] }
+}
+
+///|
+pub fn NativeBridgeWorkQueue::pending_count(
+  self : NativeBridgeWorkQueue,
+) -> Int {
+  self.tasks.length()
+}
+
+///|
+pub fn NativeBridgeWorkQueue::is_empty(self : NativeBridgeWorkQueue) -> Bool {
+  self.tasks.is_empty()
+}
+
+///|
+pub fn NativeBridgeWorkQueue::tasks(
+  self : NativeBridgeWorkQueue,
+) -> Array[NativeBridgeDispatchTask] {
+  self.tasks.copy()
+}
+
+///|
+pub fn NativeBridgeWorkQueue::enqueue_task(
+  self : NativeBridgeWorkQueue,
+  task : NativeBridgeDispatchTask,
+) -> Result[Int, String] {
+  if task.requires_async_dispatch() {
+    self.tasks.push(task)
+    Ok(self.pending_count())
+  } else {
+    Err("native bridge queue only accepts async dispatch tasks")
+  }
+}
+
+///|
+pub fn NativeBridgeWorkQueue::enqueue_handoff(
+  self : NativeBridgeWorkQueue,
+  handoff : NativeBridgeHandoff,
+) -> Result[Int, String] {
+  if handoff.requires_async_dispatch() {
+    self.enqueue_task(handoff.task())
+  } else {
+    Err("native bridge queue only accepts deferred async handoffs")
+  }
+}
+
+///|
+pub async fn NativeBridgeWorkQueue::drain(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+) -> Array[NativeBridgeCompletion] {
+  let tasks = self.tasks.copy()
+  self.tasks.clear()
+  let completions : Array[NativeBridgeCompletion] = []
+  for task in tasks {
+    completions.push(task.complete(runtime))
+  }
+  completions
+}
+
+///|
+pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
+  [
+    "{",
+    "\"pendingCount\":\{self.pending_count()},",
+    "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
 }

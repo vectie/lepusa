@@ -160,6 +160,9 @@ platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a
 `NativeBridgeCompletion` containing the original task metadata, response JSON,
 and callback script to evaluate in the target WebView.
+For loops that need explicit scheduling state, `NativeBridgeWorkQueue` stores
+deferred async tasks in FIFO order and drains them into completion envelopes.
+`BundledBridgeWorkQueue` mirrors the same contract for packaged runtimes.
 
 Command rules:
 

@@ -1685,6 +1685,24 @@ async test "native runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+          let queue = NativeBridgeWorkQueue::new()
+          assert_true(queue.is_empty())
+          match queue.enqueue_handoff(handoff) {
+            Ok(count) => assert_eq(count, 1)
+            Err(_) => abort("unexpected bridge queue enqueue failure")
+          }
+          assert_eq(queue.pending_count(), 1)
+          assert_true(queue.to_json().contains("\"pendingCount\":1"))
+          assert_true(queue.to_json().contains("\"route\":\"core.invoke\""))
+          let completions = queue.drain(runtime)
+          assert_eq(completions.length(), 1)
+          assert_true(queue.is_empty())
+          assert_eq(queue.drain(runtime).length(), 0)
+          assert_true(
+            completions[0]
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
           match handoff.complete_deferred(runtime) {
             Ok(completion) => {
               assert_eq(completion.task().route(), "core.invoke")
@@ -1747,6 +1765,17 @@ async test "native runtime owns bridge message transport" {
             Ok(_) => abort("expected immediate handoff completion failure")
           }
         Err(_) => abort("unexpected immediate bridge handoff failure")
+      }
+      match runtime.bridge_handoff(sync_handoff_message) {
+        Ok(handoff) =>
+          match NativeBridgeWorkQueue::new().enqueue_handoff(handoff) {
+            Err(problem) =>
+              assert_eq(
+                problem, "native bridge queue only accepts deferred async handoffs",
+              )
+            Ok(_) => abort("expected immediate handoff queue failure")
+          }
+        Err(_) => abort("unexpected immediate bridge queue setup failure")
       }
       let async_script = @utf8.decode(
         runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),

@@ -90,6 +90,18 @@ pub fn BundledBridgeMessage::message(Self) -> String
 pub fn BundledBridgeMessage::response_hook(Self) -> String
 pub fn BundledBridgeMessage::window_label(Self) -> String
 
+pub struct BundledBridgeWorkQueue {
+  tasks : Array[BundledBridgeDispatchTask]
+} derive(Eq, @debug.Debug)
+pub async fn BundledBridgeWorkQueue::drain(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
+pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int, String]
+pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int, String]
+pub fn BundledBridgeWorkQueue::is_empty(Self) -> Bool
+pub fn BundledBridgeWorkQueue::new() -> Self
+pub fn BundledBridgeWorkQueue::pending_count(Self) -> Int
+pub fn BundledBridgeWorkQueue::tasks(Self) -> Array[BundledBridgeDispatchTask]
+pub fn BundledBridgeWorkQueue::to_json(Self) -> String
+
 pub struct BundledLifecycleEvent {
   kind : String
   label : String

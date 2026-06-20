@@ -34,6 +34,11 @@ pub struct BundledBridgeCompletion {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeWorkQueue {
+  tasks : Array[BundledBridgeDispatchTask]
+} derive(Debug, Eq)
+
+///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
@@ -493,6 +498,79 @@ pub fn BundledBridgeCompletion::to_json(
     "\"task\":\{self.task.to_json()},",
     "\"dispatch\":\{self.dispatch.to_json()},",
     "\"evaluationScript\":\{self.evaluation_script().json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn BundledBridgeWorkQueue::new() -> BundledBridgeWorkQueue {
+  { tasks: [] }
+}
+
+///|
+pub fn BundledBridgeWorkQueue::pending_count(
+  self : BundledBridgeWorkQueue,
+) -> Int {
+  self.tasks.length()
+}
+
+///|
+pub fn BundledBridgeWorkQueue::is_empty(self : BundledBridgeWorkQueue) -> Bool {
+  self.tasks.is_empty()
+}
+
+///|
+pub fn BundledBridgeWorkQueue::tasks(
+  self : BundledBridgeWorkQueue,
+) -> Array[BundledBridgeDispatchTask] {
+  self.tasks.copy()
+}
+
+///|
+pub fn BundledBridgeWorkQueue::enqueue_task(
+  self : BundledBridgeWorkQueue,
+  task : BundledBridgeDispatchTask,
+) -> Result[Int, String] {
+  if task.requires_async_dispatch() {
+    self.tasks.push(task)
+    Ok(self.pending_count())
+  } else {
+    Err("bundled bridge queue only accepts async dispatch tasks")
+  }
+}
+
+///|
+pub fn BundledBridgeWorkQueue::enqueue_handoff(
+  self : BundledBridgeWorkQueue,
+  handoff : BundledBridgeHandoff,
+) -> Result[Int, String] {
+  if handoff.requires_async_dispatch() {
+    self.enqueue_task(handoff.task())
+  } else {
+    Err("bundled bridge queue only accepts deferred async handoffs")
+  }
+}
+
+///|
+pub async fn BundledBridgeWorkQueue::drain(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+) -> Array[BundledBridgeCompletion] {
+  let tasks = self.tasks.copy()
+  self.tasks.clear()
+  let completions : Array[BundledBridgeCompletion] = []
+  for task in tasks {
+    completions.push(task.complete(runtime))
+  }
+  completions
+}
+
+///|
+pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String {
+  [
+    "{",
+    "\"pendingCount\":\{self.pending_count()},",
+    "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
 }

@@ -737,6 +737,17 @@ async test "bundled runtime owns bridge message transport" {
           }
         Err(_) => abort("unexpected bundled immediate bridge handoff failure")
       }
+      match runtime.bridge_handoff(sync_message) {
+        Ok(handoff) =>
+          match BundledBridgeWorkQueue::new().enqueue_handoff(handoff) {
+            Err(problem) =>
+              assert_eq(
+                problem, "bundled bridge queue only accepts deferred async handoffs",
+              )
+            Ok(_) => abort("expected bundled immediate queue failure")
+          }
+        Err(_) => abort("unexpected bundled immediate queue setup failure")
+      }
       let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
       match runtime.bridge_dispatch_task(async_message) {
         Ok(task) => {
@@ -755,6 +766,24 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
+          let queue = BundledBridgeWorkQueue::new()
+          assert_true(queue.is_empty())
+          match queue.enqueue_handoff(handoff) {
+            Ok(count) => assert_eq(count, 1)
+            Err(_) => abort("unexpected bundled bridge queue enqueue failure")
+          }
+          assert_eq(queue.pending_count(), 1)
+          assert_true(queue.to_json().contains("\"pendingCount\":1"))
+          assert_true(queue.to_json().contains("\"route\":\"fs.writeText\""))
+          let completions = queue.drain(runtime)
+          assert_eq(completions.length(), 1)
+          assert_true(queue.is_empty())
+          assert_eq(queue.drain(runtime).length(), 0)
+          assert_true(
+            completions[0]
+            .evaluation_script()
+            .contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
           match handoff.complete_deferred(runtime) {
             Ok(completion) => {
               assert_eq(completion.task().route(), "fs.writeText")
