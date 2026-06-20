@@ -141,6 +141,7 @@ moon run cmd/main --target native -- bridge-handoff main log.write '{"message":"
 moon run cmd/main --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-dispatch main log.write '{"message":"ready"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bridge-loop main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
+moon run cmd/main --target native -- bridge-drain main fs.readText '{"scope":"data","path":"note.txt"}' --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog
 moon run cmd/main --target native -- bundle-plan macos
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
@@ -156,6 +157,7 @@ moon run cmd/runtime --target native -- bridge-handoff main log.write '{"message
 moon run cmd/runtime --target native -- bridge-complete main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-dispatch main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- bridge-loop main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
+moon run cmd/runtime --target native -- bridge-drain main fs.readText '{"scope":"data","path":"note.txt"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- invoke main log.write '{"message":"ready"}' --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/main --target native -- build macos _build/lepusa-build --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
@@ -467,6 +469,9 @@ starting a WebView.
 feeds one source-project WebView message through the bridge-loop adapter and
 prints the immediate script, drained async completions, and evaluation scripts
 plus the native executable evaluation plan a platform loop should run.
+`lepusa bridge-drain <window> <plugin.command> [payload] --project lepusa.json`
+simulates the split native loop: the message-handler handoff callback runs
+first, then pending async work drains into a target-window delivery envelope.
 `lepusa invoke <window> <plugin.command> [payload] --project lepusa.json`
 executes the same host dispatch path from the CLI. It is a native smoke-test
 tool for project configuration, official plugin registration, and capability
@@ -590,6 +595,9 @@ callback script that a native event loop evaluates back into the target WebView.
 feeds one packaged WebView message through the bundled bridge-loop adapter and
 returns the immediate script, drained async completions, and evaluation scripts
 plus the native executable evaluation plan a platform loop should evaluate.
+`lepusa-runtime bridge-drain <window> <plugin.command> [payload] --manifest <runtime.json>`
+simulates the packaged split native loop: handoff callback first, then
+target-window drain delivery for pending async work.
 `lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <runtime.json>`
 executes a packaged bridge command against the manifest's registered official
 native handlers. It checks the requested window's `allowedRoutes` before

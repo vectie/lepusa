@@ -293,6 +293,96 @@ async fn render_bridge_loop_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bridge_drain_async(args : Array[String]) -> CliResult {
+  let values = positional_args(args)
+  let window_label = values.get(0).unwrap_or("")
+  let route = values.get(1).unwrap_or("")
+  let payload = values.get(2).unwrap_or("")
+  if window_label == "" {
+    return fail("bridge-drain window is required\n")
+  }
+  match parse_command_route(route, command_name="bridge-drain") {
+    Ok((plugin, command)) =>
+      match project_runtime_host(args) {
+        Ok(host) =>
+          match
+            @runtime.NativeRuntime::new(
+              @runtime.NativeBackend::new(
+                name="cli",
+                webview_engine="SystemWebView",
+              ),
+              host,
+            ) {
+            Ok(runtime) => {
+              let request = @lepusa.InvokeRequest::new(
+                id="cli",
+                window_label~,
+                plugin~,
+                command~,
+                payload~,
+              )
+              let message = @runtime.encode_invoke_request_json(request)
+              let adapter = runtime.bridge_loop_adapter()
+              let handoff_script = @utf8.decode(
+                adapter.handoff_callback()(@utf8.encode(message)),
+              ) catch {
+                _ => ""
+              }
+              let pending_after_handoff = adapter.pending_count()
+              let delivery = adapter.drain_window(window_label~)
+              ok(
+                render_bridge_drain_json(
+                  handoff_script,
+                  pending_after_handoff~,
+                  delivery_json=delivery.to_json(),
+                  pending_after_drain=adapter.pending_count(),
+                ) +
+                "\n",
+              )
+            }
+            Err(problems) =>
+              fail(render_problems("Lepusa bridge drain", problems))
+          }
+        Err(problems) => fail(render_problems("Lepusa bridge drain", problems))
+      }
+    Err(problem) => fail(problem + "\n")
+  }
+}
+
+///|
+fn render_bridge_drain_json(
+  handoff_script : String,
+  pending_after_handoff~ : Int,
+  delivery_json~ : String,
+  pending_after_drain~ : Int,
+) -> String {
+  [
+    "{",
+    "\"handoffScript\":\{cli_json_string(handoff_script)},",
+    "\"pendingAfterHandoff\":\{pending_after_handoff},",
+    "\"delivery\":\{delivery_json},",
+    "\"pendingAfterDrain\":\{pending_after_drain}",
+    "}",
+  ].join("")
+}
+
+///|
+fn cli_json_string(value : String) -> String {
+  let mut out = "\""
+  for ch in value {
+    match ch {
+      '"' => out += "\\\""
+      '\\' => out += "\\\\"
+      '\n' => out += "\\n"
+      '\r' => out += "\\r"
+      '\t' => out += "\\t"
+      _ => out += ch.to_string()
+    }
+  }
+  out + "\""
+}
+
+///|
 async fn render_invoke_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let window_label = values.get(0).unwrap_or("")

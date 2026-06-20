@@ -8,6 +8,7 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bridge-task"))
   assert_true(result.output.contains("lepusa bridge-complete"))
   assert_true(result.output.contains("lepusa bridge-loop"))
+  assert_true(result.output.contains("lepusa bridge-drain"))
   assert_true(result.output.contains("lepusa invoke"))
   assert_true(result.output.contains("lepusa asset"))
   assert_true(result.output.contains("lepusa lifecycle"))
@@ -604,6 +605,14 @@ async test "bridge task command reports source scheduling mode" {
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
     ),
   )
+  let sync_drain = render_cli_async([
+    "bridge-drain", "main", "core.invoke", "true",
+  ])
+  assert_eq(sync_drain.exit_code, 0)
+  assert_true(sync_drain.output.contains("\"handoffScript\":\"globalThis"))
+  assert_true(sync_drain.output.contains("\"pendingAfterHandoff\":0"))
+  assert_true(sync_drain.output.contains("\"pendingAfterDrain\":0"))
+  assert_true(sync_drain.output.contains("\"operations\":[]"))
   let sync_complete = render_cli_async([
     "bridge-complete", "main", "core.invoke", "true",
   ])
@@ -684,6 +693,21 @@ async test "bridge task command reports source scheduling mode" {
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
     ),
   )
+  let async_drain = render_cli_async([
+    "bridge-drain",
+    "main",
+    "fs.readText",
+    "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(async_drain.exit_code, 0)
+  assert_true(async_drain.output.contains("\"handoffScript\":\"\""))
+  assert_true(async_drain.output.contains("\"pendingAfterHandoff\":1"))
+  assert_true(async_drain.output.contains("\"pendingAfterDrain\":0"))
+  assert_true(async_drain.output.contains("\"delivery\":{"))
+  assert_true(async_drain.output.contains("\"route\":\"fs.readText\""))
+  assert_true(async_drain.output.contains("\"kind\":\"evaluate-script\""))
   let async_complete = render_cli_async([
     "bridge-complete",
     "main",
@@ -710,6 +734,11 @@ async test "bridge task command reports source scheduling mode" {
   assert_eq(invalid_loop.exit_code, 1)
   assert_true(
     invalid_loop.output.contains("bridge-loop route must be <plugin.command>"),
+  )
+  let invalid_drain = render_cli_async(["bridge-drain", "main", "log"])
+  assert_eq(invalid_drain.exit_code, 1)
+  assert_true(
+    invalid_drain.output.contains("bridge-drain route must be <plugin.command>"),
   )
 }
 

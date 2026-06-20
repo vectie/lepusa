@@ -4,6 +4,7 @@ async test "runtime help text names bridge loop command" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("lepusa-runtime bridge-task"))
   assert_true(result.output.contains("lepusa-runtime bridge-loop"))
+  assert_true(result.output.contains("lepusa-runtime bridge-drain"))
 }
 
 ///|
@@ -620,6 +621,14 @@ async test "runtime cli renders bridge dispatch tasks" {
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
     ),
   )
+  let sync_drain = render_runtime_bridge_drain_text(
+    "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
+  )
+  assert_eq(sync_drain.exit_code, 0)
+  assert_true(sync_drain.output.contains("\"handoffScript\":\"globalThis"))
+  assert_true(sync_drain.output.contains("\"pendingAfterHandoff\":0"))
+  assert_true(sync_drain.output.contains("\"pendingAfterDrain\":0"))
+  assert_true(sync_drain.output.contains("\"operations\":[]"))
   let sync_complete = render_runtime_bridge_complete_text(
     "lepusa/runtime.json", manifest, "main", "log.write", "{\"message\":\"hello\"}",
   )
@@ -657,6 +666,16 @@ async test "runtime cli renders bridge dispatch tasks" {
       "\"evaluationScripts\":[\"globalThis[\\\"__lepusaInvokeResponse\\\"]",
     ),
   )
+  let async_drain = render_runtime_bridge_drain_text(
+    "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
+  )
+  assert_eq(async_drain.exit_code, 0)
+  assert_true(async_drain.output.contains("\"handoffScript\":\"\""))
+  assert_true(async_drain.output.contains("\"pendingAfterHandoff\":1"))
+  assert_true(async_drain.output.contains("\"pendingAfterDrain\":0"))
+  assert_true(async_drain.output.contains("\"delivery\":{"))
+  assert_true(async_drain.output.contains("\"route\":\"fs.readText\""))
+  assert_true(async_drain.output.contains("\"kind\":\"evaluate-script\""))
   let async_complete = render_runtime_bridge_complete_text(
     "lepusa/runtime.json", manifest, "main", "fs.readText", "{\"scope\":\"data\",\"path\":\"note.txt\"}",
   )
@@ -678,6 +697,11 @@ async test "runtime cli renders bridge dispatch tasks" {
   assert_eq(invalid_loop.exit_code, 1)
   assert_true(
     invalid_loop.output.contains("bridge-loop route must be <plugin.command>"),
+  )
+  let invalid_drain = render_runtime_cli_async(["bridge-drain", "main", "log"])
+  assert_eq(invalid_drain.exit_code, 1)
+  assert_true(
+    invalid_drain.output.contains("bridge-drain route must be <plugin.command>"),
   )
 }
 

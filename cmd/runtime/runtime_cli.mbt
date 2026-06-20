@@ -28,6 +28,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("bridge-complete") => render_runtime_bridge_complete(args)
     Some("bridge-dispatch") => render_runtime_bridge_dispatch(args)
     Some("bridge-loop") => render_runtime_bridge_loop(args)
+    Some("bridge-drain") => render_runtime_bridge_drain(args)
     Some("invoke") => render_runtime_invoke(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
@@ -400,6 +401,7 @@ fn runtime_help() -> String {
     #|  lepusa-runtime bridge-complete <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime bridge-loop <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime bridge-drain <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|
   )
@@ -755,6 +757,114 @@ async fn render_runtime_bridge_loop_text(
         }
       }
   }
+}
+
+///|
+async fn render_runtime_bridge_drain(args : Array[String]) -> RuntimeCliResult {
+  let values = runtime_positional_args(args)
+  let window_label = values.get(1).unwrap_or("")
+  let route = values.get(2).unwrap_or("")
+  let payload = values.get(3).unwrap_or("")
+  if window_label == "" {
+    return runtime_fail("bridge-drain window is required\n")
+  }
+  if route == "" || route == "--manifest" {
+    return runtime_fail("bridge-drain route is required\n")
+  }
+  match runtime_parse_invoke_route(route, command_name="bridge-drain") {
+    Err(problem) => return runtime_fail(problem + "\n")
+    Ok(_) => ()
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime bridge-drain\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_bridge_drain_text(path, text, window_label, route, payload)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+async fn render_runtime_bridge_drain_text(
+  path : String,
+  text : String,
+  window_label : String,
+  route : String,
+  payload : String,
+) -> RuntimeCliResult {
+  match runtime_parse_invoke_route(route, command_name="bridge-drain") {
+    Err(problem) => runtime_fail(problem + "\n")
+    Ok((plugin, command)) =>
+      match @bundled.BundledRuntimeManifest::parse(path, text) {
+        Err(problem) =>
+          runtime_fail("Lepusa runtime bridge-drain\n[fail] \{problem}\n")
+        Ok(manifest) => {
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          let message = @runtime_core.encode_invoke_request_json(request)
+          let adapter = manifest.bridge_loop_adapter()
+          let handoff_script = @utf8.decode(
+            adapter.handoff_callback()(@utf8.encode(message)),
+          ) catch {
+            _ => ""
+          }
+          let pending_after_handoff = adapter.pending_count()
+          let delivery = adapter.drain_window(window_label~)
+          runtime_ok(
+            render_runtime_bridge_drain_json(
+              handoff_script,
+              pending_after_handoff~,
+              delivery_json=delivery.to_json(),
+              pending_after_drain=adapter.pending_count(),
+            ) +
+            "\n",
+          )
+        }
+      }
+  }
+}
+
+///|
+fn render_runtime_bridge_drain_json(
+  handoff_script : String,
+  pending_after_handoff~ : Int,
+  delivery_json~ : String,
+  pending_after_drain~ : Int,
+) -> String {
+  [
+    "{",
+    "\"handoffScript\":\{runtime_cli_json_string(handoff_script)},",
+    "\"pendingAfterHandoff\":\{pending_after_handoff},",
+    "\"delivery\":\{delivery_json},",
+    "\"pendingAfterDrain\":\{pending_after_drain}",
+    "}",
+  ].join("")
+}
+
+///|
+fn runtime_cli_json_string(value : String) -> String {
+  let mut out = "\""
+  for ch in value {
+    match ch {
+      '"' => out += "\\\""
+      '\\' => out += "\\\\"
+      '\n' => out += "\\n"
+      '\r' => out += "\\r"
+      '\t' => out += "\\t"
+      _ => out += ch.to_string()
+    }
+  }
+  out + "\""
 }
 
 ///|

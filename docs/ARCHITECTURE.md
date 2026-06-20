@@ -669,6 +669,9 @@ lepusa bridge-dispatch <window> <plugin.command> [payload]
 lepusa bridge-loop <window> <plugin.command> [payload]
   -> feeds one source-project bridge message through the adapter loop and emits scripts to evaluate
 
+lepusa bridge-drain <window> <plugin.command> [payload]
+  -> runs source handoff callback first, then drains pending async bridge work into a delivery envelope
+
 lepusa-runtime --manifest <lepusa/runtime.json>
   -> reads a bundled runtime manifest and prints a summary
 
@@ -698,6 +701,9 @@ lepusa-runtime bridge-dispatch <window> <plugin.command> [payload] --manifest <l
 
 lepusa-runtime bridge-loop <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> feeds one bundled bridge message through the adapter loop and emits scripts to evaluate
+
+lepusa-runtime bridge-drain <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+  -> runs bundled handoff callback first, then drains pending async bridge work into a delivery envelope
 
 lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> dispatches a packaged bridge command through registered official native handlers
