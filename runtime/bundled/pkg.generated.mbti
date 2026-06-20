@@ -96,6 +96,8 @@ pub struct BundledBridgeWorkQueue {
 pub async fn BundledBridgeWorkQueue::drain(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
 pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int, String]
 pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int, String]
+pub fn BundledBridgeWorkQueue::handoff_callback(Self, BundledRuntime) -> (Bytes) -> Bytes
+pub fn BundledBridgeWorkQueue::handoff_script_bytes(Self, BundledRuntime, Bytes) -> Bytes
 pub fn BundledBridgeWorkQueue::is_empty(Self) -> Bool
 pub fn BundledBridgeWorkQueue::new() -> Self
 pub fn BundledBridgeWorkQueue::pending_count(Self) -> Int

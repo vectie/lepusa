@@ -1687,6 +1687,16 @@ async test "native runtime owns bridge message transport" {
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
           let queue = NativeBridgeWorkQueue::new()
           assert_true(queue.is_empty())
+          let queued_script = @utf8.decode(
+            queue.handoff_callback(runtime)(@utf8.encode(message)),
+          ) catch {
+            _ => abort("unexpected invalid queued bridge callback bytes")
+          }
+          assert_eq(queued_script, "")
+          assert_eq(queue.pending_count(), 1)
+          let queued_completions = queue.drain(runtime)
+          assert_eq(queued_completions.length(), 1)
+          assert_true(queue.is_empty())
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)
             Err(_) => abort("unexpected bridge queue enqueue failure")
@@ -1777,6 +1787,16 @@ async test "native runtime owns bridge message transport" {
           }
         Err(_) => abort("unexpected immediate bridge queue setup failure")
       }
+      let sync_queue = NativeBridgeWorkQueue::new()
+      let sync_queue_script = @utf8.decode(
+        sync_queue.handoff_callback(runtime)(@utf8.encode(sync_handoff_message)),
+      ) catch {
+        _ => abort("unexpected invalid immediate queue callback bytes")
+      }
+      assert_true(
+        sync_queue_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(sync_queue.is_empty())
       let async_script = @utf8.decode(
         runtime.bridge_async_dispatch_callback()(@utf8.encode(message)),
       ) catch {

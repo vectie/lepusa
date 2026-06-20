@@ -421,10 +421,11 @@ a `NativeBridgeCompletion`, preserving the original task metadata together with
 the response JSON and JavaScript callback script the platform loop should
 evaluate. Immediate handoffs intentionally reject deferred completion so backend
 code cannot accidentally run a sync command twice.
-`NativeBridgeWorkQueue` is the shared FIFO queue for platform loops: enqueue
-only deferred async handoffs, drain completions later, and evaluate each
-completion's callback script in the target WebView. Packaged runtimes expose the
-same shape as `BundledBridgeWorkQueue`.
+`NativeBridgeWorkQueue` is the shared FIFO queue for platform loops:
+`handoff_callback(runtime)` returns immediate scripts for sync routes, enqueues
+deferred async routes, and lets the loop drain completions later before
+evaluating each callback script in the target WebView. Packaged runtimes expose
+the same shape as `BundledBridgeWorkQueue`.
 `RuntimeHost::dispatch_bridge_message(message)` and
 `BundledRuntime::dispatch_bridge_message(message)` execute that captured bridge
 message and return the response JSON plus the callback script a native WebView

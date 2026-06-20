@@ -162,7 +162,10 @@ it away from the native message handler, and later receive a
 and callback script to evaluate in the target WebView.
 For loops that need explicit scheduling state, `NativeBridgeWorkQueue` stores
 deferred async tasks in FIFO order and drains them into completion envelopes.
-`BundledBridgeWorkQueue` mirrors the same contract for packaged runtimes.
+Its `handoff_callback(runtime)` method is the sync native message-handler
+callback: immediate routes return a script immediately, while async routes are
+queued for later drain. `BundledBridgeWorkQueue` mirrors the same contract for
+packaged runtimes.
 
 Command rules:
 

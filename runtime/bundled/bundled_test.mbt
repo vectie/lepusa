@@ -748,6 +748,16 @@ async test "bundled runtime owns bridge message transport" {
           }
         Err(_) => abort("unexpected bundled immediate queue setup failure")
       }
+      let sync_queue = BundledBridgeWorkQueue::new()
+      let sync_queue_script = @utf8.decode(
+        sync_queue.handoff_callback(runtime)(@utf8.encode(sync_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled immediate callback bytes")
+      }
+      assert_true(
+        sync_queue_script.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+      )
+      assert_true(sync_queue.is_empty())
       let async_message = "{\"id\":\"write\",\"window_label\":\"main\",\"plugin\":\"fs\",\"command\":\"writeText\",\"payload\":\"{\\\"scope\\\":\\\"data\\\",\\\"path\\\":\\\"note.txt\\\",\\\"content\\\":\\\"hello\\\"}\"}"
       match runtime.bridge_dispatch_task(async_message) {
         Ok(task) => {
@@ -767,6 +777,17 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
           let queue = BundledBridgeWorkQueue::new()
+          assert_true(queue.is_empty())
+          let queued_script = @utf8.decode(
+            queue.handoff_callback(runtime)(@utf8.encode(async_message)),
+          ) catch {
+            _ =>
+              abort("unexpected invalid bundled queued bridge callback bytes")
+          }
+          assert_eq(queued_script, "")
+          assert_eq(queue.pending_count(), 1)
+          let queued_completions = queue.drain(runtime)
+          assert_eq(queued_completions.length(), 1)
           assert_true(queue.is_empty())
           match queue.enqueue_handoff(handoff) {
             Ok(count) => assert_eq(count, 1)

@@ -612,6 +612,34 @@ pub fn NativeBridgeWorkQueue::enqueue_handoff(
 }
 
 ///|
+pub fn NativeBridgeWorkQueue::handoff_script_bytes(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match runtime.bridge_handoff(input) {
+    Ok(handoff) =>
+      match handoff.immediate_script() {
+        Some(script) => @utf8.encode(script)
+        None => {
+          ignore(self.enqueue_handoff(handoff))
+          @utf8.encode("")
+        }
+      }
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
+pub fn NativeBridgeWorkQueue::handoff_callback(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) { self.handoff_script_bytes(runtime, message) }
+}
+
+///|
 pub async fn NativeBridgeWorkQueue::drain(
   self : NativeBridgeWorkQueue,
   runtime : NativeRuntime,

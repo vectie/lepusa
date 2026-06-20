@@ -552,6 +552,34 @@ pub fn BundledBridgeWorkQueue::enqueue_handoff(
 }
 
 ///|
+pub fn BundledBridgeWorkQueue::handoff_script_bytes(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+  message : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(message) catch { _ => "" }
+  match runtime.bridge_handoff(input) {
+    Ok(handoff) =>
+      match handoff.immediate_script() {
+        Some(script) => @utf8.encode(script)
+        None => {
+          ignore(self.enqueue_handoff(handoff))
+          @utf8.encode("")
+        }
+      }
+    Err(_) => @utf8.encode("")
+  }
+}
+
+///|
+pub fn BundledBridgeWorkQueue::handoff_callback(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+) -> (Bytes) -> Bytes {
+  fn(message : Bytes) { self.handoff_script_bytes(runtime, message) }
+}
+
+///|
 pub async fn BundledBridgeWorkQueue::drain(
   self : BundledBridgeWorkQueue,
   runtime : BundledRuntime,

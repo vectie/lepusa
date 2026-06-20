@@ -154,6 +154,8 @@ pub struct NativeBridgeWorkQueue {
 pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
 pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]
+pub fn NativeBridgeWorkQueue::handoff_callback(Self, NativeRuntime) -> (Bytes) -> Bytes
+pub fn NativeBridgeWorkQueue::handoff_script_bytes(Self, NativeRuntime, Bytes) -> Bytes
 pub fn NativeBridgeWorkQueue::is_empty(Self) -> Bool
 pub fn NativeBridgeWorkQueue::new() -> Self
 pub fn NativeBridgeWorkQueue::pending_count(Self) -> Int
