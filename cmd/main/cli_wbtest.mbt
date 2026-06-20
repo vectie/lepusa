@@ -301,7 +301,7 @@ async test "bundle plan supports target selection" {
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("runtime-dependencies: 2"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
-  assert_true(result.output.contains("files: 3"))
+  assert_true(result.output.contains("files: 4"))
   let json_result = render_cli_async(["bundle-plan", "windows", "--json"])
   assert_eq(json_result.exit_code, 0)
   assert_true(json_result.output.contains("\"target\":\"windows\""))
@@ -1792,7 +1792,7 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("runtime-dependencies: 1"))
-  assert_true(result.output.contains("verification-checks: 7"))
+  assert_true(result.output.contains("verification-checks: 8"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-file"))
   assert_true(result.output.contains("planned file content matches"))
@@ -1810,14 +1810,16 @@ async test "bundle write materializes planned files" {
     result.output.contains("external runtime dependency declared: WebKitGTK"),
   )
   assert_true(result.output.contains("signing-prerequisites: 2"))
-  assert_true(result.output.contains("files: 3"))
+  assert_true(result.output.contains("files: 4"))
   let bundle_root = root + "/lepusa-example"
   let desktop_path = bundle_root + "/lepusa-example.desktop"
   let launcher_path = bundle_root + "/lepusa-example"
   let runtime_path = bundle_root + "/lepusa/runtime.json"
+  let distribution_path = bundle_root + "/lepusa/distribution.json"
   assert_true(@fs.exists(desktop_path))
   assert_true(@fs.exists(launcher_path))
   assert_true(@fs.exists(runtime_path))
+  assert_true(@fs.exists(distribution_path))
   assert_true(
     @fs.read_file(desktop_path).text().contains("Name=Lepusa Example"),
   )
@@ -1831,6 +1833,11 @@ async test "bundle write materializes planned files" {
   assert_true(runtime_manifest.contains("\"signingPrerequisites\""))
   assert_true(runtime_manifest.contains("\"initializationScripts\""))
   assert_true(runtime_manifest.contains("__lepusaInvoke"))
+  let distribution_manifest = @fs.read_file(distribution_path).text()
+  assert_true(distribution_manifest.contains("\"target\":\"linux\""))
+  assert_true(distribution_manifest.contains("\"runtimeDependencies\""))
+  assert_true(distribution_manifest.contains("\"runtimeExecutable\""))
+  assert_true(distribution_manifest.contains("WebKitGTK 4.1 or 4.0"))
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
   let json_result = render_cli_async([
     "bundle-write", "linux", json_root, "--json",
@@ -1870,15 +1877,15 @@ async test "bundle write embeds host runtime executable when compatible" {
     _ => false
   }
   if @macos_backend.available() && source_exists {
-    assert_true(result.output.contains("verification-checks: 8"))
-    assert_true(result.output.contains("files: 4"))
+    assert_true(result.output.contains("verification-checks: 9"))
+    assert_true(result.output.contains("files: 5"))
     assert_true(result.output.contains("[ok] verify: runtime-executable"))
     assert_true(result.output.contains("runtime executable is bundled"))
     assert_true(
       @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
     )
   } else {
-    assert_true(result.output.contains("verification-checks: 7"))
+    assert_true(result.output.contains("verification-checks: 8"))
     assert_true(result.output.contains("[ok] verify: runtime-dependency"))
     assert_true(
       result.output.contains("external runtime dependency declared: WKWebView"),
@@ -2075,7 +2082,7 @@ async test "bundle write materializes planned resources" {
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
   assert_true(result.output.contains("runtime-dependencies: 1"))
-  assert_true(result.output.contains("verification-checks: 8"))
+  assert_true(result.output.contains("verification-checks: 9"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: initial-content"))
   assert_true(result.output.contains("[ok] verify: planned-resource"))

@@ -129,6 +129,7 @@ pub struct BundlePlan {
 } derive(Eq, @debug.Debug)
 pub fn BundlePlan::artifacts(Self) -> Array[BundleArtifact]
 pub fn BundlePlan::bundle_name(Self) -> String
+pub fn BundlePlan::distribution_manifest_json(Self) -> String
 pub fn BundlePlan::executable_name(Self) -> String
 pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
 pub fn BundlePlan::icon_path(Self) -> String?

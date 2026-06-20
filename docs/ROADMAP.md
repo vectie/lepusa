@@ -244,8 +244,10 @@ desktop core is reliable.
   `BundlePlan`; a native `.exe` wrapper remains future packaging work.
 - Linux desktop integration and portable bundle artifact paths are represented
   in `BundlePlan`.
-- `BundlePlan::files()` emits platform metadata, launcher stubs, and one
-  runtime manifest with per-window bridge initialization scripts.
+- `BundlePlan::files()` emits platform metadata, launcher stubs, one runtime
+  manifest with per-window bridge initialization scripts, and one distribution
+  manifest for installer-facing artifact, dependency, resource, and signing
+  metadata.
 - `BundlePlan::resources()` emits target resource mappings for app icons and
   packaged asset directories.
 - `BundlePlan::runtime_dependencies()` emits target WebView/runtime loader

@@ -664,13 +664,14 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 `localServices` for native runners to supervise.
 
 `lepusa bundle-plan` now also validates concrete bundle artifact plans through
-`BundlePlan::files()`: platform metadata, manifest-aware launcher stubs, and
-`lepusa/runtime.json`, with per-window bridge initialization scripts embedded
-in the runtime manifest. Passing `--json` emits target metadata, planned
-resources, runtime dependencies, signing prerequisites and steps, and planned
-bundle files for CI and native runner tooling.
-The generated bundle metadata also records those runtime dependencies beside
-artifacts, resources, signing data, and the portable runtime manifest.
+`BundlePlan::files()`: platform metadata, manifest-aware launcher stubs,
+`lepusa/runtime.json`, and `lepusa/distribution.json`, with per-window bridge
+initialization scripts embedded in the runtime manifest. Passing `--json` emits
+target metadata, planned resources, runtime dependencies, signing prerequisites
+and steps, and planned bundle files for CI and native runner tooling.
+The generated distribution manifest records those runtime dependencies beside
+artifacts, resources, signing data, runtime executable placement, and target
+metadata without requiring installer tooling to parse the launch manifest.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

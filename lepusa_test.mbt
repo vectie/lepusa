@@ -1030,7 +1030,7 @@ test "bundle plans derive executable and package names from metadata" {
           }
           match plan.files() {
             Ok(files) => {
-              assert_eq(files.length(), 3)
+              assert_eq(files.length(), 4)
               assert_eq(
                 files[0].path(),
                 "lepusa-example.app/Contents/Info.plist",
@@ -1082,6 +1082,16 @@ test "bundle plans derive executable and package names from metadata" {
                 .content()
                 .contains("Developer ID Application certificate"),
               )
+              assert_eq(
+                files[3].path(),
+                "lepusa-example.app/Contents/Resources/lepusa/distribution.json",
+              )
+              assert_true(files[3].content().contains("\"target\":\"macos\""))
+              assert_true(
+                files[3].content().contains("\"runtimeDependencies\""),
+              )
+              assert_true(files[3].content().contains("\"runtimeExecutable\""))
+              assert_true(files[3].content().contains("\"signingSteps\""))
             }
             Err(_) => abort("unexpected invalid bundle files")
           }
@@ -1165,7 +1175,7 @@ test "bundle files include platform metadata" {
                 plan.runtime_executable_path(),
                 "files-app/lepusa-runtime",
               )
-              assert_eq(files.length(), 3)
+              assert_eq(files.length(), 4)
               assert_eq(files[0].path(), "files-app/files-app.desktop")
               assert_true(files[0].content().contains("Name=Files App"))
               assert_eq(files[1].path(), "files-app/files-app")
@@ -1175,10 +1185,17 @@ test "bundle files include platform metadata" {
                 files[1].content().contains("exec \"$RUNTIME\" launch"),
               )
               assert_true(files[1].content().contains("lepusa/runtime.json"))
+              assert_eq(files[2].path(), "files-app/lepusa/runtime.json")
               assert_true(files[2].content().contains("\"target\":\"linux\""))
               assert_true(
                 files[2].content().contains("\"name\":\"package signing key\""),
               )
+              assert_eq(files[3].path(), "files-app/lepusa/distribution.json")
+              assert_true(files[3].content().contains("\"target\":\"linux\""))
+              assert_true(
+                files[3].content().contains("\"runtimeDependencies\""),
+              )
+              assert_true(files[3].content().contains("WebKitGTK 4.1 or 4.0"))
             }
             Err(_) => abort("unexpected invalid linux bundle files")
           }
@@ -1239,7 +1256,7 @@ test "windows bundle artifacts match generated command launcher" {
           assert_true(dependencies[1].to_json().contains("\"sourcePath\""))
           match plan.files() {
             Ok(files) => {
-              assert_eq(files.length(), 3)
+              assert_eq(files.length(), 4)
               assert_eq(files[0].path(), "windows-app/app.manifest.xml")
               assert_eq(files[1].path(), "windows-app/windows-app.cmd")
               assert_true(
@@ -1255,6 +1272,12 @@ test "windows bundle artifacts match generated command launcher" {
                 files[2].content().contains("\"runtimeDependencies\""),
               )
               assert_true(files[2].content().contains("WebView2Loader.dll"))
+              assert_eq(files[3].path(), "windows-app/lepusa/distribution.json")
+              assert_true(files[3].content().contains("\"target\":\"windows\""))
+              assert_true(
+                files[3].content().contains("\"runtimeDependencies\""),
+              )
+              assert_true(files[3].content().contains("WebView2Loader.dll"))
             }
             Err(_) => abort("unexpected invalid windows bundle files")
           }

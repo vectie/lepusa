@@ -573,11 +573,14 @@ from framework backend implementation gaps.
 
 ## Bundling
 
-`BundlePlan` is a pure framework contract: it computes platform metadata and
-`lepusa/runtime.json` without touching the filesystem. The runtime manifest
-includes per-window WebView boot data and initialization scripts, so bundle
-writers do not emit a separate default bridge file that can drift from
-multi-window runtime state. `@lepusa/bundle` owns native filesystem
+`BundlePlan` is a pure framework contract: it computes platform metadata,
+`lepusa/runtime.json`, and `lepusa/distribution.json` without touching the
+filesystem. The runtime manifest includes per-window WebView boot data and
+initialization scripts, so bundle writers do not emit a separate default bridge
+file that can drift from multi-window runtime state. The distribution manifest
+keeps installer-facing data such as artifacts, resources, runtime dependencies,
+runtime executable placement, signing prerequisites, and signing steps out of
+the WebView launch manifest. `@lepusa/bundle` owns native filesystem
 materialization through `write_plan`, which writes the planned files into an
 output directory and applies executable permissions where the plan asks for
 them. When the selected target matches an available host runtime backend,
@@ -596,6 +599,9 @@ delegates `lepusa bundle-write` to that package.
 without forcing tooling to scan `BundlePlan::files()`. When created from a
 registry-aware project path, it also preserves the registered native routes that
 the host exposes to command dispatch.
+`BundlePlan::distribution_manifest_json()` exposes the installer-facing
+manifest directly, so future package generators can consume the same
+distribution contract without reinterpreting launcher or runtime manifest JSON.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume
@@ -646,9 +652,12 @@ signing configuration. They should not need to maintain native launcher code.
 `BundlePlan::files()` is the first artifact boundary. It generates platform
 metadata plus shared runtime assets:
 
-- macOS: `Contents/Info.plist`, launcher stub, runtime manifest
-- Windows: app manifest, `.cmd` command launcher, runtime manifest
-- Linux: `.desktop` entry, executable launcher, runtime manifest
+- macOS: `Contents/Info.plist`, launcher stub, runtime and distribution
+  manifests
+- Windows: app manifest, `.cmd` command launcher, runtime and distribution
+  manifests
+- Linux: `.desktop` entry, executable launcher, runtime and distribution
+  manifests
 
 The next bundler step should write these files and add platform signing or
 installer packaging without inventing another configuration model.

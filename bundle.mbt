@@ -352,6 +352,12 @@ pub fn BundlePlan::files(
           content=runtime_manifest_file,
         ),
       )
+      files.push(
+        BundleFile::new(
+          path=self.shared_path("lepusa/distribution.json"),
+          content=self.distribution_manifest_json(),
+        ),
+      )
       Ok(files)
     }
     Err(problems) => Err(problems)
@@ -394,6 +400,27 @@ pub fn BundlePlan::runtime_manifest_json(
     Ok(runtime_manifest) => Ok(runtime_manifest.to_json())
     Err(problems) => Err(problems)
   }
+}
+
+///|
+pub fn BundlePlan::distribution_manifest_json(self : BundlePlan) -> String {
+  [
+    "{",
+    "\"identifier\":\{self.identifier().json_string()},",
+    "\"productName\":\{self.metadata.product_name().json_string()},",
+    "\"version\":\{self.metadata.version().json_string()},",
+    "\"target\":\{self.target.name().json_string()},",
+    "\"executable\":\{self.executable_name().json_string()},",
+    "\"bundle\":\{self.bundle_name().json_string()},",
+    "\"runtimeExecutable\":\{self.runtime_executable_path().json_string()},",
+    "\"artifacts\":[\{self.artifacts().map(fn(artifact) { artifact.to_json() }).join(",")}],",
+    "\"resources\":[\{self.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
+    "\"runtimeDependencies\":[\{self.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}],",
+    "\"signing\":\{self.signing.to_json()},",
+    "\"signingPrerequisites\":[\{self.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
+    "\"signingSteps\":[\{self.signing_steps().map(fn(step) { step.to_json() }).join(",")}]",
+    "}",
+  ].join("")
 }
 
 ///|
