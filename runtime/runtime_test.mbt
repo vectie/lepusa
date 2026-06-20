@@ -463,21 +463,26 @@ test "native webview launch packet owns abi lowering" {
         ) {
         Ok(webview) => {
           let packet = webview.launch_packet()
-          let title = @utf8.decode(packet.title()) catch {
-            _ => abort("unexpected invalid packet title")
-          }
-          let load_url = @utf8.decode(packet.load_url()) catch {
-            _ => abort("unexpected invalid packet url")
-          }
-          let native_hook = @utf8.decode(packet.native_hook()) catch {
-            _ => abort("unexpected invalid packet hook")
-          }
-          assert_eq(title, "Runtime")
-          assert_eq(load_url, "lepusa://inline/main/index.html")
-          assert_eq(native_hook, "__lepusaInvoke")
+          assert_eq(packet.title_text(), "Runtime")
+          assert_eq(packet.load_url_text(), "lepusa://inline/main/index.html")
+          assert_eq(packet.native_hook_text(), "__lepusaInvoke")
+          assert_eq(packet.asset_protocol_text(), "lepusa")
+          assert_eq(packet.initialization_script_text(), "/* native hook */")
           assert_eq(packet.width(), 900)
           assert_eq(packet.height(), 640)
           assert_eq(packet.resizable(), 1)
+          assert_true(packet.to_json().contains("\"title\":\"Runtime\""))
+          let context = webview.launch_context(
+            bridge_scheduler=runtime.runner_plan().bridge_scheduler(),
+          )
+          assert_eq(context.packet().native_hook_text(), "__lepusaInvoke")
+          assert_false(context.bridge_scheduler().requires_async_dispatch())
+          assert_false(context.async_bridge_executor().required())
+          assert_false(context.bridge_loop_contract().required())
+          assert_true(context.can_launch())
+          assert_true(context.launch_blocker("Test") is None)
+          assert_true(context.to_json().contains("\"packet\":{"))
+          assert_true(context.to_json().contains("\"bridgeLoop\":{"))
         }
         Err(problem) => abort(problem)
       }

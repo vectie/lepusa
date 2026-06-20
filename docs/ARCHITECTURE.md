@@ -159,6 +159,10 @@ It also carries a `bridgeLoop` contract naming the shared
 `bridge_loop_adapter().handoff_callback` and async
 `bridge_loop_adapter().receive_message` result boundary for source and packaged
 runtime loops.
+`NativeWebViewLaunchContext` is the runner-side handoff for a single WebView:
+it keeps the byte-level native launch packet together with the same scheduler,
+async executor, and `bridgeLoop` contract from the launch session before a
+backend crosses into C, WebKit, or WebView2 code.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a

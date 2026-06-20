@@ -278,6 +278,7 @@ pub fn NativeLaunchSession::bridge_loop_contract(Self) -> NativeBridgeLoopContra
 pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
 pub fn NativeLaunchSession::can_launch(Self) -> Bool
 pub fn NativeLaunchSession::execution(Self) -> NativeExecutionPlan
+pub fn NativeLaunchSession::first_launch_context(Self) -> Result[NativeWebViewLaunchContext, String]
 pub fn NativeLaunchSession::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativeLaunchSession::launch_blocker(Self, String) -> String?
 pub fn NativeLaunchSession::new(webviews~ : Array[NativeWebViewPlan], execution~ : NativeExecutionPlan, bridge_scheduler~ : NativeBridgeScheduler, service_supervisor~ : NativeServiceSupervisorPlan) -> Self
@@ -488,6 +489,20 @@ pub fn NativeServiceSupervisorReport::ok(Self) -> Bool
 pub fn NativeServiceSupervisorReport::to_json(Self) -> String
 pub fn NativeServiceSupervisorReport::webview_engine(Self) -> String
 
+pub struct NativeWebViewLaunchContext {
+  packet : NativeWebViewLaunchPacket
+  bridge_scheduler : NativeBridgeScheduler
+  async_bridge_executor : NativeBridgeAsyncExecutor
+  bridge_loop : NativeBridgeLoopContract
+} derive(Eq, @debug.Debug)
+pub fn NativeWebViewLaunchContext::async_bridge_executor(Self) -> NativeBridgeAsyncExecutor
+pub fn NativeWebViewLaunchContext::bridge_loop_contract(Self) -> NativeBridgeLoopContract
+pub fn NativeWebViewLaunchContext::bridge_scheduler(Self) -> NativeBridgeScheduler
+pub fn NativeWebViewLaunchContext::can_launch(Self) -> Bool
+pub fn NativeWebViewLaunchContext::launch_blocker(Self, String) -> String?
+pub fn NativeWebViewLaunchContext::packet(Self) -> NativeWebViewLaunchPacket
+pub fn NativeWebViewLaunchContext::to_json(Self) -> String
+
 pub struct NativeWebViewLaunchPacket {
   title : Bytes
   load_url : Bytes
@@ -499,12 +514,18 @@ pub struct NativeWebViewLaunchPacket {
   resizable : Int
 } derive(Eq, @debug.Debug)
 pub fn NativeWebViewLaunchPacket::asset_protocol(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::asset_protocol_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::height(Self) -> Int
 pub fn NativeWebViewLaunchPacket::initialization_script(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::initialization_script_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::load_url(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::load_url_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::native_hook(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::native_hook_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::resizable(Self) -> Int
 pub fn NativeWebViewLaunchPacket::title(Self) -> Bytes
+pub fn NativeWebViewLaunchPacket::title_text(Self) -> String
+pub fn NativeWebViewLaunchPacket::to_json(Self) -> String
 pub fn NativeWebViewLaunchPacket::width(Self) -> Int
 
 pub struct NativeWebViewPlan {
@@ -523,6 +544,7 @@ pub fn NativeWebViewPlan::asset_protocol(Self) -> String
 pub fn NativeWebViewPlan::height(Self) -> Int
 pub fn NativeWebViewPlan::initialization_script(Self) -> String
 pub fn NativeWebViewPlan::label(Self) -> String
+pub fn NativeWebViewPlan::launch_context(Self, bridge_scheduler~ : NativeBridgeScheduler) -> NativeWebViewLaunchContext
 pub fn NativeWebViewPlan::launch_packet(Self) -> NativeWebViewLaunchPacket
 pub fn NativeWebViewPlan::load_url(Self) -> String
 pub fn NativeWebViewPlan::native_hook(Self) -> String

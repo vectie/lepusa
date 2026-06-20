@@ -178,6 +178,9 @@ Passing `--async-bridge` marks the bridge scheduler as async-capable and sets
 the executor and bridge-loop contract as available for platform loops that wire
 deferred command completion through the queue-backed adapter APIs; it does not
 change `run` or `launch` behavior.
+Platform runners now lower the first WebView from that session through
+`NativeWebViewLaunchContext`, which keeps the native byte packet together with
+the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
 
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin

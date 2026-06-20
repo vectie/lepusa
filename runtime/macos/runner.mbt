@@ -314,11 +314,11 @@ fn run_plan(
         Some(message) => return Ok({ plan, status: RunUnsupported(message) })
         None => ()
       }
-      let webview = match session.first_webview() {
-        Ok(webview) => webview
+      let context = match session.first_launch_context() {
+        Ok(context) => context
         Err(problem) => return Err([problem])
       }
-      let packet = webview.launch_packet()
+      let packet = context.packet()
       let exit_code = run_webview_with_bridge(
         packet.title(),
         packet.load_url(),

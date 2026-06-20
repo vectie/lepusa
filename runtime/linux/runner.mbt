@@ -196,11 +196,12 @@ fn linux_open_window(
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let webview = match plan.first_webview() {
-    Ok(webview) => webview
+  let session = plan.launch_session()
+  let context = match session.first_launch_context() {
+    Ok(context) => context
     Err(problem) => return RunFailed(problem)
   }
-  let packet = webview.launch_packet()
+  let packet = context.packet()
   let exit_code = native_run_webview(
     packet.title(),
     packet.load_url(),
@@ -231,11 +232,15 @@ fn linux_open_bundled_window(
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let webview = match plan.first_webview() {
-    Ok(webview) => webview
+  let session = match plan.launch_session() {
+    Ok(session) => session
     Err(problem) => return RunFailed(problem)
   }
-  let packet = webview.launch_packet()
+  let context = match session.first_launch_context() {
+    Ok(context) => context
+    Err(problem) => return RunFailed(problem)
+  }
+  let packet = context.packet()
   let exit_code = native_run_webview(
     packet.title(),
     packet.load_url(),
