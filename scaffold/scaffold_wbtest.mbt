@@ -35,6 +35,8 @@ test "app scaffold wires official plugin handlers" {
   assert_true(main.contains("@catalog.register"))
   assert_true(main.contains("@ui.main_"))
   assert_true(main.contains("@ui.on_click(\"log.write\""))
+  assert_true(main.contains("@ui.text_listener(\"ready\", \"#status\")"))
+  assert_true(main.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
   assert_true(main.contains("ignore([Increment, Reset])"))
   assert_true(main.contains("@catalog.plugin(\"log\").unwrap()"))
   assert_true(main.contains("@catalog.plugin(\"store\").unwrap()"))

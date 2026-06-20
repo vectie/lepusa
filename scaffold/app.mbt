@@ -237,7 +237,9 @@ fn project_main_mbt() -> String {
     #|  @ui.main_([
     #|    @ui.h1([@ui.text("Lepusa App")]),
     #|    @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
+    #|    @ui.p([@ui.text("Starting")], attrs=[@ui.id("status")]),
     #|    @ui.button("Increment", attrs=[@ui.on_click("log.write", payload="{\"message\":\"increment\"}")]),
+    #|    @ui.text_listener("ready", "#status"),
     #|  ])
     #|}
     #|
@@ -267,7 +269,12 @@ fn project_main_mbt() -> String {
     #|      .command("store.clear")
     #|      .command("store.keys"),
     #|    )
-    #|    .with_startup(@lepusa.Cmd::effect("boot"))
+    #|    .with_startup(
+    #|      @lepusa.Cmd::batch([
+    #|        @lepusa.Cmd::effect("boot"),
+    #|        @lepusa.Cmd::emit(@lepusa.Event::new("ready", payload="{\"message\":\"Ready\"}")),
+    #|      ]),
+    #|    )
     #|  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     #|    Ok(plan) =>
     #|      println(

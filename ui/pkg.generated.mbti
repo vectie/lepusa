@@ -31,6 +31,8 @@ pub fn id(String) -> Attr
 
 pub fn input(attrs? : Array[Attr]) -> @lepusa.Html
 
+pub fn listen(String, String) -> @lepusa.Html
+
 pub fn main_(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
 
 pub fn on_click(String, payload? : String) -> Attr
@@ -39,6 +41,8 @@ pub fn p(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
 
 pub fn raw(String) -> @lepusa.Html
 
+pub fn script(String) -> @lepusa.Html
+
 pub fn section(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
 
 pub fn span(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
@@ -46,6 +50,8 @@ pub fn span(Array[@lepusa.Html], attrs? : Array[Attr]) -> @lepusa.Html
 pub fn style(String) -> Attr
 
 pub fn text(String) -> @lepusa.Html
+
+pub fn text_listener(String, String) -> @lepusa.Html
 
 pub fn void_element(String, attrs? : Array[Attr]) -> @lepusa.Html
 

@@ -25,6 +25,18 @@ test "ui helpers compose rabbita style views" {
 }
 
 ///|
+test "ui listeners bridge native emitted events" {
+  let listener = text_listener("ready", "#status")
+  assert_true(listener.content().contains("<script>"))
+  assert_true(listener.content().contains("api.listen(\"ready\""))
+  assert_true(
+    listener.content().contains("document.querySelector(\"#status\")"),
+  )
+  let custom = listen("saved", "    console.log(payload, event);")
+  assert_true(custom.content().contains("console.log(payload, event);"))
+}
+
+///|
 test "ui html can back a lepusa cell" {
   let cell = @lepusa.simple_cell(section([text("Ready")]))
   let app = @lepusa.new(cell).window(title="UI App")

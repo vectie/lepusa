@@ -246,6 +246,8 @@ async test "init writes standalone project skeleton" {
   assert_true(main_file.contains("cell_with_dispatch"))
   assert_true(main_file.contains("@ui.main_"))
   assert_true(main_file.contains("@ui.on_click(\"log.write\""))
+  assert_true(main_file.contains("@ui.text_listener(\"ready\", \"#status\")"))
+  assert_true(main_file.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))
   assert_true(main_file.contains("@lepusa.new(root)"))
   assert_true(main_file.contains("RuntimeConfig::system_webview"))
 }

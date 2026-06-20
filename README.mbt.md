@@ -74,7 +74,9 @@ fn render_app(dispatch, model) {
   @ui.main_([
     @ui.h1([@ui.text("Counter")]),
     @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
+    @ui.p([@ui.text("Starting")], attrs=[@ui.id("status")]),
     @ui.button("Increment", attrs=[@ui.on_click("counter.increment")]),
+    @ui.text_listener("ready", "#status"),
   ])
 }
 ```

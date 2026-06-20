@@ -179,6 +179,38 @@ pub fn input(attrs? : Array[Attr] = []) -> @lepusa.Html {
 }
 
 ///|
+pub fn script(source : String) -> @lepusa.Html {
+  element("script", [raw(source)])
+}
+
+///|
+pub fn listen(event_name : String, body : String) -> @lepusa.Html {
+  script(
+    [
+      "(() => {",
+      "  const api = window.lepusa;",
+      "  if (!api || typeof api.listen !== \"function\") { return; }",
+      "  api.listen(\{js_string(event_name)}, (payload, event) => {",
+      body,
+      "  });",
+      "})();",
+    ].join("\n"),
+  )
+}
+
+///|
+pub fn text_listener(event_name : String, selector : String) -> @lepusa.Html {
+  listen(
+    event_name,
+    [
+      "    const target = document.querySelector(\{js_string(selector)});",
+      "    if (!target) { return; }",
+      "    target.textContent = payload == null ? \"\" : String(payload.message ?? payload);",
+    ].join("\n"),
+  )
+}
+
+///|
 fn escape_text(content : String) -> String {
   content
   .replace_all(old="&", new="&amp;")
