@@ -78,12 +78,17 @@ pub struct UiProgram[Model, Msg] {
   window_label : String
   root_id : String
 }
+pub fn[Model, Msg] UiProgram::capability(Self[Model, Msg], name? : String) -> @lepusa.Capability
+pub fn[Model, Msg] UiProgram::capability_for_window(Self[Model, Msg], name? : String) -> @lepusa.Capability
 pub fn[Model, Msg] UiProgram::cell(Self[Model, Msg]) -> @lepusa.Cell
 pub fn[Model, Msg] UiProgram::dispatch(Self[Model, Msg], String) -> Result[UiTransition[Model, Msg], String]
 pub fn[Model, Msg] UiProgram::dispatch_attr(Self[Model, Msg], Msg) -> Attr
 pub fn[Model, Msg] UiProgram::html(Self[Model, Msg]) -> @lepusa.Html
 pub fn[Model, Msg] UiProgram::model(Self[Model, Msg]) -> Model
 pub fn[Model, Msg] UiProgram::new(model~ : Model, update~ : (Msg, Model) -> (Model, @lepusa.Cmd), view~ : ((Msg) -> Attr, Model) -> @lepusa.Html, encode~ : (Msg) -> String, decode~ : (String) -> Result[Msg, String], route? : String, render_event? : String, window_label? : String, root_id? : String) -> Self[Model, Msg]
+pub fn[Model, Msg] UiProgram::plugin(Self[Model, Msg]) -> @lepusa.Plugin
+pub fn[Model, Msg] UiProgram::register(Self[Model, Msg], @lepusa.CommandRegistry) -> @lepusa.CommandRegistry
+pub fn[Model, Msg] UiProgram::registry(Self[Model, Msg]) -> @lepusa.CommandRegistry
 pub fn[Model, Msg] UiProgram::render_event(Self[Model, Msg]) -> String
 pub fn[Model, Msg] UiProgram::root_id(Self[Model, Msg]) -> String
 pub fn[Model, Msg] UiProgram::route(Self[Model, Msg]) -> String

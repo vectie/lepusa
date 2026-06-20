@@ -87,6 +87,11 @@ pub fn[Model, Msg] UiProgram::validate(
   let problems : Array[String] = []
   if self.route == "" {
     problems.push("ui program route is required")
+  } else {
+    let (plugin, command) = self.route_parts()
+    if plugin == "" || command == "" {
+      problems.push("ui program route must be plugin.command")
+    }
   }
   if self.render_event == "" {
     problems.push("ui program render event is required")
@@ -105,7 +110,59 @@ pub fn[Model, Msg] UiProgram::dispatch_attr(
   self : UiProgram[Model, Msg],
   message : Msg,
 ) -> Attr {
-  on_click(self.route, payload=(self.encode)(message))
+  attr("onclick", self.dispatch_script(message))
+}
+
+///|
+pub fn[Model, Msg] UiProgram::plugin(
+  self : UiProgram[Model, Msg],
+) -> @lepusa.Plugin {
+  let (plugin, command) = self.route_parts()
+  @lepusa.Plugin::new(plugin).command_sync(command)
+}
+
+///|
+pub fn[Model, Msg] UiProgram::capability(
+  self : UiProgram[Model, Msg],
+  name? : String = "ui",
+) -> @lepusa.Capability {
+  @lepusa.Capability::new(name).command(self.route)
+}
+
+///|
+pub fn[Model, Msg] UiProgram::capability_for_window(
+  self : UiProgram[Model, Msg],
+  name? : String = "ui",
+) -> @lepusa.Capability {
+  self.capability(name~).window(self.window_label)
+}
+
+///|
+pub fn[Model, Msg] UiProgram::registry(
+  self : UiProgram[Model, Msg],
+) -> @lepusa.CommandRegistry {
+  self.register(@lepusa.CommandRegistry::new())
+}
+
+///|
+pub fn[Model, Msg] UiProgram::register(
+  self : UiProgram[Model, Msg],
+  registry : @lepusa.CommandRegistry,
+) -> @lepusa.CommandRegistry {
+  let mut current = self
+  registry.register_fn(
+    self.route,
+    permission=@lepusa.Permission::command(self.route),
+    handler=fn(payload) {
+      match current.dispatch(payload) {
+        Err(problem) => Err(problem)
+        Ok(transition) => {
+          current = transition.program()
+          Ok(current.render_payload())
+        }
+      }
+    },
+  )
 }
 
 ///|
@@ -170,6 +227,25 @@ fn[Model, Msg] UiProgram::driver_script(
 }
 
 ///|
+fn[Model, Msg] UiProgram::dispatch_script(
+  self : UiProgram[Model, Msg],
+  message : Msg,
+) -> String {
+  [
+    "window.lepusa&&window.lepusa.invoke(",
+    self.route.js_string(),
+    ",",
+    (self.encode)(message),
+    ").then((payload)=>{",
+    "const root=document.getElementById(",
+    self.root_id.js_string(),
+    ");",
+    "if(root&&payload&&typeof payload.html==='string'){root.innerHTML=payload.html;}",
+    "})",
+  ].join("")
+}
+
+///|
 fn[Model, Msg] UiProgram::render_command(
   self : UiProgram[Model, Msg],
   command : @lepusa.Cmd,
@@ -188,6 +264,27 @@ fn[Model, Msg] UiProgram::render_payload(
   self : UiProgram[Model, Msg],
 ) -> String {
   "{\"html\":\{self.view_html().content().json_string()}}"
+}
+
+///|
+fn[Model, Msg] UiProgram::route_parts(
+  self : UiProgram[Model, Msg],
+) -> (String, String) {
+  let parts : Array[String] = []
+  for part in self.route.split(".") {
+    parts.push(part.to_owned())
+  }
+  match parts.length() {
+    0 => ("", "")
+    1 => (parts[0], "")
+    _ => {
+      let command_parts : Array[String] = []
+      for index in 1..<parts.length() {
+        command_parts.push(parts[index])
+      }
+      (parts[0], command_parts.join("."))
+    }
+  }
 }
 
 ///|

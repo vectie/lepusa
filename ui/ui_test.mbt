@@ -134,6 +134,19 @@ test "ui program renders model update view cell" {
 }
 
 ///|
+test "ui program validates route shape" {
+  let invalid = UiProgram::new(
+    model=0,
+    update=update_counter,
+    view=view_counter,
+    encode=encode_counter_message,
+    decode=decode_counter_message,
+    route="counter",
+  )
+  assert_eq(invalid.validate()[0], "ui program route must be plugin.command")
+}
+
+///|
 test "ui program dispatch advances model and emits render command" {
   let program = counter_program(1)
   match program.dispatch("{\"kind\":\"increment\"}") {
@@ -167,4 +180,37 @@ test "ui program dispatch advances model and emits render command" {
     Ok(_) => abort("unexpected valid message")
     Err(problem) => assert_eq(problem, "unknown counter message")
   }
+}
+
+///|
+test "ui program declares plugin capability and registry handler" {
+  let program = counter_program(1)
+  let plugin = program.plugin()
+  assert_eq(plugin.name(), "counter")
+  assert_eq(plugin.command_routes()[0], "counter.dispatch")
+  let grant = program.capability_for_window()
+  assert_true(
+    grant.allows(
+      window_label="main",
+      permission=@lepusa.Permission::command("counter.dispatch"),
+    ),
+  )
+  let registry = program.registry()
+  assert_true(registry.contains("counter.dispatch"))
+  let request = @lepusa.InvokeRequest::new(
+    id="ui",
+    window_label="main",
+    plugin="counter",
+    command="dispatch",
+    payload="{\"kind\":\"increment\"}",
+  )
+  let response = registry.dispatch(request, capabilities=[grant])
+  assert_true(response is InvokeOk("ui", _))
+  assert_true(response.payload().unwrap_or("").contains("Count: 2"))
+  let next = registry.dispatch(request, capabilities=[grant])
+  assert_true(next.payload().unwrap_or("").contains("Count: 3"))
+  let denied = registry.dispatch(request)
+  assert_true(
+    denied is InvokeError("ui", "permission denied: counter.dispatch"),
+  )
 }

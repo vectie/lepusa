@@ -3,7 +3,9 @@
 `@lepusa/ui` provides Rabbita-style helpers for MoonBit-authored desktop views.
 Use the lightweight HTML builders directly for static views, or `UiProgram`
 when a view needs model/update/view state, message encoding, and normal Lepusa
-command/event integration.
+command/event integration. `UiProgram` also declares its own plugin,
+capability, and registry handler, so a small app does not need custom IPC
+boilerplate for UI messages.
 
 ```mbt check
 ///|
@@ -64,11 +66,22 @@ test "compose a model update view program" {
     route="counter.dispatch",
     render_event="counter.render",
   )
-  let app = @lepusa.new(program.cell()).window(title="Counter")
-  match program.dispatch("{\"kind\":\"increment\"}") {
-    Ok(next) => inspect(next.model(), content="1")
-    Err(_) => fail("unexpected invalid message")
-  }
+  let app = @lepusa.new(program.cell())
+    .with_plugin(program.plugin())
+    .with_capability(program.capability_for_window())
+    .window(title="Counter")
+  let registry = program.registry()
+  let response = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="1",
+      window_label="main",
+      plugin="counter",
+      command="dispatch",
+      payload="{\"kind\":\"increment\"}",
+    ),
+    capabilities=[program.capability_for_window()],
+  )
+  inspect(response.payload().unwrap_or("").contains("Count: 1"), content="true")
   match app.launch_plan() {
     Ok(plan) => inspect(plan.window_count(), content="1")
     Err(_) => fail("unexpected invalid app")

@@ -68,10 +68,12 @@ supporting arbitrary built frontend assets.
 
 `@lepusa/ui` is the first dedicated authoring layer. Static helpers return root
 `@lepusa.Html` values, while `UiProgram` adds a compact model/update/view loop
-with message encode/decode, click dispatch attributes, and render events that
-lower through normal Lepusa `Cmd::emit` window delivery. It still produces a
-root `Cell`, so the runtime boundary remains
-`cell -> new(cell) -> launch_plan/runtime_plan`.
+with message encode/decode, click dispatch attributes, plugin/capability
+declaration, and a registry handler that returns render payloads through normal
+Lepusa IPC. It still produces a root `Cell`, so the runtime boundary remains
+`cell -> new(cell) -> launch_plan/runtime_plan`. The lower-level
+`UiTransition::command()` remains available for native loops that later support
+command-emitting UI handlers.
 
 ## Process Model
 
