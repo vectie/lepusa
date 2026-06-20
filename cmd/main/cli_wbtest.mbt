@@ -1577,6 +1577,30 @@ async test "bundle write materializes planned files" {
 }
 
 ///|
+async test "bundle write embeds host runtime executable when compatible" {
+  let root = "/tmp/lepusa-runtime-executable-\{@async.now().to_int()}"
+  let result = render_cli_async(["bundle-write", "macos", root])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("target: macos"))
+  let source_exists = @fs.exists(
+    "_build/native/debug/build/cmd/runtime/runtime.exe",
+  ) catch {
+    _ => false
+  }
+  if @macos_backend.available() && source_exists {
+    assert_true(result.output.contains("verification-checks: 6"))
+    assert_true(result.output.contains("files: 4"))
+    assert_true(result.output.contains("[ok] verify: runtime-executable"))
+    assert_true(result.output.contains("runtime executable is bundled"))
+    assert_true(
+      @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
+    )
+  } else {
+    assert_false(result.output.contains("runtime-executable"))
+  }
+}
+
+///|
 async test "bundle write gates target launch capability" {
   let root = "/tmp/lepusa-windows-bundle-write-\{@async.now().to_int()}"
   let result = render_cli_async(["bundle-write", "windows", root])

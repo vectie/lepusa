@@ -1033,7 +1033,14 @@ test "bundle plans derive executable and package names from metadata" {
                 "lepusa-example.app/Contents/MacOS/lepusa-example",
               )
               assert_true(files[1].executable())
-              assert_true(files[1].content().contains("lepusa-runtime launch"))
+              assert_true(
+                files[1]
+                .content()
+                .contains("RUNTIME=\"$APP_DIR/MacOS/lepusa-runtime\""),
+              )
+              assert_true(
+                files[1].content().contains("exec \"$RUNTIME\" launch"),
+              )
               assert_true(
                 files[1].content().contains("Resources/lepusa/runtime.json"),
               )
@@ -1121,7 +1128,10 @@ test "bundle files include platform metadata" {
               assert_true(files[0].content().contains("Name=Files App"))
               assert_eq(files[1].path(), "files-app/files-app")
               assert_true(files[1].executable())
-              assert_true(files[1].content().contains("lepusa-runtime launch"))
+              assert_true(files[1].content().contains("RUNTIME=lepusa-runtime"))
+              assert_true(
+                files[1].content().contains("exec \"$RUNTIME\" launch"),
+              )
               assert_true(files[1].content().contains("lepusa/runtime.json"))
               assert_true(files[2].content().contains("\"target\":\"linux\""))
               assert_true(
@@ -1166,8 +1176,11 @@ test "windows bundle artifacts match generated command launcher" {
               assert_eq(files[0].path(), "windows-app/app.manifest.xml")
               assert_eq(files[1].path(), "windows-app/windows-app.cmd")
               assert_true(
-                files[1].content().contains("lepusa-runtime.exe launch"),
+                files[1]
+                .content()
+                .contains("set \"RUNTIME=%APP_DIR%lepusa-runtime.exe\""),
               )
+              assert_true(files[1].content().contains("\"%RUNTIME%\" launch"))
               assert_true(
                 files[2].content().contains("windows-app/windows-app.cmd"),
               )

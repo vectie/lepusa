@@ -645,6 +645,12 @@ directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
 registered official plugin routes into
 `lepusa/runtime.json`, so packaged runtime data matches the same host path used
 by `lepusa manifest`, `lepusa dev`, and `lepusa invoke`.
+When the selected bundle target matches an available host runtime backend and
+the local `cmd/runtime` native binary exists, `bundle-write` also embeds a
+target-named `lepusa-runtime` executable beside the launcher and verifies it
+with a `runtime-executable` check. Cross-target bundles keep a launcher fallback
+to `lepusa-runtime` on `PATH` until Lepusa owns cross-compiled runtime
+artifacts.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
 into a target native launch session that passes the selected backend launch
 capability. Windows bundles and bundles with async bridge routes stay

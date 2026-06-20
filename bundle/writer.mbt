@@ -10,6 +10,7 @@ pub struct BundleWriteResult {
 pub(all) enum BundleWriteCheckKind {
   PlannedFileCheck
   PlannedResourceCheck
+  RuntimeExecutableCheck
   RuntimeManifestCheck
   NativeLaunchSessionCheck
 } derive(Debug, Eq)
@@ -89,6 +90,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
   match self {
     PlannedFileCheck => "planned-file"
     PlannedResourceCheck => "planned-resource"
+    RuntimeExecutableCheck => "runtime-executable"
     RuntimeManifestCheck => "runtime-manifest"
     NativeLaunchSessionCheck => "native-launch-session"
   }
@@ -141,13 +143,20 @@ pub async fn write_plan(
           }
         }
       }
+      let runtime_executable = copy_bundle_runtime_executable(
+        plan, root, problems,
+      )
+      match runtime_executable {
+        Some(path) => written.push(path)
+        None => ()
+      }
       if problems.is_empty() {
-        Ok({
-          root,
-          files: written,
-          resources: copied_resources,
-          checks: verify_written_plan(root, files, plan.resources()),
-        })
+        let checks = verify_written_plan(root, files, plan.resources())
+        match runtime_executable {
+          Some(path) => checks.push(verify_runtime_executable(path))
+          None => ()
+        }
+        Ok({ root, files: written, resources: copied_resources, checks })
       } else {
         Err(problems)
       }
@@ -318,6 +327,78 @@ async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
         message="runtime manifest parse failed: \{problem}",
       )
   }
+}
+
+///|
+async fn copy_bundle_runtime_executable(
+  plan : @lepusa.BundlePlan,
+  root : String,
+  problems : Array[String],
+) -> String? {
+  match bundled_runtime_destination_path(plan) {
+    Some(destination) => {
+      let source = bundled_runtime_source_path()
+      let source_exists = @xfs.is_file(source) catch { _ => false }
+      if !source_exists {
+        return None
+      }
+      let path = join_path(root, destination)
+      copy_bundle_file(source, path, problems)
+      if problems.is_empty() {
+        @fs.chmod(path, 0o755) catch {
+          error =>
+            problems.push("could not mark runtime executable \{path}: \{error}")
+        }
+      }
+      if problems.is_empty() {
+        Some(path)
+      } else {
+        None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+fn bundled_runtime_destination_path(plan : @lepusa.BundlePlan) -> String? {
+  if !bundle_target_matches_host_runtime(plan.target()) {
+    return None
+  }
+  match plan.target() {
+    MacOS => Some("\{plan.bundle_name()}/Contents/MacOS/lepusa-runtime")
+    Windows => Some("\{plan.executable_name()}/lepusa-runtime.exe")
+    Linux => Some("\{plan.executable_name()}/lepusa-runtime")
+  }
+}
+
+///|
+fn bundled_runtime_source_path() -> String {
+  "_build/native/debug/build/cmd/runtime/runtime.exe"
+}
+
+///|
+fn bundle_target_matches_host_runtime(target : @lepusa.BundleTarget) -> Bool {
+  match target {
+    MacOS => @macos_backend.available()
+    Windows => @windows_backend.available()
+    Linux => @linux_backend.available()
+  }
+}
+
+///|
+fn verify_runtime_executable(path : String) -> BundleWriteCheck {
+  let ok = @xfs.is_file(path) catch { _ => false }
+  BundleWriteCheck::new(
+    kind=RuntimeExecutableCheck,
+    path~,
+    ok~,
+    message=if ok {
+      "runtime executable is bundled"
+    } else {
+      "runtime executable is missing"
+    },
+  )
 }
 
 ///|

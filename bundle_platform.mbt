@@ -97,7 +97,11 @@ fn macos_launcher() -> String {
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-    #|exec lepusa-runtime launch --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
+    #|RUNTIME="$APP_DIR/MacOS/lepusa-runtime"
+    #|if [ ! -x "$RUNTIME" ]; then
+    #|  RUNTIME=lepusa-runtime
+    #|fi
+    #|exec "$RUNTIME" launch --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
     #|
   )
 }
@@ -107,7 +111,9 @@ fn windows_launcher() -> String {
   (
     #|@echo off
     #|set "APP_DIR=%~dp0"
-    #|lepusa-runtime.exe launch --manifest "%APP_DIR%lepusa\runtime.json" %*
+    #|set "RUNTIME=%APP_DIR%lepusa-runtime.exe"
+    #|if not exist "%RUNTIME%" set "RUNTIME=lepusa-runtime.exe"
+    #|"%RUNTIME%" launch --manifest "%APP_DIR%lepusa\runtime.json" %*
     #|
   )
 }
@@ -117,7 +123,11 @@ fn linux_launcher() -> String {
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-    #|exec lepusa-runtime launch --manifest "$APP_DIR/lepusa/runtime.json" "$@"
+    #|RUNTIME="$APP_DIR/lepusa-runtime"
+    #|if [ ! -x "$RUNTIME" ]; then
+    #|  RUNTIME=lepusa-runtime
+    #|fi
+    #|exec "$RUNTIME" launch --manifest "$APP_DIR/lepusa/runtime.json" "$@"
     #|
   )
 }
