@@ -9,9 +9,24 @@ pub(all) enum BundleArtifactKind {
 } derive(Debug, Eq)
 
 ///|
+pub(all) enum BundleRuntimeDependencyKind {
+  SystemWebViewRuntime
+  NativeLoaderLibrary
+} derive(Debug, Eq)
+
+///|
 pub struct BundleArtifact {
   kind : BundleArtifactKind
   path : String
+  description : String
+} derive(Debug, Eq)
+
+///|
+pub struct BundleRuntimeDependency {
+  kind : BundleRuntimeDependencyKind
+  name : String
+  path : String?
+  required : Bool
   description : String
 } derive(Debug, Eq)
 
@@ -188,6 +203,73 @@ pub fn BundleArtifact::to_json(self : BundleArtifact) -> String {
 }
 
 ///|
+pub fn BundleRuntimeDependency::new(
+  kind~ : BundleRuntimeDependencyKind,
+  name~ : String,
+  path? : String,
+  required? : Bool = true,
+  description~ : String,
+) -> BundleRuntimeDependency {
+  { kind, name, path, required, description }
+}
+
+///|
+pub fn BundleRuntimeDependency::kind(
+  self : BundleRuntimeDependency,
+) -> BundleRuntimeDependencyKind {
+  self.kind
+}
+
+///|
+pub fn BundleRuntimeDependency::name(self : BundleRuntimeDependency) -> String {
+  self.name
+}
+
+///|
+pub fn BundleRuntimeDependency::path(self : BundleRuntimeDependency) -> String? {
+  self.path
+}
+
+///|
+pub fn BundleRuntimeDependency::required(
+  self : BundleRuntimeDependency,
+) -> Bool {
+  self.required
+}
+
+///|
+pub fn BundleRuntimeDependency::description(
+  self : BundleRuntimeDependency,
+) -> String {
+  self.description
+}
+
+///|
+pub fn BundleRuntimeDependencyKind::name(
+  self : BundleRuntimeDependencyKind,
+) -> String {
+  match self {
+    SystemWebViewRuntime => "system-webview-runtime"
+    NativeLoaderLibrary => "native-loader-library"
+  }
+}
+
+///|
+pub fn BundleRuntimeDependency::to_json(
+  self : BundleRuntimeDependency,
+) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.name().json_string()},",
+    "\"name\":\{self.name.json_string()},",
+    "\"required\":\{self.required.json_bool()},",
+    "\"path\":\{optional_bundle_json_string(self.path)},",
+    "\"description\":\{self.description.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn SigningPrerequisite::new(
   kind~ : SigningPrerequisiteKind,
   name~ : String,
@@ -337,6 +419,44 @@ pub fn BundlePlan::artifacts(self : BundlePlan) -> Array[BundleArtifact] {
 }
 
 ///|
+pub fn BundlePlan::runtime_dependencies(
+  self : BundlePlan,
+) -> Array[BundleRuntimeDependency] {
+  match self.target {
+    MacOS =>
+      [
+        BundleRuntimeDependency::new(
+          kind=SystemWebViewRuntime,
+          name="WKWebView",
+          description="Provided by macOS; required by the native Lepusa runtime",
+        ),
+      ]
+    Windows =>
+      [
+        BundleRuntimeDependency::new(
+          kind=SystemWebViewRuntime,
+          name="Microsoft Edge WebView2 Runtime",
+          description="Required on target machines unless the installer provisions a fixed or evergreen WebView2 runtime",
+        ),
+        BundleRuntimeDependency::new(
+          kind=NativeLoaderLibrary,
+          name="WebView2Loader.dll",
+          path="\{self.executable_name()}/WebView2Loader.dll",
+          description="Required beside the Windows Lepusa runtime so it can load the WebView2 API without a wrapper layer",
+        ),
+      ]
+    Linux =>
+      [
+        BundleRuntimeDependency::new(
+          kind=SystemWebViewRuntime,
+          name="WebKitGTK 4.1 or 4.0",
+          description="Required on target machines for the native Linux WebView backend",
+        ),
+      ]
+  }
+}
+
+///|
 pub fn BundlePlan::signing_prerequisites(
   self : BundlePlan,
 ) -> Array[SigningPrerequisite] {
@@ -401,6 +521,14 @@ pub fn BundlePlan::signing_prerequisites(
       }
       prerequisites
     }
+  }
+}
+
+///|
+fn optional_bundle_json_string(value : String?) -> String {
+  match value {
+    Some(text) => text.json_string()
+    None => "null"
   }
 }
 

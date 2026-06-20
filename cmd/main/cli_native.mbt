@@ -104,6 +104,7 @@ fn render_doctor_host(
               "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
               render_handler_coverage(host) +
               "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+              "[ok] runtime-dependencies: count=\{bundle.runtime_dependencies().length()}\n" +
               render_doctor_native_launch_gate(bundle.target(), host) +
               "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
               render_signing_prerequisites(bundle) +
@@ -132,7 +133,7 @@ fn render_doctor_json(
     "\"manifest\":{\"webviews\":\{manifest.webviews().length()},\"routes\":\{manifest.command_routes().length()}},",
     "\"ipc\":{\"routes\":\{plan.command_routes().length()}},",
     "\"handlers\":\{render_handler_coverage_json(host)},",
-    "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()}},",
+    "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()},\"runtimeDependencies\":[\{bundle.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}]},",
     "\"nativeLaunch\":\{render_doctor_native_launch_json(bundle.target(), host)},",
     "\"signing\":{\"prerequisites\":[\{bundle.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}]},",
     "\"platforms\":[\{render_native_backend_diagnostics_json()}]",

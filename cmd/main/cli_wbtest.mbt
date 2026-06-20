@@ -299,6 +299,7 @@ async test "bundle plan supports target selection" {
     ),
   )
   assert_true(result.output.contains("resources: 0"))
+  assert_true(result.output.contains("runtime-dependencies: 2"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
   assert_true(result.output.contains("files: 3"))
   let json_result = render_cli_async(["bundle-plan", "windows", "--json"])
@@ -316,6 +317,14 @@ async test "bundle plan supports target selection" {
   assert_true(json_result.output.contains("\"localServices\":0"))
   assert_true(json_result.output.contains("\"filesystemScopes\":0"))
   assert_true(json_result.output.contains("\"resources\":[]"))
+  assert_true(json_result.output.contains("\"runtimeDependencies\":["))
+  assert_true(json_result.output.contains("Microsoft Edge WebView2 Runtime"))
+  assert_true(json_result.output.contains("WebView2Loader.dll"))
+  assert_true(
+    json_result.output.contains(
+      "\"path\":\"lepusa-example/WebView2Loader.dll\"",
+    ),
+  )
   assert_true(json_result.output.contains("\"signingPrerequisites\":["))
   assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("\"signingSteps\":[]"))

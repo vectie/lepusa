@@ -248,6 +248,9 @@ desktop core is reliable.
   runtime manifest with per-window bridge initialization scripts.
 - `BundlePlan::resources()` emits target resource mappings for app icons and
   packaged asset directories.
+- `BundlePlan::runtime_dependencies()` emits target WebView/runtime loader
+  requirements, including Windows WebView2 Runtime plus `WebView2Loader.dll`
+  placement beside the packaged Lepusa runtime.
 - `BundlePlan::signing_prerequisites()` emits target signing, notarization, and
   package validation requirements.
 - App metadata manifest: id, product name, version, icons, capabilities,

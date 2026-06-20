@@ -1006,6 +1006,10 @@ test "bundle plans derive executable and package names from metadata" {
           assert_eq(signing.length(), 3)
           assert_true(signing[0].kind() is SigningIdentity)
           assert_eq(signing[1].name(), "codesign")
+          let dependencies = plan.runtime_dependencies()
+          assert_eq(dependencies.length(), 1)
+          assert_true(dependencies[0].kind() is SystemWebViewRuntime)
+          assert_eq(dependencies[0].name(), "WKWebView")
           match plan.runtime_manifest() {
             Ok(manifest) => {
               assert_eq(manifest.webviews().length(), 1)
@@ -1128,6 +1132,10 @@ test "bundle files include platform metadata" {
               assert_true(artifacts[1].kind() is DesktopEntryArtifact)
               assert_eq(artifacts[1].path(), "files-app/files-app.desktop")
               assert_eq(plan.signing_prerequisites().length(), 2)
+              let dependencies = plan.runtime_dependencies()
+              assert_eq(dependencies.length(), 1)
+              assert_true(dependencies[0].kind() is SystemWebViewRuntime)
+              assert_eq(dependencies[0].name(), "WebKitGTK 4.1 or 4.0")
               assert_eq(plan.runtime_executable_name(), "lepusa-runtime")
               assert_eq(
                 plan.runtime_executable_path(),
@@ -1185,6 +1193,21 @@ test "windows bundle artifacts match generated command launcher" {
           assert_eq(artifacts[0].path(), "windows-app/windows-app.cmd")
           assert_true(artifacts[1].kind() is InstallerArtifact)
           assert_eq(artifacts[1].path(), "windows-app-1.2.0-setup.exe")
+          let dependencies = plan.runtime_dependencies()
+          assert_eq(dependencies.length(), 2)
+          assert_true(dependencies[0].kind() is SystemWebViewRuntime)
+          assert_eq(dependencies[0].name(), "Microsoft Edge WebView2 Runtime")
+          assert_true(dependencies[0].required())
+          assert_true(dependencies[0].path() is None)
+          assert_true(dependencies[1].kind() is NativeLoaderLibrary)
+          assert_eq(dependencies[1].name(), "WebView2Loader.dll")
+          assert_eq(
+            dependencies[1].path().unwrap(),
+            "windows-app/WebView2Loader.dll",
+          )
+          assert_true(
+            dependencies[1].to_json().contains("\"native-loader-library\""),
+          )
           match plan.files() {
             Ok(files) => {
               assert_eq(files.length(), 3)

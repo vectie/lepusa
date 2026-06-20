@@ -38,6 +38,7 @@ fn render_bundle_plan_summary(plan : @lepusa.BundlePlan) -> CliResult {
         "local-services: \{local_service_count}\n" +
         "filesystem-scopes: \{filesystem_scope_count}\n" +
         "resources: \{plan.resources().length()}\n" +
+        "runtime-dependencies: \{plan.runtime_dependencies().length()}\n" +
         "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
         "files: \{files.length()}\n",
       )
@@ -69,6 +70,7 @@ fn render_bundle_plan_json(plan : @lepusa.BundlePlan) -> CliResult {
           "\"localServices\":\{local_service_count},",
           "\"filesystemScopes\":\{filesystem_scope_count},",
           "\"resources\":[\{plan.resources().map(fn(resource) { resource.to_json() }).join(",")}],",
+          "\"runtimeDependencies\":[\{plan.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}],",
           "\"signingPrerequisites\":[\{plan.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}],",
           "\"signingSteps\":[\{plan.signing_steps().map(fn(step) { step.to_json() }).join(",")}],",
           "\"files\":[\{files.map(fn(file) { render_bundle_file_json(file) }).join(",")}]",
@@ -141,6 +143,7 @@ fn render_bundle_write_summary(
   "filesystem-scopes: \{filesystem_scope_count}\n" +
   "resources: \{plan.resources().length()}\n" +
   "resources-written: \{result.resources().length()}\n" +
+  "runtime-dependencies: \{plan.runtime_dependencies().length()}\n" +
   "verification-checks: \{result.checks().length()}\n" +
   "verified: \{result.verified().to_string()}\n" +
   "signing-prerequisites: \{plan.signing_prerequisites().length()}\n" +
@@ -158,6 +161,7 @@ fn render_bundle_write_json(
     "\"target\":\{cli_json_string(plan.target().name())},",
     "\"identifier\":\{cli_json_string(plan.identifier())},",
     "\"bundle\":\{result.to_json()},",
+    "\"runtimeDependencies\":[\{plan.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}],",
     "\"signingPrerequisites\":\{plan.signing_prerequisites().length()}",
     "}",
   ].join("")

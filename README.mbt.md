@@ -316,10 +316,12 @@ plugin authors. `lepusa plugin new` is the CLI wrapper over that package:
 moon run cmd/main --target native -- plugin new file-dialog _build/lepusa-plugin-file-dialog --workspace /Users/kq/Workspace/lepusa
 ```
 
-`BundlePlan::signing_prerequisites()` exposes target-specific distribution
-requirements for macOS, Windows, and Linux. The generated bundle runtime file
-includes those prerequisites so future signing, notarization, and installer
-steps can consume one bundle contract.
+`BundlePlan::runtime_dependencies()` and
+`BundlePlan::signing_prerequisites()` expose target-specific distribution
+requirements for macOS, Windows, and Linux. Windows plans explicitly carry both
+the Microsoft Edge WebView2 Runtime requirement and the `WebView2Loader.dll`
+placement expected beside `lepusa-runtime.exe`, so future installer generation
+can consume one bundle contract without a wrapper layer.
 
 `BundlePlan::resources()` exposes planned bundle resource mappings such as the
 application icon. The generated bundle runtime file includes these mappings
@@ -665,8 +667,8 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 `BundlePlan::files()`: platform metadata, manifest-aware launcher stubs, and
 `lepusa/runtime.json`, with per-window bridge initialization scripts embedded
 in the runtime manifest. Passing `--json` emits target metadata, planned
-resources, signing prerequisites and steps, and planned bundle files for CI and
-native runner tooling.
+resources, runtime dependencies, signing prerequisites and steps, and planned
+bundle files for CI and native runner tooling.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry
