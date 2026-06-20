@@ -1119,8 +1119,22 @@ static void lepusa_linux_cleanup_services_at_exit(void) {
 
 static void lepusa_linux_cleanup_services_on_signal(int signo) {
   lepusa_linux_terminate_tracked_services(0);
-  signal(signo, SIG_DFL);
+  struct sigaction reset_action;
+  memset(&reset_action, 0, sizeof(reset_action));
+  reset_action.sa_handler = SIG_DFL;
+  sigemptyset(&reset_action.sa_mask);
+  sigaction(signo, &reset_action, NULL);
   raise(signo);
+}
+
+static void lepusa_linux_install_service_signal_action(void) {
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = lepusa_linux_cleanup_services_on_signal;
+  sigemptyset(&action.sa_mask);
+  sigaction(SIGINT, &action, NULL);
+  sigaction(SIGTERM, &action, NULL);
+  sigaction(SIGHUP, &action, NULL);
 }
 
 static void lepusa_linux_install_service_cleanup_handlers(void) {
@@ -1129,9 +1143,7 @@ static void lepusa_linux_install_service_cleanup_handlers(void) {
   }
   lepusa_linux_service_signal_handlers_installed = 1;
   atexit(lepusa_linux_cleanup_services_at_exit);
-  signal(SIGINT, lepusa_linux_cleanup_services_on_signal);
-  signal(SIGTERM, lepusa_linux_cleanup_services_on_signal);
-  signal(SIGHUP, lepusa_linux_cleanup_services_on_signal);
+  lepusa_linux_install_service_signal_action();
 }
 
 static long lepusa_linux_now_ms(void) {

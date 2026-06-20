@@ -293,8 +293,22 @@ static void lepusa_cleanup_services_at_exit(void) {
 
 static void lepusa_cleanup_services_on_signal(int signo) {
   lepusa_terminate_tracked_services(0);
-  signal(signo, SIG_DFL);
+  struct sigaction reset_action;
+  memset(&reset_action, 0, sizeof(reset_action));
+  reset_action.sa_handler = SIG_DFL;
+  sigemptyset(&reset_action.sa_mask);
+  sigaction(signo, &reset_action, NULL);
   raise(signo);
+}
+
+static void lepusa_install_service_signal_action(void) {
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_handler = lepusa_cleanup_services_on_signal;
+  sigemptyset(&action.sa_mask);
+  sigaction(SIGINT, &action, NULL);
+  sigaction(SIGTERM, &action, NULL);
+  sigaction(SIGHUP, &action, NULL);
 }
 
 static void lepusa_install_service_cleanup_handlers(void) {
@@ -303,9 +317,14 @@ static void lepusa_install_service_cleanup_handlers(void) {
   }
   lepusa_service_signal_handlers_installed = 1;
   atexit(lepusa_cleanup_services_at_exit);
-  signal(SIGINT, lepusa_cleanup_services_on_signal);
-  signal(SIGTERM, lepusa_cleanup_services_on_signal);
-  signal(SIGHUP, lepusa_cleanup_services_on_signal);
+  lepusa_install_service_signal_action();
+}
+
+static void lepusa_reinstall_service_signal_handlers(void) {
+  if (!lepusa_service_signal_handlers_installed) {
+    return;
+  }
+  lepusa_install_service_signal_action();
 }
 
 static long lepusa_now_ms(void) {
@@ -1436,6 +1455,7 @@ static int32_t lepusa_macos_run_webview_impl(
   free(initial_url);
   lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
   lepusa_msg_void_int(app, "activateIgnoringOtherApps:", 1);
+  lepusa_reinstall_service_signal_handlers();
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(app, lepusa_sel("run"));
   if (lepusa_current_bridge_context == &bridge_context) {
     lepusa_current_bridge_context = NULL;
