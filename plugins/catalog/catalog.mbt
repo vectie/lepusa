@@ -173,7 +173,13 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     },
     {
       name: "notification",
-      register: fn(registry, _) { @notification.register(registry) },
+      register: fn(registry, _) {
+        if @notification.native_available() {
+          @notification.register_native(registry)
+        } else {
+          @notification.register(registry)
+        }
+      },
     },
     { name: "opener", register: fn(registry, _) { @opener.register(registry) } },
     {

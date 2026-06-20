@@ -206,3 +206,18 @@ test "catalog registered plugin names resolve and install handlers" {
     assert_true(registry.routes().length() > 0)
   }
 }
+
+///|
+test "catalog notification registration dispatches permission state" {
+  let registry = register(@lepusa.CommandRegistry::new(), "notification")
+  let response = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="notification-state",
+      window_label="main",
+      plugin="notification",
+      command="permissionState",
+    ),
+    capabilities=[@notification.capability_for_window("main")],
+  )
+  assert_true(response.payload().unwrap_or("").contains("\"permission\":"))
+}

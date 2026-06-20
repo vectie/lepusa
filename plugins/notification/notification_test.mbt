@@ -64,3 +64,32 @@ test "notification registry tracks permission and delivered titles" {
   assert_true(shown.payload().unwrap_or("").contains("\"shown\":true"))
   assert_eq(center.delivered()[0], "Build done")
 }
+
+///|
+test "notification native registry reports host permission state" {
+  let registry = native_registry()
+  assert_true(registry.contains("notification.show"))
+  assert_true(registry.contains("notification.permissionState"))
+  assert_true(registry.contains("notification.requestPermission"))
+  let grant = capability_for_window("main")
+  let state = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="native-state",
+      window_label="main",
+      plugin="notification",
+      command="permissionState",
+    ),
+    capabilities=[grant],
+  )
+  assert_true(state.payload().unwrap_or("").contains("\"permission\":"))
+  assert_true(state.payload().unwrap_or("").contains("\"native\":"))
+}
+
+///|
+test "notification auto registry exposes sync handlers" {
+  let registry = auto_registry()
+  assert_true(registry.contains("notification.show"))
+  assert_true(registry.contains("notification.permissionState"))
+  assert_true(registry.contains("notification.requestPermission"))
+  assert_eq(registry.sync_routes().length(), 3)
+}

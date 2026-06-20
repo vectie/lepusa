@@ -2,8 +2,8 @@
 
 `@lepusa/plugins/notification` defines Lepusa's official notification command
 contract. It includes sync permission/show handlers backed by an in-process
-`NotificationCenter`. Native runtimes can replace that registry with OS
-notification integration.
+`NotificationCenter`, plus an auto registry that uses native macOS/Linux
+delivery when the host exposes it.
 
 ```moonbit nocheck
 ///|
@@ -21,5 +21,8 @@ test "declare notification access" {
 
   let registry = @notification.registry()
   assert_true(registry.contains("notification.permissionState"))
+
+  let runtime_registry = @notification.auto_registry()
+  assert_true(runtime_registry.contains("notification.show"))
 }
 ```

@@ -213,8 +213,8 @@ Stabilize the cross-platform core set first:
 - process: initial explicit process permission contract exists
 - clipboard: platform-neutral command contract, native system clipboard stubs,
   and in-process sync text handlers for deterministic tests exist
-- notification: initial platform-neutral command contract and in-process sync
-  permission/show handlers exist
+- notification: platform-neutral command contract, macOS/Linux native delivery,
+  and in-process sync permission/show handlers for deterministic tests exist
 - log: initial pure command-registry package exists
 - store: initial pure command-registry package exists
 - localhost: initial local service lifecycle contract and portable metadata

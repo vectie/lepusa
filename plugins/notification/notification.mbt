@@ -20,6 +20,32 @@ pub fn capability_for_window(
 }
 
 ///|
+#cfg(target="native")
+extern "c" fn native_available_code() -> Int = "lepusa_notification_available"
+
+///|
+#cfg(target="native")
+#borrow(title, body)
+extern "c" fn native_show_code(title : Bytes, body : Bytes) -> Int = "lepusa_notification_show"
+
+///|
+#cfg(not(target="native"))
+fn native_available_code() -> Int {
+  0
+}
+
+///|
+#cfg(not(target="native"))
+fn native_show_code(_title : Bytes, _body : Bytes) -> Int {
+  2
+}
+
+///|
+pub fn native_available() -> Bool {
+  native_available_code() == 1
+}
+
+///|
 pub(all) enum NotificationPermissionState {
   Default
   Granted
@@ -69,6 +95,22 @@ pub fn registry(
 }
 
 ///|
+pub fn native_registry() -> @lepusa.CommandRegistry {
+  register_native(@lepusa.CommandRegistry::new())
+}
+
+///|
+pub fn auto_registry(
+  center? : NotificationCenter = NotificationCenter::new(),
+) -> @lepusa.CommandRegistry {
+  if native_available() {
+    native_registry()
+  } else {
+    registry(center~)
+  }
+}
+
+///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
   center? : NotificationCenter = NotificationCenter::new(),
@@ -82,6 +124,22 @@ pub fn register(
   })
   .register_fn("notification.requestPermission", permission=Notification, handler=_ => {
     handle_request_permission(center)
+  })
+}
+
+///|
+pub fn register_native(
+  registry : @lepusa.CommandRegistry,
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_fn("notification.show", permission=Notification, handler=payload => {
+    handle_native_show(payload)
+  })
+  .register_fn("notification.permissionState", permission=Notification, handler=_ => {
+    handle_native_permission_state()
+  })
+  .register_fn("notification.requestPermission", permission=Notification, handler=_ => {
+    handle_native_request_permission()
   })
 }
 
@@ -128,6 +186,39 @@ fn handle_request_permission(
 }
 
 ///|
+fn handle_native_show(payload : String) -> Result[String, String] {
+  match decode_notification_payload(payload) {
+    Ok((title, body)) =>
+      match native_show_code(@utf8.encode(title), @utf8.encode(body)) {
+        0 =>
+          Ok(
+            Json::object({
+              "title": Json::string(title),
+              "body": Json::string(body),
+              "permission": Json::string("granted"),
+              "shown": Json::boolean(true),
+              "queued": Json::boolean(false),
+              "native": Json::boolean(true),
+            }).stringify(),
+          )
+        2 => Err("native notification is unavailable on this platform")
+        code => Err("native notification show failed: code \{code}")
+      }
+    Err(problem) => Err(problem)
+  }
+}
+
+///|
+fn handle_native_permission_state() -> Result[String, String] {
+  Ok(native_permission_json().stringify())
+}
+
+///|
+fn handle_native_request_permission() -> Result[String, String] {
+  Ok(native_permission_json().stringify())
+}
+
+///|
 fn decode_notification_payload(
   payload : String,
 ) -> Result[(String, String), String] {
@@ -163,6 +254,20 @@ fn require_title(
 ///|
 fn permission_json(permission : NotificationPermissionState) -> Json {
   Json::object({ "permission": Json::string(permission_name(permission)) })
+}
+
+///|
+fn native_permission_json() -> Json {
+  Json::object({
+    "permission": Json::string(
+      if native_available() {
+        "granted"
+      } else {
+        "default"
+      },
+    ),
+    "native": Json::boolean(native_available()),
+  })
 }
 
 ///|
