@@ -191,6 +191,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     { name: "store", register: fn(registry, _) { @store.register(registry) } },
     { name: "tray", register: fn(registry, _) { @tray.register(registry) } },
     {
+      name: "updater",
+      register: fn(registry, _) { @updater.register(registry) },
+    },
+    {
       name: "windowState",
       register: fn(registry, _) { @window_state.register(registry) },
     },

@@ -632,7 +632,8 @@ menu-click routes, plus delegated tray state handlers.
 status and enablement routes, plus delegated enablement handlers.
 `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
-download, install, and restart routes. `@lepusa/plugins/service_discovery`
+download, install, and restart routes, plus delegated update lifecycle handlers.
+`@lepusa/plugins/service_discovery`
 declares service lookup, status, watch, change-event routes, and portable
 metadata handlers for configured endpoints.
 `@lepusa/plugins/dialog` declares message, confirm, and prompt routes, plus

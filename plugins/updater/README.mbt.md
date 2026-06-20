@@ -1,8 +1,10 @@
 # @lepusa/plugins/updater
 
 `@lepusa/plugins/updater` defines Lepusa's official self-update command
-contract. Native backends own feed retrieval, package download, signature
-verification, installation, and restart behavior.
+contract. The portable registry validates update policy, records delegated
+check/download/install/restart lifecycle state, and leaves feed retrieval,
+package download, signature verification, installation, and restart behavior to
+native backends.
 
 ```moonbit nocheck
 ///|

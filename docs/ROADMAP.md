@@ -208,7 +208,8 @@ Stabilize the cross-platform core set first:
 - autoLaunch: initial launch-at-login contract and delegated enablement
   handlers exist
 - windowState: initial window geometry persistence contract exists
-- updater: initial update lifecycle contract exists
+- updater: initial update lifecycle contract and delegated lifecycle handlers
+  exist
 - serviceDiscovery: initial service lookup/status contract and portable
   metadata handlers exist
 

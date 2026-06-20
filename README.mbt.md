@@ -368,8 +368,10 @@ runtime process for `windowState.save`/`set`, `windowState.restore`/`get`, and
 
 `@lepusa/plugins/updater` defines update lifecycle routes such as
 `updater.check`, `updater.download`, `updater.install`, and
-`updater.downloadAndInstall`, plus feed/channel policy metadata. Native
-backends own feed retrieval, signature verification, installation, and restart.
+`updater.downloadAndInstall`, plus feed/channel policy metadata. Its portable
+registry validates update policy and tracks delegated check, download, install,
+and restart lifecycle state; native backends own feed retrieval, signature
+verification, installation, and restart.
 
 `@lepusa/plugins/service_discovery` defines service lookup and status routes
 such as `serviceDiscovery.list`, `serviceDiscovery.resolve`,

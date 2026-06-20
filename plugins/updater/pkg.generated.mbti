@@ -13,6 +13,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : UpdaterPolicy, state? : UpdaterState) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : UpdaterPolicy, state? : UpdaterState) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
@@ -28,6 +32,22 @@ pub fn UpdaterPolicy::feed_url(Self) -> String
 pub fn UpdaterPolicy::new(feed_url~ : String, channel? : String, public_key? : String, allow_prerelease? : Bool) -> Self
 pub fn UpdaterPolicy::public_key(Self) -> String?
 pub fn UpdaterPolicy::validate(Self) -> Array[String]
+
+pub struct UpdaterState {
+  mut update_available : Bool
+  mut version : String?
+  mut downloaded : Bool
+  mut installed : Bool
+  mut restart_requested : Bool
+  mut last_action : String
+} derive(Eq, @debug.Debug)
+pub fn UpdaterState::downloaded(Self) -> Bool
+pub fn UpdaterState::installed(Self) -> Bool
+pub fn UpdaterState::last_action(Self) -> String
+pub fn UpdaterState::new(update_available? : Bool, version? : String) -> Self
+pub fn UpdaterState::restart_requested(Self) -> Bool
+pub fn UpdaterState::update_available(Self) -> Bool
+pub fn UpdaterState::version(Self) -> String?
 
 // Type aliases
 
