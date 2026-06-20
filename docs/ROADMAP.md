@@ -130,7 +130,8 @@
   now lower official plugin response payloads into `window-control` executable
   operations, and macOS/Linux WebView loops now consume the sync window control
   set for title, size, position, fullscreen, show/hide/focus,
-  minimize/maximize/unmaximize, and close;
+  minimize/maximize/unmaximize, and close, plus `navigate-window` operations
+  from approved bridge handoff packets;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, and bridge-drain operations, and canonical
   `RunReport` values expose those execution counts for source and packaged

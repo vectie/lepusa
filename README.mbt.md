@@ -674,8 +674,8 @@ can actually handle.
 Native runner plans also report bridge sync and async route sets, giving
 platform loops an explicit scheduling contract before they open a WebView.
 They also expose executable operation views for frontend event scripts and
-window navigations, so native loops do not need to parse operation JSON to
-drive lifecycle/startup work. Prepared source and packaged run plans append
+window navigations, so lifecycle/startup reporting uses typed operations before
+the backend crosses into C. Prepared source and packaged run plans append
 startup frontend event scripts to the matching WebView initialization script,
 so launchers consume the same operation boundary they report.
 `NativeOperationExecutor` executes those operation arrays through platform
@@ -686,7 +686,9 @@ response into a `window-control` executable operation, so native loops can apply
 window actions without parsing JavaScript response callbacks.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
-show, hide, focus, minimize, maximize, unmaximize, and close.
+show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
+`navigate-window` operations from the same handoff packet by loading the target
+URL in the live WebView after the approved MoonBit dispatch completes.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation policy instead of the
 generic skipped-operation fallback.

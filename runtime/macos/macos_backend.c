@@ -439,15 +439,6 @@ static void *lepusa_ns_string(moonbit_bytes_t bytes) {
   );
 }
 
-static void *lepusa_ns_url(moonbit_bytes_t bytes) {
-  void *url_string = lepusa_ns_string(bytes);
-  return ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
-    lepusa_cls("NSURL"),
-    lepusa_sel("URLWithString:"),
-    url_string
-  );
-}
-
 static void *lepusa_ns_string_from_range(const char *text, int32_t len) {
   return lepusa_ns_string(lepusa_bytes_from_range(text, len));
 }
@@ -752,6 +743,88 @@ static int lepusa_extract_handoff_bool_field(
   return 0;
 }
 
+static int lepusa_extract_string_field_from_range(
+  const char *start,
+  const char *end,
+  const char *field,
+  char *value,
+  size_t value_len
+) {
+  if (field == NULL ||
+      value == NULL ||
+      value_len == 0 ||
+      start == NULL ||
+      end == NULL) {
+    return 0;
+  }
+  char key[128];
+  snprintf(key, sizeof(key), "\"%s\":\"", field);
+  const char *cursor = lepusa_find_range(start, end, key);
+  if (cursor == NULL) {
+    return 0;
+  }
+  cursor += strlen(key);
+  size_t written = 0;
+  while (cursor < end) {
+    if (*cursor == '"') {
+      value[written] = '\0';
+      return 1;
+    }
+    if (written + 1 >= value_len) {
+      return 0;
+    }
+    if (*cursor == '\\' && cursor + 1 < end) {
+      cursor++;
+      switch (*cursor) {
+        case '"':
+        case '\\':
+        case '/':
+          value[written++] = *cursor;
+          break;
+        case 'n':
+          value[written++] = '\n';
+          break;
+        case 'r':
+          value[written++] = '\r';
+          break;
+        case 't':
+          value[written++] = '\t';
+          break;
+        default:
+          value[written++] = *cursor;
+          break;
+      }
+      cursor++;
+    } else {
+      value[written++] = *cursor;
+      cursor++;
+    }
+  }
+  return 0;
+}
+
+static void lepusa_load_webview_url(void *webview, const char *url) {
+  if (webview == NULL || url == NULL || url[0] == '\0') {
+    return;
+  }
+  void *ns_url = ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
+    lepusa_cls("NSURL"),
+    lepusa_sel("URLWithString:"),
+    lepusa_ns_string_from_range(url, (int32_t)strlen(url))
+  );
+  if (ns_url == NULL) {
+    return;
+  }
+  void *request = ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
+    lepusa_cls("NSURLRequest"),
+    lepusa_sel("requestWithURL:"),
+    ns_url
+  );
+  if (request != NULL) {
+    lepusa_msg_void_id(webview, "loadRequest:", request);
+  }
+}
+
 static void lepusa_apply_window_controls_from_handoff_packet(
   void *window,
   moonbit_bytes_t packet
@@ -830,6 +903,33 @@ static void lepusa_apply_window_controls_from_handoff_packet(
     }
   } else if (lepusa_handoff_has_window_action(packet, "close")) {
     ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("close"));
+  }
+}
+
+static void lepusa_apply_navigation_from_handoff_packet(
+  void *webview,
+  moonbit_bytes_t packet
+) {
+  if (webview == NULL || packet == NULL) {
+    return;
+  }
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_handoff_operations_range(packet, &operations, &operations_len)) {
+    return;
+  }
+  const char *end = operations + operations_len;
+  const char *navigate = lepusa_find_range(
+    operations,
+    end,
+    "\"kind\":\"navigate-window\""
+  );
+  if (navigate == NULL) {
+    return;
+  }
+  char url[4096];
+  if (lepusa_extract_string_field_from_range(navigate, end, "url", url, sizeof(url))) {
+    lepusa_load_webview_url(webview, url);
   }
 }
 
@@ -984,6 +1084,7 @@ static void lepusa_script_message_handler(
     NULL
   );
   lepusa_apply_window_controls_from_handoff_packet(context->window, packet);
+  lepusa_apply_navigation_from_handoff_packet(context->webview, packet);
 }
 
 static void lepusa_url_scheme_start_task(
@@ -1355,23 +1456,15 @@ static int32_t lepusa_macos_run_webview_impl(
   bridge_context.window = window;
   bridge_context.webview = webview;
 
-  void *ns_url = lepusa_ns_url(url);
-  if (ns_url == NULL) {
-    return 7;
-  }
-  void *request = ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
-    lepusa_cls("NSURLRequest"),
-    lepusa_sel("requestWithURL:"),
-    ns_url
-  );
-  if (request == NULL) {
-    return 8;
-  }
-
   lepusa_msg_void_id(window, "setTitle:", lepusa_ns_string(title));
   lepusa_msg_void_id(window, "setContentView:", webview);
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("center"));
-  lepusa_msg_void_id(webview, "loadRequest:", request);
+  char *initial_url = lepusa_cstr_from_bytes(url);
+  if (initial_url == NULL) {
+    return 7;
+  }
+  lepusa_load_webview_url(webview, initial_url);
+  free(initial_url);
   lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
   lepusa_msg_void_int(app, "activateIgnoringOtherApps:", 1);
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(app, lepusa_sel("run"));

@@ -708,6 +708,66 @@ static int lepusa_linux_extract_handoff_bool_field(
   return 0;
 }
 
+static int lepusa_linux_extract_string_field_from_range(
+  const char *start,
+  const char *end,
+  const char *field,
+  char *value,
+  size_t value_len
+) {
+  if (field == NULL ||
+      value == NULL ||
+      value_len == 0 ||
+      start == NULL ||
+      end == NULL) {
+    return 0;
+  }
+  char key[128];
+  snprintf(key, sizeof(key), "\"%s\":\"", field);
+  const char *cursor = lepusa_linux_find_range(start, end, key);
+  if (cursor == NULL) {
+    return 0;
+  }
+  cursor += strlen(key);
+  size_t written = 0;
+  while (cursor < end) {
+    if (*cursor == '"') {
+      value[written] = '\0';
+      return 1;
+    }
+    if (written + 1 >= value_len) {
+      return 0;
+    }
+    if (*cursor == '\\' && cursor + 1 < end) {
+      cursor++;
+      switch (*cursor) {
+        case '"':
+        case '\\':
+        case '/':
+          value[written++] = *cursor;
+          break;
+        case 'n':
+          value[written++] = '\n';
+          break;
+        case 'r':
+          value[written++] = '\r';
+          break;
+        case 't':
+          value[written++] = '\t';
+          break;
+        default:
+          value[written++] = *cursor;
+          break;
+      }
+      cursor++;
+    } else {
+      value[written++] = *cursor;
+      cursor++;
+    }
+  }
+  return 0;
+}
+
 static void lepusa_linux_apply_window_controls_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -765,6 +825,46 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
     context->api->gtk_window_unmaximize(context->window);
   } else if (lepusa_linux_handoff_has_window_action(packet, "close")) {
     context->api->gtk_widget_destroy(context->window);
+  }
+}
+
+static void lepusa_linux_apply_navigation_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->webview == NULL ||
+      packet == NULL) {
+    return;
+  }
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
+    return;
+  }
+  const char *end = operations + operations_len;
+  const char *navigate = lepusa_linux_find_range(
+    operations,
+    end,
+    "\"kind\":\"navigate-window\""
+  );
+  if (navigate == NULL) {
+    return;
+  }
+  char url[4096];
+  if (lepusa_linux_extract_string_field_from_range(
+        navigate,
+        end,
+        "url",
+        url,
+        sizeof(url)
+      )) {
+    context->api->webkit_web_view_load_uri(context->webview, url);
   }
 }
 
@@ -877,6 +977,7 @@ static void lepusa_linux_script_message_received(
     free(script_text);
   }
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
+  lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
   if (message != NULL) {
     context->api->g_free(message);
   }
