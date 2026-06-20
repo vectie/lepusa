@@ -21,6 +21,8 @@ pub fn native_bridge_response_script(String, String) -> String
 
 pub fn native_direct_load_url(String) -> Bool
 
+pub fn native_executable_operations_packet(Array[NativeExecutableOperation]) -> String
+
 pub fn native_protocol_load_url(String, String) -> Bool
 
 pub fn native_service_command_packet(Array[String]) -> Bytes

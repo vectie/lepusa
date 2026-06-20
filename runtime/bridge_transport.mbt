@@ -939,8 +939,7 @@ fn native_bridge_handoff_packet(
   body : String,
   operations~ : Array[NativeExecutableOperation],
 ) -> String {
-  let operations_json = "[\{operations.map(fn(operation) { operation.to_json() }).join(",")}]"
-  "\{status}\n\{window_label}\n\{@utf8.encode(body).length()}\n\{body}\n\{operations_json}"
+  "\{status}\n\{window_label}\n\{@utf8.encode(body).length()}\n\{body}\n\{native_executable_operations_packet(operations)}"
 }
 
 ///|

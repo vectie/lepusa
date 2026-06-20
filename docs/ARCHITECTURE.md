@@ -206,13 +206,15 @@ Open-window runners pass the queue-backed
 commands still return callback scripts immediately while async commands are
 captured for the backend drain/evaluate step.
 The C-facing callback now uses `handoff_packet_callback`: packets are encoded as
-`status\n<window>\n<body-byte-length>\n<body>\n<operations-json>`. Immediate
-packets carry the JavaScript callback script plus executable operations,
-deferred packets carry the target window and queued task count, and error
-packets carry a diagnostic body. macOS and Linux WebView handlers parse that
-packet and only evaluate immediate scripts today, so deferred async work is
-explicit instead of being indistinguishable from an empty callback, while native
-operations such as `window-control` have a stable packet slot.
+`status\n<window>\n<body-byte-length>\n<body>\n<operation-packet>`. The final
+section is a versioned `lepusa-ops-v1` length-prefixed native operation packet
+with normalized fields for follow-up operations. Immediate packets carry the
+JavaScript callback script plus executable operations, deferred packets carry
+the target window and queued task count, and error packets carry a diagnostic
+body. macOS and Linux WebView handlers parse that packet and only evaluate
+immediate scripts today, so deferred async work is explicit instead of being
+indistinguishable from an empty callback, while native operations such as
+`window-control` and `navigate-window` have a stable non-JSON packet slot.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a

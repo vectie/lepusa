@@ -421,6 +421,125 @@ pub fn NativeExecutableOperation::to_json(
 }
 
 ///|
+pub fn native_executable_operations_packet(
+  operations : Array[NativeExecutableOperation],
+) -> String {
+  [
+    "lepusa-ops-v1\n",
+    "\{operations.length()}\n",
+    operations.map(fn(operation) { operation.native_packet_record() }).join(""),
+  ].join("")
+}
+
+///|
+fn NativeExecutableOperation::native_packet_record(
+  self : NativeExecutableOperation,
+) -> String {
+  let (window_label, action, url, title, width, height, x, y, fullscreen) = match
+    self {
+    NativeExecutableEvaluateScript(script) =>
+      (script.window_label(), "", "", "", "", "", "", "", "")
+    NativeExecutableDrainBridge(drain) =>
+      (drain.window_label(), "", "", "", "", "", "", "", "")
+    NativeExecutableNavigate(navigation) =>
+      (navigation.window_label(), "", navigation.url(), "", "", "", "", "", "")
+    NativeExecutableWindowControl(control) =>
+      (
+        control.window_label(),
+        control.action(),
+        "",
+        control.payload_string("title"),
+        control.payload_int("width"),
+        control.payload_int("height"),
+        control.payload_int("x"),
+        control.payload_int("y"),
+        control.payload_bool("fullscreen"),
+      )
+    NativeExecutableRunEffect(name) => ("", name, "", "", "", "", "", "", "")
+    NativeExecutableStartService(_) => ("", "", "", "", "", "", "", "", "")
+  }
+  [
+    packet_field(self.kind()),
+    packet_field(window_label),
+    packet_field(action),
+    packet_field(url),
+    packet_field(title),
+    packet_field(width),
+    packet_field(height),
+    packet_field(x),
+    packet_field(y),
+    packet_field(fullscreen),
+  ].join("")
+}
+
+///|
+fn packet_field(value : String) -> String {
+  "\{@utf8.encode(value).length()}\n\{value}"
+}
+
+///|
+fn NativeWindowControl::payload_object(
+  self : NativeWindowControl,
+) -> Map[String, Json]? {
+  let parsed = @json.parse(self.payload) catch { _ => return None }
+  match parsed {
+    Object(object) => Some(object)
+    _ => None
+  }
+}
+
+///|
+fn NativeWindowControl::payload_string(
+  self : NativeWindowControl,
+  key : String,
+) -> String {
+  match self.payload_object() {
+    Some(object) =>
+      match object.get(key) {
+        Some(String(value)) => value
+        _ => ""
+      }
+    None => ""
+  }
+}
+
+///|
+fn NativeWindowControl::payload_int(
+  self : NativeWindowControl,
+  key : String,
+) -> String {
+  match self.payload_object() {
+    Some(object) =>
+      match object.get(key) {
+        Some(Number(value, ..)) => value.to_int().to_string()
+        _ => ""
+      }
+    None => ""
+  }
+}
+
+///|
+fn NativeWindowControl::payload_bool(
+  self : NativeWindowControl,
+  key : String,
+) -> String {
+  match self.payload_object() {
+    Some(object) =>
+      match object.get(key) {
+        Some(True) => "true"
+        Some(False) => "false"
+        _ => ""
+      }
+    None =>
+      if self.payload == "true" || self.payload == "false" {
+        self.payload
+      } else {
+        ""
+      }
+  }
+}
+
+///|
 pub fn NativeOperation::kind(self : NativeOperation) -> String {
   match self {
     NativeStartService(_) => "start-service"

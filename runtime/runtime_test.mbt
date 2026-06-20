@@ -2069,8 +2069,10 @@ test "bridge dispatch lowers approved window responses to native operations" {
       }
       assert_true(packet.has_prefix("immediate\nmain\n"))
       assert_true(packet.contains("globalThis[\"__lepusaInvokeResponse\"]"))
-      assert_true(packet.contains("\"kind\":\"window-control\""))
-      assert_true(packet.contains("\"action\":\"setTitle\""))
+      assert_true(packet.contains("lepusa-ops-v1\n2\n"))
+      assert_true(packet.contains("window-control"))
+      assert_true(packet.contains("setTitle"))
+      assert_true(packet.contains("Ready"))
     }
     Err(_) => abort("unexpected bridge prepare failure")
   }
@@ -2096,9 +2098,10 @@ test "bridge dispatch lowers approved window responses to native operations" {
       ) catch {
         _ => abort("unexpected invalid size window control packet bytes")
       }
-      assert_true(packet.contains("\"action\":\"setSize\""))
-      assert_true(packet.contains("\\\"width\\\":900"))
-      assert_true(packet.contains("\\\"height\\\":640"))
+      assert_true(packet.contains("window-control"))
+      assert_true(packet.contains("setSize"))
+      assert_true(packet.contains("900"))
+      assert_true(packet.contains("640"))
     }
     Err(_) => abort("unexpected size bridge prepare failure")
   }
@@ -2124,9 +2127,10 @@ test "bridge dispatch lowers approved window responses to native operations" {
       ) catch {
         _ => abort("unexpected invalid position window control packet bytes")
       }
-      assert_true(packet.contains("\"action\":\"setPosition\""))
-      assert_true(packet.contains("\\\"x\\\":120"))
-      assert_true(packet.contains("\\\"y\\\":80"))
+      assert_true(packet.contains("window-control"))
+      assert_true(packet.contains("setPosition"))
+      assert_true(packet.contains("120"))
+      assert_true(packet.contains("80"))
     }
     Err(_) => abort("unexpected position bridge prepare failure")
   }
@@ -2152,8 +2156,9 @@ test "bridge dispatch lowers approved window responses to native operations" {
       ) catch {
         _ => abort("unexpected invalid fullscreen window control packet bytes")
       }
-      assert_true(packet.contains("\"action\":\"setFullscreen\""))
-      assert_true(packet.contains("\\\"fullscreen\\\":true"))
+      assert_true(packet.contains("window-control"))
+      assert_true(packet.contains("setFullscreen"))
+      assert_true(packet.contains("true"))
     }
     Err(_) => abort("unexpected fullscreen bridge prepare failure")
   }
@@ -2335,7 +2340,7 @@ async test "native runtime owns bridge message transport" {
           ) catch {
             _ => abort("unexpected invalid bridge handoff packet bytes")
           }
-          assert_eq(deferred_packet, "deferred\nmain\n1\n1\n[]")
+          assert_eq(deferred_packet, "deferred\nmain\n1\n1\nlepusa-ops-v1\n0\n")
           assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bridge callback drain json bytes")

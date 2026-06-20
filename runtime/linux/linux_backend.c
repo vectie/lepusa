@@ -445,23 +445,6 @@ static const char *lepusa_linux_find_newline_range(
   return NULL;
 }
 
-static const char *lepusa_linux_find_range(
-  const char *start,
-  const char *end,
-  const char *needle
-) {
-  size_t needle_len = strlen(needle);
-  if (needle_len == 0 || start == NULL || end == NULL) {
-    return NULL;
-  }
-  for (const char *cursor = start; cursor + needle_len <= end; cursor++) {
-    if (memcmp(cursor, needle, needle_len) == 0) {
-      return cursor;
-    }
-  }
-  return NULL;
-}
-
 static int lepusa_linux_handoff_operations_range(
   moonbit_bytes_t packet,
   const char **operations_out,
@@ -508,264 +491,235 @@ static int lepusa_linux_handoff_operations_range(
   return 1;
 }
 
-static int lepusa_linux_handoff_has_window_action(
-  moonbit_bytes_t packet,
-  const char *action
+typedef struct {
+  const char *kind;
+  int32_t kind_len;
+  const char *window;
+  int32_t window_len;
+  const char *action;
+  int32_t action_len;
+  const char *url;
+  int32_t url_len;
+  const char *title;
+  int32_t title_len;
+  const char *width;
+  int32_t width_len;
+  const char *height;
+  int32_t height_len;
+  const char *x;
+  int32_t x_len;
+  const char *y;
+  int32_t y_len;
+  const char *fullscreen;
+  int32_t fullscreen_len;
+} LepusaLinuxNativeOperationRecord;
+
+static int lepusa_linux_range_equals(
+  const char *value,
+  int32_t value_len,
+  const char *literal
 ) {
-  const char *operations = NULL;
-  int32_t operations_len = 0;
-  if (!lepusa_linux_handoff_operations_range(
-        packet,
-        &operations,
-        &operations_len
-      )) {
-    return 0;
-  }
-  const char *end = operations + operations_len;
-  char action_token[128];
-  snprintf(
-    action_token,
-    sizeof(action_token),
-    "\"action\":\"%s\"",
-    action == NULL ? "" : action
-  );
-  return lepusa_linux_find_range(
-      operations,
-      end,
-      "\"kind\":\"window-control\""
-    ) != NULL &&
-    lepusa_linux_find_range(operations, end, action_token) != NULL;
+  size_t literal_len = literal == NULL ? 0 : strlen(literal);
+  return value != NULL &&
+    value_len == (int32_t)literal_len &&
+    memcmp(value, literal, literal_len) == 0;
 }
 
-static int lepusa_linux_extract_handoff_title(
-  moonbit_bytes_t packet,
-  char *title,
-  size_t title_len
+static int lepusa_linux_read_packet_field(
+  const char **cursor,
+  const char *end,
+  const char **value_out,
+  int32_t *value_len_out
 ) {
-  const char *operations = NULL;
-  int32_t operations_len = 0;
-  if (title == NULL ||
-      title_len == 0 ||
-      !lepusa_linux_handoff_operations_range(
-        packet,
-        &operations,
-        &operations_len
-      )) {
+  if (cursor == NULL ||
+      *cursor == NULL ||
+      value_out == NULL ||
+      value_len_out == NULL) {
     return 0;
   }
-  const char *end = operations + operations_len;
-  const char *key = lepusa_linux_find_range(operations, end, "\\\"title\\\"");
-  if (key == NULL) {
+  const char *line_end = lepusa_linux_find_newline_range(*cursor, end);
+  if (line_end == NULL) {
     return 0;
   }
-  const char *cursor = key + strlen("\\\"title\\\"");
-  while (cursor < end && isspace((unsigned char)*cursor)) {
-    cursor++;
-  }
-  if (cursor >= end || *cursor != ':') {
-    return 0;
-  }
-  cursor++;
-  while (cursor < end && isspace((unsigned char)*cursor)) {
-    cursor++;
-  }
-  if (cursor + 2 > end || cursor[0] != '\\' || cursor[1] != '"') {
-    return 0;
-  }
-  cursor += 2;
-  size_t written = 0;
-  while (cursor < end) {
-    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '"') {
-      title[written] = '\0';
-      return 1;
-    }
-    if (written + 1 >= title_len) {
+  int64_t len64 = 0;
+  for (const char *p = *cursor; p < line_end; p++) {
+    if (*p < '0' || *p > '9') {
       return 0;
     }
-    if (cursor + 1 < end && cursor[0] == '\\' && cursor[1] == '\\') {
-      title[written++] = '\\';
-      cursor += 2;
-    } else {
-      title[written++] = *cursor;
-      cursor++;
+    len64 = len64 * 10 + (*p - '0');
+    if (len64 > INT32_MAX) {
+      return 0;
     }
   }
-  return 0;
-}
-
-static const char *lepusa_linux_handoff_payload_key(
-  moonbit_bytes_t packet,
-  const char *field,
-  const char **end_out
-) {
-  const char *operations = NULL;
-  int32_t operations_len = 0;
-  if (field == NULL ||
-      !lepusa_linux_handoff_operations_range(
-        packet,
-        &operations,
-        &operations_len
-      )) {
-    return NULL;
-  }
-  const char *end = operations + operations_len;
-  char key[128];
-  snprintf(key, sizeof(key), "\\\"%s\\\"", field);
-  const char *cursor = lepusa_linux_find_range(operations, end, key);
-  if (cursor == NULL) {
-    return NULL;
-  }
-  cursor += strlen(key);
-  while (cursor < end && isspace((unsigned char)*cursor)) {
-    cursor++;
-  }
-  if (cursor >= end || *cursor != ':') {
-    return NULL;
-  }
-  cursor++;
-  while (cursor < end && isspace((unsigned char)*cursor)) {
-    cursor++;
-  }
-  if (end_out != NULL) {
-    *end_out = end;
-  }
-  return cursor;
-}
-
-static int lepusa_linux_extract_handoff_int_field(
-  moonbit_bytes_t packet,
-  const char *field,
-  int *value_out
-) {
-  const char *end = NULL;
-  const char *cursor = lepusa_linux_handoff_payload_key(packet, field, &end);
-  if (cursor == NULL || value_out == NULL) {
+  const char *value = line_end + 1;
+  if (value + (int32_t)len64 > end) {
     return 0;
   }
-  int sign = 1;
-  if (cursor < end && *cursor == '-') {
-    sign = -1;
-    cursor++;
-  }
-  if (cursor >= end || !isdigit((unsigned char)*cursor)) {
-    return 0;
-  }
-  int value = 0;
-  while (cursor < end && isdigit((unsigned char)*cursor)) {
-    value = value * 10 + (*cursor - '0');
-    cursor++;
-  }
-  *value_out = sign * value;
+  *value_out = value;
+  *value_len_out = (int32_t)len64;
+  *cursor = value + (int32_t)len64;
   return 1;
 }
 
-static int lepusa_linux_extract_handoff_bool_field(
-  moonbit_bytes_t packet,
-  const char *field,
+static int lepusa_linux_read_native_operation_record(
+  const char **cursor,
+  const char *end,
+  LepusaLinuxNativeOperationRecord *record
+) {
+  return record != NULL &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->kind,
+      &record->kind_len
+    ) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->window,
+      &record->window_len
+    ) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->action,
+      &record->action_len
+    ) &&
+    lepusa_linux_read_packet_field(cursor, end, &record->url, &record->url_len) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->title,
+      &record->title_len
+    ) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->width,
+      &record->width_len
+    ) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->height,
+      &record->height_len
+    ) &&
+    lepusa_linux_read_packet_field(cursor, end, &record->x, &record->x_len) &&
+    lepusa_linux_read_packet_field(cursor, end, &record->y, &record->y_len) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
+      &record->fullscreen,
+      &record->fullscreen_len
+    );
+}
+
+static int lepusa_linux_parse_record_int(
+  const char *value,
+  int32_t value_len,
   int *value_out
 ) {
-  const char *end = NULL;
-  const char *cursor = lepusa_linux_handoff_payload_key(packet, field, &end);
+  if (value == NULL || value_len <= 0 || value_out == NULL) {
+    return 0;
+  }
+  int sign = 1;
+  int32_t index = 0;
+  if (value[0] == '-') {
+    sign = -1;
+    index = 1;
+  }
+  if (index >= value_len || !isdigit((unsigned char)value[index])) {
+    return 0;
+  }
+  int parsed = 0;
+  while (index < value_len && isdigit((unsigned char)value[index])) {
+    parsed = parsed * 10 + (value[index] - '0');
+    index++;
+  }
+  if (index != value_len) {
+    return 0;
+  }
+  *value_out = sign * parsed;
+  return 1;
+}
+
+static int lepusa_linux_parse_record_bool(
+  const char *value,
+  int32_t value_len,
+  int *value_out
+) {
   if (value_out == NULL) {
     return 0;
   }
-  if (cursor != NULL) {
-    if (cursor + 4 <= end && memcmp(cursor, "true", 4) == 0) {
-      *value_out = 1;
-      return 1;
-    }
-    if (cursor + 5 <= end && memcmp(cursor, "false", 5) == 0) {
-      *value_out = 0;
-      return 1;
-    }
-  }
-  const char *operations = NULL;
-  int32_t operations_len = 0;
-  if (!lepusa_linux_handoff_operations_range(
-        packet,
-        &operations,
-        &operations_len
-      )) {
-    return 0;
-  }
-  end = operations + operations_len;
-  if (lepusa_linux_find_range(
-        operations,
-        end,
-        "\"payload\":\"true\""
-      ) != NULL) {
+  if (lepusa_linux_range_equals(value, value_len, "true")) {
     *value_out = 1;
     return 1;
   }
-  if (lepusa_linux_find_range(
-        operations,
-        end,
-        "\"payload\":\"false\""
-      ) != NULL) {
+  if (lepusa_linux_range_equals(value, value_len, "false")) {
     *value_out = 0;
     return 1;
   }
   return 0;
 }
 
-static int lepusa_linux_extract_string_field_from_range(
-  const char *start,
-  const char *end,
-  const char *field,
-  char *value,
-  size_t value_len
+static int lepusa_linux_handoff_operation_records(
+  moonbit_bytes_t packet,
+  const char **cursor_out,
+  const char **end_out,
+  int32_t *count_out
 ) {
-  if (field == NULL ||
-      value == NULL ||
-      value_len == 0 ||
-      start == NULL ||
-      end == NULL) {
+  const char *operations = NULL;
+  int32_t operations_len = 0;
+  if (!lepusa_linux_handoff_operations_range(
+        packet,
+        &operations,
+        &operations_len
+      )) {
     return 0;
   }
-  char key[128];
-  snprintf(key, sizeof(key), "\"%s\":\"", field);
-  const char *cursor = lepusa_linux_find_range(start, end, key);
-  if (cursor == NULL) {
+  const char *cursor = operations;
+  const char *end = operations + operations_len;
+  const char *version = lepusa_linux_find_newline_range(cursor, end);
+  if (version == NULL ||
+      !lepusa_linux_range_equals(
+        cursor,
+        (int32_t)(version - cursor),
+        "lepusa-ops-v1"
+      )) {
     return 0;
   }
-  cursor += strlen(key);
-  size_t written = 0;
-  while (cursor < end) {
-    if (*cursor == '"') {
-      value[written] = '\0';
-      return 1;
-    }
-    if (written + 1 >= value_len) {
+  cursor = version + 1;
+  const char *count_end = lepusa_linux_find_newline_range(cursor, end);
+  if (count_end == NULL) {
+    return 0;
+  }
+  int64_t count64 = 0;
+  for (const char *p = cursor; p < count_end; p++) {
+    if (*p < '0' || *p > '9') {
       return 0;
     }
-    if (*cursor == '\\' && cursor + 1 < end) {
-      cursor++;
-      switch (*cursor) {
-        case '"':
-        case '\\':
-        case '/':
-          value[written++] = *cursor;
-          break;
-        case 'n':
-          value[written++] = '\n';
-          break;
-        case 'r':
-          value[written++] = '\r';
-          break;
-        case 't':
-          value[written++] = '\t';
-          break;
-        default:
-          value[written++] = *cursor;
-          break;
-      }
-      cursor++;
-    } else {
-      value[written++] = *cursor;
-      cursor++;
+    count64 = count64 * 10 + (*p - '0');
+    if (count64 > INT32_MAX) {
+      return 0;
     }
   }
-  return 0;
+  *cursor_out = count_end + 1;
+  *end_out = end;
+  *count_out = (int32_t)count64;
+  return 1;
+}
+
+static char *lepusa_linux_cstr_from_range(const char *value, int32_t value_len) {
+  if (value == NULL || value_len <= 0) {
+    return NULL;
+  }
+  char *copy = (char *)malloc((size_t)value_len + 1);
+  if (copy == NULL) {
+    return NULL;
+  }
+  memcpy(copy, value, (size_t)value_len);
+  copy[value_len] = '\0';
+  return copy;
 }
 
 static void lepusa_linux_apply_window_controls_from_handoff_packet(
@@ -778,53 +732,98 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
       packet == NULL) {
     return;
   }
-  char title[1024];
-  if (lepusa_linux_handoff_has_window_action(packet, "setTitle") &&
-      lepusa_linux_extract_handoff_title(packet, title, sizeof(title))) {
-    context->api->gtk_window_set_title(context->window, title);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "setSize")) {
-    int width = 0;
-    int height = 0;
-    if (lepusa_linux_extract_handoff_int_field(packet, "width", &width) &&
-        lepusa_linux_extract_handoff_int_field(packet, "height", &height) &&
-        width > 0 &&
-        height > 0) {
-      context->api->gtk_window_resize(context->window, width, height);
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
     }
-  } else if (lepusa_linux_handoff_has_window_action(packet, "setPosition")) {
-    int x = 0;
-    int y = 0;
-    if (lepusa_linux_extract_handoff_int_field(packet, "x", &x) &&
-        lepusa_linux_extract_handoff_int_field(packet, "y", &y)) {
-      context->api->gtk_window_move(context->window, x, y);
-    }
-  } else if (lepusa_linux_handoff_has_window_action(packet, "setFullscreen")) {
-    int fullscreen = 0;
-    if (lepusa_linux_extract_handoff_bool_field(
-          packet,
-          "fullscreen",
-          &fullscreen
+    if (!lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "window-control"
         )) {
-      if (fullscreen) {
-        context->api->gtk_window_fullscreen(context->window);
-      } else {
-        context->api->gtk_window_unfullscreen(context->window);
-      }
+      continue;
     }
-  } else if (lepusa_linux_handoff_has_window_action(packet, "show")) {
-    context->api->gtk_widget_show_all(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "focus")) {
-    context->api->gtk_window_present(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "hide")) {
-    context->api->gtk_widget_hide(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "minimize")) {
-    context->api->gtk_window_iconify(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "maximize")) {
-    context->api->gtk_window_maximize(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "unmaximize")) {
-    context->api->gtk_window_unmaximize(context->window);
-  } else if (lepusa_linux_handoff_has_window_action(packet, "close")) {
-    context->api->gtk_widget_destroy(context->window);
+    if (lepusa_linux_range_equals(record.action, record.action_len, "setTitle")) {
+      char *title = lepusa_linux_cstr_from_range(record.title, record.title_len);
+      if (title != NULL) {
+        context->api->gtk_window_set_title(context->window, title);
+        free(title);
+      }
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "setSize"
+               )) {
+      int width = 0;
+      int height = 0;
+      if (lepusa_linux_parse_record_int(record.width, record.width_len, &width) &&
+          lepusa_linux_parse_record_int(record.height, record.height_len, &height) &&
+          width > 0 &&
+          height > 0) {
+        context->api->gtk_window_resize(context->window, width, height);
+      }
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "setPosition"
+               )) {
+      int x = 0;
+      int y = 0;
+      if (lepusa_linux_parse_record_int(record.x, record.x_len, &x) &&
+          lepusa_linux_parse_record_int(record.y, record.y_len, &y)) {
+        context->api->gtk_window_move(context->window, x, y);
+      }
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "setFullscreen"
+               )) {
+      int fullscreen = 0;
+      if (lepusa_linux_parse_record_bool(
+            record.fullscreen,
+            record.fullscreen_len,
+            &fullscreen
+          )) {
+        if (fullscreen) {
+          context->api->gtk_window_fullscreen(context->window);
+        } else {
+          context->api->gtk_window_unfullscreen(context->window);
+        }
+      }
+    } else if (lepusa_linux_range_equals(record.action, record.action_len, "show")) {
+      context->api->gtk_widget_show_all(context->window);
+    } else if (lepusa_linux_range_equals(record.action, record.action_len, "focus")) {
+      context->api->gtk_window_present(context->window);
+    } else if (lepusa_linux_range_equals(record.action, record.action_len, "hide")) {
+      context->api->gtk_widget_hide(context->window);
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "minimize"
+               )) {
+      context->api->gtk_window_iconify(context->window);
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "maximize"
+               )) {
+      context->api->gtk_window_maximize(context->window);
+    } else if (lepusa_linux_range_equals(
+                 record.action,
+                 record.action_len,
+                 "unmaximize"
+               )) {
+      context->api->gtk_window_unmaximize(context->window);
+    } else if (lepusa_linux_range_equals(record.action, record.action_len, "close")) {
+      context->api->gtk_widget_destroy(context->window);
+    }
   }
 }
 
@@ -838,33 +837,28 @@ static void lepusa_linux_apply_navigation_from_handoff_packet(
       packet == NULL) {
     return;
   }
-  const char *operations = NULL;
-  int32_t operations_len = 0;
-  if (!lepusa_linux_handoff_operations_range(
-        packet,
-        &operations,
-        &operations_len
-      )) {
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
     return;
   }
-  const char *end = operations + operations_len;
-  const char *navigate = lepusa_linux_find_range(
-    operations,
-    end,
-    "\"kind\":\"navigate-window\""
-  );
-  if (navigate == NULL) {
-    return;
-  }
-  char url[4096];
-  if (lepusa_linux_extract_string_field_from_range(
-        navigate,
-        end,
-        "url",
-        url,
-        sizeof(url)
-      )) {
-    context->api->webkit_web_view_load_uri(context->webview, url);
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "navigate-window"
+        )) {
+      char *url = lepusa_linux_cstr_from_range(record.url, record.url_len);
+      if (url != NULL) {
+        context->api->webkit_web_view_load_uri(context->webview, url);
+        free(url);
+      }
+    }
   }
 }
 
