@@ -39,6 +39,8 @@ The first implementation slice already owns the public MoonBit foundation:
   coupling build tools to CLI internals
 - `@lepusa/scaffold` app and plugin skeleton generation for ecosystem tooling
   without shelling through `lepusa init`
+- `@lepusa/desktop` app-facing official plugin kit that keeps plugin
+  declarations, capability grants, and runtime command handlers in sync
 - `@lepusa/runtime` host/session snapshots that native WebView backends can
   consume without reinterpreting app configuration
 - `@lepusa/runtime.NativeRuntime` as the single native-loop facade over backend
@@ -96,6 +98,30 @@ let bundle = @lepusa.BundleConfig::new(
     version="0.1.0",
   ),
 )
+```
+
+For official desktop APIs, `@lepusa/desktop.DesktopKit` wires the framework
+parts together:
+
+```moonbit nocheck
+///|
+let kit = @desktop.DesktopKit::new().with_plugins(["dialog", "fs"])
+
+///|
+let app = kit
+  .apply(
+    @lepusa.new(root).window(
+      title="Desk",
+      source=@lepusa.Source::html("<main></main>"),
+    ),
+  )
+  .unwrap()
+
+///|
+let plan = app.runtime_plan().unwrap()
+
+///|
+let host = kit.runtime_host(plan).unwrap()
 ```
 
 For programmatic project configuration, use `ProjectManifest`:

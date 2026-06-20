@@ -21,6 +21,10 @@ lepusa/ui
   Rabbita-compatible HTML helpers and model/update/view programs for
   MoonBit-authored desktop UI
 
+lepusa/desktop
+  app-facing official plugin kit for keeping plugin declarations,
+  capability grants, command registries, and runtime hosts in sync
+
 lepusa/runtime
   WebView windows, event loop, custom protocols, asset loading, IPC transport
 
@@ -74,6 +78,14 @@ Lepusa IPC. It still produces a root `Cell`, so the runtime boundary remains
 `cell -> new(cell) -> launch_plan/runtime_plan`. The lower-level
 `UiTransition::command()` remains available for native loops that later support
 command-emitting UI handlers.
+
+`@lepusa/desktop` is the first app-facing desktop API kit over official
+plugins. `DesktopKit::with_plugin` adds the official plugin metadata, grants
+the command permissions to a target window, registers the native handlers
+through the catalog with policy context, and can build a `RuntimeHost` from the
+same registry. This prevents the common framework failure mode where the
+frontend bridge advertises a command route that was not registered in the
+native process.
 
 ## Process Model
 

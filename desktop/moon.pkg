@@ -1,0 +1,9 @@
+import {
+  "vectie/lepusa",
+  "vectie/lepusa/plugins/catalog",
+  "vectie/lepusa/runtime",
+}
+
+options(
+  test_import: [ "moonbitlang/async" ],
+)

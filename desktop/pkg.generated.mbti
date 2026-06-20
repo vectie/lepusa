@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/desktop"
+
+import {
+  "vectie/lepusa",
+  "vectie/lepusa/runtime",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct DesktopKit {
+  plugins : Array[@lepusa.Plugin]
+  capabilities : Array[@lepusa.Capability]
+  filesystem_scopes : Array[@lepusa.FileSystemScope]
+  local_services : Array[@lepusa.LocalService]
+  problems : Array[String]
+}
+pub fn DesktopKit::apply(Self, @lepusa.App) -> Result[@lepusa.App, Array[String]]
+pub fn DesktopKit::capabilities(Self) -> Array[@lepusa.Capability]
+pub fn DesktopKit::capability_names(Self) -> Array[String]
+pub fn DesktopKit::filesystem_scopes(Self) -> Array[@lepusa.FileSystemScope]
+pub fn DesktopKit::local_services(Self) -> Array[@lepusa.LocalService]
+pub fn DesktopKit::new() -> Self
+pub fn DesktopKit::plugin_names(Self) -> Array[String]
+pub fn DesktopKit::plugins(Self) -> Array[@lepusa.Plugin]
+pub fn DesktopKit::problems(Self) -> Array[String]
+pub fn DesktopKit::registered_routes(Self) -> Array[String]
+pub fn DesktopKit::registry(Self) -> @lepusa.CommandRegistry
+pub fn DesktopKit::runtime_host(Self, @lepusa.RuntimePlan) -> Result[@runtime.RuntimeHost, Array[String]]
+pub fn DesktopKit::validate(Self) -> Array[String]
+pub fn DesktopKit::with_capability(Self, @lepusa.Capability) -> Self
+pub fn DesktopKit::with_filesystem_scope(Self, @lepusa.FileSystemScope) -> Self
+pub fn DesktopKit::with_local_service(Self, @lepusa.LocalService) -> Self
+pub fn DesktopKit::with_plugin(Self, String, window_label? : String, capability_name? : String) -> Self
+pub fn DesktopKit::with_plugin_spec(Self, @lepusa.Plugin) -> Self
+pub fn DesktopKit::with_plugins(Self, Array[String], window_label? : String) -> Self
+
+// Type aliases
+
+// Traits
+

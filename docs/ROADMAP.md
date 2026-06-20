@@ -18,6 +18,9 @@
   `launch_plan` APIs with syntax close to Rabbita.
 - Add `@lepusa/ui` HTML node and attribute helpers plus `UiProgram`
   model/update/view state flow for compact MoonBit-authored desktop views.
+- Add `@lepusa/desktop.DesktopKit` as the official desktop API kit that keeps
+  plugin declarations, capability grants, catalog registries, and runtime hosts
+  aligned for app authors.
 - Lower source-less `App` windows into generated Rabbita-style HTML from the
   root `Cell`.
 - Add native `run` once the first runtime backend is wired: macOS now has an
@@ -119,6 +122,8 @@
 
 - Stabilize `Plugin::command`, `command_sync`, async command behavior, and
   backend-to-frontend events.
+- Stabilize the app-facing official plugin kit so desktop APIs can be enabled
+  without hand-syncing manifest routes, capabilities, and native handlers.
 - Add capability manifests and runtime permission checks: launch and bundled
   runtime manifests now carry capability grants, and dispatch already enforces
   those permissions.
