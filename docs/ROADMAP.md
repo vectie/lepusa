@@ -296,6 +296,9 @@ desktop core is reliable.
   host-compatible runtime executable copies, and target launch capability after
   `bundle-write` as the pre-install smoke boundary, with `bundle-write --json`
   exposing the same checks as a machine-readable CI report.
+- `BundleReleasePlan` now emits required/optional release step counts, item
+  counts, readiness state, and missing required steps so `bundle-release-plan`
+  can act as a compact CI gate before platform-specific installer tooling.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof

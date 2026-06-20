@@ -62,6 +62,15 @@ test "distribution manifest parser exposes installer-facing bundle data" {
               )
               let release = manifest.release_plan()
               assert_eq(release.steps().length(), 5)
+              assert_eq(release.required_step_count(), 3)
+              assert_eq(release.optional_step_count(), 2)
+              assert_eq(release.required_item_count(), 5)
+              assert_eq(release.optional_item_count(), 0)
+              assert_true(release.ready())
+              assert_true(
+                release.readiness_message().contains("required release steps"),
+              )
+              assert_eq(release.missing_required_steps().length(), 0)
               assert_eq(
                 release.steps()[0].kind().name(),
                 "validate-runtime-dependencies",
@@ -85,10 +94,14 @@ test "distribution manifest parser exposes installer-facing bundle data" {
               assert_eq(release.steps()[3].kind().name(), "run-signing-steps")
               assert_false(release.steps()[3].required())
               assert_eq(release.required_steps().length(), 3)
+              assert_eq(release.optional_steps().length(), 2)
               assert_true(release.summary().contains("step: collect-artifacts"))
+              assert_true(release.summary().contains("ready: true"))
               assert_true(
                 release.to_json().contains("\"kind\":\"collect-artifacts\""),
               )
+              assert_true(release.to_json().contains("\"ready\":true"))
+              assert_true(release.to_json().contains("\"requiredStepCount\":3"))
             }
             Err(problem) => abort("unexpected invalid distribution: \{problem}")
           }
@@ -96,6 +109,51 @@ test "distribution manifest parser exposes installer-facing bundle data" {
       }
     }
     Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "release plan reports missing required release data" {
+  match
+    BundleDistributionManifest::parse(
+      "app/lepusa/distribution.json",
+      (
+        #|{
+        #|  "identifier": "dev.local.missing",
+        #|  "productName": "Missing Release Data",
+        #|  "version": "1.0.0",
+        #|  "target": "linux",
+        #|  "executable": "missing",
+        #|  "bundle": "missing",
+        #|  "runtimeExecutable": "missing/lepusa-runtime",
+        #|  "artifacts": [
+        #|    { "kind": "portable-directory", "name": "missing", "path": "missing" }
+        #|  ],
+        #|  "resources": [],
+        #|  "runtimeDependencies": [
+        #|    { "kind": "system-webview-runtime", "name": "WebKitGTK", "required": true }
+        #|  ],
+        #|  "signing": {},
+        #|  "signingPrerequisites": [],
+        #|  "signingSteps": []
+        #|}
+      ),
+    ) {
+    Ok(manifest) => {
+      let release = manifest.release_plan()
+      assert_false(release.ready())
+      assert_eq(release.missing_required_steps().length(), 1)
+      assert_eq(
+        release.missing_required_steps()[0].kind().name(),
+        "validate-signing-prerequisites",
+      )
+      assert_true(
+        release.readiness_message().contains("validate-signing-prerequisites"),
+      )
+      assert_true(release.to_json().contains("\"ready\":false"))
+      assert_true(release.to_json().contains("\"missingRequiredSteps\":[{"))
+    }
+    Err(problem) => abort("unexpected invalid distribution: \{problem}")
   }
 }
 

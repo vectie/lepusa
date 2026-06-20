@@ -1864,12 +1864,18 @@ async test "bundle write materializes planned files" {
   assert_eq(release.exit_code, 0)
   assert_true(release.output.contains("Lepusa release plan"))
   assert_true(release.output.contains("steps: 5"))
+  assert_true(release.output.contains("required-steps: 3"))
+  assert_true(release.output.contains("required-items: 5"))
+  assert_true(release.output.contains("ready: true"))
   assert_true(release.output.contains("step: validate-runtime-dependencies"))
   assert_true(release.output.contains("step: collect-artifacts"))
   let release_json = render_cli_async([
     "bundle-release-plan", distribution_path, "--json",
   ])
   assert_eq(release_json.exit_code, 0)
+  assert_true(release_json.output.contains("\"ready\":true"))
+  assert_true(release_json.output.contains("\"requiredStepCount\":3"))
+  assert_true(release_json.output.contains("\"missingRequiredSteps\":[]"))
   assert_true(release_json.output.contains("\"steps\":["))
   assert_true(
     release_json.output.contains("\"kind\":\"validate-signing-prerequisites\""),
