@@ -30,7 +30,7 @@ test "desktop kit applies plugins and capabilities to app runtime" {
             Ok(host) => {
               assert_true(host.sync_command_routes().contains("log.write"))
               assert_true(
-                host.async_command_routes().contains("clipboard.readText"),
+                host.sync_command_routes().contains("clipboard.readText"),
               )
               let response = host.dispatch(
                 @lepusa.InvokeRequest::new(
@@ -141,7 +141,7 @@ test "desktop project builds runtime host and bundle plan from one boundary" {
   match project.runtime_host() {
     Ok(host) => {
       assert_true(host.sync_command_routes().contains("log.write"))
-      assert_true(host.async_command_routes().contains("clipboard.readText"))
+      assert_true(host.sync_command_routes().contains("clipboard.readText"))
       match host.snapshot() {
         Ok(session) => {
           assert_true(session.registered_routes().contains("log.write"))

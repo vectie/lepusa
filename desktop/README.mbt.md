@@ -21,7 +21,7 @@ test "build a desktop project" {
   match project.runtime_host() {
     Ok(host) => {
       assert_true(host.sync_command_routes().contains("log.write"))
-      assert_true(host.async_command_routes().contains("clipboard.readText"))
+      assert_true(host.sync_command_routes().contains("clipboard.readText"))
     }
     Err(problems) => fail(problems.join("; "))
   }
@@ -47,7 +47,7 @@ test "build an app with official desktop plugins" {
           match kit.runtime_host(plan) {
             Ok(host) => {
               assert_true(
-                host.async_command_routes().contains("clipboard.readText"),
+                host.sync_command_routes().contains("clipboard.readText"),
               )
               assert_true(host.sync_command_routes().contains("log.write"))
             }

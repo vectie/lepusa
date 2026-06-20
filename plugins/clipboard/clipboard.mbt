@@ -1,9 +1,9 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("clipboard")
-  .command_async("readText", permission=Clipboard)
-  .command_async("writeText", permission=Clipboard)
-  .command_async("clear", permission=Clipboard)
+  .command_sync("readText", permission=Clipboard)
+  .command_sync("writeText", permission=Clipboard)
+  .command_sync("clear", permission=Clipboard)
 }
 
 ///|
@@ -110,13 +110,13 @@ pub fn register(
   store? : ClipboardStore = ClipboardStore::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("clipboard.readText", permission=Clipboard, handler=_ => {
+  .register_fn("clipboard.readText", permission=Clipboard, handler=_ => {
     handle_read_text(store)
   })
-  .register_async_fn("clipboard.writeText", permission=Clipboard, handler=payload => {
+  .register_fn("clipboard.writeText", permission=Clipboard, handler=payload => {
     handle_write_text(store, payload)
   })
-  .register_async_fn("clipboard.clear", permission=Clipboard, handler=_ => {
+  .register_fn("clipboard.clear", permission=Clipboard, handler=_ => {
     handle_clear(store)
   })
 }
@@ -126,20 +126,19 @@ pub fn register_native(
   registry : @lepusa.CommandRegistry,
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("clipboard.readText", permission=Clipboard, handler=_ => {
+  .register_fn("clipboard.readText", permission=Clipboard, handler=_ => {
     handle_native_read_text()
   })
-  .register_async_fn("clipboard.writeText", permission=Clipboard, handler=payload => {
+  .register_fn("clipboard.writeText", permission=Clipboard, handler=payload => {
     handle_native_write_text(payload)
   })
-  .register_async_fn("clipboard.clear", permission=Clipboard, handler=_ => {
+  .register_fn("clipboard.clear", permission=Clipboard, handler=_ => {
     handle_native_clear()
   })
 }
 
 ///|
-async fn handle_read_text(store : ClipboardStore) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_read_text(store : ClipboardStore) -> Result[String, String] {
   match store.read_text() {
     Some(text) =>
       Ok(
@@ -156,11 +155,10 @@ async fn handle_read_text(store : ClipboardStore) -> Result[String, String] {
 }
 
 ///|
-async fn handle_write_text(
+fn handle_write_text(
   store : ClipboardStore,
   payload : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   match decode_text_payload(payload, context="clipboard writeText") {
     Ok(text) => {
       store.write_text(text)
@@ -176,15 +174,13 @@ async fn handle_write_text(
 }
 
 ///|
-async fn handle_clear(store : ClipboardStore) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_clear(store : ClipboardStore) -> Result[String, String] {
   let cleared = store.clear()
   Ok(Json::object({ "cleared": Json::boolean(cleared) }).stringify())
 }
 
 ///|
-async fn handle_native_read_text() -> Result[String, String] {
-  @async.sleep(0)
+fn handle_native_read_text() -> Result[String, String] {
   match decode_native_read_packet(native_read_text_packet()) {
     Ok(text) =>
       Ok(
@@ -199,8 +195,7 @@ async fn handle_native_read_text() -> Result[String, String] {
 }
 
 ///|
-async fn handle_native_write_text(payload : String) -> Result[String, String] {
-  @async.sleep(0)
+fn handle_native_write_text(payload : String) -> Result[String, String] {
   match decode_text_payload(payload, context="clipboard writeText") {
     Ok(text) =>
       match native_write_text_code(@utf8.encode(text)) {
@@ -220,8 +215,7 @@ async fn handle_native_write_text(payload : String) -> Result[String, String] {
 }
 
 ///|
-async fn handle_native_clear() -> Result[String, String] {
-  @async.sleep(0)
+fn handle_native_clear() -> Result[String, String] {
   match native_clear_code() {
     0 =>
       Ok(

@@ -1,6 +1,5 @@
 import {
   "vectie/lepusa",
-  "moonbitlang/async",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
 }

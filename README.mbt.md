@@ -409,7 +409,7 @@ backends own resolver integration, health checks, and change watching.
 validates payloads and returns deterministic runtime-owned responses; native
 backends own the actual OS dialog implementation.
 
-`@lepusa/plugins/clipboard` provides async text clipboard handlers backed by
+`@lepusa/plugins/clipboard` provides sync text clipboard handlers backed by
 native system clipboard stubs for desktop runtimes, plus an in-process
 `ClipboardStore` for deterministic tests. `@lepusa/plugins/notification`
 provides async permission and show handlers backed by an in-process
