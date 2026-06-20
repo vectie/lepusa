@@ -674,8 +674,9 @@ availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
 package exposes `runtime(host)` and `detect_runtime(host)` helpers that return
 the same `NativeRuntime` facade, plus `launch_capability()` declarations for
 WebView creation and async bridge drain support. Platform packages also expose
-service executor helpers, and native launch paths run service startup before
-opening a WebView, then run service shutdown after the window loop returns.
+service executor helpers, and native run plans build launch sessions from the
+selected backend capability before running service startup, opening a WebView,
+and running service shutdown after the window loop returns.
 macOS, Linux, and Windows start tracked sidecar processes, poll HTTP readiness
 URLs, and stop tracked processes through platform-owned native hooks.
 

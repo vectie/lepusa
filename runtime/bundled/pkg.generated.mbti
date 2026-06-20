@@ -202,7 +202,9 @@ pub fn BundledNativeRunPlan::bundled_webviews(Self) -> Array[BundledWebView]
 pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
 pub fn BundledNativeRunPlan::first_webview_url(Self) -> String
+pub fn BundledNativeRunPlan::launch_blocker_with_capability(Self, String, @runtime.NativeLaunchCapability) -> String?
 pub fn BundledNativeRunPlan::launch_session(Self, bridge_mode? : @runtime.NativeBridgeSchedulerMode) -> Result[@runtime.NativeLaunchSession, String]
+pub fn BundledNativeRunPlan::launch_session_with_capability(Self, @runtime.NativeLaunchCapability) -> Result[@runtime.NativeLaunchSession, String]
 pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
 pub fn BundledNativeRunPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledNativeRunPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]

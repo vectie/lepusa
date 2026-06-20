@@ -657,6 +657,7 @@ test "bundled runtime dispatches sync official plugins" {
 async test "bundled runtime owns bridge message transport" {
   let manifest =
     #|{
+    #|  "target": "linux",
     #|  "runtime": {
     #|    "webviews": [
     #|      {
@@ -682,6 +683,50 @@ async test "bundled runtime owns bridge message transport" {
         mode=NativeBridgeAsyncCapable,
       )
       assert_true(async_capable.can_launch())
+      match
+        manifest.prepare_native_run_plan(target="linux", prepare_webview=fn(
+          webview,
+        ) {
+          manifest.webview_plan(webview, initialization_script="")
+        }) {
+        Ok(plan) => {
+          let sync_capability = @runtime.NativeLaunchCapability::new(
+            webview_creation=true,
+            async_bridge_drain=false,
+          )
+          match plan.launch_session_with_capability(sync_capability) {
+            Ok(session) => {
+              assert_true(
+                session.bridge_scheduler().mode() is NativeBridgeSyncOnly,
+              )
+              assert_true(
+                plan
+                .launch_blocker_with_capability("Linux", sync_capability)
+                .unwrap()
+                .contains("1 async command route"),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
+          let async_capability = @runtime.NativeLaunchCapability::new(
+            webview_creation=true,
+            async_bridge_drain=true,
+          )
+          match plan.launch_session_with_capability(async_capability) {
+            Ok(session) => {
+              assert_true(
+                session.bridge_scheduler().mode() is NativeBridgeAsyncCapable,
+              )
+              assert_true(
+                plan.launch_blocker_with_capability("Linux", async_capability)
+                is None,
+              )
+            }
+            Err(problem) => abort(problem)
+          }
+        }
+        Err(_) => abort("unexpected bundled async native run plan failure")
+      }
       match manifest.bridge_response_hook(window_label="main") {
         Ok((window_label, hook)) => {
           assert_eq(window_label, "main")

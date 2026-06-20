@@ -220,6 +220,27 @@ pub fn BundledNativeRunPlan::launch_session(
 }
 
 ///|
+pub fn BundledNativeRunPlan::launch_session_with_capability(
+  self : BundledNativeRunPlan,
+  capability : @runtime.NativeLaunchCapability,
+) -> Result[@runtime.NativeLaunchSession, String] {
+  self.launch_session(bridge_mode=capability.bridge_mode())
+}
+
+///|
+pub fn BundledNativeRunPlan::launch_blocker_with_capability(
+  self : BundledNativeRunPlan,
+  platform_name : String,
+  capability : @runtime.NativeLaunchCapability,
+) -> String? {
+  match self.launch_session_with_capability(capability) {
+    Ok(session) =>
+      session.launch_blocker_with_capability(platform_name, capability)
+    Err(problem) => Some(problem)
+  }
+}
+
+///|
 pub fn BundledNativeRunPlan::operation_execution_report(
   self : BundledNativeRunPlan,
 ) -> Result[@runtime.NativeOperationExecutionReport, String] {

@@ -493,7 +493,9 @@ pub fn NativePreparedRunPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativePreparedRunPlan::first_webview_load_url(Self) -> String
 pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
+pub fn NativePreparedRunPlan::launch_blocker_with_capability(Self, String, NativeLaunchCapability) -> String?
 pub fn NativePreparedRunPlan::launch_session(Self, bridge_mode? : NativeBridgeSchedulerMode) -> NativeLaunchSession
+pub fn NativePreparedRunPlan::launch_session_with_capability(Self, NativeLaunchCapability) -> NativeLaunchSession
 pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int
 pub fn NativePreparedRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan

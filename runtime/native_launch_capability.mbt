@@ -125,3 +125,22 @@ pub fn NativeLaunchSession::can_launch_with_capability(
 ) -> Bool {
   capability.can_launch(self.bridge_scheduler())
 }
+
+///|
+pub fn NativePreparedRunPlan::launch_session_with_capability(
+  self : NativePreparedRunPlan,
+  capability : NativeLaunchCapability,
+) -> NativeLaunchSession {
+  self.launch_session(bridge_mode=capability.bridge_mode())
+}
+
+///|
+pub fn NativePreparedRunPlan::launch_blocker_with_capability(
+  self : NativePreparedRunPlan,
+  platform_name : String,
+  capability : NativeLaunchCapability,
+) -> String? {
+  self
+  .launch_session_with_capability(capability)
+  .launch_blocker_with_capability(platform_name, capability)
+}

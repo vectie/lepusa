@@ -167,8 +167,9 @@ pub fn LinuxBundledRunResult::launch_session(
 pub fn LinuxBundledRunResult::report(
   self : LinuxBundledRunResult,
 ) -> @lepusa.RunReport {
+  let capability = launch_capability()
   let blocker = match
-    launch_capability().launch_blocker("Linux", self.plan.bridge_scheduler()) {
+    self.plan.launch_blocker_with_capability("Linux", capability) {
     Some(message) => message
     None => ""
   }
@@ -204,11 +205,12 @@ fn linux_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
-  match launch_capability().launch_blocker("Linux", plan.bridge_scheduler()) {
+  let capability = launch_capability()
+  match plan.launch_blocker_with_capability("Linux", capability) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let session = plan.launch_session()
+  let session = plan.launch_session_with_capability(capability)
   let context = match session.first_launch_context() {
     Ok(context) => context
     Err(problem) => return RunFailed(problem)
@@ -277,11 +279,12 @@ fn linux_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
-  match launch_capability().launch_blocker("Linux", plan.bridge_scheduler()) {
+  let capability = launch_capability()
+  match plan.launch_blocker_with_capability("Linux", capability) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let session = match plan.launch_session() {
+  let session = match plan.launch_session_with_capability(capability) {
     Ok(session) => session
     Err(problem) => return RunFailed(problem)
   }

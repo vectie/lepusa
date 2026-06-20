@@ -560,6 +560,9 @@ The platform packages expose `NativeLaunchCapability` so WebView creation, sync
 bridge response evaluation, and async bridge drain/evaluate support are
 declared in one place and consumed by `doctor`, `verify --strict`,
 launch-session readiness rendering, and open-window launch paths.
+Source and packaged native run plans expose capability-aware launch-session
+helpers, so platform runners build the same bridge mode that the selected
+backend capability advertises instead of hand-assembling sync-only schedulers.
 `lepusa run macos --launch` is the first protocol-complete GUI entry point. The
 Linux package also owns a first WebKitGTK source-window loop: it resolves the
 first runtime WebView to an HTML/file/remote URL, injects document-start bridge

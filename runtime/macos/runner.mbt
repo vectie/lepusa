@@ -260,6 +260,25 @@ pub fn MacOSRunPlan::launch_session(
 }
 
 ///|
+pub fn MacOSRunPlan::launch_session_with_capability(
+  self : MacOSRunPlan,
+  capability : @runtime.NativeLaunchCapability,
+) -> @runtime.NativeLaunchSession {
+  self.launch_session(bridge_mode=capability.bridge_mode())
+}
+
+///|
+pub fn MacOSRunPlan::launch_blocker_with_capability(
+  self : MacOSRunPlan,
+  platform_name : String,
+  capability : @runtime.NativeLaunchCapability,
+) -> String? {
+  self
+  .launch_session_with_capability(capability)
+  .launch_blocker_with_capability(platform_name, capability)
+}
+
+///|
 pub fn MacOSRunPlan::service_supervisor_report(
   self : MacOSRunPlan,
 ) -> @runtime.NativeServiceSupervisorReport {
@@ -317,12 +336,12 @@ fn run_plan(
   match mode {
     MacOSDryRun => Ok({ plan, status: RunPrepared })
     MacOSOpenWindow => {
-      let session = plan.launch_session()
-      match
-        session.launch_blocker_with_capability("macOS", launch_capability()) {
+      let capability = launch_capability()
+      match plan.launch_blocker_with_capability("macOS", capability) {
         Some(message) => return Ok({ plan, status: RunUnsupported(message) })
         None => ()
       }
+      let session = plan.launch_session_with_capability(capability)
       let context = match session.first_launch_context() {
         Ok(context) => context
         Err(problem) => return Err([problem])

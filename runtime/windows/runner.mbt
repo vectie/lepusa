@@ -167,8 +167,9 @@ pub fn WindowsBundledRunResult::launch_session(
 pub fn WindowsBundledRunResult::report(
   self : WindowsBundledRunResult,
 ) -> @lepusa.RunReport {
+  let capability = launch_capability()
   let blocker = match
-    launch_capability().launch_blocker("Windows", self.plan.bridge_scheduler()) {
+    self.plan.launch_blocker_with_capability("Windows", capability) {
     Some(message) => message
     None => ""
   }
@@ -218,11 +219,12 @@ fn windows_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
-  match launch_capability().launch_blocker("Windows", plan.bridge_scheduler()) {
+  let capability = launch_capability()
+  match plan.launch_blocker_with_capability("Windows", capability) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let session = plan.launch_session()
+  let session = plan.launch_session_with_capability(capability)
   let context = match session.first_launch_context() {
     Ok(context) => context
     Err(problem) => return RunFailed(problem)
@@ -263,11 +265,12 @@ fn windows_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
-  match launch_capability().launch_blocker("Windows", plan.bridge_scheduler()) {
+  let capability = launch_capability()
+  match plan.launch_blocker_with_capability("Windows", capability) {
     Some(message) => return RunUnsupported(message)
     None => ()
   }
-  let session = match plan.launch_session() {
+  let session = match plan.launch_session_with_capability(capability) {
     Ok(session) => session
     Err(problem) => return RunFailed(problem)
   }

@@ -734,6 +734,38 @@ test "native runner plans expose async bridge blockers" {
             .async_bridge_launch_message("Test")
             .contains("1 async command route"),
           )
+          let sync_capability = NativeLaunchCapability::new(
+            webview_creation=true,
+            async_bridge_drain=false,
+          )
+          let sync_capability_session = plan.launch_session_with_capability(
+            sync_capability,
+          )
+          assert_true(
+            sync_capability_session.bridge_scheduler().mode()
+            is NativeBridgeSyncOnly,
+          )
+          assert_true(
+            plan
+            .launch_blocker_with_capability("Test", sync_capability)
+            .unwrap()
+            .contains("1 async command route"),
+          )
+          let async_capability = NativeLaunchCapability::new(
+            webview_creation=true,
+            async_bridge_drain=true,
+          )
+          let capability_session = plan.launch_session_with_capability(
+            async_capability,
+          )
+          assert_true(
+            capability_session.bridge_scheduler().mode()
+            is NativeBridgeAsyncCapable,
+          )
+          assert_true(
+            plan.launch_blocker_with_capability("Test", async_capability)
+            is None,
+          )
         }
         Err(_) => abort("unexpected invalid async native prepared run plan")
       }
