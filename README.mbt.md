@@ -424,6 +424,9 @@ packaged runtime adapters, so CLI output and future native loops use one status
 vocabulary for prepared, launched, failed, and unsupported runs.
 Native runner plans also report bridge sync and async route sets, giving
 platform loops an explicit scheduling contract before they open a WebView.
+They also expose executable operation views for frontend event scripts and
+window navigations, so native loops do not need to parse operation JSON to
+drive lifecycle/startup work.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform

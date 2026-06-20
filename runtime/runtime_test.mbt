@@ -144,6 +144,80 @@ test "native backend lowers host runner plan with portable operations" {
 }
 
 ///|
+test "native runner exposes executable operation views" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>before</main>"))
+    .with_startup(
+      @lepusa.Cmd::batch([
+        @lepusa.Cmd::emit(
+          @lepusa.Event::new("ready", payload="{\"ok\":true}"),
+          target=WindowTarget("main"),
+        ),
+        @lepusa.Cmd::effect("boot"),
+        @lepusa.Cmd::navigate(
+          "main",
+          @lepusa.Source::html("<main>after</main>"),
+        ),
+      ]),
+    )
+    .on_window_close_requested(
+      "main",
+      @lepusa.Cmd::emit(@lepusa.Event::new("closing")),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => {
+      let backend = NativeBackend::new(
+        name="test",
+        webview_engine="SystemWebView",
+      )
+      match backend.runner_plan(RuntimeHost::new(plan)) {
+        Ok(runner) => {
+          let startup = runner.startup_operations()
+          assert_eq(startup.length(), 3)
+          assert_eq(startup[0].kind(), "evaluate-script")
+          assert_eq(startup[0].window_label().unwrap(), "main")
+          assert_true(
+            startup[0]
+            .evaluation_script()
+            .unwrap()
+            .script()
+            .contains("__lepusaDispatchEvent"),
+          )
+          assert_eq(startup[1].kind(), "run-effect")
+          assert_eq(startup[1].effect_name().unwrap(), "boot")
+          assert_eq(startup[2].kind(), "navigate-window")
+          assert_eq(startup[2].navigation().unwrap().window_label(), "main")
+          assert_eq(
+            startup[2].navigation().unwrap().url(),
+            "lepusa://inline/main/index.html",
+          )
+          let scripts = runner.startup_evaluation_scripts()
+          assert_eq(scripts.length(), 1)
+          assert_eq(scripts[0].window_label(), "main")
+          assert_true(scripts[0].to_json().contains("\"script\""))
+          let navigations = runner.startup_navigations()
+          assert_eq(navigations.length(), 1)
+          assert_eq(navigations[0].window_label(), "main")
+          assert_true(navigations[0].to_json().contains("\"url\""))
+          match runner.lifecycle_step(WindowCloseRequested("main")) {
+            Ok(step) => {
+              let lifecycle_scripts = step.evaluation_scripts()
+              assert_eq(lifecycle_scripts.length(), 1)
+              assert_true(lifecycle_scripts[0].script().contains("closing"))
+              assert_eq(step.navigations().length(), 0)
+            }
+            Err(_) => abort("unexpected invalid native lifecycle step")
+          }
+        }
+        Err(_) => abort("unexpected invalid native runner plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid native executable operation plan")
+  }
+}
+
+///|
 test "native runtime facade exposes platform loop hooks" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
     payload,
