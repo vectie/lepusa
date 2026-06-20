@@ -42,7 +42,7 @@ test "app scaffold wires official plugin handlers" {
   assert_true(
     main.contains(".with_capability(program.capability_for_window())"),
   )
-  assert_true(main.contains(".with_official_plugins([\"log\", \"store\"])"))
+  assert_true(main.contains(".with_sync_plugins()"))
   assert_true(main.contains("dispatch(Increment)"))
   assert_true(main.contains("@ui.text_listener(\"ready\", \"#status\")"))
   assert_true(main.contains("Cmd::emit(@lepusa.Event::new(\"ready\""))

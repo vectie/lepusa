@@ -17,7 +17,7 @@ test "build a desktop project" {
       @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
     )
     .window(source=@lepusa.Source::html("<main></main>"))
-    .with_official_plugins(["log", "clipboard"])
+    .with_sync_plugins()
   match project.runtime_host() {
     Ok(host) => {
       assert_true(host.sync_command_routes().contains("log.write"))
@@ -36,7 +36,7 @@ test "build a desktop project" {
 ```mbt check
 ///|
 test "build an app with official desktop plugins" {
-  let kit = DesktopKit::new().with_plugins(["log", "clipboard"])
+  let kit = DesktopKit::new().with_sync_plugins()
   let base = @lepusa.new(
     @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
   ).window(source=@lepusa.Source::html("<main></main>"))
@@ -50,6 +50,7 @@ test "build an app with official desktop plugins" {
                 host.sync_command_routes().contains("clipboard.readText"),
               )
               assert_true(host.sync_command_routes().contains("log.write"))
+              assert_eq(host.async_command_routes().length(), 0)
             }
             Err(problems) => fail(problems.join("; "))
           }

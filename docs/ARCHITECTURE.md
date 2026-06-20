@@ -90,6 +90,11 @@ native process.
 declare windows, official desktop APIs, filesystem scopes, runtime config, and
 bundle metadata once, then derive the runtime plan, runtime host, and bundle
 plan with the same registered route set.
+`DesktopKit::with_sync_plugins` and `DesktopProject::with_sync_plugins` install
+the official plugin profile whose command declarations and registered handlers
+fit the current sync native WebView loops; async-heavy APIs such as filesystem,
+dialogs, shell, and updaters remain explicit opt-ins until native async bridge
+drain/evaluate support is wired.
 
 ## Process Model
 
@@ -806,7 +811,9 @@ path without changing the publish-ready `moon.mod` dependency.
 Generated apps use `@lepusa/ui.UiProgram` for MoonBit model/update/view UI and
 `@lepusa/desktop.DesktopProject` for the project boundary, so custom UI command
 handlers and official desktop plugins are registered through one runtime host
-and bundle route set.
+and bundle route set. The app scaffold uses `with_sync_plugins()` as its
+default official plugin baseline so a new app can pass native launch-session
+verification without needing async bridge scheduling.
 
 Project manifests may declare official plugins by name only. The CLI expands
 official package names such as `autoLaunch`, `deepLink`, `singleInstance`,

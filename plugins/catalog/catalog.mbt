@@ -97,6 +97,14 @@ pub fn plugin_names() -> Array[String] {
 }
 
 ///|
+pub fn sync_plugin_names() -> Array[String] {
+  [
+    "autoLaunch", "clipboard", "deepLink", "localhost", "log", "notification", "opener",
+    "serviceDiscovery", "singleInstance", "store", "tray", "windowState",
+  ]
+}
+
+///|
 fn catalog_plugins() -> Array[CatalogPlugin] {
   [
     { name: "autoLaunch", load: fn() { @auto_launch.plugin() } },

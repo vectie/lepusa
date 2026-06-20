@@ -286,9 +286,7 @@ async test "init writes standalone project skeleton" {
   assert_true(
     main_file.contains(".with_capability(program.capability_for_window())"),
   )
-  assert_true(
-    main_file.contains(".with_official_plugins([\"log\", \"store\"])"),
-  )
+  assert_true(main_file.contains(".with_sync_plugins()"))
   assert_true(main_file.contains("@ui.main_"))
   assert_true(main_file.contains("dispatch(Increment)"))
   assert_true(main_file.contains("@ui.text_listener(\"ready\", \"#status\")"))

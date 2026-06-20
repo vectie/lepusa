@@ -95,6 +95,42 @@ test "catalog plugin names resolve to plugins" {
 }
 
 ///|
+test "catalog exposes sync-safe official plugin profile" {
+  let names = sync_plugin_names()
+  assert_true(names.contains("autoLaunch"))
+  assert_true(names.contains("clipboard"))
+  assert_true(names.contains("deepLink"))
+  assert_true(names.contains("localhost"))
+  assert_true(names.contains("log"))
+  assert_true(names.contains("notification"))
+  assert_true(names.contains("opener"))
+  assert_true(names.contains("serviceDiscovery"))
+  assert_true(names.contains("singleInstance"))
+  assert_true(names.contains("store"))
+  assert_true(names.contains("tray"))
+  assert_true(names.contains("windowState"))
+  assert_false(names.contains("dialog"))
+  assert_false(names.contains("fileDialog"))
+  assert_false(names.contains("fs"))
+  assert_false(names.contains("process"))
+  assert_false(names.contains("shell"))
+  assert_false(names.contains("updater"))
+  let mut registry = @lepusa.CommandRegistry::new()
+  for name in names {
+    match plugin(name) {
+      Some(plugin) =>
+        for command in plugin.commands() {
+          assert_true(command.mode() is Sync || command.mode() is Event)
+        }
+      None => abort("sync profile plugin did not resolve: \{name}")
+    }
+    registry = register(registry, name)
+  }
+  assert_true(registry.sync_routes().length() > 0)
+  assert_eq(registry.async_routes().length(), 0)
+}
+
+///|
 test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
   let registry = register(registry, "autoLaunch")

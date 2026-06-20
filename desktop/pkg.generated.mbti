@@ -7,6 +7,7 @@ import {
 }
 
 // Values
+pub fn sync_plugin_names() -> Array[String]
 
 // Errors
 
@@ -41,6 +42,7 @@ pub fn DesktopKit::with_plugin(Self, String, window_label? : String, capability_
 pub fn DesktopKit::with_plugin_spec(Self, @lepusa.Plugin) -> Self
 pub fn DesktopKit::with_plugins(Self, Array[String], window_label? : String) -> Self
 pub fn DesktopKit::with_registry(Self, @lepusa.CommandRegistry) -> Self
+pub fn DesktopKit::with_sync_plugins(Self, window_label? : String) -> Self
 
 pub struct DesktopProject {
   root : @lepusa.Cell
@@ -73,6 +75,7 @@ pub fn DesktopProject::with_registry(Self, @lepusa.CommandRegistry) -> Self
 pub fn DesktopProject::with_runtime(Self, @lepusa.RuntimeConfig) -> Self
 pub fn DesktopProject::with_signing(Self, @lepusa.SigningConfig) -> Self
 pub fn DesktopProject::with_startup(Self, @lepusa.Cmd) -> Self
+pub fn DesktopProject::with_sync_plugins(Self, window_label? : String) -> Self
 pub fn DesktopProject::with_window(Self, @lepusa.WindowConfig) -> Self
 
 // Type aliases

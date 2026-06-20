@@ -11,6 +11,23 @@ test "desktop kit installs official plugin metadata and handlers together" {
 }
 
 ///|
+test "desktop kit installs sync-safe official profile" {
+  let names = sync_plugin_names()
+  assert_true(names.contains("log"))
+  assert_true(names.contains("windowState"))
+  assert_false(names.contains("fs"))
+  let kit = DesktopKit::new().with_sync_plugins()
+  assert_eq(kit.validate().length(), 0)
+  for name in names {
+    assert_true(kit.plugin_names().contains(name))
+  }
+  let registry = kit.registry()
+  assert_true(registry.sync_routes().contains("log.write"))
+  assert_true(registry.sync_routes().contains("windowState.set"))
+  assert_eq(registry.async_routes().length(), 0)
+}
+
+///|
 test "desktop kit applies plugins and capabilities to app runtime" {
   let kit = DesktopKit::new().with_plugins(["log", "clipboard"])
   let base = @lepusa.new(
@@ -48,6 +65,28 @@ test "desktop kit applies plugins and capabilities to app runtime" {
         }
         Err(problems) => abort(problems.join("; "))
       }
+    Err(problems) => abort(problems.join("; "))
+  }
+}
+
+///|
+test "desktop project builds launchable sync plugin host" {
+  let project = DesktopProject::new(
+      @lepusa.AppMetadata::new(
+        identifier="dev.lepusa.sync",
+        product_name="Lepusa Sync",
+        version="0.1.0",
+      ),
+      @lepusa.simple_cell(@lepusa.Html::text("<main>sync</main>")),
+    )
+    .window(source=@lepusa.Source::html("<main>sync</main>"))
+    .with_sync_plugins()
+  match project.runtime_host() {
+    Ok(host) => {
+      assert_true(host.sync_command_routes().contains("autoLaunch.status"))
+      assert_true(host.sync_command_routes().contains("windowState.set"))
+      assert_eq(host.async_command_routes().length(), 0)
+    }
     Err(problems) => abort(problems.join("; "))
   }
 }

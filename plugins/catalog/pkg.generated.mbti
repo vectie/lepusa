@@ -18,6 +18,8 @@ pub fn register_with_filesystem_scopes(@lepusa.CommandRegistry, String, scopes~ 
 
 pub fn registered_plugin_names() -> Array[String]
 
+pub fn sync_plugin_names() -> Array[String]
+
 // Errors
 
 // Types and methods

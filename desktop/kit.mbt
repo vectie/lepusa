@@ -51,6 +51,19 @@ pub fn DesktopKit::with_plugins(
 }
 
 ///|
+pub fn DesktopKit::with_sync_plugins(
+  self : DesktopKit,
+  window_label? : String = "main",
+) -> DesktopKit {
+  self.with_plugins(sync_plugin_names(), window_label~)
+}
+
+///|
+pub fn sync_plugin_names() -> Array[String] {
+  @catalog.sync_plugin_names()
+}
+
+///|
 pub fn DesktopKit::with_plugin_spec(
   self : DesktopKit,
   plugin : @lepusa.Plugin,

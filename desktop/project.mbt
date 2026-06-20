@@ -122,6 +122,14 @@ pub fn DesktopProject::with_official_plugins(
 }
 
 ///|
+pub fn DesktopProject::with_sync_plugins(
+  self : DesktopProject,
+  window_label? : String = "main",
+) -> DesktopProject {
+  { ..self, kit: self.kit.with_sync_plugins(window_label~) }
+}
+
+///|
 pub fn DesktopProject::with_filesystem_scope(
   self : DesktopProject,
   scope : @lepusa.FileSystemScope,

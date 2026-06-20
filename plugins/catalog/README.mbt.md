@@ -52,5 +52,8 @@ test "lookup official plugins" {
     context~,
   )
   assert_true(registry.contains("serviceDiscovery.resolve"))
+
+  assert_true(@catalog.sync_plugin_names().contains("windowState"))
+  assert_false(@catalog.sync_plugin_names().contains("fs"))
 }
 ```

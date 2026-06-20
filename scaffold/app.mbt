@@ -284,7 +284,7 @@ fn project_main_mbt() -> String {
     #|    .with_plugin(program.plugin())
     #|    .with_capability(program.capability_for_window())
     #|    .with_registry(program.registry())
-    #|    .with_official_plugins(["log", "store"])
+    #|    .with_sync_plugins()
     #|    .with_startup(
     #|      @lepusa.Cmd::batch([
     #|        @lepusa.Cmd::effect("boot"),
@@ -326,7 +326,8 @@ fn project_readme() -> String {
     #|The generated app uses `@lepusa/ui.UiProgram` for model/update/view UI
     #|and `@lepusa/desktop.DesktopProject` to keep custom UI handlers,
     #|official desktop plugins, capabilities, runtime hosts, and bundle plans
-    #|aligned.
+    #|aligned. It starts from `with_sync_plugins()` so the default app stays
+    #|launchable on native loops before async bridge scheduling is required.
     #|
     #|```bash
     #|moon run src --target native

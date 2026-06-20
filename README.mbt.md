@@ -107,7 +107,7 @@ framework parts together:
 ///|
 let project = @desktop.DesktopProject::new(metadata, root)
   .window(title="Desk", source=@lepusa.Source::html("<main></main>"))
-  .with_official_plugins(["dialog", "fs"])
+  .with_sync_plugins()
 
 ///|
 let host = project.runtime_host().unwrap()
@@ -247,7 +247,9 @@ a versioned `vectie/lepusa` module dependency. It is intentionally small:
 `@lepusa/ui.UiProgram` model/update/view flow and wraps it in
 `@lepusa/desktop.DesktopProject`, so custom UI handlers, official desktop
 plugins, capabilities, runtime hosts, and bundle plans are derived from one
-project boundary.
+project boundary. It uses the `@lepusa/desktop` sync-safe official plugin
+profile by default, so the generated MoonBit app stays launchable on native
+loops that do not yet support deferred async bridge scheduling.
 `write_app_with_workspace` also writes a `moon.work` file pointing at a local
 Lepusa checkout, which lets new apps compile against this repository before the
 framework is published to the MoonBit registry. `lepusa init` is the CLI wrapper
