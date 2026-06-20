@@ -1,8 +1,9 @@
 # @lepusa/plugins/tray
 
 `@lepusa/plugins/tray` defines Lepusa's official system tray command contract.
-Native backends own status icon creation, platform menu rendering, and click
-dispatch.
+The portable registry validates and tracks icon, tooltip, menu, visibility, and
+destroy state, then delegates status icon creation, platform menu rendering, and
+click dispatch to native backends.
 
 ```moonbit nocheck
 ///|

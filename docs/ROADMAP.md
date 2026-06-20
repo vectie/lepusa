@@ -203,7 +203,8 @@ Stabilize the cross-platform core set first:
   exist
 - singleInstance: initial app lock/launch handoff contract and portable
   primary-state handlers exist
-- tray: initial status icon and menu contract exists
+- tray: initial status icon/menu contract and delegated tray state handlers
+  exist
 - autoLaunch: initial launch-at-login contract exists
 - windowState: initial window geometry persistence contract exists
 - updater: initial update lifecycle contract exists

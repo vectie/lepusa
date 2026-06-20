@@ -349,7 +349,9 @@ native backends own cross-process locking and platform window activation.
 
 `@lepusa/plugins/tray` defines system tray routes such as `tray.setIcon`,
 `tray.setMenu`, `tray.setVisible`, and `tray.onMenuItemClick`, plus menu item
-policy metadata. Native backends own status icon creation and OS menu behavior.
+policy metadata. Its portable registry validates and tracks icon, tooltip,
+menu, visibility, and destroy state, then delegates status icon creation and OS
+menu behavior to native backends.
 
 `@lepusa/plugins/auto_launch` defines launch-at-login routes such as
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and

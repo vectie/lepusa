@@ -13,6 +13,10 @@ pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
 pub fn plugin() -> @lepusa.Plugin
 
+pub fn register(@lepusa.CommandRegistry, policy? : TrayPolicy, state? : TrayState) -> @lepusa.CommandRegistry
+
+pub fn registry(policy? : TrayPolicy, state? : TrayState) -> @lepusa.CommandRegistry
+
 // Errors
 
 // Types and methods
@@ -50,6 +54,20 @@ pub fn TrayPolicy::menu(Self) -> Array[TrayMenuItem]
 pub fn TrayPolicy::new(icon_path? : String, tooltip? : String, menu? : Array[TrayMenuItem]) -> Self
 pub fn TrayPolicy::tooltip(Self) -> String?
 pub fn TrayPolicy::validate(Self) -> Array[String]
+
+pub struct TrayState {
+  mut icon_path : String?
+  mut tooltip : String?
+  mut menu : Array[TrayMenuItem]
+  mut visible : Bool
+  mut destroyed : Bool
+} derive(Eq, @debug.Debug)
+pub fn TrayState::destroyed(Self) -> Bool
+pub fn TrayState::icon_path(Self) -> String?
+pub fn TrayState::menu(Self) -> Array[TrayMenuItem]
+pub fn TrayState::new(policy? : TrayPolicy) -> Self
+pub fn TrayState::tooltip(Self) -> String?
+pub fn TrayState::visible(Self) -> Bool
 
 // Type aliases
 

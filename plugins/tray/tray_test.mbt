@@ -49,3 +49,94 @@ test "tray policy rejects invalid menu metadata" {
   assert_true(problems.contains("tray menu item id is invalid: open/item"))
   assert_true(problems.contains("tray menu item must be unique: open"))
 }
+
+///|
+async test "tray registry tracks delegated tray state" {
+  let state = TrayState::new()
+  let registry = registry(state~)
+  let grant = capability_for_window("main")
+  let icon_request = @lepusa.InvokeRequest::new(
+    id="1",
+    window_label="main",
+    plugin="tray",
+    command="setIcon",
+    payload="{\"iconPath\":\"assets/tray.png\"}",
+  )
+  let icon = registry.dispatch_async(icon_request, capabilities=[grant])
+  assert_true(icon.payload().unwrap_or("").contains("\"status\":\"delegated\""))
+  assert_true(state.icon_path() is Some("assets/tray.png"))
+  let tooltip_request = @lepusa.InvokeRequest::new(
+    id="2",
+    window_label="main",
+    plugin="tray",
+    command="setTooltip",
+    payload="\"Lepusa\"",
+  )
+  let tooltip = registry.dispatch_async(tooltip_request, capabilities=[grant])
+  assert_true(
+    tooltip.payload().unwrap_or("").contains("\"tooltip\":\"Lepusa\""),
+  )
+  assert_true(state.tooltip() is Some("Lepusa"))
+  let menu_request = @lepusa.InvokeRequest::new(
+    id="3",
+    window_label="main",
+    plugin="tray",
+    command="setMenu",
+    payload="{ \"items\": [ { \"id\": \"open\", \"label\": \"Open\" }, { \"kind\": \"separator\" }, { \"kind\": \"check\", \"id\": \"launch\", \"label\": \"Launch at login\", \"checked\": true } ] }",
+  )
+  let menu = registry.dispatch_async(menu_request, capabilities=[grant])
+  assert_true(menu.payload().unwrap_or("").contains("\"kind\":\"check\""))
+  assert_eq(state.menu().length(), 3)
+  assert_true(state.menu()[2].kind() is Check)
+  assert_true(state.menu()[2].checked())
+  let visible_request = @lepusa.InvokeRequest::new(
+    id="4",
+    window_label="main",
+    plugin="tray",
+    command="setVisible",
+    payload="false",
+  )
+  let visible = registry.dispatch_async(visible_request, capabilities=[grant])
+  assert_true(visible.payload().unwrap_or("").contains("\"visible\":false"))
+  assert_false(state.visible())
+  let destroy_request = @lepusa.InvokeRequest::new(
+    id="5",
+    window_label="main",
+    plugin="tray",
+    command="destroy",
+  )
+  let destroyed = registry.dispatch_async(destroy_request, capabilities=[grant])
+  assert_true(destroyed.payload().unwrap_or("").contains("\"destroyed\":true"))
+  assert_true(state.destroyed())
+  assert_false(state.visible())
+}
+
+///|
+async test "tray registry rejects invalid delegated state" {
+  let registry = registry()
+  let grant = capability_for_window("main")
+  let bad_icon_request = @lepusa.InvokeRequest::new(
+    id="1",
+    window_label="main",
+    plugin="tray",
+    command="setIcon",
+    payload="{\"iconPath\":\"assets\\\\tray.png\"}",
+  )
+  let bad_icon = registry.dispatch_async(bad_icon_request, capabilities=[grant])
+  assert_true(
+    bad_icon is InvokeError("1", "tray icon path must use forward slashes"),
+  )
+  let duplicate_menu_request = @lepusa.InvokeRequest::new(
+    id="2",
+    window_label="main",
+    plugin="tray",
+    command="setMenu",
+    payload="[ { \"id\": \"open\", \"label\": \"Open\" }, { \"id\": \"open\", \"label\": \"Open again\" } ]",
+  )
+  let duplicate_menu = registry.dispatch_async(duplicate_menu_request, capabilities=[
+    grant,
+  ])
+  assert_true(
+    duplicate_menu is InvokeError("2", "tray menu item must be unique: open"),
+  )
+}

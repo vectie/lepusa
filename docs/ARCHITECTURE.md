@@ -627,7 +627,8 @@ routes, plus portable metadata handlers for configured local services.
 routes.
 `@lepusa/plugins/single_instance` declares app lock, focus, and second-launch
 handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
-menu-click routes. `@lepusa/plugins/auto_launch` declares launch-at-login
+menu-click routes, plus delegated tray state handlers.
+`@lepusa/plugins/auto_launch` declares launch-at-login
 status and enablement routes. `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes. `@lepusa/plugins/service_discovery`
