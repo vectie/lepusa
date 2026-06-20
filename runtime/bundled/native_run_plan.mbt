@@ -142,3 +142,33 @@ pub fn BundledNativeRunPlan::lifecycle_step_count(
 ) -> Int {
   self.bootstrap.lifecycle_operations().length()
 }
+
+///|
+pub fn BundledNativeRunPlan::bridge_sync_route_count(
+  self : BundledNativeRunPlan,
+) -> Int {
+  self.bootstrap.run_plan().sync_route_count()
+}
+
+///|
+pub fn BundledNativeRunPlan::bridge_async_route_count(
+  self : BundledNativeRunPlan,
+) -> Int {
+  self.bootstrap.run_plan().async_route_count()
+}
+
+///|
+pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(
+  self : BundledNativeRunPlan,
+) -> Bool {
+  self.bridge_async_route_count() > 0
+}
+
+///|
+pub fn BundledNativeRunPlan::async_bridge_launch_message(
+  self : BundledNativeRunPlan,
+  platform_name : String,
+) -> String {
+  let count = self.bridge_async_route_count()
+  "\{platform_name} launch requires native async bridge scheduling for \{count} async command route(s)"
+}

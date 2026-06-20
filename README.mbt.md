@@ -422,6 +422,8 @@ making each backend rebuild those paths.
 `@lepusa.RunReport` is the shared launch summary returned by source and
 packaged runtime adapters, so CLI output and future native loops use one status
 vocabulary for prepared, launched, failed, and unsupported runs.
+Native runner plans also report bridge sync and async route sets, giving
+platform loops an explicit scheduling contract before they open a WebView.
 `@lepusa/runtime/macos`, `@lepusa/runtime/windows`, and
 `@lepusa/runtime/linux` now provide small backend descriptors and host
 availability checks for WKWebView, WebView2, and WebKitGTK. Each platform
@@ -485,7 +487,9 @@ scripts, while the manifest helper remains useful for one-shot probes.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
-responses. Async bridge scheduling is still a separate runtime-loop step.
+responses. Native launch paths refuse async bridge routes with an explicit
+scheduler requirement until a backend event loop can dispatch them without
+blocking the WebView callback.
 `NativeRuntime.prepare_bridge_message` and `dispatch_bridge_message` own the
 MoonBit side of that path by resolving the target window, response hook,
 sync/async dispatch, and response-callback script. macOS, Linux, and Windows

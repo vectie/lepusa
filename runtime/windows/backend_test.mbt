@@ -14,6 +14,28 @@ fn test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn async_test_host() -> @runtime.RuntimeHost {
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok(payload) },
+  )
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      title="Windows",
+      source=@lepusa.Source::html("<main>Windows</main>"),
+    )
+    .with_plugin(@lepusa.Plugin::new("core").command_async("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.invoke"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => @runtime.RuntimeHost::new(plan, registry~)
+    Err(_) => abort("unexpected invalid async Windows runtime plan")
+  }
+}
+
+///|
 test "windows backend exposes webview2 descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "windows")
@@ -120,6 +142,40 @@ test "windows backend prepares run plan and reports unsupported launch" {
       }
     }
     Err(_) => abort("unexpected invalid Windows native runtime")
+  }
+}
+
+///|
+test "windows launch reports async bridge scheduler requirement" {
+  match runtime(async_test_host()) {
+    Ok(runtime) =>
+      match launch(runtime) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected Windows async launch status")
+          }
+        Err(_) => abort("unexpected invalid Windows async launch plan")
+      }
+    Err(_) => abort("unexpected invalid Windows async native runtime")
+  }
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      windows_async_bundled_manifest(),
+    ) {
+    Ok(manifest) =>
+      match launch_bundled(manifest) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected Windows bundled async launch status")
+          }
+        Err(_) => abort("unexpected invalid Windows bundled async launch plan")
+      }
+    Err(problem) => abort(problem)
   }
 }
 
@@ -260,6 +316,19 @@ test "windows backend rejects mismatched bundled target" {
       }
     Err(problem) => abort(problem)
   }
+}
+
+///|
+fn windows_async_bundled_manifest() -> String {
+  windows_bundled_manifest()
+  .replace_all(
+    old="\"allowedRoutes\": [\"log.write\"]",
+    new="\"allowedRoutes\": [\"fs.readText\"]",
+  )
+  .replace_all(
+    old="\"registeredRoutes\": [\"log.write\"]",
+    new="\"registeredRoutes\": [\"fs.readText\"]",
+  )
 }
 
 ///|

@@ -11,6 +11,25 @@ fn test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn async_test_host() -> @runtime.RuntimeHost {
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok(payload) },
+  )
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(title="Linux", source=@lepusa.Source::html("<main>Linux</main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_async("invoke"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.invoke"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => @runtime.RuntimeHost::new(plan, registry~)
+    Err(_) => abort("unexpected invalid async Linux runtime plan")
+  }
+}
+
+///|
 test "linux backend exposes webkitgtk descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "linux")
@@ -119,6 +138,40 @@ test "linux backend prepares run plan and reports unsupported launch" {
       }
     }
     Err(_) => abort("unexpected invalid Linux native runtime")
+  }
+}
+
+///|
+test "linux launch reports async bridge scheduler requirement" {
+  match runtime(async_test_host()) {
+    Ok(runtime) =>
+      match launch(runtime) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected Linux async launch status")
+          }
+        Err(_) => abort("unexpected invalid Linux async launch plan")
+      }
+    Err(_) => abort("unexpected invalid Linux async native runtime")
+  }
+  match
+    @bundled.BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      linux_async_bundled_manifest(),
+    ) {
+    Ok(manifest) =>
+      match launch_bundled(manifest) {
+        Ok(result) =>
+          match result.status() {
+            RunUnsupported(message) =>
+              assert_true(message.contains("1 async command route"))
+            _ => abort("unexpected Linux bundled async launch status")
+          }
+        Err(_) => abort("unexpected invalid Linux bundled async launch plan")
+      }
+    Err(problem) => abort(problem)
   }
 }
 
@@ -261,6 +314,19 @@ test "linux backend rejects mismatched bundled target" {
       }
     Err(problem) => abort(problem)
   }
+}
+
+///|
+fn linux_async_bundled_manifest() -> String {
+  linux_bundled_manifest()
+  .replace_all(
+    old="\"allowedRoutes\": [\"log.write\"]",
+    new="\"allowedRoutes\": [\"fs.readText\"]",
+  )
+  .replace_all(
+    old="\"registeredRoutes\": [\"log.write\"]",
+    new="\"registeredRoutes\": [\"fs.readText\"]",
+  )
 }
 
 ///|

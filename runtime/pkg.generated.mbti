@@ -89,10 +89,14 @@ pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
   webviews : Array[NativeWebViewPlan]
 } derive(Eq, @debug.Debug)
+pub fn NativePreparedRunPlan::async_bridge_launch_message(Self, String) -> String
+pub fn NativePreparedRunPlan::bridge_async_routes(Self) -> Array[String]
+pub fn NativePreparedRunPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativePreparedRunPlan::first_webview_load_url(Self) -> String
 pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
 pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int
+pub fn NativePreparedRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan
 pub fn NativePreparedRunPlan::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativePreparedRunPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport
@@ -108,12 +112,17 @@ pub struct NativeRunnerPlan {
   webview_specs : Array[RuntimeWebViewSpec]
   startup_operations : Array[NativeOperation]
   lifecycle_steps : Array[NativeRunnerStep]
+  bridge_sync_routes : Array[String]
+  bridge_async_routes : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn NativeRunnerPlan::backend_name(Self) -> String
 pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
+pub fn NativeRunnerPlan::bridge_async_routes(Self) -> Array[String]
+pub fn NativeRunnerPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
 pub fn NativeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[NativeRunnerStep, Array[String]]
 pub fn NativeRunnerPlan::lifecycle_steps(Self) -> Array[NativeRunnerStep]
+pub fn NativeRunnerPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn NativeRunnerPlan::service_plan(Self) -> RuntimeServicePlan
 pub fn NativeRunnerPlan::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativeRunnerPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport

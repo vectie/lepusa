@@ -28,6 +28,8 @@ pub struct NativeRunnerPlan {
   webview_specs : Array[RuntimeWebViewSpec]
   startup_operations : Array[NativeOperation]
   lifecycle_steps : Array[NativeRunnerStep]
+  bridge_sync_routes : Array[String]
+  bridge_async_routes : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -94,6 +96,8 @@ pub fn NativeBackend::runner_plan(
         lifecycle_steps: native_lifecycle_steps_from_runtime(
           plan.lifecycle_steps(),
         ),
+        bridge_sync_routes: host.sync_command_routes(),
+        bridge_async_routes: host.async_command_routes(),
       })
     Err(problems) => Err(problems)
   }
@@ -271,6 +275,27 @@ pub fn NativeRunnerPlan::webviews(
 }
 
 ///|
+pub fn NativeRunnerPlan::bridge_sync_routes(
+  self : NativeRunnerPlan,
+) -> Array[String] {
+  self.bridge_sync_routes.copy()
+}
+
+///|
+pub fn NativeRunnerPlan::bridge_async_routes(
+  self : NativeRunnerPlan,
+) -> Array[String] {
+  self.bridge_async_routes.copy()
+}
+
+///|
+pub fn NativeRunnerPlan::requires_async_bridge_dispatch(
+  self : NativeRunnerPlan,
+) -> Bool {
+  !self.bridge_async_routes.is_empty()
+}
+
+///|
 pub fn NativeRunnerPlan::lifecycle_step(
   self : NativeRunnerPlan,
   event : @lepusa.LifecycleEvent,
@@ -304,6 +329,10 @@ pub fn NativeRunnerPlan::bootstrap_json(self : NativeRunnerPlan) -> String {
     "\"runtime\":\{self.launch_plan.runtime_manifest().to_json()},",
     "\"webviewSpecs\":[\{self.webview_specs.map(fn(spec) { spec.to_json() }).join(",")}],",
     "\"serviceSupervisor\":\{self.service_supervisor_plan().to_json()},",
+    "\"bridgeRoutes\":{",
+    "\"sync\":[\{self.bridge_sync_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"async\":[\{self.bridge_async_routes.map(fn(route) { route.json_string() }).join(",")}]",
+    "},",
     "\"startupOperations\":[\{self.startup_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"lifecycleOperations\":[\{self.lifecycle_steps.map(fn(step) { step.to_json() }).join(",")}]",
     "}",

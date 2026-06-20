@@ -162,6 +162,9 @@ fn linux_open_window(
   plan : @runtime.NativePreparedRunPlan,
   runtime : @runtime.NativeRuntime,
 ) -> @lepusa.RunStatus {
+  if plan.requires_async_bridge_dispatch() {
+    return RunUnsupported(plan.async_bridge_launch_message("Linux"))
+  }
   let webview = match plan.first_webview() {
     Ok(webview) => webview
     Err(problem) => return RunFailed(problem)
@@ -193,6 +196,9 @@ fn linux_open_bundled_window(
   plan : @bundled.BundledNativeRunPlan,
   manifest : @bundled.BundledRuntimeManifest,
 ) -> @lepusa.RunStatus {
+  if plan.requires_async_bridge_dispatch() {
+    return RunUnsupported(plan.async_bridge_launch_message("Linux"))
+  }
   let webview = match plan.first_webview() {
     Ok(webview) => webview
     Err(problem) => return RunFailed(problem)

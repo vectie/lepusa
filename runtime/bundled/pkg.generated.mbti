@@ -70,13 +70,17 @@ pub struct BundledNativeRunPlan {
   bundled_webviews : Array[BundledWebView]
   webviews : Array[@runtime.NativeWebViewPlan]
 } derive(@debug.Debug)
+pub fn BundledNativeRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn BundledNativeRunPlan::bootstrap(Self) -> BundledBootstrapPlan
 pub fn BundledNativeRunPlan::bootstrap_json(Self) -> String
+pub fn BundledNativeRunPlan::bridge_async_route_count(Self) -> Int
+pub fn BundledNativeRunPlan::bridge_sync_route_count(Self) -> Int
 pub fn BundledNativeRunPlan::bundled_webviews(Self) -> Array[BundledWebView]
 pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
 pub fn BundledNativeRunPlan::first_webview_url(Self) -> String
 pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
+pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn BundledNativeRunPlan::service_supervisor_plan(Self) -> @runtime.NativeServiceSupervisorPlan
 pub fn BundledNativeRunPlan::service_supervisor_report(Self) -> @runtime.NativeServiceSupervisorReport
 pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int

@@ -107,3 +107,33 @@ pub fn NativePreparedRunPlan::lifecycle_step_count(
 ) -> Int {
   self.runner.lifecycle_steps().length()
 }
+
+///|
+pub fn NativePreparedRunPlan::bridge_sync_routes(
+  self : NativePreparedRunPlan,
+) -> Array[String] {
+  self.runner.bridge_sync_routes()
+}
+
+///|
+pub fn NativePreparedRunPlan::bridge_async_routes(
+  self : NativePreparedRunPlan,
+) -> Array[String] {
+  self.runner.bridge_async_routes()
+}
+
+///|
+pub fn NativePreparedRunPlan::requires_async_bridge_dispatch(
+  self : NativePreparedRunPlan,
+) -> Bool {
+  self.runner.requires_async_bridge_dispatch()
+}
+
+///|
+pub fn NativePreparedRunPlan::async_bridge_launch_message(
+  self : NativePreparedRunPlan,
+  platform_name : String,
+) -> String {
+  let count = self.bridge_async_routes().length()
+  "\{platform_name} launch requires native async bridge scheduling for \{count} async command route(s)"
+}

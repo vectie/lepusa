@@ -382,6 +382,9 @@ test "native runtime prepares shared run plans" {
           )
           assert_eq(plan.startup_operation_count(), 1)
           assert_eq(plan.lifecycle_step_count(), 1)
+          assert_eq(plan.bridge_sync_routes().length(), 0)
+          assert_eq(plan.bridge_async_routes().length(), 0)
+          assert_false(plan.requires_async_bridge_dispatch())
           assert_eq(plan.service_supervisor_plan().backend_name(), "test")
           assert_true(plan.service_supervisor_report().ok())
           match plan.first_webview() {
@@ -393,6 +396,45 @@ test "native runtime prepares shared run plans" {
         Err(_) => abort("unexpected invalid native prepared run plan")
       }
     Err(_) => abort("unexpected invalid native runtime")
+  }
+}
+
+///|
+test "native runner plans expose async bridge blockers" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok(payload) },
+  )
+  match
+    NativeRuntime::new(
+      backend,
+      RuntimeHost::new(async_bridge_plan(), registry~),
+    ) {
+    Ok(runtime) => {
+      let runner = runtime.runner_plan()
+      assert_true(runner.requires_async_bridge_dispatch())
+      assert_eq(runner.bridge_sync_routes().length(), 0)
+      assert_eq(runner.bridge_async_routes().length(), 1)
+      assert_eq(runner.bridge_async_routes()[0], "core.invoke")
+      assert_true(runner.bootstrap_json().contains("\"bridgeRoutes\""))
+      match
+        runtime.prepare_run_plan(prepare_webview=fn(spec) {
+          runtime.webview_plan(spec, initialization_script="")
+        }) {
+        Ok(plan) => {
+          assert_true(plan.requires_async_bridge_dispatch())
+          assert_eq(plan.bridge_async_routes()[0], "core.invoke")
+          assert_true(
+            plan
+            .async_bridge_launch_message("Test")
+            .contains("1 async command route"),
+          )
+        }
+        Err(_) => abort("unexpected invalid async native prepared run plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid async native runtime")
   }
 }
 
