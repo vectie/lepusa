@@ -559,6 +559,43 @@ async test "generated project config drives native runner smoke command" {
 }
 
 ///|
+async test "generated project config prints actionable dev commands" {
+  let root = "/tmp/lepusa-project-dev-\{@async.now().to_int()}"
+  let init = render_cli_async(["init", root])
+  assert_eq(init.exit_code, 0)
+  let project = root + "/lepusa.json"
+  let result = render_cli_async(["dev", "--project", project])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa dev plan"))
+  assert_true(result.output.contains("commands:"))
+  assert_true(
+    result.output.contains("inspect: lepusa plan --project \{project}"),
+  )
+  assert_true(
+    result.output.contains("manifest: lepusa manifest --project \{project}"),
+  )
+  assert_true(
+    result.output.contains(
+      "verify:linux: lepusa verify linux --project \{project}",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "run:macos: lepusa run macos --launch --project \{project}",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "bundle:windows: lepusa bundle-write windows _build/lepusa-windows --project \{project}",
+    ),
+  )
+  let json = render_cli_async(["dev", "--json", "--project", project])
+  assert_eq(json.exit_code, 0)
+  assert_true(json.output.contains("\"commands\":[{"))
+  assert_true(json.output.contains("\"targetRequired\":true"))
+}
+
+///|
 async test "generated project config verifies end to end contracts" {
   let root = "/tmp/lepusa-project-verify-\{@async.now().to_int()}"
   let init = render_cli_async(["init", root])

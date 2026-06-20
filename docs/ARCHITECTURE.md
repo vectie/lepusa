@@ -425,9 +425,10 @@ names, allowed routes, and document-start initialization scripts. The platform
 layer should translate these specs to WKWebView, WebView2, or WebKitGTK calls
 without re-reading `App`, `WindowConfig`, or manifest state.
 `RuntimeHost::dev_plan()` is the portable development-run boundary over the
-same host: it returns WebView specs, the stepped runtime session, and startup
-operations in one object so CLI and platform backends do not reconstruct boot
-state separately.
+same host: it returns WebView specs, the stepped runtime session, startup
+operations, bridge route scheduling, and target-parameterized development
+command templates in one object so CLI and platform backends do not reconstruct
+boot state separately.
 `RuntimeHost::runner_plan()` is the native-loop form of the same handoff: it
 adds the launch manifest to the resolved WebViews, stepped session, and startup
 operations so platform packages can translate a single runtime object. Local

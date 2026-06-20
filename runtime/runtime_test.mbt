@@ -1387,11 +1387,22 @@ test "runtime host builds dev plan for backend runners" {
           assert_eq(dev.lifecycle_steps().length(), 0)
           assert_eq(dev.bridge_sync_routes().length(), 0)
           assert_eq(dev.bridge_async_routes().length(), 0)
+          assert_eq(dev.commands().length(), 5)
+          assert_eq(dev.commands()[0].name(), "inspect")
+          assert_eq(dev.commands()[3].name(), "run")
+          assert_true(dev.commands()[3].target_required())
+          assert_true(dev.commands()[3].template().contains("{target}"))
           assert_true(dev.to_json().contains("\"kind\":\"runtime-dev-plan\""))
           assert_true(dev.to_json().contains("\"launchManifest\":{"))
           assert_true(dev.to_json().contains("\"startupOperations\":[{"))
           assert_true(dev.to_json().contains("\"lifecycleSteps\":[]"))
           assert_true(dev.to_json().contains("\"bridgeRoutes\":{"))
+          assert_true(dev.to_json().contains("\"commands\":[{"))
+          assert_true(
+            dev
+            .to_json()
+            .contains("\"template\":\"lepusa run {target} --launch{project}\""),
+          )
           let services = dev.service_plan()
           assert_eq(services.services().length(), 0)
           assert_false(services.requires_supervisor())

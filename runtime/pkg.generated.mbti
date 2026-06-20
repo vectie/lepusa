@@ -661,6 +661,19 @@ pub fn RuntimeAssetResponse::to_native_load_url(Self) -> String
 pub fn RuntimeAssetResponse::to_native_protocol_packet(Self) -> Bytes
 pub fn RuntimeAssetResponse::url(Self) -> String
 
+pub struct RuntimeDevCommand {
+  name : String
+  purpose : String
+  template : String
+  target_required : Bool
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevCommand::name(Self) -> String
+pub fn RuntimeDevCommand::new(name~ : String, purpose~ : String, template~ : String, target_required? : Bool) -> Self
+pub fn RuntimeDevCommand::purpose(Self) -> String
+pub fn RuntimeDevCommand::target_required(Self) -> Bool
+pub fn RuntimeDevCommand::template(Self) -> String
+pub fn RuntimeDevCommand::to_json(Self) -> String
+
 pub struct RuntimeDevPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
@@ -669,9 +682,11 @@ pub struct RuntimeDevPlan {
   lifecycle_steps : Array[RuntimeRunnerStep]
   bridge_sync_routes : Array[String]
   bridge_async_routes : Array[String]
+  commands : Array[RuntimeDevCommand]
 } derive(Eq, @debug.Debug)
 pub fn RuntimeDevPlan::bridge_async_routes(Self) -> Array[String]
 pub fn RuntimeDevPlan::bridge_sync_routes(Self) -> Array[String]
+pub fn RuntimeDevPlan::commands(Self) -> Array[RuntimeDevCommand]
 pub fn RuntimeDevPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn RuntimeDevPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
 pub fn RuntimeDevPlan::service_plan(Self) -> RuntimeServicePlan

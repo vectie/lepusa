@@ -39,7 +39,7 @@ async fn render_dev_async(args : Array[String]) -> CliResult {
           if has_flag(args, "--json") {
             ok(dev.to_json() + "\n")
           } else {
-            render_dev_plan(dev)
+            render_dev_plan(dev, args)
           }
         Err(problems) => fail(render_problems("Lepusa dev", problems))
       }
@@ -466,7 +466,10 @@ fn render_runtime_plan(plan : @lepusa.RuntimePlan) -> CliResult {
 }
 
 ///|
-fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
+fn render_dev_plan(
+  dev : @runtime.RuntimeDevPlan,
+  args : Array[String],
+) -> CliResult {
   let session = dev.session()
   let services = dev.service_plan()
   let routes = session.command_routes().join(",")
@@ -490,6 +493,74 @@ fn render_dev_plan(dev : @runtime.RuntimeDevPlan) -> CliResult {
     "service-start-order: \{services.startup_service_names().join(",")}\n" +
     "filesystem-scopes: \{session.file_system_scopes().length()}\n" +
     "startup-operations: \{dev.startup_operations().length()}\n" +
-    "lifecycle-steps: \{dev.lifecycle_steps().length()}\n",
+    "lifecycle-steps: \{dev.lifecycle_steps().length()}\n" +
+    render_dev_commands(dev, args),
   )
+}
+
+///|
+fn render_dev_commands(
+  dev : @runtime.RuntimeDevPlan,
+  args : Array[String],
+) -> String {
+  let project = render_dev_project_suffix(args)
+  let lines : Array[String] = ["commands:\n"]
+  for command in dev.commands() {
+    if command.target_required() {
+      for target in ["macos", "linux", "windows"] {
+        lines.push(
+          "  \{command.name()}:\{target}: \{render_dev_command(command, target, project)}\n",
+        )
+      }
+    } else {
+      lines.push(
+        "  \{command.name()}: \{render_dev_command(command, "", project)}\n",
+      )
+    }
+  }
+  lines.join("")
+}
+
+///|
+fn render_dev_command(
+  command : @runtime.RuntimeDevCommand,
+  target : String,
+  project : String,
+) -> String {
+  command
+  .template()
+  .replace_all(old="{target}", new=target)
+  .replace_all(old="{project}", new=project)
+}
+
+///|
+fn render_dev_project_suffix(args : Array[String]) -> String {
+  match project_path_arg(args) {
+    Some(path) => " --project \{shell_arg(path)}"
+    None => ""
+  }
+}
+
+///|
+fn shell_arg(value : String) -> String {
+  if value == "" {
+    return "''"
+  }
+  let mut safe = true
+  for char in value {
+    if !(char >= 'a' && char <= 'z') &&
+      !(char >= 'A' && char <= 'Z') &&
+      !(char >= '0' && char <= '9') &&
+      char != '/' &&
+      char != '.' &&
+      char != '_' &&
+      char != '-' {
+      safe = false
+    }
+  }
+  if safe {
+    value
+  } else {
+    "'" + value.replace_all(old="'", new="'\\''") + "'"
+  }
 }
