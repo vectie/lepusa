@@ -57,27 +57,13 @@ extern "c" fn run_webview_with_bridge(
 pub fn prepare_run(
   runtime : @runtime.NativeRuntime,
 ) -> Result[MacOSRunPlan, Array[String]] {
-  let runner = runtime.runner_plan()
-  let webviews : Array[@runtime.NativeWebViewPlan] = []
-  let problems : Array[String] = []
-  for spec in runner.webview_specs() {
-    match macos_webview_plan_from_spec(runtime, spec) {
-      Ok(webview) => webviews.push(webview)
-      Err(problem) => problems.push(problem)
-    }
-  }
-  if webviews.is_empty() {
-    problems.push("macOS run requires at least one webview")
-  }
-  if problems.is_empty() {
-    Ok({
-      webviews,
-      execution: macos_execution_plan_from_runner(runner),
-      bridge: macos_bridge_plan_from_runtime(runtime),
-      service_supervisor: runner.service_supervisor_plan(),
-    })
-  } else {
-    Err(problems)
+  match
+    runtime.prepare_run_plan(
+      prepare_webview=fn(spec) { macos_webview_plan_from_spec(runtime, spec) },
+      missing_webview_message="macOS run requires at least one webview",
+    ) {
+    Ok(plan) => Ok(macos_run_plan_from_prepared(runtime, plan))
+    Err(problems) => Err(problems)
   }
 }
 
@@ -99,46 +85,28 @@ fn macos_webview_plan_from_spec(
 pub fn prepare_bundled_run(
   manifest : @bundled.BundledRuntimeManifest,
 ) -> Result[MacOSRunPlan, Array[String]] {
-  match manifest.webviews() {
-    Err(problem) => Err([problem])
-    Ok(bundled_webviews) => {
-      let webviews : Array[@runtime.NativeWebViewPlan] = []
-      let problems : Array[String] = []
-      for webview in bundled_webviews {
-        match macos_webview_plan_from_bundled(manifest, webview) {
-          Ok(plan) => webviews.push(plan)
-          Err(problem) => problems.push(problem)
-        }
-      }
-      let execution = match
-        macos_execution_plan_from_bundled(manifest, bundled_webviews) {
-        Ok(execution) => Some(execution)
-        Err(execution_problems) => {
-          for problem in execution_problems {
-            problems.push(problem)
-          }
-          None
-        }
-      }
-      let service_supervisor = match
-        macos_service_supervisor_from_bundled(manifest) {
-        Ok(plan) => Some(plan)
-        Err(problem) => {
-          problems.push(problem)
-          None
-        }
-      }
-      match (execution, service_supervisor) {
-        (Some(execution), Some(service_supervisor)) if problems.is_empty() =>
+  match
+    manifest.prepare_native_run_plan(
+      target="macos",
+      target_name="macOS",
+      prepare_webview=fn(webview) {
+        macos_webview_plan_from_bundled(manifest, webview)
+      },
+      missing_webview_message="macOS bundled run requires at least one webview",
+    ) {
+    Err(problems) => Err(problems)
+    Ok(plan) =>
+      match
+        macos_execution_plan_from_bundled(manifest, plan.bundled_webviews()) {
+        Ok(execution) =>
           Ok({
-            webviews,
+            webviews: plan.webviews(),
             execution,
             bridge: macos_bridge_plan_from_bundled(manifest),
-            service_supervisor,
+            service_supervisor: plan.service_supervisor_plan(),
           })
-        _ => Err(problems)
+        Err(problems) => Err(problems)
       }
-    }
   }
 }
 
@@ -154,6 +122,19 @@ fn macos_webview_plan_from_bundled(
       webview.initialization_scripts(),
     ),
   )
+}
+
+///|
+fn macos_run_plan_from_prepared(
+  runtime : @runtime.NativeRuntime,
+  plan : @runtime.NativePreparedRunPlan,
+) -> MacOSRunPlan {
+  {
+    webviews: plan.webviews(),
+    execution: macos_execution_plan_from_runner(plan.runner()),
+    bridge: macos_bridge_plan_from_runtime(runtime),
+    service_supervisor: plan.service_supervisor_plan(),
+  }
 }
 
 ///|
@@ -240,23 +221,6 @@ fn macos_bridge_plan_from_bundled(
   {
     sync_command_routes: manifest.registered_sync_routes(),
     async_command_routes: manifest.registered_async_routes(),
-  }
-}
-
-///|
-fn macos_service_supervisor_from_bundled(
-  manifest : @bundled.BundledRuntimeManifest,
-) -> Result[@runtime.NativeServiceSupervisorPlan, String] {
-  match manifest.run_plan() {
-    Ok(plan) =>
-      Ok(
-        @runtime.NativeServiceSupervisorPlan::new(
-          backend_name=plan.backend(),
-          webview_engine=plan.webview_engine(),
-          plan=plan.service_supervisor_plan(),
-        ),
-      )
-    Err(problem) => Err(problem)
   }
 }
 

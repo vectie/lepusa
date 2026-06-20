@@ -67,10 +67,12 @@ pub fn BundledLifecyclePlan::event(Self) -> BundledLifecycleEvent
 
 pub struct BundledNativeRunPlan {
   bootstrap : BundledBootstrapPlan
+  bundled_webviews : Array[BundledWebView]
   webviews : Array[@runtime.NativeWebViewPlan]
 } derive(@debug.Debug)
 pub fn BundledNativeRunPlan::bootstrap(Self) -> BundledBootstrapPlan
 pub fn BundledNativeRunPlan::bootstrap_json(Self) -> String
+pub fn BundledNativeRunPlan::bundled_webviews(Self) -> Array[BundledWebView]
 pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
 pub fn BundledNativeRunPlan::first_webview_url(Self) -> String

@@ -320,6 +320,8 @@ test "bundled runtime manifest prepares shared native run plans" {
           )
         }) {
         Ok(plan) => {
+          assert_eq(plan.bundled_webviews().length(), 1)
+          assert_eq(plan.bundled_webviews()[0].label(), "main")
           assert_eq(plan.webview_count(), 1)
           assert_eq(
             plan.first_webview_url(),

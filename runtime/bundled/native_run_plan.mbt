@@ -1,6 +1,7 @@
 ///|
 pub struct BundledNativeRunPlan {
   bootstrap : BundledBootstrapPlan
+  bundled_webviews : Array[BundledWebView]
   webviews : Array[@runtime.NativeWebViewPlan]
 } derive(Debug)
 
@@ -40,7 +41,7 @@ pub fn BundledRuntimeManifest::prepare_native_run_plan(
     problems.push(missing_webview_message)
   }
   if problems.is_empty() {
-    Ok({ bootstrap, webviews })
+    Ok({ bootstrap, bundled_webviews, webviews })
   } else {
     Err(problems)
   }
@@ -65,6 +66,13 @@ pub fn BundledNativeRunPlan::webviews(
   self : BundledNativeRunPlan,
 ) -> Array[@runtime.NativeWebViewPlan] {
   self.webviews.copy()
+}
+
+///|
+pub fn BundledNativeRunPlan::bundled_webviews(
+  self : BundledNativeRunPlan,
+) -> Array[BundledWebView] {
+  self.bundled_webviews.copy()
 }
 
 ///|
