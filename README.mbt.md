@@ -26,8 +26,8 @@ MoonBit app code
 The first implementation slice already owns the public MoonBit foundation:
 
 - Rabbita-style `cell_with_dispatch` and `new(cell)` app construction
-- `@lepusa/ui` HTML node and attribute helpers for compact MoonBit-authored
-  desktop views
+- `@lepusa/ui` HTML helpers plus `UiProgram` model/update/view state flow for
+  compact MoonBit-authored desktop views
 - `WindowConfig`, `Source`, `Plugin`, `Capability`, `Cmd`, `Event`, and typed
   IPC request/response contracts
 - `ProjectManifest` validation plus `LaunchPlan`, `RuntimePlan`, and

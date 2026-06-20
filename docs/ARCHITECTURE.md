@@ -18,8 +18,8 @@ lepusa
   stable MoonBit facade and CLI
 
 lepusa/ui
-  Rabbita-compatible HTML node and attribute helpers for MoonBit-authored
-  desktop UI
+  Rabbita-compatible HTML helpers and model/update/view programs for
+  MoonBit-authored desktop UI
 
 lepusa/runtime
   WebView windows, event loop, custom protocols, asset loading, IPC transport
@@ -66,9 +66,12 @@ Equivalent lower-level hosting should remain available:
 This gives MoonBit UI authors the familiar model/update/view flow while still
 supporting arbitrary built frontend assets.
 
-`@lepusa/ui` is the first dedicated authoring layer. It intentionally returns
-root `@lepusa.Html` values instead of owning a second app model, so the runtime
-boundary remains `cell_with_dispatch -> new(cell) -> launch_plan/runtime_plan`.
+`@lepusa/ui` is the first dedicated authoring layer. Static helpers return root
+`@lepusa.Html` values, while `UiProgram` adds a compact model/update/view loop
+with message encode/decode, click dispatch attributes, and render events that
+lower through normal Lepusa `Cmd::emit` window delivery. It still produces a
+root `Cell`, so the runtime boundary remains
+`cell -> new(cell) -> launch_plan/runtime_plan`.
 
 ## Process Model
 

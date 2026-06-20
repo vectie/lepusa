@@ -52,3 +52,119 @@ test "ui html can back a lepusa cell" {
     Err(_) => abort("unexpected invalid ui app")
   }
 }
+
+///|
+enum TestCounterMessage {
+  TestIncrement
+  TestDecrement
+} derive(Debug, Eq)
+
+///|
+fn encode_counter_message(message : TestCounterMessage) -> String {
+  match message {
+    TestIncrement => "{\"kind\":\"increment\"}"
+    TestDecrement => "{\"kind\":\"decrement\"}"
+  }
+}
+
+///|
+fn decode_counter_message(
+  payload : String,
+) -> Result[TestCounterMessage, String] {
+  match payload {
+    "{\"kind\":\"increment\"}" => Ok(TestIncrement)
+    "{\"kind\":\"decrement\"}" => Ok(TestDecrement)
+    _ => Err("unknown counter message")
+  }
+}
+
+///|
+fn update_counter(
+  message : TestCounterMessage,
+  count : Int,
+) -> (Int, @lepusa.Cmd) {
+  match message {
+    TestIncrement => (count + 1, @lepusa.Cmd::effect("counter.changed"))
+    TestDecrement => (count - 1, @lepusa.none)
+  }
+}
+
+///|
+fn view_counter(
+  dispatch : ViewDispatch[TestCounterMessage],
+  count : Int,
+) -> @lepusa.Html {
+  main_([
+    h1([text("Counter")]),
+    p([text("Count: \{count}")], attrs=[id("count")]),
+    button("Increment", attrs=[dispatch(TestIncrement)]),
+    button("Decrement", attrs=[dispatch(TestDecrement)]),
+  ])
+}
+
+///|
+fn counter_program(count : Int) -> UiProgram[Int, TestCounterMessage] {
+  UiProgram::new(
+    model=count,
+    update=update_counter,
+    view=view_counter,
+    encode=encode_counter_message,
+    decode=decode_counter_message,
+    route="counter.dispatch",
+    render_event="counter.render",
+    window_label="main",
+    root_id="counter-root",
+  )
+}
+
+///|
+test "ui program renders model update view cell" {
+  let program = counter_program(1)
+  assert_true(program.validate().is_empty())
+  assert_eq(program.model(), 1)
+  assert_eq(program.route(), "counter.dispatch")
+  let cell = program.cell()
+  assert_eq(cell.id(), "counter-root")
+  assert_true(cell.html().content().contains("Count: 1"))
+  assert_true(cell.html().content().contains("counter.dispatch"))
+  assert_true(cell.html().content().contains("counter.render"))
+  assert_true(cell.html().content().contains("window.lepusa.invoke"))
+  assert_true(cell.html().content().contains("counter.dispatch"))
+  assert_true(cell.html().content().contains("kind&quot;:&quot;increment"))
+}
+
+///|
+test "ui program dispatch advances model and emits render command" {
+  let program = counter_program(1)
+  match program.dispatch("{\"kind\":\"increment\"}") {
+    Ok(transition) => {
+      assert_eq(transition.model(), 2)
+      assert_true(transition.message() is TestIncrement)
+      assert_true(transition.command() is Batch(_))
+      match transition.program().dispatch("{\"kind\":\"decrement\"}") {
+        Ok(next) => assert_eq(next.model(), 1)
+        Err(problem) => abort(problem)
+      }
+      match
+        @lepusa.new(transition.program().cell())
+        .window(label="main")
+        .runtime_plan() {
+        Ok(plan) =>
+          match plan.actions(transition.command()) {
+            Ok(actions) => {
+              assert_eq(actions.length(), 2)
+              assert_true(actions[0] is RuntimeEffect("counter.changed"))
+              assert_true(actions[1] is RuntimeEmit(WindowTarget("main"), _))
+            }
+            Err(problems) => abort(problems.join("; "))
+          }
+        Err(problems) => abort(problems.join("; "))
+      }
+    }
+    Err(problem) => abort(problem)
+  }
+  match program.dispatch("{\"kind\":\"missing\"}") {
+    Ok(_) => abort("unexpected valid message")
+    Err(problem) => assert_eq(problem, "unknown counter message")
+  }
+}

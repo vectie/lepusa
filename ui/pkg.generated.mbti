@@ -67,6 +67,49 @@ pub fn Attr::new(String, String) -> Self
 pub fn Attr::render(Self) -> String
 pub fn Attr::value(Self) -> String
 
+pub struct UiProgram[Model, Msg] {
+  model : Model
+  update : (Msg, Model) -> (Model, @lepusa.Cmd)
+  view : ((Msg) -> Attr, Model) -> @lepusa.Html
+  encode : (Msg) -> String
+  decode : (String) -> Result[Msg, String]
+  route : String
+  render_event : String
+  window_label : String
+  root_id : String
+}
+pub fn[Model, Msg] UiProgram::cell(Self[Model, Msg]) -> @lepusa.Cell
+pub fn[Model, Msg] UiProgram::dispatch(Self[Model, Msg], String) -> Result[UiTransition[Model, Msg], String]
+pub fn[Model, Msg] UiProgram::dispatch_attr(Self[Model, Msg], Msg) -> Attr
+pub fn[Model, Msg] UiProgram::html(Self[Model, Msg]) -> @lepusa.Html
+pub fn[Model, Msg] UiProgram::model(Self[Model, Msg]) -> Model
+pub fn[Model, Msg] UiProgram::new(model~ : Model, update~ : (Msg, Model) -> (Model, @lepusa.Cmd), view~ : ((Msg) -> Attr, Model) -> @lepusa.Html, encode~ : (Msg) -> String, decode~ : (String) -> Result[Msg, String], route? : String, render_event? : String, window_label? : String, root_id? : String) -> Self[Model, Msg]
+pub fn[Model, Msg] UiProgram::render_event(Self[Model, Msg]) -> String
+pub fn[Model, Msg] UiProgram::root_id(Self[Model, Msg]) -> String
+pub fn[Model, Msg] UiProgram::route(Self[Model, Msg]) -> String
+pub fn[Model, Msg] UiProgram::validate(Self[Model, Msg]) -> Array[String]
+pub fn[Model, Msg] UiProgram::view_html(Self[Model, Msg]) -> @lepusa.Html
+pub fn[Model, Msg] UiProgram::window_label(Self[Model, Msg]) -> String
+
+pub struct UiTransition[Model, Msg] {
+  program : UiProgram[Model, Msg]
+  message : Msg
+  command : @lepusa.Cmd
+}
+pub fn[Model, Msg] UiTransition::command(Self[Model, Msg]) -> @lepusa.Cmd
+pub fn[Model, Msg] UiTransition::message(Self[Model, Msg]) -> Msg
+pub fn[Model, Msg] UiTransition::model(Self[Model, Msg]) -> Model
+pub fn[Model, Msg] UiTransition::program(Self[Model, Msg]) -> UiProgram[Model, Msg]
+
 // Type aliases
+pub type UiDecode[Msg] = (String) -> Result[Msg, String]
+
+pub type UiEncode[Msg] = (Msg) -> String
+
+pub type UiUpdate[Model, Msg] = (Msg, Model) -> (Model, @lepusa.Cmd)
+
+pub type UiView[Model, Msg] = ((Msg) -> Attr, Model) -> @lepusa.Html
+
+pub type ViewDispatch[Msg] = (Msg) -> Attr
 
 // Traits

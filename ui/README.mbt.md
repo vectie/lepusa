@@ -1,8 +1,9 @@
 # Lepusa UI
 
-`@lepusa/ui` provides small Rabbita-style HTML helpers for MoonBit-authored
-desktop views. The package returns `@lepusa.Html`, so apps still use the root
-`@lepusa.cell_with_dispatch` and `@lepusa.new(cell)` runtime boundary.
+`@lepusa/ui` provides Rabbita-style helpers for MoonBit-authored desktop views.
+Use the lightweight HTML builders directly for static views, or `UiProgram`
+when a view needs model/update/view state, message encoding, and normal Lepusa
+command/event integration.
 
 ```mbt check
 ///|
@@ -20,6 +21,54 @@ test "compose a Lepusa UI view" {
       @lepusa.Cmd::emit(@lepusa.Event::new("ready", payload="Ready")),
     )
     .window(title="Counter")
+  match app.launch_plan() {
+    Ok(plan) => inspect(plan.window_count(), content="1")
+    Err(_) => fail("unexpected invalid app")
+  }
+}
+```
+
+```mbt check
+///|
+enum CounterMessage {
+  Increment
+} derive(Debug, Eq)
+
+///|
+test "compose a model update view program" {
+  let program = UiProgram::new(
+    model=0,
+    update=fn(message, count) {
+      match message {
+        Increment => (count + 1, @lepusa.none)
+      }
+    },
+    view=fn(dispatch, count) {
+      main_([
+        h1([text("Counter")]),
+        p([text("Count: \{count}")]),
+        button("Increment", attrs=[dispatch(Increment)]),
+      ])
+    },
+    encode=fn(message) {
+      match message {
+        Increment => "{\"kind\":\"increment\"}"
+      }
+    },
+    decode=fn(payload) {
+      match payload {
+        "{\"kind\":\"increment\"}" => Ok(Increment)
+        _ => Err("unknown message")
+      }
+    },
+    route="counter.dispatch",
+    render_event="counter.render",
+  )
+  let app = @lepusa.new(program.cell()).window(title="Counter")
+  match program.dispatch("{\"kind\":\"increment\"}") {
+    Ok(next) => inspect(next.model(), content="1")
+    Err(_) => fail("unexpected invalid message")
+  }
   match app.launch_plan() {
     Ok(plan) => inspect(plan.window_count(), content="1")
     Err(_) => fail("unexpected invalid app")

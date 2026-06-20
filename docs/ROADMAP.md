@@ -16,13 +16,15 @@
 
 - Add `cell_with_dispatch`, `new`, `with_startup`, `window`, validation, and
   `launch_plan` APIs with syntax close to Rabbita.
-- Add `@lepusa/ui` HTML node and attribute helpers for compact
-  MoonBit-authored desktop views.
+- Add `@lepusa/ui` HTML node and attribute helpers plus `UiProgram`
+  model/update/view state flow for compact MoonBit-authored desktop views.
 - Lower source-less `App` windows into generated Rabbita-style HTML from the
   root `Cell`.
 - Add native `run` once the first runtime backend is wired: macOS now has an
   explicit `lepusa run macos --launch` path.
-- Run a desktop counter app authored in MoonBit model/update/view style.
+- Run a desktop counter app authored in MoonBit model/update/view style:
+  `UiProgram` now provides the framework boundary; the remaining proof is a
+  native-window smoke test around a packaged counter.
 - Support direct `WindowConfig::new(..., source=...)` hosting for non-Rabbita
   assets.
 - Add a smoke test that proves the WebView is nonblank.
