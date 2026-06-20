@@ -579,6 +579,13 @@ pub fn NativeBridgeCompletion::evaluation_script(
 }
 
 ///|
+pub fn NativeBridgeCompletion::operations(
+  self : NativeBridgeCompletion,
+) -> Array[NativeExecutableOperation] {
+  self.dispatch.operations()
+}
+
+///|
 pub fn NativeBridgeCompletion::to_json(self : NativeBridgeCompletion) -> String {
   [
     "{",
@@ -976,13 +983,34 @@ pub fn NativeBridgeLoopResult::evaluation_scripts(
 }
 
 ///|
+pub fn NativeBridgeLoopResult::operations(
+  self : NativeBridgeLoopResult,
+  window_label~ : String,
+) -> Array[NativeExecutableOperation] {
+  let operations : Array[NativeExecutableOperation] = []
+  if self.has_immediate_script() {
+    operations.push(
+      NativeExecutableOperation::evaluate_script(
+        NativeEvaluationScript::new(window_label~, script=self.immediate_script),
+      ),
+    )
+  }
+  for completion in self.completions {
+    for operation in completion.operations() {
+      operations.push(operation)
+    }
+  }
+  operations
+}
+
+///|
 pub fn NativeBridgeLoopResult::evaluation_plan(
   self : NativeBridgeLoopResult,
   window_label~ : String,
 ) -> NativeBridgeLoopEvaluationPlan {
-  NativeBridgeLoopEvaluationPlan::from_scripts(
+  NativeBridgeLoopEvaluationPlan::new(
     window_label~,
-    scripts=self.evaluation_scripts(),
+    operations=self.operations(window_label~),
   )
 }
 
@@ -1091,16 +1119,109 @@ pub fn NativeBridgeDispatch::evaluation_script(
 }
 
 ///|
+pub fn NativeBridgeDispatch::native_window_control(
+  self : NativeBridgeDispatch,
+) -> NativeWindowControl? {
+  native_window_control_from_dispatch(self.message, self.response_json)
+}
+
+///|
+pub fn NativeBridgeDispatch::operations(
+  self : NativeBridgeDispatch,
+) -> Array[NativeExecutableOperation] {
+  let operations : Array[NativeExecutableOperation] = [
+    NativeExecutableOperation::evaluate_script(
+      NativeEvaluationScript::new(
+        window_label=self.window_label,
+        script=self.evaluation_script,
+      ),
+    ),
+  ]
+  match self.native_window_control() {
+    Some(control) =>
+      operations.push(NativeExecutableOperation::window_control(control))
+    None => ()
+  }
+  operations
+}
+
+///|
 pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
+  let control_json = match self.native_window_control() {
+    Some(control) => control.to_json()
+    None => "null"
+  }
   [
     "{",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"responseHook\":\{self.response_hook.json_string()},",
     "\"message\":\{self.message.json_string()},",
     "\"responseJson\":\{self.response_json.json_string()},",
-    "\"evaluationScript\":\{self.evaluation_script.json_string()}",
+    "\"evaluationScript\":\{self.evaluation_script.json_string()},",
+    "\"nativeWindowControl\":\{control_json},",
+    "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")
+}
+
+///|
+fn native_window_control_from_dispatch(
+  message : String,
+  response_json : String,
+) -> NativeWindowControl? {
+  let request = match decode_invoke_request_json(message) {
+    Ok(request) => request
+    Err(_) => return None
+  }
+  if request.plugin() != "window" {
+    return None
+  }
+  let response = @json.parse(response_json) catch { _ => return None }
+  let payload = match response {
+    Object(object) =>
+      match object.get("error") {
+        Some(_) => return None
+        None =>
+          match object.get("payload") {
+            Some(String(payload)) => payload
+            _ => return None
+          }
+      }
+    _ => return None
+  }
+  let parsed_payload = @json.parse(payload) catch { _ => return None }
+  let operation = match parsed_payload {
+    Object(object) =>
+      match object.get("operation") {
+        Some(Object(operation)) => operation
+        _ => return None
+      }
+    _ => return None
+  }
+  let window_label = native_window_control_string(operation, "windowLabel")
+  let action = native_window_control_string(operation, "action")
+  if window_label == "" || action == "" {
+    None
+  } else {
+    Some(
+      NativeWindowControl::new(
+        window_label~,
+        action~,
+        payload=native_window_control_string(operation, "payload"),
+      ),
+    )
+  }
+}
+
+///|
+fn native_window_control_string(
+  object : Map[String, Json],
+  key : String,
+) -> String {
+  match object.get(key) {
+    Some(String(value)) => value
+    _ => ""
+  }
 }
 
 ///|

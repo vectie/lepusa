@@ -17,6 +17,13 @@ pub struct NativeBridgeDrain {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeWindowControl {
+  window_label : String
+  action : String
+  payload : String
+} derive(Debug, Eq)
+
+///|
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String
   operations : Array[NativeExecutableOperation]
@@ -29,6 +36,7 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
   NativeExecutableNavigate(NativeNavigation)
+  NativeExecutableWindowControl(NativeWindowControl)
 } derive(Debug, Eq)
 
 ///|
@@ -53,6 +61,15 @@ pub fn NativeBridgeDrain::new(
   callback~ : String,
 ) -> NativeBridgeDrain {
   { window_label, callback }
+}
+
+///|
+pub fn NativeWindowControl::new(
+  window_label~ : String,
+  action~ : String,
+  payload? : String = "",
+) -> NativeWindowControl {
+  { window_label, action, payload }
 }
 
 ///|
@@ -141,6 +158,32 @@ pub fn NativeBridgeDrain::to_json(self : NativeBridgeDrain) -> String {
 }
 
 ///|
+pub fn NativeWindowControl::window_label(self : NativeWindowControl) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeWindowControl::action(self : NativeWindowControl) -> String {
+  self.action
+}
+
+///|
+pub fn NativeWindowControl::payload(self : NativeWindowControl) -> String {
+  self.payload
+}
+
+///|
+pub fn NativeWindowControl::to_json(self : NativeWindowControl) -> String {
+  [
+    "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"action\":\{self.action.json_string()},",
+    "\"payload\":\{self.payload.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn NativeBridgeLoopEvaluationPlan::window_label(
   self : NativeBridgeLoopEvaluationPlan,
 ) -> String {
@@ -223,6 +266,13 @@ pub fn NativeExecutableOperation::navigate(
 }
 
 ///|
+pub fn NativeExecutableOperation::window_control(
+  control : NativeWindowControl,
+) -> NativeExecutableOperation {
+  NativeExecutableWindowControl(control)
+}
+
+///|
 pub fn NativeExecutableOperation::kind(
   self : NativeExecutableOperation,
 ) -> String {
@@ -232,6 +282,7 @@ pub fn NativeExecutableOperation::kind(
     NativeExecutableDrainBridge(_) => "drain-bridge-window"
     NativeExecutableRunEffect(_) => "run-effect"
     NativeExecutableNavigate(_) => "navigate-window"
+    NativeExecutableWindowControl(_) => "window-control"
   }
 }
 
@@ -286,6 +337,16 @@ pub fn NativeExecutableOperation::navigation(
 }
 
 ///|
+pub fn NativeExecutableOperation::window_control_operation(
+  self : NativeExecutableOperation,
+) -> NativeWindowControl? {
+  match self {
+    NativeExecutableWindowControl(control) => Some(control)
+    _ => None
+  }
+}
+
+///|
 pub fn NativeExecutableOperation::window_label(
   self : NativeExecutableOperation,
 ) -> String? {
@@ -297,7 +358,11 @@ pub fn NativeExecutableOperation::window_label(
         None =>
           match self.navigation() {
             Some(navigation) => Some(navigation.window_label())
-            None => None
+            None =>
+              match self.window_control_operation() {
+                Some(control) => Some(control.window_label())
+                None => None
+              }
           }
       }
   }
@@ -341,6 +406,15 @@ pub fn NativeExecutableOperation::to_json(
         "\"kind\":\"navigate-window\",",
         "\"windowLabel\":\{navigation.window_label().json_string()},",
         "\"url\":\{navigation.url().json_string()}",
+        "}",
+      ].join("")
+    NativeExecutableWindowControl(control) =>
+      [
+        "{",
+        "\"kind\":\"window-control\",",
+        "\"windowLabel\":\{control.window_label().json_string()},",
+        "\"action\":\{control.action().json_string()},",
+        "\"payload\":\{control.payload().json_string()}",
         "}",
       ].join("")
   }

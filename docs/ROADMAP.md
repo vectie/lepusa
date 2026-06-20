@@ -125,7 +125,9 @@
   immediate scripts are evaluated while deferred async work remains explicit;
   source and bundled bridge callback bundles now expose a first-class
   `drain-bridge-window` executable operation, giving platform loops a typed
-  scheduler hook for queued async bridge windows;
+  scheduler hook for queued async bridge windows; approved `window.*` dispatches
+  now lower official plugin response payloads into `window-control` executable
+  operations for platform loops;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, and bridge-drain operations, and canonical
   `RunReport` values expose those execution counts for source and packaged

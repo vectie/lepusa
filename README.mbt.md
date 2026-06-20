@@ -678,6 +678,9 @@ so launchers consume the same operation boundary they report.
 `NativeOperationExecutor` executes those operation arrays through platform
 handlers and reports executed, skipped, and failed outcomes, giving WebView
 loops one reusable path for startup, lifecycle, and bridge-drain work.
+Capability-approved `window.*` bridge dispatches also lower their plugin
+response into a `window-control` executable operation, so native loops can apply
+window actions without parsing JavaScript response callbacks.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation policy instead of the
 generic skipped-operation fallback.

@@ -95,6 +95,7 @@ pub struct NativeBridgeCompletion {
 } derive(Eq, @debug.Debug)
 pub fn NativeBridgeCompletion::dispatch(Self) -> NativeBridgeDispatch
 pub fn NativeBridgeCompletion::evaluation_script(Self) -> String
+pub fn NativeBridgeCompletion::operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeBridgeCompletion::task(Self) -> NativeBridgeDispatchTask
 pub fn NativeBridgeCompletion::to_json(Self) -> String
 
@@ -107,6 +108,8 @@ pub struct NativeBridgeDispatch {
 } derive(Eq, @debug.Debug)
 pub fn NativeBridgeDispatch::evaluation_script(Self) -> String
 pub fn NativeBridgeDispatch::message(Self) -> String
+pub fn NativeBridgeDispatch::native_window_control(Self) -> NativeWindowControl?
+pub fn NativeBridgeDispatch::operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeBridgeDispatch::response_hook(Self) -> String
 pub fn NativeBridgeDispatch::response_json(Self) -> String
 pub fn NativeBridgeDispatch::to_json(Self) -> String
@@ -256,6 +259,7 @@ pub fn NativeBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
 pub fn NativeBridgeLoopResult::has_immediate_script(Self) -> Bool
 pub fn NativeBridgeLoopResult::immediate_script(Self) -> String
 pub fn NativeBridgeLoopResult::new(immediate_script? : String, completions? : Array[NativeBridgeCompletion]) -> Self
+pub fn NativeBridgeLoopResult::operations(Self, window_label~ : String) -> Array[NativeExecutableOperation]
 pub fn NativeBridgeLoopResult::to_json(Self) -> String
 
 pub struct NativeBridgeMessage {
@@ -322,6 +326,7 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
   NativeExecutableNavigate(NativeNavigation)
+  NativeExecutableWindowControl(NativeWindowControl)
 } derive(Eq, @debug.Debug)
 pub fn NativeExecutableOperation::bridge_drain(Self) -> NativeBridgeDrain?
 pub fn NativeExecutableOperation::drain_bridge(NativeBridgeDrain) -> Self
@@ -335,6 +340,8 @@ pub fn NativeExecutableOperation::run_effect(String) -> Self
 pub fn NativeExecutableOperation::service(Self) -> @lepusa.LocalService?
 pub fn NativeExecutableOperation::start_service(@lepusa.LocalService) -> Self
 pub fn NativeExecutableOperation::to_json(Self) -> String
+pub fn NativeExecutableOperation::window_control(NativeWindowControl) -> Self
+pub fn NativeExecutableOperation::window_control_operation(Self) -> NativeWindowControl?
 pub fn NativeExecutableOperation::window_label(Self) -> String?
 
 pub struct NativeExecutionPlan {
@@ -493,13 +500,14 @@ pub struct NativeOperationExecutor {
   drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
   navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
+  control_window : (NativeWindowControl) -> NativeOperationExecutionStatus
 }
 pub fn NativeOperationExecutor::execute(Self, NativeExecutableOperation) -> NativeOperationExecutionOutcome
 pub fn NativeOperationExecutor::execute_all(Self, Array[NativeExecutableOperation]) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_delivery(Self, NativeBridgeLoopDelivery) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
-pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus) -> Self
+pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus, control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus) -> Self
 
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
@@ -751,6 +759,17 @@ pub fn NativeWebViewPlan::to_json(Self) -> String
 pub fn NativeWebViewPlan::url(Self) -> String
 pub fn NativeWebViewPlan::width(Self) -> Int
 pub fn NativeWebViewPlan::with_initialization_script_suffix(Self, String) -> Self
+
+pub struct NativeWindowControl {
+  window_label : String
+  action : String
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn NativeWindowControl::action(Self) -> String
+pub fn NativeWindowControl::new(window_label~ : String, action~ : String, payload? : String) -> Self
+pub fn NativeWindowControl::payload(Self) -> String
+pub fn NativeWindowControl::to_json(Self) -> String
+pub fn NativeWindowControl::window_label(Self) -> String
 
 type ParsedAssetUrl derive(Eq, @debug.Debug)
 

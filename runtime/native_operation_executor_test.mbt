@@ -4,6 +4,7 @@ test "native operation executor runs executable operation batches" {
   let scripts : Array[String] = []
   let drains : Array[String] = []
   let navigations : Array[String] = []
+  let window_controls : Array[String] = []
   let executor = NativeOperationExecutor::new(
     start_service=fn(service) {
       started.push(service.name())
@@ -20,6 +21,10 @@ test "native operation executor runs executable operation batches" {
     run_effect=fn(name) { NativeOperationSkipped("effect delegated: \{name}") },
     navigate_window=fn(navigation) {
       navigations.push(navigation.url())
+      NativeOperationExecuted
+    },
+    control_window=fn(control) {
+      window_controls.push(control.action())
       NativeOperationExecuted
     },
   )
@@ -43,11 +48,18 @@ test "native operation executor runs executable operation batches" {
     NativeExecutableOperation::navigate(
       NativeNavigation::new(window_label="main", url="lepusa://inline/main"),
     ),
+    NativeExecutableOperation::window_control(
+      NativeWindowControl::new(
+        window_label="main",
+        action="setTitle",
+        payload="{\"title\":\"Ready\"}",
+      ),
+    ),
   ]
   let report = executor.execute_all(operations)
   assert_true(report.ok())
-  assert_eq(report.operation_count(), 5)
-  assert_eq(report.executed_count(), 4)
+  assert_eq(report.operation_count(), 6)
+  assert_eq(report.executed_count(), 5)
   assert_eq(report.skipped_count(), 1)
   assert_eq(report.failed_count(), 0)
   assert_true(report.first_failure_message() is None)
@@ -58,14 +70,16 @@ test "native operation executor runs executable operation batches" {
     "bridge_loop_adapter().callbacks(main).drain_window_scripts",
   )
   assert_eq(navigations[0], "lepusa://inline/main")
+  assert_eq(window_controls[0], "setTitle")
   assert_eq(report.outcomes()[3].status().name(), "skipped")
   assert_eq(report.outcomes()[3].status().message(), "effect delegated: boot")
   let json = report.to_json()
-  assert_true(json.contains("\"operationCount\":5"))
-  assert_true(json.contains("\"executedCount\":4"))
+  assert_true(json.contains("\"operationCount\":6"))
+  assert_true(json.contains("\"executedCount\":5"))
   assert_true(json.contains("\"skippedCount\":1"))
   assert_true(json.contains("\"kind\":\"drain-bridge-window\""))
   assert_true(json.contains("\"kind\":\"navigate-window\""))
+  assert_true(json.contains("\"kind\":\"window-control\""))
 }
 
 ///|

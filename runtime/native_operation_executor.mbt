@@ -23,6 +23,7 @@ pub struct NativeOperationExecutor {
   drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
   navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
+  control_window : (NativeWindowControl) -> NativeOperationExecutionStatus
 }
 
 ///|
@@ -52,8 +53,20 @@ pub fn NativeOperationExecutor::new(
   ) {
     NativeOperationSkipped("native window navigation handler is unavailable")
   },
+  control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus = fn(
+    _,
+  ) {
+    NativeOperationSkipped("native window control handler is unavailable")
+  },
 ) -> NativeOperationExecutor {
-  { start_service, evaluate_script, drain_bridge, run_effect, navigate_window }
+  {
+    start_service,
+    evaluate_script,
+    drain_bridge,
+    run_effect,
+    navigate_window,
+    control_window,
+  }
 }
 
 ///|
@@ -67,6 +80,7 @@ pub fn NativeOperationExecutor::execute(
     NativeExecutableDrainBridge(drain) => (self.drain_bridge)(drain)
     NativeExecutableRunEffect(name) => (self.run_effect)(name)
     NativeExecutableNavigate(navigation) => (self.navigate_window)(navigation)
+    NativeExecutableWindowControl(control) => (self.control_window)(control)
   }
   { operation, status }
 }

@@ -1951,6 +1951,76 @@ test "runtime host dispatches bridge json through capability checks" {
 }
 
 ///|
+fn window_control_plan() -> @lepusa.RuntimePlan {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Runtime",
+      source=@lepusa.Source::html("<main>runtime</main>"),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("window").command_sync("setTitle", permission=Window),
+    )
+    .with_capability(
+      @lepusa.Capability::new("window").window("main").permission(Window),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid window control plan")
+  }
+}
+
+///|
+test "bridge dispatch lowers approved window responses to native operations" {
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "window.setTitle",
+    permission=Window,
+    handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "windowLabel": Json::string("main"),
+          "action": Json::string("setTitle"),
+          "operation": Json::object({
+            "windowLabel": Json::string("main"),
+            "action": Json::string("setTitle"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    },
+  )
+  let host = RuntimeHost::new(window_control_plan(), registry~)
+  let message = "{\"id\":\"11\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setTitle\",\"payload\":\"{\\\"title\\\":\\\"Ready\\\"}\"}"
+  match host.prepare_bridge_message(message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      match dispatch.native_window_control() {
+        Some(control) => {
+          assert_eq(control.window_label(), "main")
+          assert_eq(control.action(), "setTitle")
+          assert_eq(control.payload(), "{\"title\":\"Ready\"}")
+        }
+        None => abort("expected native window control operation")
+      }
+      let operations = dispatch.operations()
+      assert_eq(operations.length(), 2)
+      assert_eq(operations[0].kind(), "evaluate-script")
+      assert_eq(operations[1].kind(), "window-control")
+      assert_eq(operations[1].window_label().unwrap(), "main")
+      assert_true(dispatch.to_json().contains("\"nativeWindowControl\":{"))
+      assert_true(dispatch.to_json().contains("\"kind\":\"window-control\""))
+    }
+    Err(_) => abort("unexpected bridge prepare failure")
+  }
+}
+
+///|
 async test "runtime host dispatches async bridge handlers" {
   let registry = @lepusa.CommandRegistry::new().register_async_fn(
     "core.invoke",
