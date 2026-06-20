@@ -385,6 +385,48 @@ test "bundled runtime manifest prepares shared native run plans" {
 }
 
 ///|
+test "bundled native run plans expose executable operation views" {
+  match
+    BundledRuntimeManifest::parse(
+      "/app/lepusa/runtime.json",
+      bundled_native_operation_manifest(),
+    ) {
+    Ok(runtime) =>
+      match
+        runtime.prepare_native_run_plan(target="linux", prepare_webview=fn(
+          webview,
+        ) {
+          runtime.webview_plan(webview, initialization_script="")
+        }) {
+        Ok(plan) => {
+          let scripts = plan.startup_evaluation_scripts()
+          assert_eq(scripts.length(), 1)
+          assert_eq(scripts[0].window_label(), "main")
+          assert_true(scripts[0].script().contains("__lepusaDispatchEvent"))
+          assert_true(scripts[0].script().contains("ready"))
+          let navigations = plan.startup_navigations()
+          assert_eq(navigations.length(), 1)
+          assert_eq(navigations[0].window_label(), "main")
+          assert_eq(navigations[0].url(), "lepusa://rabbita/main/next.html")
+          match plan.native_lifecycle_steps() {
+            Ok(steps) => {
+              assert_eq(steps.length(), 2)
+              assert_eq(steps[1].event().kind(), "window-close-requested")
+              let lifecycle_scripts = steps[1].evaluation_scripts()
+              assert_eq(lifecycle_scripts.length(), 1)
+              assert_true(lifecycle_scripts[0].script().contains("closing"))
+              assert_eq(steps[1].navigations().length(), 0)
+            }
+            Err(problem) => abort(problem)
+          }
+        }
+        Err(_) => abort("unexpected invalid bundled operation run plan")
+      }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime manifest selects lifecycle actions" {
   match
     BundledRuntimeManifest::parse(
@@ -719,5 +761,30 @@ fn sample_bundled_manifest() -> String {
     #|    "registeredRoutes": ["log.write"]
     #|  }
     #|}
+  )
+}
+
+///|
+fn bundled_native_operation_manifest() -> String {
+  sample_bundled_manifest().replace_all(
+    old=(
+      #|    "startupActions": [
+      #|      { "kind": "effect", "name": "boot" }
+      #|    ]
+    ),
+    new=(
+      #|    "startupActions": [
+      #|      {
+      #|        "kind": "emit",
+      #|        "target": { "kind": "window", "label": "main" },
+      #|        "event": { "name": "ready", "payload": "{}" }
+      #|      },
+      #|      {
+      #|        "kind": "navigate",
+      #|        "windowLabel": "main",
+      #|        "url": "lepusa://rabbita/main/next.html"
+      #|      }
+      #|    ]
+    ),
   )
 }

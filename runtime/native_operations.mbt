@@ -11,6 +11,22 @@ pub struct NativeNavigation {
 } derive(Debug, Eq)
 
 ///|
+pub fn NativeEvaluationScript::new(
+  window_label~ : String,
+  script~ : String,
+) -> NativeEvaluationScript {
+  { window_label, script }
+}
+
+///|
+pub fn NativeNavigation::new(
+  window_label~ : String,
+  url~ : String,
+) -> NativeNavigation {
+  { window_label, url }
+}
+
+///|
 pub fn NativeEvaluationScript::window_label(
   self : NativeEvaluationScript,
 ) -> String {
@@ -78,7 +94,12 @@ pub fn NativeOperation::evaluation_script(
 ) -> NativeEvaluationScript? {
   match self {
     NativeDispatchEvent(dispatch) =>
-      Some({ window_label: dispatch.window_label(), script: dispatch.script() })
+      Some(
+        NativeEvaluationScript::new(
+          window_label=dispatch.window_label(),
+          script=dispatch.script(),
+        ),
+      )
     _ => None
   }
 }
@@ -94,7 +115,8 @@ pub fn NativeOperation::effect_name(self : NativeOperation) -> String? {
 ///|
 pub fn NativeOperation::navigation(self : NativeOperation) -> NativeNavigation? {
   match self {
-    NativeNavigateWindow(window_label, url) => Some({ window_label, url })
+    NativeNavigateWindow(window_label, url) =>
+      Some(NativeNavigation::new(window_label~, url~))
     _ => None
   }
 }

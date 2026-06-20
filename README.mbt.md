@@ -487,6 +487,9 @@ loops can consume bundled runtime data without depending on CLI internals.
 for repeated bridge calls. It also owns bundled bridge message preparation,
 sync/async dispatch, target-window response-hook lookup, and response-callback
 scripts, while the manifest helper remains useful for one-shot probes.
+Bundled native run plans expose startup and lifecycle event scripts plus window
+navigations as typed runtime values, so packaged app loops can consume the same
+native-operation boundary as source-project runs.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command

@@ -69,6 +69,7 @@ pub struct NativeEvaluationScript {
   window_label : String
   script : String
 } derive(Eq, @debug.Debug)
+pub fn NativeEvaluationScript::new(window_label~ : String, script~ : String) -> Self
 pub fn NativeEvaluationScript::script(Self) -> String
 pub fn NativeEvaluationScript::to_json(Self) -> String
 pub fn NativeEvaluationScript::window_label(Self) -> String
@@ -88,6 +89,7 @@ pub struct NativeNavigation {
   window_label : String
   url : String
 } derive(Eq, @debug.Debug)
+pub fn NativeNavigation::new(window_label~ : String, url~ : String) -> Self
 pub fn NativeNavigation::to_json(Self) -> String
 pub fn NativeNavigation::url(Self) -> String
 pub fn NativeNavigation::window_label(Self) -> String
