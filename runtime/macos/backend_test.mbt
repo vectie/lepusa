@@ -221,10 +221,10 @@ test "macos backend prepares first webview load url" {
           assert_eq(webview.height(), 720)
           let execution = plan.execution()
           assert_eq(execution.startup_operations().length(), 3)
-          assert_true(
-            execution.startup_operations()[1].contains(
-              "\"kind\":\"run-effect\"",
-            ),
+          assert_eq(execution.startup_operations()[1].kind(), "run-effect")
+          assert_eq(
+            execution.startup_operations()[1].effect_name().unwrap(),
+            "boot",
           )
           let lifecycle_steps = execution.lifecycle_steps()
           assert_eq(lifecycle_steps.length(), 1)
@@ -233,7 +233,11 @@ test "macos backend prepares first webview load url" {
             .event_json()
             .contains("\"kind\":\"app-will-exit\""),
           )
-          assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
+          assert_eq(lifecycle_steps[0].operations()[0].kind(), "run-effect")
+          assert_eq(
+            lifecycle_steps[0].operations()[0].effect_name().unwrap(),
+            "flush",
+          )
           let supervisor = plan.service_supervisor_plan()
           assert_eq(supervisor.backend_name(), "macos")
           assert_eq(supervisor.webview_engine(), "WKWebView")
@@ -374,23 +378,20 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(webview.resizable(), false)
           let execution = plan.execution()
           assert_eq(execution.startup_operations().length(), 3)
-          assert_true(
-            execution.startup_operations()[0].contains(
-              "\"kind\":\"start-service\"",
-            ),
+          assert_eq(execution.startup_operations()[0].kind(), "start-service")
+          assert_eq(
+            execution.startup_operations()[0].service().unwrap().name(),
+            "api",
           )
-          assert_true(
-            execution.startup_operations()[1].contains("\"name\":\"boot\""),
+          assert_eq(execution.startup_operations()[1].kind(), "run-effect")
+          assert_eq(
+            execution.startup_operations()[1].effect_name().unwrap(),
+            "boot",
           )
-          assert_true(
-            execution.startup_operations()[2].contains(
-              "\"kind\":\"evaluate-script\"",
-            ),
-          )
-          assert_true(
-            execution.startup_operations()[2].contains(
-              "\"windowLabel\":\"main\"",
-            ),
+          assert_eq(execution.startup_operations()[2].kind(), "evaluate-script")
+          assert_eq(
+            execution.startup_operations()[2].window_label().unwrap(),
+            "main",
           )
           let lifecycle_steps = execution.lifecycle_steps()
           assert_eq(lifecycle_steps.length(), 1)
@@ -399,7 +400,11 @@ test "macos backend prepares bundled runtime manifest" {
             .event_json()
             .contains("\"kind\":\"app-will-exit\""),
           )
-          assert_true(lifecycle_steps[0].operations()[0].contains("flush"))
+          assert_eq(lifecycle_steps[0].operations()[0].kind(), "run-effect")
+          assert_eq(
+            lifecycle_steps[0].operations()[0].effect_name().unwrap(),
+            "flush",
+          )
           let bridge = plan.bridge()
           let sync_routes = bridge.sync_command_routes()
           assert_eq(sync_routes.length(), 1)

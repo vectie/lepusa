@@ -92,6 +92,26 @@ pub fn NativeExecutableOperation::start_service(@lepusa.LocalService) -> Self
 pub fn NativeExecutableOperation::to_json(Self) -> String
 pub fn NativeExecutableOperation::window_label(Self) -> String?
 
+pub struct NativeExecutionPlan {
+  startup_operations : Array[NativeExecutableOperation]
+  lifecycle_steps : Array[NativeExecutionStep]
+} derive(Eq, @debug.Debug)
+pub fn NativeExecutionPlan::lifecycle_steps(Self) -> Array[NativeExecutionStep]
+pub fn NativeExecutionPlan::new(startup_operations~ : Array[NativeExecutableOperation], lifecycle_steps~ : Array[NativeExecutionStep]) -> Self
+pub fn NativeExecutionPlan::startup_operation_jsons(Self) -> Array[String]
+pub fn NativeExecutionPlan::startup_operations(Self) -> Array[NativeExecutableOperation]
+pub fn NativeExecutionPlan::to_json(Self) -> String
+
+pub struct NativeExecutionStep {
+  event_json : String
+  operations : Array[NativeExecutableOperation]
+} derive(Eq, @debug.Debug)
+pub fn NativeExecutionStep::event_json(Self) -> String
+pub fn NativeExecutionStep::new(event_json~ : String, operations~ : Array[NativeExecutableOperation]) -> Self
+pub fn NativeExecutionStep::operation_jsons(Self) -> Array[String]
+pub fn NativeExecutionStep::operations(Self) -> Array[NativeExecutableOperation]
+pub fn NativeExecutionStep::to_json(Self) -> String
+
 pub struct NativeLaunchPlan {
   backend_name : String
   webview_engine : String
@@ -135,6 +155,7 @@ pub struct NativePreparedRunPlan {
 pub fn NativePreparedRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn NativePreparedRunPlan::bridge_async_routes(Self) -> Array[String]
 pub fn NativePreparedRunPlan::bridge_sync_routes(Self) -> Array[String]
+pub fn NativePreparedRunPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativePreparedRunPlan::first_webview(Self) -> Result[NativeWebViewPlan, String]
 pub fn NativePreparedRunPlan::first_webview_load_url(Self) -> String
 pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
@@ -162,6 +183,7 @@ pub fn NativeRunnerPlan::backend_name(Self) -> String
 pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
 pub fn NativeRunnerPlan::bridge_async_routes(Self) -> Array[String]
 pub fn NativeRunnerPlan::bridge_sync_routes(Self) -> Array[String]
+pub fn NativeRunnerPlan::execution_plan(Self) -> NativeExecutionPlan
 pub fn NativeRunnerPlan::launch_plan(Self) -> NativeLaunchPlan
 pub fn NativeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[NativeRunnerStep, Array[String]]
 pub fn NativeRunnerPlan::lifecycle_steps(Self) -> Array[NativeRunnerStep]

@@ -415,6 +415,27 @@ test "bundled native run plans expose executable operation views" {
             }
             Err(problem) => abort(problem)
           }
+          match plan.native_execution_plan() {
+            Ok(execution) => {
+              assert_eq(execution.startup_operations().length(), 3)
+              assert_eq(
+                execution.startup_operations()[1].kind(),
+                "evaluate-script",
+              )
+              assert_true(
+                execution.startup_operation_jsons()[2].contains(
+                  "\"kind\":\"navigate-window\"",
+                ),
+              )
+              assert_eq(execution.lifecycle_steps().length(), 2)
+              assert_true(
+                execution.lifecycle_steps()[1]
+                .event_json()
+                .contains("\"kind\":\"window-close-requested\""),
+              )
+            }
+            Err(problem) => abort(problem)
+          }
           let scripts = plan.startup_evaluation_scripts()
           assert_eq(scripts.length(), 1)
           assert_eq(scripts[0].window_label(), "main")

@@ -5,18 +5,6 @@ pub(all) enum MacOSRunMode {
 } derive(Debug, Eq)
 
 ///|
-pub struct MacOSExecutionPlan {
-  startup_operations : Array[String]
-  lifecycle_steps : Array[MacOSLifecycleStepPlan]
-} derive(Debug, Eq)
-
-///|
-pub struct MacOSLifecycleStepPlan {
-  event_json : String
-  operations : Array[String]
-} derive(Debug, Eq)
-
-///|
 pub struct MacOSBridgePlan {
   sync_command_routes : Array[String]
   async_command_routes : Array[String]
@@ -25,7 +13,7 @@ pub struct MacOSBridgePlan {
 ///|
 pub struct MacOSRunPlan {
   webviews : Array[@runtime.NativeWebViewPlan]
-  execution : MacOSExecutionPlan
+  execution : @runtime.NativeExecutionPlan
   bridge : MacOSBridgePlan
   service_supervisor : @runtime.NativeServiceSupervisorPlan
 } derive(Debug, Eq)
@@ -130,62 +118,19 @@ fn macos_run_plan_from_prepared(
 ) -> MacOSRunPlan {
   {
     webviews: plan.webviews(),
-    execution: macos_execution_plan_from_runner(plan.runner()),
+    execution: plan.execution_plan(),
     bridge: macos_bridge_plan_from_runtime(runtime),
     service_supervisor: plan.service_supervisor_plan(),
   }
 }
 
 ///|
-fn macos_execution_plan_from_runner(
-  runner : @runtime.NativeRunnerPlan,
-) -> MacOSExecutionPlan {
-  {
-    startup_operations: runner
-    .startup_executable_operations()
-    .map(fn(operation) { operation.to_json() }),
-    lifecycle_steps: runner
-    .lifecycle_steps()
-    .map(fn(step) {
-      {
-        event_json: step.event().to_json(),
-        operations: step
-        .executable_operations()
-        .map(fn(operation) { operation.to_json() }),
-      }
-    }),
-  }
-}
-
-///|
 fn macos_execution_plan_from_bundled(
   plan : @bundled.BundledNativeRunPlan,
-) -> Result[MacOSExecutionPlan, Array[String]] {
-  let problems : Array[String] = []
-  let startup_operations = match plan.startup_executable_operations() {
-    Ok(operations) => operations.map(fn(operation) { operation.to_json() })
-    Err(problem) => {
-      problems.push(problem)
-      []
-    }
-  }
-  let lifecycle_steps : Array[MacOSLifecycleStepPlan] = []
-  match plan.native_lifecycle_steps() {
-    Ok(steps) =>
-      for step in steps {
-        lifecycle_steps.push({
-          event_json: macos_bundled_lifecycle_event_json(step.event()),
-          operations: step
-          .executable_operations()
-          .map(fn(operation) { operation.to_json() }),
-        })
-      }
-    Err(problem) => problems.push(problem)
-  }
-  if problems.is_empty() {
-    Ok({ startup_operations, lifecycle_steps })
-  } else {
-    Err(problems)
+) -> Result[@runtime.NativeExecutionPlan, Array[String]] {
+  match plan.native_execution_plan() {
+    Ok(execution) => Ok(execution)
+    Err(problem) => Err([problem])
   }
 }
 
@@ -206,22 +151,6 @@ fn macos_bridge_plan_from_bundled(
   {
     sync_command_routes: manifest.registered_sync_routes(),
     async_command_routes: manifest.registered_async_routes(),
-  }
-}
-
-///|
-fn macos_bundled_lifecycle_event_json(
-  event : @bundled.BundledLifecycleEvent,
-) -> String {
-  if event.label() == "" {
-    "{\"kind\":\{event.kind().json_string()}}"
-  } else {
-    [
-      "{",
-      "\"kind\":\{event.kind().json_string()},",
-      "\"label\":\{event.label().json_string()}",
-      "}",
-    ].join("")
   }
 }
 
@@ -291,7 +220,9 @@ pub fn MacOSRunPlan::first_webview(
 }
 
 ///|
-pub fn MacOSRunPlan::execution(self : MacOSRunPlan) -> MacOSExecutionPlan {
+pub fn MacOSRunPlan::execution(
+  self : MacOSRunPlan,
+) -> @runtime.NativeExecutionPlan {
   self.execution
 }
 
@@ -331,34 +262,6 @@ pub fn MacOSBridgePlan::async_command_routes(
 ///|
 pub fn MacOSBridgePlan::requires_async_dispatch(self : MacOSBridgePlan) -> Bool {
   !self.async_command_routes.is_empty()
-}
-
-///|
-pub fn MacOSExecutionPlan::startup_operations(
-  self : MacOSExecutionPlan,
-) -> Array[String] {
-  self.startup_operations.copy()
-}
-
-///|
-pub fn MacOSExecutionPlan::lifecycle_steps(
-  self : MacOSExecutionPlan,
-) -> Array[MacOSLifecycleStepPlan] {
-  self.lifecycle_steps.copy()
-}
-
-///|
-pub fn MacOSLifecycleStepPlan::event_json(
-  self : MacOSLifecycleStepPlan,
-) -> String {
-  self.event_json
-}
-
-///|
-pub fn MacOSLifecycleStepPlan::operations(
-  self : MacOSLifecycleStepPlan,
-) -> Array[String] {
-  self.operations.copy()
 }
 
 ///|
@@ -436,16 +339,4 @@ fn macos_initialization_script(
 ///|
 fn macos_native_hook_script(hook : String) -> String {
   @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS")
-}
-
-///|
-fn String::json_string(self : String) -> String {
-  "\"" +
-  self
-  .replace_all(old="\\", new="\\\\")
-  .replace_all(old="\"", new="\\\"")
-  .replace_all(old="\n", new="\\n")
-  .replace_all(old="\r", new="\\r")
-  .replace_all(old="\t", new="\\t") +
-  "\""
 }

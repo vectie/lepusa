@@ -216,6 +216,15 @@ test "native runner exposes executable operation views" {
             executable[3].navigation().unwrap().url(),
             "lepusa://inline/main/index.html",
           )
+          let execution = runner.execution_plan()
+          assert_eq(execution.startup_operations().length(), 4)
+          assert_eq(execution.startup_operations()[0].kind(), "start-service")
+          assert_eq(execution.startup_operations()[3].kind(), "navigate-window")
+          assert_true(
+            execution.startup_operation_jsons()[1].contains(
+              "\"kind\":\"evaluate-script\"",
+            ),
+          )
           let scripts = runner.startup_evaluation_scripts()
           assert_eq(scripts.length(), 1)
           assert_eq(scripts[0].window_label(), "main")
@@ -229,6 +238,17 @@ test "native runner exposes executable operation views" {
               let lifecycle_executable = step.executable_operations()
               assert_eq(lifecycle_executable.length(), 1)
               assert_eq(lifecycle_executable[0].kind(), "evaluate-script")
+              let lifecycle_steps = execution.lifecycle_steps()
+              assert_eq(lifecycle_steps.length(), 1)
+              assert_true(
+                lifecycle_steps[0]
+                .event_json()
+                .contains("\"kind\":\"window-close-requested\""),
+              )
+              assert_eq(
+                lifecycle_steps[0].operations()[0].kind(),
+                "evaluate-script",
+              )
               let lifecycle_scripts = step.evaluation_scripts()
               assert_eq(lifecycle_scripts.length(), 1)
               assert_true(lifecycle_scripts[0].script().contains("closing"))

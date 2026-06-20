@@ -120,6 +120,13 @@ pub fn WindowsRunResult::status(self : WindowsRunResult) -> @lepusa.RunStatus {
 }
 
 ///|
+pub fn WindowsRunResult::execution_plan(
+  self : WindowsRunResult,
+) -> @runtime.NativeExecutionPlan {
+  self.plan.execution_plan()
+}
+
+///|
 pub fn WindowsBundledRunResult::plan(
   self : WindowsBundledRunResult,
 ) -> @bundled.BundledNativeRunPlan {
@@ -131,6 +138,13 @@ pub fn WindowsBundledRunResult::status(
   self : WindowsBundledRunResult,
 ) -> @lepusa.RunStatus {
   self.status
+}
+
+///|
+pub fn WindowsBundledRunResult::execution_plan(
+  self : WindowsBundledRunResult,
+) -> Result[@runtime.NativeExecutionPlan, String] {
+  self.plan.native_execution_plan()
 }
 
 ///|

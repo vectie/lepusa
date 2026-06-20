@@ -120,6 +120,13 @@ pub fn LinuxRunResult::status(self : LinuxRunResult) -> @lepusa.RunStatus {
 }
 
 ///|
+pub fn LinuxRunResult::execution_plan(
+  self : LinuxRunResult,
+) -> @runtime.NativeExecutionPlan {
+  self.plan.execution_plan()
+}
+
+///|
 pub fn LinuxBundledRunResult::plan(
   self : LinuxBundledRunResult,
 ) -> @bundled.BundledNativeRunPlan {
@@ -131,6 +138,13 @@ pub fn LinuxBundledRunResult::status(
   self : LinuxBundledRunResult,
 ) -> @lepusa.RunStatus {
   self.status
+}
+
+///|
+pub fn LinuxBundledRunResult::execution_plan(
+  self : LinuxBundledRunResult,
+) -> Result[@runtime.NativeExecutionPlan, String] {
+  self.plan.native_execution_plan()
 }
 
 ///|

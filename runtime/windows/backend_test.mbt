@@ -118,6 +118,13 @@ test "windows backend prepares run plan and reports unsupported launch" {
             Err(problem) => abort(problem)
           }
           assert_eq(result.plan().startup_operation_count(), 1)
+          let execution = result.execution_plan()
+          assert_eq(execution.startup_operations().length(), 1)
+          assert_eq(execution.startup_operations()[0].kind(), "run-effect")
+          assert_eq(
+            execution.startup_operations()[0].effect_name().unwrap(),
+            "boot",
+          )
           assert_eq(
             result.plan().service_supervisor_plan().backend_name(),
             "windows",
@@ -245,6 +252,21 @@ test "windows backend prepares bundled runtime contract" {
             result.report().load_url(),
             "lepusa://rabbita/main/index.html",
           )
+          match result.execution_plan() {
+            Ok(execution) => {
+              assert_eq(execution.startup_operations().length(), 2)
+              assert_eq(
+                execution.startup_operations()[0].kind(),
+                "start-service",
+              )
+              assert_eq(
+                execution.startup_operations()[0].service().unwrap().name(),
+                "api",
+              )
+              assert_eq(execution.startup_operations()[1].kind(), "run-effect")
+            }
+            Err(problem) => abort(problem)
+          }
         }
         Err(_) => abort("unexpected invalid Windows bundled dry run")
       }

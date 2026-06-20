@@ -14,6 +14,31 @@ pub fn BundledBootstrapPlan::startup_executable_operations(
 }
 
 ///|
+pub fn BundledBootstrapPlan::native_execution_plan(
+  self : BundledBootstrapPlan,
+) -> Result[@runtime.NativeExecutionPlan, String] {
+  match self.startup_executable_operations() {
+    Err(problem) => Err(problem)
+    Ok(startup_operations) =>
+      match self.native_lifecycle_steps() {
+        Err(problem) => Err(problem)
+        Ok(steps) =>
+          Ok(
+            @runtime.NativeExecutionPlan::new(
+              startup_operations~,
+              lifecycle_steps=steps.map(fn(step) {
+                @runtime.NativeExecutionStep::new(
+                  event_json=bundled_native_lifecycle_event_json(step.event()),
+                  operations=step.executable_operations(),
+                )
+              }),
+            ),
+          )
+      }
+  }
+}
+
+///|
 pub fn BundledBootstrapPlan::startup_evaluation_scripts(
   self : BundledBootstrapPlan,
 ) -> Array[@runtime.NativeEvaluationScript] {
@@ -39,6 +64,13 @@ pub fn BundledNativeRunPlan::startup_executable_operations(
   self : BundledNativeRunPlan,
 ) -> Result[Array[@runtime.NativeExecutableOperation], String] {
   self.bootstrap().startup_executable_operations()
+}
+
+///|
+pub fn BundledNativeRunPlan::native_execution_plan(
+  self : BundledNativeRunPlan,
+) -> Result[@runtime.NativeExecutionPlan, String] {
+  self.bootstrap().native_execution_plan()
 }
 
 ///|
@@ -102,6 +134,20 @@ fn bundled_native_lifecycle_steps(
     }
   }
   Ok(steps)
+}
+
+///|
+fn bundled_native_lifecycle_event_json(event : BundledLifecycleEvent) -> String {
+  if event.label() == "" {
+    "{\"kind\":\{event.kind().json_string()}}"
+  } else {
+    [
+      "{",
+      "\"kind\":\{event.kind().json_string()},",
+      "\"label\":\{event.label().json_string()}",
+      "}",
+    ].join("")
+  }
 }
 
 ///|

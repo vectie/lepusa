@@ -19,6 +19,7 @@ pub struct BundledBootstrapPlan {
   lifecycle_operations : Array[String]
 } derive(@debug.Debug)
 pub fn BundledBootstrapPlan::lifecycle_operations(Self) -> Array[String]
+pub fn BundledBootstrapPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledBootstrapPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
 pub fn BundledBootstrapPlan::run_plan(Self) -> BundledRunPlan
 pub fn BundledBootstrapPlan::startup_evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
@@ -95,6 +96,7 @@ pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebVie
 pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
 pub fn BundledNativeRunPlan::first_webview_url(Self) -> String
 pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
+pub fn BundledNativeRunPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledNativeRunPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
 pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn BundledNativeRunPlan::service_supervisor_plan(Self) -> @runtime.NativeServiceSupervisorPlan
