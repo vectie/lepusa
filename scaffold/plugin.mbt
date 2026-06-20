@@ -92,8 +92,11 @@ fn normalize_plugin_name(name : String) -> String {
 fn plugin_skeleton_files(plugin_name : String) -> Array[ScaffoldFile] {
   [
     ScaffoldFile::new(path="moon.mod", content=plugin_moon_mod(plugin_name)),
-    ScaffoldFile::new(path="moon.pkg", content=plugin_moon_pkg()),
-    ScaffoldFile::new(path="plugin.mbt", content=plugin_main_mbt(plugin_name)),
+    ScaffoldFile::new(path="src/moon.pkg", content=plugin_moon_pkg()),
+    ScaffoldFile::new(
+      path="src/plugin.mbt",
+      content=plugin_main_mbt(plugin_name),
+    ),
     ScaffoldFile::new(path="README.mbt.md", content=plugin_readme(plugin_name)),
   ]
 }
@@ -163,6 +166,10 @@ fn plugin_readme(plugin_name : String) -> String {
   (
     #|
     #|A standalone Lepusa plugin scaffolded by `lepusa plugin new`.
+    #|
+    #|```bash
+    #|moon test src --target native
+    #|```
     #|
     #|The plugin exposes:
     #|

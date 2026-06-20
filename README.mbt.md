@@ -171,10 +171,10 @@ Rabbita-style HTML document served from the runtime manifest as a virtual file.
 
 `@lepusa/scaffold.write_app` writes a standalone MoonBit project skeleton with
 a versioned `vectie/lepusa` module dependency. It is intentionally small:
-`moon.mod`, `moon.pkg`, `lepusa.json`, `main.mbt`, and `README.mbt.md`. The
-generated `main.mbt` starts with the same `cell_with_dispatch` model/update/view
-shape as the public authoring API. `lepusa init` is the CLI wrapper over that
-package.
+`moon.mod`, `lepusa.json`, `src/moon.pkg`, `src/main.mbt`, and
+`README.mbt.md`. The generated `src/main.mbt` starts with the same
+`cell_with_dispatch` model/update/view shape as the public authoring API.
+`lepusa init` is the CLI wrapper over that package.
 
 `lepusa.json` is the app-neutral project boundary. It describes metadata,
 runtime backend, windows, plugin command routes, command permission

@@ -82,9 +82,9 @@ fn normalize_project_root(path : String) -> String {
 fn app_skeleton_files() -> Array[ScaffoldFile] {
   [
     ScaffoldFile::new(path="moon.mod", content=project_moon_mod()),
-    ScaffoldFile::new(path="moon.pkg", content=project_moon_pkg()),
     ScaffoldFile::new(path="lepusa.json", content=project_lepusa_json()),
-    ScaffoldFile::new(path="main.mbt", content=project_main_mbt()),
+    ScaffoldFile::new(path="src/moon.pkg", content=project_moon_pkg()),
+    ScaffoldFile::new(path="src/main.mbt", content=project_main_mbt()),
     ScaffoldFile::new(path="README.mbt.md", content=project_readme()),
   ]
 }
@@ -272,7 +272,7 @@ fn project_readme() -> String {
     #|plugins and register their MoonBit-native handlers.
     #|
     #|```bash
-    #|moon run . --target native
+    #|moon run src --target native
     #|```
     #|
   )
