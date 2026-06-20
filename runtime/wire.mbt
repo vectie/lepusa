@@ -40,6 +40,17 @@ pub fn decode_invoke_request_json(
 }
 
 ///|
+pub fn encode_invoke_request_json(request : @lepusa.InvokeRequest) -> String {
+  Json::object({
+    "id": Json::string(request.id()),
+    "window_label": Json::string(request.window_label()),
+    "plugin": Json::string(request.plugin()),
+    "command": Json::string(request.command()),
+    "payload": Json::string(request.payload()),
+  }).stringify()
+}
+
+///|
 pub fn encode_invoke_response_json(response : @lepusa.InvokeResponse) -> String {
   match response.error_message() {
     Some(message) =>

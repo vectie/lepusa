@@ -9,6 +9,8 @@ import {
 // Values
 pub fn decode_invoke_request_json(String) -> Result[@lepusa.InvokeRequest, String]
 
+pub fn encode_invoke_request_json(@lepusa.InvokeRequest) -> String
+
 pub fn encode_invoke_response_json(@lepusa.InvokeResponse) -> String
 
 pub fn native_asset_load_url_from_json(String) -> Result[String, String]

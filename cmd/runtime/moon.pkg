@@ -3,6 +3,7 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/x/sys",
   "vectie/lepusa",
+  "vectie/lepusa/runtime" @runtime_core,
   "vectie/lepusa/runtime/bundled",
   "vectie/lepusa/runtime/linux",
   "vectie/lepusa/runtime/macos",

@@ -23,6 +23,7 @@ async fn render_runtime_cli_async(args : Array[String]) -> RuntimeCliResult {
     Some("launch-session") => render_runtime_launch_session(args)
     Some("asset") => render_runtime_asset(args)
     Some("lifecycle") => render_runtime_lifecycle(args)
+    Some("bridge-task") => render_runtime_bridge_task(args)
     Some("invoke") => render_runtime_invoke(args)
     Some("--manifest") | None => render_runtime_manifest(args)
     Some(command) =>
@@ -369,9 +370,77 @@ fn runtime_help() -> String {
     #|  lepusa-runtime launch-session --manifest <lepusa/runtime.json>
     #|  lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
     #|  lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
+    #|  lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|  lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
     #|
   )
+}
+
+///|
+async fn render_runtime_bridge_task(args : Array[String]) -> RuntimeCliResult {
+  let values = runtime_positional_args(args)
+  let window_label = values.get(1).unwrap_or("")
+  let route = values.get(2).unwrap_or("")
+  let payload = values.get(3).unwrap_or("")
+  if window_label == "" {
+    return runtime_fail("bridge-task window is required\n")
+  }
+  if route == "" || route == "--manifest" {
+    return runtime_fail("bridge-task route is required\n")
+  }
+  match runtime_parse_invoke_route(route, command_name="bridge-task") {
+    Err(problem) => return runtime_fail(problem + "\n")
+    Ok(_) => ()
+  }
+  match runtime_manifest_path(args) {
+    Ok(path) => {
+      let text = @fs.read_file(path).text() catch {
+        error =>
+          return runtime_fail(
+            "Lepusa runtime bridge-task\n[fail] could not read manifest \{path}: \{error}\n",
+          )
+      }
+      render_runtime_bridge_task_text(path, text, window_label, route, payload)
+    }
+    Err(problem) => runtime_fail(problem + "\n")
+  }
+}
+
+///|
+fn render_runtime_bridge_task_text(
+  path : String,
+  text : String,
+  window_label : String,
+  route : String,
+  payload : String,
+) -> RuntimeCliResult {
+  match runtime_parse_invoke_route(route, command_name="bridge-task") {
+    Err(problem) => runtime_fail(problem + "\n")
+    Ok((plugin, command)) =>
+      match @bundled.BundledRuntimeManifest::parse(path, text) {
+        Err(problem) =>
+          runtime_fail("Lepusa runtime bridge-task\n[fail] \{problem}\n")
+        Ok(manifest) => {
+          let request = @lepusa.InvokeRequest::new(
+            id="cli",
+            window_label~,
+            plugin~,
+            command~,
+            payload~,
+          )
+          let message = @runtime_core.encode_invoke_request_json(request)
+          match manifest.bridge_dispatch_task(message) {
+            Ok(task) => runtime_ok(task.to_json() + "\n")
+            Err(problems) =>
+              runtime_fail(
+                render_runtime_run_problems(
+                  "Lepusa runtime bridge-task", problems,
+                ),
+              )
+          }
+        }
+      }
+  }
 }
 
 ///|
@@ -385,6 +454,10 @@ async fn render_runtime_invoke(args : Array[String]) -> RuntimeCliResult {
   }
   if route == "" || route == "--manifest" {
     return runtime_fail("invoke route is required\n")
+  }
+  match runtime_parse_invoke_route(route, command_name="invoke") {
+    Err(problem) => return runtime_fail(problem + "\n")
+    Ok(_) => ()
   }
   match runtime_manifest_path(args) {
     Ok(path) => {
@@ -424,12 +497,45 @@ async fn render_runtime_invoke_text(
   route : String,
   payload : String,
 ) -> RuntimeCliResult {
-  match @bundled.BundledRuntimeManifest::parse(path, text) {
-    Ok(manifest) =>
-      runtime_ok(
-        manifest.dispatch_json_async(id="cli", window_label~, route~, payload~) +
-        "\n",
-      )
-    Err(problem) => runtime_fail("Lepusa runtime invoke\n[fail] \{problem}\n")
+  match runtime_parse_invoke_route(route, command_name="invoke") {
+    Err(problem) => runtime_fail(problem + "\n")
+    Ok(_) =>
+      match @bundled.BundledRuntimeManifest::parse(path, text) {
+        Ok(manifest) =>
+          runtime_ok(
+            manifest.dispatch_json_async(
+              id="cli",
+              window_label~,
+              route~,
+              payload~,
+            ) +
+            "\n",
+          )
+        Err(problem) =>
+          runtime_fail("Lepusa runtime invoke\n[fail] \{problem}\n")
+      }
   }
+}
+
+///|
+fn runtime_parse_invoke_route(
+  route : String,
+  command_name~ : String,
+) -> Result[(String, String), String] {
+  let mut plugin = ""
+  let mut command = ""
+  let mut found_separator = false
+  for char in route {
+    if !found_separator && char == '.' {
+      found_separator = true
+    } else if found_separator {
+      command = command + char.to_string()
+    } else {
+      plugin = plugin + char.to_string()
+    }
+  }
+  if plugin == "" || command == "" {
+    return Err("\{command_name} route must be <plugin.command>")
+  }
+  Ok((plugin, command))
 }

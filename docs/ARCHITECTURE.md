@@ -627,6 +627,9 @@ lepusa-runtime asset <url> --manifest <lepusa/runtime.json>
 lepusa-runtime lifecycle <event> [window] --manifest <lepusa/runtime.json>
   -> selects bundled local services and actions for native lifecycle dispatch
 
+lepusa-runtime bridge-task <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
+  -> emits bundled bridge task scheduling metadata for native message handlers
+
 lepusa-runtime invoke <window> <plugin.command> [payload] --manifest <lepusa/runtime.json>
   -> dispatches a packaged bridge command through registered official native handlers
 

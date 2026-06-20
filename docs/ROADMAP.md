@@ -115,6 +115,7 @@
   - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
+  - `lepusa-runtime bridge-task`: reports packaged bridge task scheduling metadata.
   - `lepusa-runtime invoke`: dispatches packaged bridge calls through registered official native handlers.
 - Consume standalone `lepusa.json` project manifests for planning, manifest
   generation, and bundle materialization.
