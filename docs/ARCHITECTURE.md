@@ -935,6 +935,9 @@ lepusa run macos --launch
 lepusa verify [macos|windows|linux]
   -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, bundle contracts, release-readiness, and package-readiness; strict mode fails release/package readiness issues
 
+lepusa publish-plan [macos|windows|linux]
+  -> derives the third-party project ship path from lepusa.json: strict verify, bundle-write, distribution manifest path, release handoff, package handoff, and final package script command, with JSON output for CI
+
 lepusa bridge-task <window> <plugin.command> [payload]
   -> emits source-project bridge task message plus scheduling metadata for native handlers
 

@@ -240,6 +240,7 @@
   - `lepusa bundle-release-plan [--json]`: lowers packaged distribution metadata into ordered release steps for dependency validation, resource staging, signing, and artifact collection.
   - `lepusa bundle-package-plan [--json]`: lowers packaged distribution metadata into target-aware packaging commands, expected outputs, and blockers.
   - `lepusa bundle-package-write [--json]`: writes `package-plan.json`, `package-checklist.md`, and a target package script for release automation.
+  - `lepusa publish-plan [--json]`: derives the target-aware third-party project ship path from `lepusa.json`, including strict verification, bundle materialization, distribution manifest path, release/package handoff roots, final package script command, and release/package readiness.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.
@@ -383,4 +384,6 @@ desktop core is reliable.
 - Verify each example can run in dev mode and bundle mode: CLI smoke tests
   cover dev, verify, and bundle mode for the foundation examples.
 - Document how third-party MoonBit projects create, bundle, sign, and publish
-  desktop apps.
+  desktop apps: `lepusa publish-plan` now turns a standalone `lepusa.json` into
+  the target-specific strict verify, bundle, release, package, and package-script
+  command sequence, with JSON for CI and release tooling.

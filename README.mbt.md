@@ -195,6 +195,8 @@ moon run cmd/main --target native -- bundle-release-plan _build/lepusa-bundle/le
 moon run cmd/main --target native -- bundle-release-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-release
 moon run cmd/main --target native -- bundle-package-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json --json
 moon run cmd/main --target native -- bundle-package-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-package
+moon run cmd/main --target native -- publish-plan linux --project examples/static/lepusa.json
+moon run cmd/main --target native -- publish-plan linux --project examples/static/lepusa.json --json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -540,6 +542,12 @@ outside strict mode.
 `lepusa doctor` prints the same target launch-gate blocker as a warning so
 local diagnostics stay non-fatal while still showing whether the selected
 target can launch natively today.
+`lepusa publish-plan [macos|windows|linux] --project lepusa.json` is the
+third-party project release spine. It derives the strict verification command,
+bundle output root, distribution manifest path, release handoff root, package
+handoff root, package script command, and release/package readiness from the
+same `lepusa.json` and bundle distribution contract. Passing `--json` emits the
+same command list and readiness fields for CI jobs or external release tools.
 
 `@lepusa/runtime` turns a `RuntimePlan` into a `RuntimeSession`: resolved
 window frames, protocol mappings, virtual files, generated bridge source, and
@@ -839,6 +847,9 @@ contract into target-aware package commands, expected outputs, and blockers.
 `package.ps1`); Windows also receives an `installer.nsi` script for the setup
 artifact. `lepusa bundle-package-plan` and `lepusa bundle-package-write` are the
 CLI wrappers.
+For app authors, `lepusa publish-plan [target] --project lepusa.json` combines
+the strict verifier, `bundle-write`, release handoff, package handoff, and final
+package script invocation into one target-aware checklist without writing files.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

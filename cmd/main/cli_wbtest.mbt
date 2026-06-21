@@ -43,6 +43,9 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bundle-package-plan"))
   assert_true(result.output.contains("lepusa bundle-package-write"))
   assert_true(
+    result.output.contains("lepusa publish-plan [macos|windows|linux] [--json]"),
+  )
+  assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
     ),
@@ -50,6 +53,80 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa deploy-dry-run <update.json>"))
   assert_true(result.output.contains("--project <lepusa.json>"))
   assert_true(result.output.contains("--workspace <lepusa-root>"))
+}
+
+///|
+async test "publish plan renders third-party release commands" {
+  let result = render_cli_async([
+    "publish-plan", "linux", "--project", "examples/static/lepusa.json",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa publish plan"))
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("project: examples/static/lepusa.json"))
+  assert_true(
+    result.output.contains("identifier: dev.vectie.lepusa.examples.static"),
+  )
+  assert_true(result.output.contains("bundle-root: _build/lepusa-bundle-linux"))
+  assert_true(
+    result.output.contains(
+      "distribution: _build/lepusa-bundle-linux/lepusa-static-example/lepusa/distribution.json",
+    ),
+  )
+  assert_true(result.output.contains("release-ready: true"))
+  assert_true(
+    result.output.contains(
+      "release-readiness: required release steps have data",
+    ),
+  )
+  assert_true(result.output.contains("package-ready: true"))
+  assert_true(result.output.contains("package-kind: linux-portable-archive"))
+  assert_true(
+    result.output.contains(
+      "command: verify lepusa verify linux --strict --project examples/static/lepusa.json",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "command: bundle-write lepusa bundle-write linux _build/lepusa-bundle-linux --project examples/static/lepusa.json",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "command: release-write lepusa bundle-release-write _build/lepusa-bundle-linux/lepusa-static-example/lepusa/distribution.json _build/lepusa-release-linux",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "command: package-write lepusa bundle-package-write _build/lepusa-bundle-linux/lepusa-static-example/lepusa/distribution.json _build/lepusa-package-linux",
+    ),
+  )
+  assert_true(
+    result.output.contains(
+      "command: package-script BUNDLE_ROOT=_build/lepusa-bundle-linux sh _build/lepusa-package-linux/package.sh",
+    ),
+  )
+  let json_result = render_cli_async([
+    "publish-plan", "linux", "--project", "examples/static/lepusa.json", "--json",
+  ])
+  assert_eq(json_result.exit_code, 0)
+  assert_true(json_result.output.contains("\"target\":\"linux\""))
+  assert_true(
+    json_result.output.contains("\"project\":\"examples/static/lepusa.json\""),
+  )
+  assert_true(json_result.output.contains("\"releaseReady\":true"))
+  assert_true(json_result.output.contains("\"packageReady\":true"))
+  assert_true(
+    json_result.output.contains("\"packageKind\":\"linux-portable-archive\""),
+  )
+  assert_true(json_result.output.contains("\"commands\":["))
+  assert_true(json_result.output.contains("\"name\":\"verify\""))
+  assert_true(json_result.output.contains("\"name\":\"package-script\""))
+  assert_true(
+    json_result.output.contains(
+      "\"command\":\"lepusa verify linux --strict --project examples/static/lepusa.json\"",
+    ),
+  )
 }
 
 ///|
