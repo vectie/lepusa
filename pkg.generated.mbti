@@ -225,6 +225,61 @@ pub fn Cell::html(Self) -> Html
 pub fn Cell::id(Self) -> String
 pub fn Cell::new(id? : String, html? : Html) -> Self
 
+pub struct Channel {
+  resource : ResourceEntry
+  mut next_sequence : Int
+  messages : Array[ChannelMessage]
+  closed : Bool
+  cancelled : Bool
+} derive(Eq, @debug.Debug)
+pub fn Channel::cancelled(Self) -> Bool
+pub fn Channel::closed(Self) -> Bool
+pub fn Channel::id(Self) -> String
+pub fn Channel::pending_count(Self) -> Int
+pub fn Channel::resource(Self) -> ResourceEntry
+pub fn Channel::to_json(Self) -> String
+
+pub struct ChannelMessage {
+  channel_id : String
+  sequence : Int
+  kind : ChannelMessageKind
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn ChannelMessage::channel_id(Self) -> String
+pub fn ChannelMessage::kind(Self) -> ChannelMessageKind
+pub fn ChannelMessage::payload(Self) -> String
+pub fn ChannelMessage::sequence(Self) -> Int
+pub fn ChannelMessage::to_json(Self) -> String
+
+pub(all) enum ChannelMessageKind {
+  ChannelData
+  ChannelError
+  ChannelEnd
+  ChannelCancel
+} derive(Eq, @debug.Debug)
+pub fn ChannelMessageKind::name(Self) -> String
+
+pub struct ChannelTable {
+  resources : ResourceTable
+  channels : Map[String, Channel]
+  order : Array[String]
+}
+pub fn ChannelTable::cancel(Self, String) -> Result[ChannelMessage, String]
+pub fn ChannelTable::channels(Self) -> Array[Channel]
+pub fn ChannelTable::close(Self, String) -> Result[ResourceEntry, String]
+pub fn ChannelTable::close_all(Self) -> Array[ResourceEntry]
+pub fn ChannelTable::contains(Self, String) -> Bool
+pub fn ChannelTable::count(Self) -> Int
+pub fn ChannelTable::drain(Self, String) -> Result[Array[ChannelMessage], String]
+pub fn ChannelTable::end(Self, String) -> Result[ChannelMessage, String]
+pub fn ChannelTable::fail(Self, String, String) -> Result[ChannelMessage, String]
+pub fn ChannelTable::get(Self, String) -> Channel?
+pub fn ChannelTable::ids(Self) -> Array[String]
+pub fn ChannelTable::new() -> Self
+pub fn ChannelTable::open(Self, owner? : String, name? : String, metadata? : String) -> Result[Channel, Array[String]]
+pub fn ChannelTable::send(Self, String, String) -> Result[ChannelMessage, String]
+pub fn ChannelTable::to_json(Self) -> String
+
 pub(all) enum Cmd {
   None
   Batch(Array[Cmd])
