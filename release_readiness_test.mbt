@@ -17,6 +17,7 @@ fn release_readiness_plan() -> @lepusa.RuntimePlan {
 fn release_bundle(
   target : @lepusa.BundleTarget,
   signing? : @lepusa.SigningConfig = @lepusa.SigningConfig::new(),
+  runtime_dependency_sources? : Array[@lepusa.BundleRuntimeDependencySource] = [],
 ) -> @lepusa.BundlePlan {
   match
     @lepusa.BundleConfig::new(
@@ -26,6 +27,7 @@ fn release_bundle(
         version="0.1.0",
       ),
       target~,
+      runtime_dependency_sources~,
       signing~,
     ).plan(release_readiness_plan(), registered_routes=["log.write"]) {
     Ok(plan) => plan
@@ -44,10 +46,15 @@ test "release readiness reports unsigned bundle gaps" {
       assert_eq(report.runtime_webviews(), 1)
       assert_eq(report.command_routes(), 1)
       assert_eq(report.registered_routes(), 1)
+      assert_eq(report.native_launch_session_ready(), true)
+      assert_eq(report.native_launch_session_issue(), "")
       assert_eq(report.signing_configured(), false)
       assert_eq(report.ready(), false)
       assert_true(report.issues().contains("signing is not configured"))
       assert_true(report.to_json().contains("\"ready\":false"))
+      assert_true(
+        report.to_json().contains("\"nativeLaunchSessionReady\":true"),
+      )
     }
     Err(problems) => abort(problems.join(", "))
   }
@@ -62,9 +69,47 @@ test "release readiness accepts configured linux signing" {
       assert_eq(report.signing_configured(), true)
       assert_eq(report.signing_prerequisites(), 3)
       assert_eq(report.signing_steps(), 1)
+      assert_eq(report.native_launch_session_ready(), true)
+      assert_eq(report.native_launch_session_issue(), "")
       assert_eq(report.ready(), true)
       assert_eq(report.issues().length(), 0)
       assert_true(report.to_json().contains("\"signingSteps\":1"))
+    }
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
+test "release readiness reports windows native launch contract" {
+  match release_bundle(Windows).release_readiness() {
+    Ok(report) => {
+      assert_eq(report.target().name(), "windows")
+      assert_eq(report.runtime_dependencies(), 2)
+      assert_eq(report.required_runtime_dependencies(), 2)
+      assert_eq(report.native_launch_session_ready(), true)
+      assert_eq(report.native_launch_session_issue(), "")
+      assert_eq(report.ready(), false)
+      assert_true(report.issues().contains("signing is not configured"))
+    }
+    Err(problems) => abort(problems.join(", "))
+  }
+  let signing = @lepusa.SigningConfig::new(identity="release-cert")
+  let runtime_dependency_sources = [
+    @lepusa.BundleRuntimeDependencySource::new(
+      name="WebView2Loader.dll",
+      source_path="vendor/WebView2Loader.dll",
+    ),
+  ]
+  match
+    release_bundle(Windows, signing~, runtime_dependency_sources~).release_readiness() {
+    Ok(report) => {
+      assert_eq(report.signing_configured(), true)
+      assert_eq(report.native_launch_session_ready(), true)
+      assert_eq(report.ready(), true)
+      assert_eq(report.issues().length(), 0)
+      assert_true(
+        report.to_json().contains("\"nativeLaunchSessionIssue\":\"\""),
+      )
     }
     Err(problems) => abort(problems.join(", "))
   }

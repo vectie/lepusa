@@ -258,10 +258,10 @@ operation a platform loop schedules when a queued bridge window should be
 drained through its packet callback before evaluating the returned scripts.
 Deferred handoff packets carry this operation as soon as async work is queued,
 so native loops do not need to infer the wakeup from an empty callback body.
-The macOS, Linux, and Windows C loops parse that operation and retain the
-window/callback drain request in their native context; they still advertise
-async bridge drain as unavailable until the event loop can invoke the retained
-MoonBit async callback safely.
+The macOS, Linux, and Windows C loops parse that operation, retain the
+window/callback drain request in their native context, issue a `lepusa-drain-v1`
+packet over the handoff callback, and execute the returned `lepusa-ops-v3`
+operations from the platform event loop.
 Platform packages supply handlers for bridge drains, WebView script evaluation,
 navigation, effects, and service work, then get back a typed report of executed,
 skipped, and failed operations.

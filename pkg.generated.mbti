@@ -1221,12 +1221,16 @@ pub struct ReleaseReadinessReport {
   runtime_webviews : Int
   command_routes : Int
   registered_routes : Int
+  native_launch_session_ready : Bool
+  native_launch_session_issue : String
   issues : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn ReleaseReadinessReport::artifacts(Self) -> Int
 pub fn ReleaseReadinessReport::command_routes(Self) -> Int
 pub fn ReleaseReadinessReport::files(Self) -> Int
 pub fn ReleaseReadinessReport::issues(Self) -> Array[String]
+pub fn ReleaseReadinessReport::native_launch_session_issue(Self) -> String
+pub fn ReleaseReadinessReport::native_launch_session_ready(Self) -> Bool
 pub fn ReleaseReadinessReport::ready(Self) -> Bool
 pub fn ReleaseReadinessReport::registered_routes(Self) -> Int
 pub fn ReleaseReadinessReport::required_runtime_dependencies(Self) -> Int

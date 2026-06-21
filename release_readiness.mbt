@@ -12,6 +12,8 @@ pub struct ReleaseReadinessReport {
   runtime_webviews : Int
   command_routes : Int
   registered_routes : Int
+  native_launch_session_ready : Bool
+  native_launch_session_issue : String
   issues : Array[String]
 } derive(Debug, Eq)
 
@@ -25,7 +27,15 @@ pub fn BundlePlan::release_readiness(
       match self.runtime_manifest() {
         Err(problems) => Err(problems)
         Ok(manifest) => {
-          let issues = release_readiness_issues(self)
+          let native_launch_session_ready = !manifest.webviews().is_empty()
+          let native_launch_session_issue = if native_launch_session_ready {
+            ""
+          } else {
+            "native launch session requires at least one webview"
+          }
+          let issues = release_readiness_issues(
+            self, native_launch_session_ready, native_launch_session_issue,
+          )
           Ok({
             target: self.target(),
             files: files.length(),
@@ -42,6 +52,8 @@ pub fn BundlePlan::release_readiness(
             runtime_webviews: manifest.webviews().length(),
             command_routes: manifest.command_routes().length(),
             registered_routes: manifest.registered_routes().length(),
+            native_launch_session_ready,
+            native_launch_session_issue,
             issues,
           })
         }
@@ -50,8 +62,15 @@ pub fn BundlePlan::release_readiness(
 }
 
 ///|
-fn release_readiness_issues(plan : BundlePlan) -> Array[String] {
+fn release_readiness_issues(
+  plan : BundlePlan,
+  native_launch_session_ready : Bool,
+  native_launch_session_issue : String,
+) -> Array[String] {
   let issues : Array[String] = []
+  if !native_launch_session_ready {
+    issues.push(native_launch_session_issue)
+  }
   if !plan.signing().configured() {
     issues.push("signing is not configured")
   }
@@ -153,6 +172,20 @@ pub fn ReleaseReadinessReport::registered_routes(
 }
 
 ///|
+pub fn ReleaseReadinessReport::native_launch_session_ready(
+  self : ReleaseReadinessReport,
+) -> Bool {
+  self.native_launch_session_ready
+}
+
+///|
+pub fn ReleaseReadinessReport::native_launch_session_issue(
+  self : ReleaseReadinessReport,
+) -> String {
+  self.native_launch_session_issue
+}
+
+///|
 pub fn ReleaseReadinessReport::issues(
   self : ReleaseReadinessReport,
 ) -> Array[String] {
@@ -181,6 +214,8 @@ pub fn ReleaseReadinessReport::to_json(self : ReleaseReadinessReport) -> String 
     "\"runtimeWebviews\":\{self.runtime_webviews},",
     "\"commandRoutes\":\{self.command_routes},",
     "\"registeredRoutes\":\{self.registered_routes},",
+    "\"nativeLaunchSessionReady\":\{self.native_launch_session_ready.json_bool()},",
+    "\"nativeLaunchSessionIssue\":\{self.native_launch_session_issue.json_string()},",
     "\"issues\":[\{self.issues.map(fn(issue) { issue.json_string() }).join(",")}]",
     "}",
   ].join("")
