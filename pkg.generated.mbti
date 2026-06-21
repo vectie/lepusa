@@ -876,6 +876,7 @@ pub struct RuntimeLaunchManifest {
   capabilities : Array[RuntimeCapabilityGrant]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
+  command_manifest : CommandManifest
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -883,6 +884,7 @@ pub fn RuntimeLaunchManifest::asset_protocol(Self) -> String
 pub fn RuntimeLaunchManifest::backend(Self) -> String
 pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
 pub fn RuntimeLaunchManifest::capabilities(Self) -> Array[RuntimeCapabilityGrant]
+pub fn RuntimeLaunchManifest::command_manifest(Self) -> CommandManifest
 pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::file_system_scopes(Self) -> Array[FileSystemScope]

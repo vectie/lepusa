@@ -12,6 +12,7 @@ pub struct RuntimeLaunchManifest {
   capabilities : Array[RuntimeCapabilityGrant]
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
+  command_manifest : CommandManifest
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -147,6 +148,7 @@ pub fn RuntimePlan::launch_manifest(
       .map(RuntimeCapabilityGrant::from_capability),
       startup_actions,
       lifecycle_hooks,
+      command_manifest: self.command_manifest(),
       command_routes: self.command_routes(),
       registered_routes: registered_routes.copy(),
     })
@@ -288,6 +290,13 @@ pub fn RuntimeLaunchManifest::command_routes(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::command_manifest(
+  self : RuntimeLaunchManifest,
+) -> CommandManifest {
+  self.command_manifest
+}
+
+///|
 pub fn RuntimeLaunchManifest::registered_routes(
   self : RuntimeLaunchManifest,
 ) -> Array[String] {
@@ -310,6 +319,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"capabilities\":[\{self.capabilities.map(runtime_capability_grant_json).join(",")}],",
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
+    "\"commandManifest\":\{self.command_manifest.to_json()},",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",

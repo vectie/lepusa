@@ -107,3 +107,48 @@ test "command manifest can be constructed directly" {
     Err(_) => abort("unexpected invalid runtime plan")
   }
 }
+
+///|
+test "launch manifest exposes typed command manifest" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .window(label="settings", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("core")
+      .command_sync("read", permission=FileSystemRead)
+      .command_stream("events", permission=Notification),
+    )
+    .with_capability(
+      @lepusa.Capability::new("main-read")
+      .window("main")
+      .permission(FileSystemRead),
+    )
+    .with_capability(@lepusa.Capability::new("events").permission(Notification))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match plan.launch_manifest(registered_routes=["core.read"]) {
+        Ok(manifest) => {
+          assert_eq(manifest.command_manifest().entries().length(), 2)
+          match manifest.command_manifest().entry("core.events") {
+            Some(entry) => {
+              assert_true(entry.mode() is Stream)
+              assert_eq(entry.allowed_windows().length(), 2)
+            }
+            None => abort("missing stream command")
+          }
+          let json = manifest.to_json()
+          assert_true(json.contains("\"commandManifest\""))
+          assert_true(json.contains("\"route\":\"core.events\""))
+          assert_true(json.contains("\"mode\":\"stream\""))
+          assert_true(
+            json.contains("\"allowedWindows\":[\"main\",\"settings\"]"),
+          )
+          assert_eq(manifest.command_routes().length(), 2)
+          assert_eq(manifest.registered_routes()[0], "core.read")
+        }
+        Err(_) => abort("unexpected invalid launch manifest")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
