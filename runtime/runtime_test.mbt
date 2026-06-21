@@ -2475,6 +2475,18 @@ async test "native runtime owns bridge message transport" {
           let queued_completions = queue.drain(runtime)
           assert_eq(queued_completions.length(), 1)
           assert_true(queue.is_empty())
+          let result_queue = NativeBridgeWorkQueue::new()
+          ignore(result_queue.enqueue_handoff(handoff))
+          let drain_result = result_queue.drain_result(runtime)
+          assert_eq(drain_result.pending_before(), 1)
+          assert_eq(drain_result.pending_after(), 0)
+          assert_eq(drain_result.completed_count(), 1)
+          assert_eq(drain_result.completed_routes()[0], "core.invoke")
+          assert_eq(drain_result.evaluation_scripts().length(), 1)
+          assert_eq(drain_result.operations().length(), 1)
+          assert_false(drain_result.is_empty())
+          assert_true(drain_result.to_json().contains("\"completedCount\":1"))
+          assert_true(drain_result.to_json().contains("\"core.invoke\""))
           let adapter = runtime.bridge_loop_adapter()
           assert_true(adapter.is_empty())
           let adapter_script = @utf8.decode(
@@ -2563,6 +2575,9 @@ async test "native runtime owns bridge message transport" {
             1,
           )
           assert_true(adapter.is_empty())
+          let empty_drain = adapter.drain_result()
+          assert_eq(empty_drain.pending_before(), 0)
+          assert_true(empty_drain.is_empty())
           assert_true(adapter.queue().is_empty())
           assert_eq(adapter.runtime().backend().name(), "test")
           assert_true(

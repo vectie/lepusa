@@ -35,6 +35,15 @@ pub struct BundledBridgeCompletion {
 } derive(Debug, Eq)
 
 ///|
+pub struct BundledBridgeDrainResult {
+  pending_before : Int
+  pending_after : Int
+  completions : Array[BundledBridgeCompletion]
+  evaluation_scripts : Array[String]
+  operations : Array[@runtime.NativeExecutableOperation]
+} derive(Debug, Eq)
+
+///|
 pub struct BundledBridgeWorkQueue {
   tasks : Array[BundledBridgeDispatchTask]
 } derive(Debug, Eq)
@@ -552,6 +561,102 @@ pub fn BundledBridgeCompletion::to_json(
 }
 
 ///|
+pub fn BundledBridgeDrainResult::new(
+  pending_before~ : Int,
+  pending_after~ : Int,
+  completions~ : Array[BundledBridgeCompletion],
+) -> BundledBridgeDrainResult {
+  let evaluation_scripts : Array[String] = []
+  let operations : Array[@runtime.NativeExecutableOperation] = []
+  for completion in completions {
+    evaluation_scripts.push(completion.evaluation_script())
+    for operation in completion.operations() {
+      operations.push(operation)
+    }
+  }
+  {
+    pending_before,
+    pending_after,
+    completions: completions.copy(),
+    evaluation_scripts,
+    operations,
+  }
+}
+
+///|
+pub fn BundledBridgeDrainResult::pending_before(
+  self : BundledBridgeDrainResult,
+) -> Int {
+  self.pending_before
+}
+
+///|
+pub fn BundledBridgeDrainResult::pending_after(
+  self : BundledBridgeDrainResult,
+) -> Int {
+  self.pending_after
+}
+
+///|
+pub fn BundledBridgeDrainResult::completed_count(
+  self : BundledBridgeDrainResult,
+) -> Int {
+  self.completions.length()
+}
+
+///|
+pub fn BundledBridgeDrainResult::completions(
+  self : BundledBridgeDrainResult,
+) -> Array[BundledBridgeCompletion] {
+  self.completions.copy()
+}
+
+///|
+pub fn BundledBridgeDrainResult::completed_routes(
+  self : BundledBridgeDrainResult,
+) -> Array[String] {
+  self.completions.map(fn(completion) { completion.task().route() })
+}
+
+///|
+pub fn BundledBridgeDrainResult::evaluation_scripts(
+  self : BundledBridgeDrainResult,
+) -> Array[String] {
+  self.evaluation_scripts.copy()
+}
+
+///|
+pub fn BundledBridgeDrainResult::operations(
+  self : BundledBridgeDrainResult,
+) -> Array[@runtime.NativeExecutableOperation] {
+  self.operations.copy()
+}
+
+///|
+pub fn BundledBridgeDrainResult::is_empty(
+  self : BundledBridgeDrainResult,
+) -> Bool {
+  self.completed_count() == 0
+}
+
+///|
+pub fn BundledBridgeDrainResult::to_json(
+  self : BundledBridgeDrainResult,
+) -> String {
+  [
+    "{",
+    "\"pendingBefore\":\{self.pending_before},",
+    "\"pendingAfter\":\{self.pending_after},",
+    "\"completedCount\":\{self.completed_count()},",
+    "\"completedRoutes\":[\{self.completed_routes().map(fn(route) { route.json_string() }).join(",")}],",
+    "\"evaluationScripts\":[\{self.evaluation_scripts.map(fn(script) { script.json_string() }).join(",")}],",
+    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}],",
+    "\"completions\":[\{self.completions.map(fn(completion) { completion.to_json() }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn BundledBridgeWorkQueue::new() -> BundledBridgeWorkQueue {
   { tasks: [] }
 }
@@ -640,6 +745,20 @@ pub async fn BundledBridgeWorkQueue::drain(
     completions.push(task.complete(runtime))
   }
   completions
+}
+
+///|
+pub async fn BundledBridgeWorkQueue::drain_result(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+) -> BundledBridgeDrainResult {
+  let pending_before = self.pending_count()
+  let completions = self.drain(runtime)
+  BundledBridgeDrainResult::new(
+    pending_before~,
+    pending_after=self.pending_count(),
+    completions~,
+  )
 }
 
 ///|
@@ -780,6 +899,13 @@ pub async fn BundledBridgeLoopAdapter::drain(
   self : BundledBridgeLoopAdapter,
 ) -> Array[BundledBridgeCompletion] {
   self.queue.drain(self.runtime)
+}
+
+///|
+pub async fn BundledBridgeLoopAdapter::drain_result(
+  self : BundledBridgeLoopAdapter,
+) -> BundledBridgeDrainResult {
+  self.queue.drain_result(self.runtime)
 }
 
 ///|

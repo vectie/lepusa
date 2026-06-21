@@ -41,6 +41,15 @@ pub struct NativeBridgeCompletion {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeBridgeDrainResult {
+  pending_before : Int
+  pending_after : Int
+  completions : Array[NativeBridgeCompletion]
+  evaluation_scripts : Array[String]
+  operations : Array[NativeExecutableOperation]
+} derive(Debug, Eq)
+
+///|
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
 } derive(Debug, Eq)
@@ -662,6 +671,102 @@ pub fn NativeBridgeCompletion::to_json(self : NativeBridgeCompletion) -> String 
 }
 
 ///|
+pub fn NativeBridgeDrainResult::new(
+  pending_before~ : Int,
+  pending_after~ : Int,
+  completions~ : Array[NativeBridgeCompletion],
+) -> NativeBridgeDrainResult {
+  let evaluation_scripts : Array[String] = []
+  let operations : Array[NativeExecutableOperation] = []
+  for completion in completions {
+    evaluation_scripts.push(completion.evaluation_script())
+    for operation in completion.operations() {
+      operations.push(operation)
+    }
+  }
+  {
+    pending_before,
+    pending_after,
+    completions: completions.copy(),
+    evaluation_scripts,
+    operations,
+  }
+}
+
+///|
+pub fn NativeBridgeDrainResult::pending_before(
+  self : NativeBridgeDrainResult,
+) -> Int {
+  self.pending_before
+}
+
+///|
+pub fn NativeBridgeDrainResult::pending_after(
+  self : NativeBridgeDrainResult,
+) -> Int {
+  self.pending_after
+}
+
+///|
+pub fn NativeBridgeDrainResult::completed_count(
+  self : NativeBridgeDrainResult,
+) -> Int {
+  self.completions.length()
+}
+
+///|
+pub fn NativeBridgeDrainResult::completions(
+  self : NativeBridgeDrainResult,
+) -> Array[NativeBridgeCompletion] {
+  self.completions.copy()
+}
+
+///|
+pub fn NativeBridgeDrainResult::completed_routes(
+  self : NativeBridgeDrainResult,
+) -> Array[String] {
+  self.completions.map(fn(completion) { completion.task().route() })
+}
+
+///|
+pub fn NativeBridgeDrainResult::evaluation_scripts(
+  self : NativeBridgeDrainResult,
+) -> Array[String] {
+  self.evaluation_scripts.copy()
+}
+
+///|
+pub fn NativeBridgeDrainResult::operations(
+  self : NativeBridgeDrainResult,
+) -> Array[NativeExecutableOperation] {
+  self.operations.copy()
+}
+
+///|
+pub fn NativeBridgeDrainResult::is_empty(
+  self : NativeBridgeDrainResult,
+) -> Bool {
+  self.completed_count() == 0
+}
+
+///|
+pub fn NativeBridgeDrainResult::to_json(
+  self : NativeBridgeDrainResult,
+) -> String {
+  [
+    "{",
+    "\"pendingBefore\":\{self.pending_before},",
+    "\"pendingAfter\":\{self.pending_after},",
+    "\"completedCount\":\{self.completed_count()},",
+    "\"completedRoutes\":[\{self.completed_routes().map(fn(route) { route.json_string() }).join(",")}],",
+    "\"evaluationScripts\":[\{self.evaluation_scripts.map(fn(script) { script.json_string() }).join(",")}],",
+    "\"operations\":[\{self.operations.map(fn(operation) { operation.to_json() }).join(",")}],",
+    "\"completions\":[\{self.completions.map(fn(completion) { completion.to_json() }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn NativeBridgeWorkQueue::new() -> NativeBridgeWorkQueue {
   { tasks: [] }
 }
@@ -750,6 +855,20 @@ pub async fn NativeBridgeWorkQueue::drain(
     completions.push(task.complete(runtime))
   }
   completions
+}
+
+///|
+pub async fn NativeBridgeWorkQueue::drain_result(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+) -> NativeBridgeDrainResult {
+  let pending_before = self.pending_count()
+  let completions = self.drain(runtime)
+  NativeBridgeDrainResult::new(
+    pending_before~,
+    pending_after=self.pending_count(),
+    completions~,
+  )
 }
 
 ///|
@@ -883,6 +1002,13 @@ pub async fn NativeBridgeLoopAdapter::drain(
   self : NativeBridgeLoopAdapter,
 ) -> Array[NativeBridgeCompletion] {
   self.queue.drain(self.runtime)
+}
+
+///|
+pub async fn NativeBridgeLoopAdapter::drain_result(
+  self : NativeBridgeLoopAdapter,
+) -> NativeBridgeDrainResult {
+  self.queue.drain_result(self.runtime)
 }
 
 ///|

@@ -150,6 +150,24 @@ pub fn NativeBridgeDrain::new(window_label~ : String, callback~ : String) -> Sel
 pub fn NativeBridgeDrain::to_json(Self) -> String
 pub fn NativeBridgeDrain::window_label(Self) -> String
 
+pub struct NativeBridgeDrainResult {
+  pending_before : Int
+  pending_after : Int
+  completions : Array[NativeBridgeCompletion]
+  evaluation_scripts : Array[String]
+  operations : Array[NativeExecutableOperation]
+} derive(Eq, @debug.Debug)
+pub fn NativeBridgeDrainResult::completed_count(Self) -> Int
+pub fn NativeBridgeDrainResult::completed_routes(Self) -> Array[String]
+pub fn NativeBridgeDrainResult::completions(Self) -> Array[NativeBridgeCompletion]
+pub fn NativeBridgeDrainResult::evaluation_scripts(Self) -> Array[String]
+pub fn NativeBridgeDrainResult::is_empty(Self) -> Bool
+pub fn NativeBridgeDrainResult::new(pending_before~ : Int, pending_after~ : Int, completions~ : Array[NativeBridgeCompletion]) -> Self
+pub fn NativeBridgeDrainResult::operations(Self) -> Array[NativeExecutableOperation]
+pub fn NativeBridgeDrainResult::pending_after(Self) -> Int
+pub fn NativeBridgeDrainResult::pending_before(Self) -> Int
+pub fn NativeBridgeDrainResult::to_json(Self) -> String
+
 pub(all) enum NativeBridgeDrainStrategy {
   NativeBridgeDrainUnavailable
   NativeBridgeDrainEventLoop
@@ -175,6 +193,7 @@ pub struct NativeBridgeLoopAdapter {
 }
 pub fn NativeBridgeLoopAdapter::callbacks(Self, window_label~ : String) -> NativeBridgeLoopCallbacks
 pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
+pub async fn NativeBridgeLoopAdapter::drain_result(Self) -> NativeBridgeDrainResult
 pub async fn NativeBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> NativeBridgeLoopDelivery
 pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
@@ -316,6 +335,7 @@ pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
 } derive(Eq, @debug.Debug)
 pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
+pub async fn NativeBridgeWorkQueue::drain_result(Self, NativeRuntime) -> NativeBridgeDrainResult
 pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::handoff_callback(Self, NativeRuntime) -> (Bytes) -> Bytes
