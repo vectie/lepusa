@@ -1173,6 +1173,37 @@ pub fn RuntimeConfig::headless() -> Self
 pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String) -> Self
 pub fn RuntimeConfig::validate(Self) -> Array[String]
 
+pub struct RuntimeInvokeAuthorization {
+  kind : RuntimeInvokeAuthorizationKind
+  route : String
+  window_label : String
+  origin : String
+  permission : Permission?
+  registered : Bool
+  capability : String
+  reason : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeInvokeAuthorization::allowed(Self) -> Bool
+pub fn RuntimeInvokeAuthorization::capability(Self) -> String
+pub fn RuntimeInvokeAuthorization::kind(Self) -> RuntimeInvokeAuthorizationKind
+pub fn RuntimeInvokeAuthorization::origin(Self) -> String
+pub fn RuntimeInvokeAuthorization::permission(Self) -> Permission?
+pub fn RuntimeInvokeAuthorization::reason(Self) -> String
+pub fn RuntimeInvokeAuthorization::registered(Self) -> Bool
+pub fn RuntimeInvokeAuthorization::route(Self) -> String
+pub fn RuntimeInvokeAuthorization::to_json(Self) -> String
+pub fn RuntimeInvokeAuthorization::to_response(Self, String) -> InvokeResponse
+pub fn RuntimeInvokeAuthorization::window_label(Self) -> String
+
+pub(all) enum RuntimeInvokeAuthorizationKind {
+  RuntimeInvokeAuthorized
+  RuntimeInvokeInvalidRequest
+  RuntimeInvokeUnknownCommand
+  RuntimeInvokeUnregisteredCommand
+  RuntimeInvokePermissionDenied
+} derive(Eq, @debug.Debug)
+pub fn RuntimeInvokeAuthorizationKind::name(Self) -> String
+
 pub struct RuntimeLaunchAsset {
   url : String
   mime_type : String
@@ -1251,6 +1282,7 @@ pub fn RuntimePlan::app_metadata(Self) -> AppMetadata?
 pub fn RuntimePlan::asset_protocol(Self) -> String
 pub fn RuntimePlan::audit(Self) -> RuntimeAudit
 pub fn RuntimePlan::audit_with_registered_routes(Self, Array[String]) -> RuntimeAudit
+pub fn RuntimePlan::authorize_invoke(Self, InvokeRequest, registered_routes? : Array[String], check_registered? : Bool) -> RuntimeInvokeAuthorization
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]

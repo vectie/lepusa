@@ -137,9 +137,17 @@ pub fn RuntimeHost::dispatch(
       request_problems[0],
     )
   }
-  let route = request.route()
-  match self.plan.command_permission(route) {
-    None => @lepusa.InvokeResponse::unknown_command(request.id(), route)
+  let authorization = self.plan.authorize_invoke(
+    request,
+    registered_routes=self.registry.routes(),
+    check_registered=true,
+  )
+  if !authorization.allowed() {
+    return authorization.to_response(request.id())
+  }
+  match authorization.permission() {
+    None =>
+      @lepusa.InvokeResponse::unknown_command(request.id(), request.route())
     Some(permission) =>
       self.registry.dispatch_with_permission(
         request,
@@ -161,9 +169,17 @@ pub async fn RuntimeHost::dispatch_async(
       request_problems[0],
     )
   }
-  let route = request.route()
-  match self.plan.command_permission(route) {
-    None => @lepusa.InvokeResponse::unknown_command(request.id(), route)
+  let authorization = self.plan.authorize_invoke(
+    request,
+    registered_routes=self.registry.routes(),
+    check_registered=true,
+  )
+  if !authorization.allowed() {
+    return authorization.to_response(request.id())
+  }
+  match authorization.permission() {
+    None =>
+      @lepusa.InvokeResponse::unknown_command(request.id(), request.route())
     Some(permission) =>
       self.registry.dispatch_with_permission_async(
         request,

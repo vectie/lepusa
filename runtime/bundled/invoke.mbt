@@ -94,11 +94,9 @@ fn BundledRuntime::dispatch(
 ) -> Result[@lepusa.InvokeResponse, @lepusa.InvokeResponse] {
   match parse_invoke_route(route) {
     Ok((plugin, command)) => {
-      if !self.registered_routes().contains(route) {
-        return Err(@lepusa.InvokeResponse::unknown_command(id, route))
-      }
-      if !self.window_allows_route(window_label~, route~, origin~) {
-        return Err(@lepusa.InvokeResponse::permission_denied(id, route))
+      match self.authorize_route(id~, window_label~, route~, origin~) {
+        Some(response) => return Err(response)
+        None => ()
       }
       let request = @lepusa.InvokeRequest::new(
         id~,
@@ -134,11 +132,9 @@ async fn BundledRuntime::dispatch_async(
 ) -> Result[@lepusa.InvokeResponse, @lepusa.InvokeResponse] {
   match parse_invoke_route(route) {
     Ok((plugin, command)) => {
-      if !self.registered_routes().contains(route) {
-        return Err(@lepusa.InvokeResponse::unknown_command(id, route))
-      }
-      if !self.window_allows_route(window_label~, route~, origin~) {
-        return Err(@lepusa.InvokeResponse::permission_denied(id, route))
+      match self.authorize_route(id~, window_label~, route~, origin~) {
+        Some(response) => return Err(response)
+        None => ()
       }
       let request = @lepusa.InvokeRequest::new(
         id~,
@@ -160,6 +156,23 @@ async fn BundledRuntime::dispatch_async(
       )
     }
     Err(problem) => Err(@lepusa.InvokeResponse::invalid_request(id, problem))
+  }
+}
+
+///|
+fn BundledRuntime::authorize_route(
+  self : BundledRuntime,
+  id~ : String,
+  window_label~ : String,
+  route~ : String,
+  origin~ : String,
+) -> @lepusa.InvokeResponse? {
+  if !self.registered_routes().contains(route) {
+    Some(@lepusa.InvokeResponse::unknown_command(id, route))
+  } else if !self.window_allows_route(window_label~, route~, origin~) {
+    Some(@lepusa.InvokeResponse::permission_denied(id, route))
+  } else {
+    None
   }
 }
 

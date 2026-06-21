@@ -1409,6 +1409,25 @@ test "runtime host dispatches through plan capabilities" {
 }
 
 ///|
+test "runtime host rejects declared commands without registered handlers" {
+  let host = RuntimeHost::new(test_plan())
+  let response = host.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="missing-handler",
+      window_label="main",
+      plugin="core",
+      command="invoke",
+    ),
+  )
+  assert_eq(response.id(), "missing-handler")
+  assert_true(response.error_kind() is Some(UnknownCommand))
+  assert_eq(
+    response.error_message().unwrap_or(""),
+    "unknown command: core.invoke",
+  )
+}
+
+///|
 test "runtime host dispatch uses plan command permissions" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
