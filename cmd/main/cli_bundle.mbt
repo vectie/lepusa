@@ -45,6 +45,28 @@ async fn render_bundle_release_plan_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bundle_release_write_async(args : Array[String]) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-release-write") {
+    Ok(manifest) => {
+      let values = positional_args(args)
+      let out_dir = values.get(1).unwrap_or("_build/lepusa-release")
+      let plan = manifest.release_plan()
+      match @bundle.write_release_plan(plan, out_dir) {
+        Ok(result) =>
+          if has_flag(args, "--json") {
+            ok(result.to_json() + "\n")
+          } else {
+            ok(render_bundle_release_write_summary(result))
+          }
+        Err(problems) =>
+          fail(render_problems("Lepusa bundle release write", problems))
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
 async fn read_bundle_distribution_manifest(
   args : Array[String],
   command : String,
@@ -171,6 +193,22 @@ async fn render_bundle_write(args : Array[String]) -> CliResult {
     }
     Err(problem) => fail(problem + "\n")
   }
+}
+
+///|
+fn render_bundle_release_write_summary(
+  result : @bundle.BundleReleaseWriteResult,
+) -> String {
+  let plan = result.plan()
+  "Lepusa bundle release write\n" +
+  "root: \{result.root()}\n" +
+  "ready: \{result.ready().to_string()}\n" +
+  "readiness: \{plan.readiness_message()}\n" +
+  "required-steps: \{plan.required_step_count()}\n" +
+  "optional-steps: \{plan.optional_step_count()}\n" +
+  "files: \{result.files().length()}\n" +
+  "plan: \{result.plan_path()}\n" +
+  "checklist: \{result.checklist_path()}\n"
 }
 
 ///|

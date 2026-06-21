@@ -192,6 +192,7 @@ moon run cmd/main --target native -- bundle-plan macos --json
 moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --project _build/lepusa-app/lepusa.json
 moon run cmd/main --target native -- bundle-inspect _build/lepusa-bundle/lepusa-app/lepusa/distribution.json
 moon run cmd/main --target native -- bundle-release-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json --json
+moon run cmd/main --target native -- bundle-release-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-release
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -825,6 +826,10 @@ manifest JSON. The release plan also reports required and optional step/item
 counts plus a `ready` flag and `missingRequiredSteps`, giving CI a compact
 pre-installer release gate before platform-specific signing or installer
 commands run.
+`@lepusa/bundle.write_release_plan` writes that gate as
+`release-plan.json` plus a human-readable `release-checklist.md`, and
+`lepusa bundle-release-write <lepusa/distribution.json> [out-dir]` is the CLI
+wrapper for release jobs and future package generators.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

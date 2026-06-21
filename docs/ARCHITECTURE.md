@@ -760,6 +760,10 @@ signing execution, and artifact collection explicit before platform-specific
 package generators are added. Each step carries typed distribution entries with
 kind, name, optional path/sourcePath, required flag, description, and original
 JSON, so package generators do not need ad hoc manifest parsing.
+`@lepusa/bundle.write_release_plan` persists the same contract as
+`release-plan.json` plus `release-checklist.md`; the CLI exposes it as
+`lepusa bundle-release-write`, giving release automation a concrete handoff
+artifact without moving installer policy into the bundle writer.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

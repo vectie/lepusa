@@ -39,6 +39,7 @@ test "help text names available commands" {
   )
   assert_true(result.output.contains("lepusa bundle-inspect"))
   assert_true(result.output.contains("lepusa bundle-release-plan"))
+  assert_true(result.output.contains("lepusa bundle-release-write"))
   assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
@@ -1988,6 +1989,53 @@ async test "bundle write materializes planned files" {
     release_json.output.contains("\"kind\":\"validate-signing-prerequisites\""),
   )
   assert_true(release_json.output.contains("\"kind\":\"collect-artifacts\""))
+  let release_root = "/tmp/lepusa-release-write-\{@async.now().to_int()}"
+  let release_write = render_cli_async([
+    "bundle-release-write", distribution_path, release_root,
+  ])
+  assert_eq(release_write.exit_code, 0)
+  assert_true(release_write.output.contains("Lepusa bundle release write"))
+  assert_true(release_write.output.contains("root: \{release_root}"))
+  assert_true(release_write.output.contains("ready: true"))
+  assert_true(release_write.output.contains("required-steps: 3"))
+  assert_true(release_write.output.contains("optional-steps: 2"))
+  assert_true(release_write.output.contains("files: 2"))
+  let release_plan_path = release_root + "/release-plan.json"
+  let release_checklist_path = release_root + "/release-checklist.md"
+  assert_true(@fs.exists(release_plan_path))
+  assert_true(@fs.exists(release_checklist_path))
+  let release_plan = @fs.read_file(release_plan_path).text()
+  assert_true(release_plan.contains("\"ready\":true"))
+  assert_true(
+    release_plan.contains("\"kind\":\"validate-runtime-dependencies\""),
+  )
+  assert_true(release_plan.contains("\"kind\":\"collect-artifacts\""))
+  let release_checklist = @fs.read_file(release_checklist_path).text()
+  assert_true(release_checklist.contains("# Lepusa Release Checklist"))
+  assert_true(release_checklist.contains("- target: linux"))
+  assert_true(
+    release_checklist.contains(
+      "[ ] Validate runtime dependencies (validate-runtime-dependencies",
+    ),
+  )
+  assert_true(
+    release_checklist.contains("[-] Stage bundle resources (stage-resources"),
+  )
+  assert_true(release_checklist.contains("kind=system-webview-runtime"))
+  assert_true(release_checklist.contains("kind=portable-directory"))
+  let release_json_root = "/tmp/lepusa-release-write-json-\{@async.now().to_int()}"
+  let release_write_json = render_cli_async([
+    "bundle-release-write", distribution_path, release_json_root, "--json",
+  ])
+  assert_eq(release_write_json.exit_code, 0)
+  assert_true(release_write_json.output.contains("\"ready\":true"))
+  assert_true(
+    release_write_json.output.contains(
+      "\"files\":[\"\{release_json_root}/release-plan.json\",\"\{release_json_root}/release-checklist.md\"]",
+    ),
+  )
+  assert_true(release_write_json.output.contains("\"plan\":{"))
+  assert_true(release_write_json.output.contains("\"missingRequiredSteps\":[]"))
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
   let json_result = render_cli_async([
     "bundle-write", "linux", json_root, "--json",
