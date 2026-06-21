@@ -789,9 +789,14 @@ unverified until the backend advertises WebView creation and async bridge
 drain/evaluate support. Passing `--json` emits target, identifier, signing
 prerequisites, and the reusable `BundleWriteResult` payload with written files,
 resources, runtime dependency checks, and verification checks for CI tooling.
-Generated desktop launcher stubs call
-`lepusa-runtime launch --manifest <runtime.json>`. The runtime opens the first
-macOS WKWebView from the packaged `lepusa/runtime.json` today. The Linux
+Generated desktop launcher stubs wrap
+`lepusa-runtime launch --manifest <runtime.json>` instead of replacing the
+launcher process with `exec`. The wrapper traps `INT`, `TERM`, and `HUP`, waits
+on the runtime PID, and forwards termination to the runtime so CLI smoke runs do
+not strand supervised local services. The macOS runtime also installs a window
+delegate that stops tracked local services when the native window closes. The
+runtime opens the first macOS WKWebView from the packaged `lepusa/runtime.json`
+today. The Linux
 package owns WebKitGTK source and packaged-window loops when GTK3 and
 WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
 callback for MoonBit-resolved runtime, virtual, local, and packaged assets.

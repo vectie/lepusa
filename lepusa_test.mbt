@@ -1093,8 +1093,11 @@ test "bundle plans derive executable and package names from metadata" {
                 .contains("RUNTIME=\"$APP_DIR/MacOS/lepusa-runtime\""),
               )
               assert_true(
-                files[1].content().contains("exec \"$RUNTIME\" launch"),
+                files[1].content().contains("trap cleanup INT TERM HUP"),
               )
+              assert_true(files[1].content().contains("\"$RUNTIME\" launch"))
+              assert_true(files[1].content().contains("RUNTIME_PID=$!"))
+              assert_true(files[1].content().contains("wait \"$RUNTIME_PID\""))
               assert_true(
                 files[1].content().contains("Resources/lepusa/runtime.json"),
               )
@@ -1227,8 +1230,11 @@ test "bundle files include platform metadata" {
               assert_true(files[1].executable())
               assert_true(files[1].content().contains("RUNTIME=lepusa-runtime"))
               assert_true(
-                files[1].content().contains("exec \"$RUNTIME\" launch"),
+                files[1].content().contains("trap cleanup INT TERM HUP"),
               )
+              assert_true(files[1].content().contains("\"$RUNTIME\" launch"))
+              assert_true(files[1].content().contains("RUNTIME_PID=$!"))
+              assert_true(files[1].content().contains("wait \"$RUNTIME_PID\""))
               assert_true(files[1].content().contains("lepusa/runtime.json"))
               assert_eq(files[2].path(), "files-app/lepusa/runtime.json")
               assert_true(files[2].content().contains("\"target\":\"linux\""))

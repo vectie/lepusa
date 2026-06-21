@@ -101,7 +101,20 @@ fn macos_launcher() -> String {
     #|if [ ! -x "$RUNTIME" ]; then
     #|  RUNTIME=lepusa-runtime
     #|fi
-    #|exec "$RUNTIME" launch --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@"
+    #|cleanup() {
+    #|  trap - INT TERM HUP
+    #|  if [ -n "${RUNTIME_PID:-}" ]; then
+    #|    kill -TERM "$RUNTIME_PID" 2>/dev/null || true
+    #|  fi
+    #|  exit 130
+    #|}
+    #|trap cleanup INT TERM HUP
+    #|"$RUNTIME" launch --manifest "$APP_DIR/Resources/lepusa/runtime.json" "$@" &
+    #|RUNTIME_PID=$!
+    #|wait "$RUNTIME_PID"
+    #|STATUS=$?
+    #|trap - INT TERM HUP
+    #|exit "$STATUS"
     #|
   )
 }
@@ -127,7 +140,20 @@ fn linux_launcher() -> String {
     #|if [ ! -x "$RUNTIME" ]; then
     #|  RUNTIME=lepusa-runtime
     #|fi
-    #|exec "$RUNTIME" launch --manifest "$APP_DIR/lepusa/runtime.json" "$@"
+    #|cleanup() {
+    #|  trap - INT TERM HUP
+    #|  if [ -n "${RUNTIME_PID:-}" ]; then
+    #|    kill -TERM "$RUNTIME_PID" 2>/dev/null || true
+    #|  fi
+    #|  exit 130
+    #|}
+    #|trap cleanup INT TERM HUP
+    #|"$RUNTIME" launch --manifest "$APP_DIR/lepusa/runtime.json" "$@" &
+    #|RUNTIME_PID=$!
+    #|wait "$RUNTIME_PID"
+    #|STATUS=$?
+    #|trap - INT TERM HUP
+    #|exit "$STATUS"
     #|
   )
 }

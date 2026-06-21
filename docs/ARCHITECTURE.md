@@ -641,6 +641,12 @@ bundle next to the launcher and records a `runtime-executable` check.
 target location. Cross target bundles intentionally fall back to resolving
 `lepusa-runtime` from `PATH` until a cross-compiled runtime artifact model
 exists.
+Generated macOS and Linux launchers keep a small shell wrapper around
+`lepusa-runtime launch --manifest <runtime.json>` instead of using `exec`. The
+wrapper traps `INT`, `TERM`, and `HUP`, waits on the runtime PID, and forwards
+termination so CLI smoke runs do not strand supervised local services. The macOS
+runtime also installs a native window delegate that stops tracked local services
+before terminating the app when the window closes.
 Its post-write checks parse `lepusa/runtime.json`, prepare the bundled
 native launch session, and apply the target `NativeLaunchCapability`, so
 pre-install smoke verification cannot mark a Windows or async-bridge bundle
