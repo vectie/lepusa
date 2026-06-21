@@ -46,6 +46,90 @@ pub fn ResourceDescriptor::validate(self : ResourceDescriptor) -> Array[String] 
 }
 
 ///|
+pub fn ResourceDescriptor::to_json(self : ResourceDescriptor) -> String {
+  [
+    "{",
+    "\"kind\":\{self.kind.json_string()},",
+    "\"owner\":\{self.owner.json_string()},",
+    "\"name\":\{self.name.json_string()},",
+    "\"metadata\":\{self.metadata.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub struct ResourceHandle {
+  id : String
+  kind : String
+  owner : String
+  name : String
+} derive(Debug, Eq)
+
+///|
+pub fn ResourceHandle::new(
+  id~ : String,
+  kind~ : String,
+  owner? : String = "",
+  name? : String = "",
+) -> ResourceHandle {
+  { id, kind, owner, name }
+}
+
+///|
+pub fn ResourceHandle::from_entry(entry : ResourceEntry) -> ResourceHandle {
+  ResourceHandle::new(
+    id=entry.id(),
+    kind=entry.kind(),
+    owner=entry.owner(),
+    name=entry.name(),
+  )
+}
+
+///|
+pub fn ResourceHandle::id(self : ResourceHandle) -> String {
+  self.id
+}
+
+///|
+pub fn ResourceHandle::kind(self : ResourceHandle) -> String {
+  self.kind
+}
+
+///|
+pub fn ResourceHandle::owner(self : ResourceHandle) -> String {
+  self.owner
+}
+
+///|
+pub fn ResourceHandle::name(self : ResourceHandle) -> String {
+  self.name
+}
+
+///|
+pub fn ResourceHandle::validate(self : ResourceHandle) -> Array[String] {
+  let problems : Array[String] = []
+  if self.id == "" {
+    problems.push("resource handle id is required")
+  }
+  if self.kind == "" {
+    problems.push("resource handle kind is required")
+  }
+  problems
+}
+
+///|
+pub fn ResourceHandle::to_json(self : ResourceHandle) -> String {
+  [
+    "{",
+    "\"id\":\{self.id.json_string()},",
+    "\"kind\":\{self.kind.json_string()},",
+    "\"owner\":\{self.owner.json_string()},",
+    "\"name\":\{self.name.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
 pub struct ResourceEntry {
   id : String
   sequence : Int
@@ -106,6 +190,21 @@ pub fn ResourceEntry::metadata(self : ResourceEntry) -> String {
 ///|
 pub fn ResourceEntry::closed(self : ResourceEntry) -> Bool {
   self.closed
+}
+
+///|
+pub fn ResourceEntry::descriptor(self : ResourceEntry) -> ResourceDescriptor {
+  ResourceDescriptor::new(
+    kind=self.kind,
+    owner=self.owner,
+    name=self.name,
+    metadata=self.metadata,
+  )
+}
+
+///|
+pub fn ResourceEntry::handle(self : ResourceEntry) -> ResourceHandle {
+  ResourceHandle::from_entry(self)
 }
 
 ///|
@@ -176,6 +275,38 @@ pub fn ResourceTable::get(self : ResourceTable, id : String) -> ResourceEntry? {
 }
 
 ///|
+pub fn ResourceTable::handle(
+  self : ResourceTable,
+  id : String,
+) -> ResourceHandle? {
+  match self.get(id) {
+    Some(entry) => Some(entry.handle())
+    None => None
+  }
+}
+
+///|
+pub fn ResourceTable::handles(self : ResourceTable) -> Array[ResourceHandle] {
+  self.entries().map(fn(entry) { entry.handle() })
+}
+
+///|
+pub fn ResourceTable::handles_by_kind(
+  self : ResourceTable,
+  kind : String,
+) -> Array[ResourceHandle] {
+  self.entries_by_kind(kind).map(fn(entry) { entry.handle() })
+}
+
+///|
+pub fn ResourceTable::handles_by_owner(
+  self : ResourceTable,
+  owner : String,
+) -> Array[ResourceHandle] {
+  self.entries_by_owner(owner).map(fn(entry) { entry.handle() })
+}
+
+///|
 pub fn ResourceTable::contains(self : ResourceTable, id : String) -> Bool {
   self.entries.contains(id)
 }
@@ -235,6 +366,28 @@ pub fn ResourceTable::close(
       Ok(entry.as_closed())
     }
     None => Err("resource not found: \{id}")
+  }
+}
+
+///|
+pub fn ResourceTable::close_handle(
+  self : ResourceTable,
+  handle : ResourceHandle,
+) -> Result[ResourceEntry, String] {
+  let problems = handle.validate()
+  if !problems.is_empty() {
+    return Err(problems[0])
+  }
+  match self.get(handle.id()) {
+    Some(entry) =>
+      if entry.kind() != handle.kind() {
+        Err(
+          "resource kind mismatch for \{handle.id()}: expected \{handle.kind()} got \{entry.kind()}",
+        )
+      } else {
+        self.close(handle.id())
+      }
+    None => Err("resource not found: \{handle.id()}")
   }
 }
 

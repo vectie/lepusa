@@ -274,6 +274,33 @@ pub fn AppManager::resources(self : AppManager) -> Array[ResourceEntry] {
 }
 
 ///|
+pub fn AppManager::resource_handles(self : AppManager) -> Array[ResourceHandle] {
+  self.resources().map(fn(entry) { entry.handle() })
+}
+
+///|
+pub fn AppManager::resource_handles_by_kind(
+  self : AppManager,
+  kind : String,
+) -> Array[ResourceHandle] {
+  self
+  .resources()
+  .filter(fn(entry) { entry.kind() == kind })
+  .map(fn(entry) { entry.handle() })
+}
+
+///|
+pub fn AppManager::resource_handles_by_owner(
+  self : AppManager,
+  owner : String,
+) -> Array[ResourceHandle] {
+  self
+  .resources()
+  .filter(fn(entry) { entry.owner() == owner })
+  .map(fn(entry) { entry.handle() })
+}
+
+///|
 pub fn AppManager::resource(self : AppManager, id : String) -> ResourceEntry? {
   match self.resources.get(id) {
     Some(entry) => Some(entry)
@@ -302,6 +329,28 @@ pub fn AppManager::close_resource(
     self.channels.close(id)
   } else {
     self.resources.close(id)
+  }
+}
+
+///|
+pub fn AppManager::close_resource_handle(
+  self : AppManager,
+  handle : ResourceHandle,
+) -> Result[ResourceEntry, String] {
+  let problems = handle.validate()
+  if !problems.is_empty() {
+    return Err(problems[0])
+  }
+  match self.resource(handle.id()) {
+    Some(entry) =>
+      if entry.kind() != handle.kind() {
+        Err(
+          "resource kind mismatch for \{handle.id()}: expected \{handle.kind()} got \{entry.kind()}",
+        )
+      } else {
+        self.close_resource(handle.id())
+      }
+    None => Err("resource not found: \{handle.id()}")
   }
 }
 

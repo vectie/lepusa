@@ -18,6 +18,13 @@ test "resource table allocates stable resource ids" {
       assert_eq(entry.name(), "worker")
       assert_eq(entry.metadata(), "{\"pid\":42}")
       assert_eq(entry.closed(), false)
+      let handle = entry.handle()
+      assert_eq(handle.id(), "resource-1")
+      assert_eq(handle.kind(), "process")
+      assert_eq(handle.owner(), "main")
+      assert_eq(handle.name(), "worker")
+      assert_true(handle.to_json().contains("\"id\":\"resource-1\""))
+      assert_true(entry.descriptor().to_json().contains("\"kind\":\"process\""))
     }
     Err(_) => abort("unexpected invalid resource")
   }
@@ -31,6 +38,39 @@ test "resource table allocates stable resource ids" {
   assert_true(table.contains("resource-1"))
   assert_true(table.to_json().contains("\"nextSequence\":3"))
   assert_true(table.to_json().contains("\"kind\":\"process\""))
+}
+
+///|
+test "resource handles validate and close resources with kind checks" {
+  let table = @lepusa.ResourceTable::new()
+  let process = match
+    table.open(@lepusa.ResourceDescriptor::new(kind="process", owner="main")) {
+    Ok(entry) => entry
+    Err(_) => abort("unexpected invalid process resource")
+  }
+  let handle = process.handle()
+  assert_eq(table.handles().length(), 1)
+  assert_eq(table.handles_by_kind("process")[0].id(), handle.id())
+  assert_eq(table.handles_by_owner("main")[0].id(), handle.id())
+  match table.handle(handle.id()) {
+    Some(found) => {
+      assert_eq(found.id(), handle.id())
+      assert_eq(found.kind(), handle.kind())
+    }
+    None => abort("missing resource handle")
+  }
+  match
+    table.close_handle(@lepusa.ResourceHandle::new(id=handle.id(), kind="tray")) {
+    Ok(_) => abort("unexpected kind mismatch close")
+    Err(problem) => assert_true(problem.contains("resource kind mismatch"))
+  }
+  match table.close_handle(handle) {
+    Ok(closed) => {
+      assert_eq(closed.id(), "resource-1")
+      assert_true(closed.closed())
+    }
+    Err(problem) => abort(problem)
+  }
 }
 
 ///|

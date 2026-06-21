@@ -53,6 +53,7 @@ pub fn AppManager::capability_count(Self) -> Int
 pub fn AppManager::channel(Self, String) -> Channel?
 pub fn AppManager::channel_count(Self) -> Int
 pub fn AppManager::close_resource(Self, String) -> Result[ResourceEntry, String]
+pub fn AppManager::close_resource_handle(Self, ResourceHandle) -> Result[ResourceEntry, String]
 pub fn AppManager::command_routes(Self) -> Array[String]
 pub fn AppManager::dispatch(Self, InvokeRequest) -> InvokeResponse
 pub async fn AppManager::dispatch_async(Self, InvokeRequest) -> InvokeResponse
@@ -74,6 +75,9 @@ pub fn AppManager::registry(Self) -> CommandRegistry
 pub fn AppManager::remove_state(Self, String) -> Result[AppStateEntry, String]
 pub fn AppManager::resource(Self, String) -> ResourceEntry?
 pub fn AppManager::resource_count(Self) -> Int
+pub fn AppManager::resource_handles(Self) -> Array[ResourceHandle]
+pub fn AppManager::resource_handles_by_kind(Self, String) -> Array[ResourceHandle]
+pub fn AppManager::resource_handles_by_owner(Self, String) -> Array[ResourceHandle]
 pub fn AppManager::resources(Self) -> Array[ResourceEntry]
 pub fn AppManager::send_channel(Self, String, String) -> Result[ChannelMessage, String]
 pub fn AppManager::state(Self, String) -> AppStateEntry?
@@ -1113,6 +1117,7 @@ pub fn ResourceDescriptor::metadata(Self) -> String
 pub fn ResourceDescriptor::name(Self) -> String
 pub fn ResourceDescriptor::new(kind~ : String, owner? : String, name? : String, metadata? : String) -> Self
 pub fn ResourceDescriptor::owner(Self) -> String
+pub fn ResourceDescriptor::to_json(Self) -> String
 pub fn ResourceDescriptor::validate(Self) -> Array[String]
 
 pub struct ResourceEntry {
@@ -1125,6 +1130,8 @@ pub struct ResourceEntry {
   closed : Bool
 } derive(Eq, @debug.Debug)
 pub fn ResourceEntry::closed(Self) -> Bool
+pub fn ResourceEntry::descriptor(Self) -> ResourceDescriptor
+pub fn ResourceEntry::handle(Self) -> ResourceHandle
 pub fn ResourceEntry::id(Self) -> String
 pub fn ResourceEntry::kind(Self) -> String
 pub fn ResourceEntry::metadata(Self) -> String
@@ -1132,6 +1139,21 @@ pub fn ResourceEntry::name(Self) -> String
 pub fn ResourceEntry::owner(Self) -> String
 pub fn ResourceEntry::sequence(Self) -> Int
 pub fn ResourceEntry::to_json(Self) -> String
+
+pub struct ResourceHandle {
+  id : String
+  kind : String
+  owner : String
+  name : String
+} derive(Eq, @debug.Debug)
+pub fn ResourceHandle::from_entry(ResourceEntry) -> Self
+pub fn ResourceHandle::id(Self) -> String
+pub fn ResourceHandle::kind(Self) -> String
+pub fn ResourceHandle::name(Self) -> String
+pub fn ResourceHandle::new(id~ : String, kind~ : String, owner? : String, name? : String) -> Self
+pub fn ResourceHandle::owner(Self) -> String
+pub fn ResourceHandle::to_json(Self) -> String
+pub fn ResourceHandle::validate(Self) -> Array[String]
 
 pub struct ResourceTable {
   mut next_sequence : Int
@@ -1141,6 +1163,7 @@ pub struct ResourceTable {
 }
 pub fn ResourceTable::close(Self, String) -> Result[ResourceEntry, String]
 pub fn ResourceTable::close_all(Self) -> Array[ResourceEntry]
+pub fn ResourceTable::close_handle(Self, ResourceHandle) -> Result[ResourceEntry, String]
 pub fn ResourceTable::close_kind(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::close_owner(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::contains(Self, String) -> Bool
@@ -1149,6 +1172,10 @@ pub fn ResourceTable::entries(Self) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_kind(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_owner(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::get(Self, String) -> ResourceEntry?
+pub fn ResourceTable::handle(Self, String) -> ResourceHandle?
+pub fn ResourceTable::handles(Self) -> Array[ResourceHandle]
+pub fn ResourceTable::handles_by_kind(Self, String) -> Array[ResourceHandle]
+pub fn ResourceTable::handles_by_owner(Self, String) -> Array[ResourceHandle]
 pub fn ResourceTable::id_prefix(Self) -> String
 pub fn ResourceTable::ids(Self) -> Array[String]
 pub fn ResourceTable::is_empty(Self) -> Bool

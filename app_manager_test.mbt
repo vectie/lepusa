@@ -52,6 +52,9 @@ test "app manager owns dispatch resources channels events and state" {
   }
   assert_eq(channel.id(), "channel-1")
   assert_eq(manager.resource_count(), 2)
+  assert_eq(manager.resource_handles().length(), 2)
+  assert_eq(manager.resource_handles_by_owner("core").length(), 2)
+  assert_eq(manager.resource_handles_by_kind("channel")[0].id(), "channel-1")
   match manager.resource(channel.id()) {
     Some(entry) => {
       assert_eq(entry.kind(), "channel")
@@ -98,7 +101,7 @@ test "app manager owns dispatch resources channels events and state" {
 }
 
 ///|
-test "app manager closes generic resources and channel resources by id" {
+test "app manager closes generic resources and channel resources by handle" {
   let manager = match
     manager_test_app().manager(config=@lepusa.RuntimeConfig::headless()) {
     Ok(manager) => manager
@@ -113,19 +116,26 @@ test "app manager closes generic resources and channel resources by id" {
     Ok(channel) => channel
     Err(_) => abort("unexpected invalid channel")
   }
-  match manager.close_resource(watcher.id()) {
+  match manager.close_resource_handle(watcher.handle()) {
     Ok(closed) => {
       assert_eq(closed.id(), "resource-1")
       assert_eq(closed.closed(), true)
     }
     Err(problem) => abort(problem)
   }
-  match manager.close_resource(channel.id()) {
+  match manager.close_resource_handle(channel.resource().handle()) {
     Ok(closed) => {
       assert_eq(closed.id(), "channel-1")
       assert_eq(closed.closed(), true)
     }
     Err(problem) => abort(problem)
+  }
+  match
+    manager.close_resource_handle(
+      @lepusa.ResourceHandle::new(id="missing", kind="channel"),
+    ) {
+    Ok(_) => abort("unexpected missing close")
+    Err(problem) => assert_eq(problem, "resource not found: missing")
   }
   assert_eq(manager.resource_count(), 0)
 }
