@@ -5,6 +5,8 @@ pub struct InvokeRequest {
   plugin : String
   command : String
   payload : String
+  callback_id : String
+  error_id : String
 } derive(Debug, Eq)
 
 ///|
@@ -14,8 +16,10 @@ pub fn InvokeRequest::new(
   plugin~ : String,
   command~ : String,
   payload? : String = "",
+  callback_id? : String = "",
+  error_id? : String = "",
 ) -> InvokeRequest {
-  { id, window_label, plugin, command, payload }
+  { id, window_label, plugin, command, payload, callback_id, error_id }
 }
 
 ///|
@@ -46,6 +50,21 @@ pub fn InvokeRequest::command(self : InvokeRequest) -> String {
 ///|
 pub fn InvokeRequest::payload(self : InvokeRequest) -> String {
   self.payload
+}
+
+///|
+pub fn InvokeRequest::callback_id(self : InvokeRequest) -> String {
+  self.callback_id
+}
+
+///|
+pub fn InvokeRequest::error_id(self : InvokeRequest) -> String {
+  self.error_id
+}
+
+///|
+pub fn InvokeRequest::has_resolver_ids(self : InvokeRequest) -> Bool {
+  self.callback_id != "" && self.error_id != ""
 }
 
 ///|

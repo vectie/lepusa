@@ -329,10 +329,15 @@ pub struct InvokeRequest {
   plugin : String
   command : String
   payload : String
+  callback_id : String
+  error_id : String
 } derive(Eq, @debug.Debug)
+pub fn InvokeRequest::callback_id(Self) -> String
 pub fn InvokeRequest::command(Self) -> String
+pub fn InvokeRequest::error_id(Self) -> String
+pub fn InvokeRequest::has_resolver_ids(Self) -> Bool
 pub fn InvokeRequest::id(Self) -> String
-pub fn InvokeRequest::new(id~ : String, window_label~ : String, plugin~ : String, command~ : String, payload? : String) -> Self
+pub fn InvokeRequest::new(id~ : String, window_label~ : String, plugin~ : String, command~ : String, payload? : String, callback_id? : String, error_id? : String) -> Self
 pub fn InvokeRequest::payload(Self) -> String
 pub fn InvokeRequest::plugin(Self) -> String
 pub fn InvokeRequest::route(Self) -> String

@@ -1954,6 +1954,20 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
   let json = encode_invoke_response_json(@lepusa.InvokeResponse::ok("7", "{}"))
   assert_true(json.contains("\"id\":\"7\""))
   assert_true(json.contains("\"payload\":\"{}\""))
+  match
+    decode_invoke_request_json(
+      "{\"id\":\"cb-7\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"callback_id\":\"cb-7\",\"error_id\":\"err-7\"}",
+    ) {
+    Ok(request) => {
+      assert_eq(request.callback_id(), "cb-7")
+      assert_eq(request.error_id(), "err-7")
+      assert_eq(request.has_resolver_ids(), true)
+      assert_true(
+        encode_invoke_request_json(request).contains("\"callback_id\":\"cb-7\""),
+      )
+    }
+    Err(_) => abort("unexpected invalid resolver bridge request")
+  }
 }
 
 ///|
