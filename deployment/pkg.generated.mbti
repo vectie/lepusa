@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/deployment"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum DeploymentMode {
+  FreshInstall
+  UpdateInstall
+} derive(Eq, @debug.Debug)
+pub fn DeploymentMode::name(Self) -> String
+
+pub struct DeploymentPlan {
+  target : @lepusa.BundleTarget
+  mode : DeploymentMode
+  identifier : String
+  product_name : String
+  version : String
+  channel : String
+  install_root : String
+  staging_root : String
+  trust : @lepusa.UpdateTrustReport
+  steps : Array[DeploymentStep]
+} derive(Eq, @debug.Debug)
+pub fn DeploymentPlan::channel(Self) -> String
+pub fn DeploymentPlan::from_update_manifest(@lepusa.UpdateManifest, target~ : @lepusa.BundleTarget, install_root~ : String, staging_root~ : String, current_version? : String, require_signature? : Bool) -> Result[Self, Array[String]]
+pub fn DeploymentPlan::identifier(Self) -> String
+pub fn DeploymentPlan::install_root(Self) -> String
+pub fn DeploymentPlan::mode(Self) -> DeploymentMode
+pub fn DeploymentPlan::product_name(Self) -> String
+pub fn DeploymentPlan::ready(Self) -> Bool
+pub fn DeploymentPlan::required_steps(Self) -> Array[DeploymentStep]
+pub fn DeploymentPlan::rollback_steps(Self) -> Array[DeploymentStep]
+pub fn DeploymentPlan::staging_root(Self) -> String
+pub fn DeploymentPlan::steps(Self) -> Array[DeploymentStep]
+pub fn DeploymentPlan::steps_by_kind(Self, DeploymentStepKind) -> Array[DeploymentStep]
+pub fn DeploymentPlan::summary(Self) -> String
+pub fn DeploymentPlan::target(Self) -> @lepusa.BundleTarget
+pub fn DeploymentPlan::to_json(Self) -> String
+pub fn DeploymentPlan::trust(Self) -> @lepusa.UpdateTrustReport
+pub fn DeploymentPlan::version(Self) -> String
+
+pub struct DeploymentStep {
+  kind : DeploymentStepKind
+  artifact_path : String?
+  source : String?
+  destination : String?
+  required : Bool
+  description : String
+} derive(Eq, @debug.Debug)
+pub fn DeploymentStep::artifact_path(Self) -> String?
+pub fn DeploymentStep::description(Self) -> String
+pub fn DeploymentStep::destination(Self) -> String?
+pub fn DeploymentStep::kind(Self) -> DeploymentStepKind
+pub fn DeploymentStep::new(kind~ : DeploymentStepKind, artifact_path? : String, source? : String, destination? : String, required? : Bool, description~ : String) -> Self
+pub fn DeploymentStep::required(Self) -> Bool
+pub fn DeploymentStep::source(Self) -> String?
+pub fn DeploymentStep::to_json(Self) -> String
+
+pub(all) enum DeploymentStepKind {
+  ValidateUpdateManifest
+  DownloadUpdateArtifact
+  VerifyArtifactChecksum
+  VerifyArtifactSignature
+  StageUpdateArtifact
+  BackupCurrentInstall
+  InstallUpdateArtifact
+  RollbackUpdateArtifact
+  RestartApplication
+} derive(Eq, @debug.Debug)
+pub fn DeploymentStepKind::name(Self) -> String
+
+// Type aliases
+
+// Traits
+
