@@ -68,10 +68,18 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     },
     control_window=fn(_) { NativeOperationExecuted },
     desktop_shell=fn(operation) {
-      @runtime.native_desktop_shell_platform_status(
-        operation,
-        platform_name="macOS",
-      )
+      if operation.domain() == "app" &&
+        (
+          operation.action() == "setDockVisibility" ||
+          operation.action() == "app.setDockVisibility"
+        ) {
+        NativeOperationExecuted
+      } else {
+        @runtime.native_desktop_shell_platform_status(
+          operation,
+          platform_name="macOS",
+        )
+      }
     },
   )
 }

@@ -652,9 +652,9 @@ and validated payload so platform shell consumers can attach menus, tray state,
 dock/app controls, and menu-click plumbing without bypassing the shared
 capability and registry boundary. Native macOS, Linux, and Windows loops parse
 those records from `lepusa-ops-v3` packets; app show/hide/setTheme/exit/restart execute
-inside the event loop, while menu/tray records are consumed as accepted shell
-records but reported as skipped renderer work until native menu/tray renderers
-land.
+inside the event loop, macOS also applies app dock visibility, while menu/tray
+records are consumed as accepted shell records but reported as skipped renderer
+work until native menu/tray renderers land.
 operations for concrete OS menu and status-item renderers.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,

@@ -751,10 +751,11 @@ This gives platform menu, tray, dock, and app-shell implementations one stable
 native-operation contract while MoonBit keeps permission checks and payload
 validation at the official plugin boundary. The macOS, Linux, and Windows loops
 consume those records from bridge packets; app show/hide/setTheme/exit/restart are
-applied in the native loop, and menu/tray records are accepted through the same
-operation path for concrete OS shell renderers. Platform operation reports now
-mark app window lifecycle shell operations as executed and leave menu/tray
-renderers explicitly skipped until native OS renderers land.
+applied in the native loop, macOS also applies app dock visibility, and menu/tray
+records are accepted through the same operation path for concrete OS shell
+renderers. Platform operation reports now mark supported app shell operations as
+executed and leave menu/tray renderers explicitly skipped until native OS
+renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

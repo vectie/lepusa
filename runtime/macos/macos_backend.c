@@ -42,6 +42,7 @@ static const unsigned long LEPUSA_NS_WINDOW_STYLE_RESIZABLE = 1UL << 3;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_FULLSCREEN = 1UL << 14;
 static const unsigned long LEPUSA_NS_BACKING_STORE_BUFFERED = 2UL;
 static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_REGULAR = 0;
+static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_ACCESSORY = 1;
 
 typedef void *(*LepusaMsgSendId)(void *, void *);
 typedef void *(*LepusaMsgSendIdId)(void *, void *, void *);
@@ -1361,6 +1362,50 @@ static void lepusa_apply_app_theme(
   }
 }
 
+static int lepusa_visibility_payload_value(
+  const char *payload,
+  int32_t payload_len,
+  int *visible_out
+) {
+  if (visible_out == NULL) {
+    return 0;
+  }
+  if (payload_len <= 0) {
+    *visible_out = 1;
+    return 1;
+  }
+  if (lepusa_range_contains_text(payload, payload_len, "false")) {
+    *visible_out = 0;
+    return 1;
+  }
+  if (lepusa_range_contains_text(payload, payload_len, "true") ||
+      lepusa_range_contains_text(payload, payload_len, "{")) {
+    *visible_out = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static void lepusa_apply_dock_visibility(
+  const char *payload,
+  int32_t payload_len
+) {
+  int visible = 1;
+  if (!lepusa_visibility_payload_value(payload, payload_len, &visible)) {
+    return;
+  }
+  void *application = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+  if (application != NULL) {
+    ((LepusaMsgSendIntInt)lepusa_objc_msg_send)(
+      application,
+      lepusa_sel("setActivationPolicy:"),
+      visible ?
+        LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_REGULAR :
+        LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_ACCESSORY
+    );
+  }
+}
+
 static void lepusa_apply_desktop_shell_from_handoff_packet(
   LepusaBridgeContext *context,
   moonbit_bytes_t packet
@@ -1389,6 +1434,10 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     }
     if (lepusa_app_shell_action_equals(record.action, record.action_len, "setTheme")) {
       lepusa_apply_app_theme(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "setDockVisibility")) {
+      lepusa_apply_dock_visibility(record.url, record.url_len);
       continue;
     }
     LepusaWindowSlot *slot = lepusa_find_window_slot(
