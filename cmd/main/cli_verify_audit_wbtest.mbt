@@ -35,6 +35,8 @@ async test "verify json includes runtime audit diagnostics" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("\"audit\":{"))
   assert_true(result.output.contains("\"errorCount\":0"))
+  assert_true(result.output.contains("\"routeExposures\":["))
+  assert_true(result.output.contains("\"exposedRoutes\":["))
   assert_true(result.output.contains("\"findings\":["))
   assert_true(result.output.contains("\"commandManifest\":{"))
   assert_true(result.output.contains("\"permissionManifest\":{"))

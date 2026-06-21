@@ -303,6 +303,7 @@ fn verify_runtime_audit(
 ) -> Bool {
   let missing = audit_findings_by_kind(audit, RuntimeAuditMissingHandler)
   lines.push(render_handler_coverage_from_audit(audit, missing))
+  lines.push(render_route_exposure_from_audit(audit))
   if audit.ok() {
     lines.push(
       "[ok] audit: errors=0 warnings=\{audit.warning_count()} info=\{audit.info_count()}\n",
@@ -325,6 +326,14 @@ fn verify_runtime_audit(
     )
     true
   }
+}
+
+///|
+fn render_route_exposure_from_audit(audit : @lepusa.RuntimeAudit) -> String {
+  let exposures = audit.route_exposures()
+  let exposed = audit.exposed_routes()
+  let omitted = exposures.length() - exposed.length()
+  "[ok] exposure: declared=\{exposures.length()} exposed=\{exposed.length()} omitted=\{omitted}\n"
 }
 
 ///|

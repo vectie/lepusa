@@ -22,10 +22,21 @@ pub struct RuntimeAuditFinding {
 } derive(Debug, Eq)
 
 ///|
+pub struct RuntimeRouteExposure {
+  route : String
+  mode : CommandMode
+  registered : Bool
+  exposed : Bool
+  windows : Array[String]
+  reasons : Array[String]
+} derive(Debug, Eq)
+
+///|
 pub struct RuntimeAudit {
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
   registered_routes : Array[String]
+  route_exposures : Array[RuntimeRouteExposure]
   findings : Array[RuntimeAuditFinding]
 } derive(Debug, Eq)
 
@@ -95,6 +106,87 @@ pub fn RuntimeAuditFinding::to_json(self : RuntimeAuditFinding) -> String {
 }
 
 ///|
+fn RuntimeRouteExposure::from_entry(
+  entry : CommandManifestEntry,
+  registered_routes : Array[String],
+  check_handlers~ : Bool,
+) -> RuntimeRouteExposure {
+  let reasons : Array[String] = []
+  let registered = registered_routes.contains(entry.route())
+  if entry.allowed_windows().is_empty() {
+    reasons.push("no-window-capability")
+  }
+  if !entry.mode().requires_registered_handler() {
+    reasons.push("event-route")
+  }
+  if check_handlers && entry.mode().requires_registered_handler() && !registered {
+    reasons.push("missing-handler")
+  }
+  let exposed = entry.mode().requires_registered_handler() &&
+    !entry.allowed_windows().is_empty() &&
+    (!check_handlers || registered)
+  if exposed {
+    reasons.push("exposed")
+  }
+  {
+    route: entry.route(),
+    mode: entry.mode(),
+    registered,
+    exposed,
+    windows: entry.allowed_windows(),
+    reasons,
+  }
+}
+
+///|
+pub fn RuntimeRouteExposure::route(self : RuntimeRouteExposure) -> String {
+  self.route
+}
+
+///|
+pub fn RuntimeRouteExposure::mode(self : RuntimeRouteExposure) -> CommandMode {
+  self.mode
+}
+
+///|
+pub fn RuntimeRouteExposure::registered(self : RuntimeRouteExposure) -> Bool {
+  self.registered
+}
+
+///|
+pub fn RuntimeRouteExposure::exposed(self : RuntimeRouteExposure) -> Bool {
+  self.exposed
+}
+
+///|
+pub fn RuntimeRouteExposure::windows(
+  self : RuntimeRouteExposure,
+) -> Array[String] {
+  self.windows.copy()
+}
+
+///|
+pub fn RuntimeRouteExposure::reasons(
+  self : RuntimeRouteExposure,
+) -> Array[String] {
+  self.reasons.copy()
+}
+
+///|
+pub fn RuntimeRouteExposure::to_json(self : RuntimeRouteExposure) -> String {
+  [
+    "{",
+    "\"route\":\{self.route.json_string()},",
+    "\"mode\":\{self.mode.name().json_string()},",
+    "\"registered\":\{self.registered.json_bool()},",
+    "\"exposed\":\{self.exposed.json_bool()},",
+    "\"windows\":[\{self.windows.map(fn(window) { window.json_string() }).join(",")}],",
+    "\"reasons\":[\{self.reasons.map(fn(reason) { reason.json_string() }).join(",")}]",
+    "}",
+  ].join("")
+}
+
+///|
 pub fn RuntimeAudit::from_plan(plan : RuntimePlan) -> RuntimeAudit {
   RuntimeAudit::build(plan, registered_routes=[], check_handlers=false)
 }
@@ -116,8 +208,16 @@ fn RuntimeAudit::build(
   let command_manifest = plan.command_manifest()
   let permission_manifest = plan.permission_manifest()
   let registered_routes = sorted_unique_routes(registered_routes)
+  let route_exposures : Array[RuntimeRouteExposure] = []
   let findings : Array[RuntimeAuditFinding] = []
   for entry in command_manifest.entries() {
+    route_exposures.push(
+      RuntimeRouteExposure::from_entry(
+        entry,
+        registered_routes,
+        check_handlers~,
+      ),
+    )
     if entry.allowed_windows().is_empty() {
       findings.push(
         RuntimeAuditFinding::new(
@@ -165,7 +265,13 @@ fn RuntimeAudit::build(
       }
     }
   }
-  { command_manifest, permission_manifest, registered_routes, findings }
+  {
+    command_manifest,
+    permission_manifest,
+    registered_routes,
+    route_exposures,
+    findings,
+  }
 }
 
 ///|
@@ -203,6 +309,20 @@ pub fn RuntimeAudit::findings(
   self : RuntimeAudit,
 ) -> Array[RuntimeAuditFinding] {
   self.findings.copy()
+}
+
+///|
+pub fn RuntimeAudit::route_exposures(
+  self : RuntimeAudit,
+) -> Array[RuntimeRouteExposure] {
+  self.route_exposures.copy()
+}
+
+///|
+pub fn RuntimeAudit::exposed_routes(self : RuntimeAudit) -> Array[String] {
+  self.route_exposures
+  .filter(fn(exposure) { exposure.exposed() })
+  .map(fn(exposure) { exposure.route() })
 }
 
 ///|
@@ -264,6 +384,8 @@ pub fn RuntimeAudit::to_json(self : RuntimeAudit) -> String {
     "\"warningCount\":\{self.warning_count()},",
     "\"infoCount\":\{self.info_count()},",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"exposedRoutes\":[\{self.exposed_routes().map(fn(route) { route.json_string() }).join(",")}],",
+    "\"routeExposures\":[\{self.route_exposures.map(fn(exposure) { exposure.to_json() }).join(",")}],",
     "\"findings\":[\{self.findings.map(fn(finding) { finding.to_json() }).join(",")}],",
     "\"commandManifest\":\{self.command_manifest.to_json()},",
     "\"permissionManifest\":\{self.permission_manifest.to_json()}",

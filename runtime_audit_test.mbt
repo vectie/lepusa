@@ -89,6 +89,50 @@ test "runtime audit does not require handlers for declared event routes" {
 }
 
 ///|
+test "runtime audit explains route exposure decisions" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("core")
+      .command_sync("ready")
+      .command_sync("missing")
+      .command_event("changed"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("core")
+      .window("main")
+      .origin("https://app.example")
+      .command("core.ready")
+      .command("core.missing")
+      .command("core.changed"),
+    )
+  let plan = match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => plan
+    Err(problems) => abort(problems.join(", "))
+  }
+  let audit = plan.audit_with_registered_routes(["core.ready"])
+  assert_eq(audit.exposed_routes().length(), 1)
+  assert_eq(audit.exposed_routes()[0], "core.ready")
+  assert_eq(audit.route_exposures().length(), 3)
+  let ready = audit.route_exposures()[0]
+  assert_eq(ready.route(), "core.ready")
+  assert_eq(ready.registered(), true)
+  assert_eq(ready.exposed(), true)
+  assert_true(ready.reasons().contains("exposed"))
+  let missing = audit.route_exposures()[1]
+  assert_eq(missing.route(), "core.missing")
+  assert_eq(missing.exposed(), false)
+  assert_true(missing.reasons().contains("missing-handler"))
+  let changed = audit.route_exposures()[2]
+  assert_eq(changed.route(), "core.changed")
+  assert_eq(changed.exposed(), false)
+  assert_true(changed.reasons().contains("event-route"))
+  assert_true(audit.to_json().contains("\"routeExposures\":["))
+  assert_true(audit.to_json().contains("\"exposedRoutes\":[\"core.ready\"]"))
+}
+
+///|
 test "app manager audit uses its command registry" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.ping", handler=fn(
     payload,
