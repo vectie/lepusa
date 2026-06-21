@@ -15,6 +15,7 @@ pub fn decode_invoke_request_json(
       let plugin = required_string_field(object, "plugin")
       let command = required_string_field(object, "command")
       let payload = payload_field(object)
+      let origin = string_field(object, "origin").unwrap_or("")
       let callback_id = string_field(object, "callback_id").unwrap_or("")
       let error_id = string_field(object, "error_id").unwrap_or("")
       if id == "" {
@@ -33,6 +34,7 @@ pub fn decode_invoke_request_json(
             plugin~,
             command~,
             payload~,
+            origin~,
             callback_id~,
             error_id~,
           ),
@@ -51,6 +53,7 @@ pub fn encode_invoke_request_json(request : @lepusa.InvokeRequest) -> String {
     "plugin": Json::string(request.plugin()),
     "command": Json::string(request.command()),
     "payload": Json::string(request.payload()),
+    "origin": Json::string(request.origin()),
     "callback_id": Json::string(request.callback_id()),
     "error_id": Json::string(request.error_id()),
   }).stringify()

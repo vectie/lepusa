@@ -269,7 +269,11 @@ fn dispatch_command(
 ) -> InvokeResponse {
   let route = request.route()
   let policy = CapabilityPolicy::new(capabilities~)
-  if !policy.allows(window_label=request.window_label(), permission~) {
+  if !policy.allows(
+      window_label=request.window_label(),
+      permission~,
+      origin=request.origin(),
+    ) {
     InvokeResponse::permission_denied(request.id(), route)
   } else {
     match command.handler {
@@ -294,7 +298,11 @@ async fn dispatch_command_async(
 ) -> InvokeResponse {
   let route = request.route()
   let policy = CapabilityPolicy::new(capabilities~)
-  if !policy.allows(window_label=request.window_label(), permission~) {
+  if !policy.allows(
+      window_label=request.window_label(),
+      permission~,
+      origin=request.origin(),
+    ) {
     InvokeResponse::permission_denied(request.id(), route)
   } else {
     match command.handler {

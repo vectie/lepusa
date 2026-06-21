@@ -1439,6 +1439,89 @@ test "runtime host dispatch uses plan command permissions" {
 }
 
 ///|
+test "runtime host enforces command origins from capabilities" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::url("https://app.example"))
+    .with_plugin(
+      @lepusa.Plugin::new("fs").command_sync("read", permission=FileSystemRead),
+    )
+    .with_capability(
+      @lepusa.Capability::new("remote-files")
+      .window("main")
+      .origin("https://app.example")
+      .permission(FileSystemRead),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let manifest = plan.command_manifest()
+      match manifest.entry("fs.read") {
+        Some(entry) => {
+          assert_eq(entry.allowed_origins().length(), 1)
+          assert_eq(entry.allowed_origins()[0], "https://app.example")
+          assert_true(
+            manifest.allows(
+              "fs.read",
+              window_label="main",
+              origin="https://app.example",
+            ),
+          )
+          assert_false(
+            manifest.allows(
+              "fs.read",
+              window_label="main",
+              origin="https://evil.example",
+            ),
+          )
+        }
+        None => abort("missing fs.read manifest entry")
+      }
+      let registry = @lepusa.CommandRegistry::new().register_fn("fs.read", handler=fn(
+        payload,
+      ) {
+        Ok("file:\{payload}")
+      })
+      let host = RuntimeHost::new(plan, registry~)
+      let allowed = host.dispatch(
+        @lepusa.InvokeRequest::new(
+          id="origin-ok",
+          window_label="main",
+          plugin="fs",
+          command="read",
+          payload="/tmp/a.txt",
+          origin="https://app.example",
+        ),
+      )
+      assert_true(allowed is InvokeOk("origin-ok", "file:/tmp/a.txt"))
+      let denied = host.dispatch(
+        @lepusa.InvokeRequest::new(
+          id="origin-denied",
+          window_label="main",
+          plugin="fs",
+          command="read",
+          origin="https://evil.example",
+        ),
+      )
+      assert_true(denied.error_kind() is Some(PermissionDenied))
+      assert_eq(
+        denied.error_message().unwrap_or(""),
+        "permission denied: fs.read",
+      )
+      match plan.launch_manifest() {
+        Ok(launch) => {
+          assert_true(launch.to_json().contains("\"allowedOrigins\""))
+          assert_true(
+            launch.to_json().contains("\"origins\":[\"https://app.example\"]"),
+          )
+        }
+        Err(_) => abort("unexpected launch manifest error")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime session applies startup actions as backend operations" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
@@ -1958,6 +2041,7 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
       assert_eq(request.window_label(), "main")
       assert_eq(request.route(), "core.invoke")
       assert_eq(request.payload(), "{\"x\":1}")
+      assert_eq(request.origin(), "")
     }
     Err(_) => abort("unexpected invalid bridge request")
   }
@@ -1975,14 +2059,20 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
   assert_true(denied_json.contains("\"route\":\"core.invoke\""))
   match
     decode_invoke_request_json(
-      "{\"id\":\"cb-7\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"callback_id\":\"cb-7\",\"error_id\":\"err-7\"}",
+      "{\"id\":\"cb-7\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"origin\":\"https://app.example\",\"callback_id\":\"cb-7\",\"error_id\":\"err-7\"}",
     ) {
     Ok(request) => {
+      assert_eq(request.origin(), "https://app.example")
       assert_eq(request.callback_id(), "cb-7")
       assert_eq(request.error_id(), "err-7")
       assert_eq(request.has_resolver_ids(), true)
       assert_true(
         encode_invoke_request_json(request).contains("\"callback_id\":\"cb-7\""),
+      )
+      assert_true(
+        encode_invoke_request_json(request).contains(
+          "\"origin\":\"https://app.example\"",
+        ),
       )
     }
     Err(_) => abort("unexpected invalid resolver bridge request")

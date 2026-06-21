@@ -21,6 +21,7 @@ test "runtime command manifest projects modes permissions and windows" {
     .with_capability(
       @lepusa.Capability::new("main-read")
       .window("main")
+      .origin("https://app.example")
       .permission(FileSystemRead),
     )
     .with_capability(
@@ -46,9 +47,14 @@ test "runtime command manifest projects modes permissions and windows" {
           assert_true(entry.mode() is Sync)
           assert_true(entry.permission() is FileSystemRead)
           assert_eq(entry.allowed_windows().length(), 1)
+          assert_eq(entry.allowed_origins().length(), 1)
+          assert_eq(entry.allowed_origins()[0], "https://app.example")
           assert_true(entry.allowed_in_window("main"))
           assert_false(entry.allowed_in_window("settings"))
+          assert_true(entry.allowed_for_origin("https://app.example"))
+          assert_false(entry.allowed_for_origin("https://evil.example"))
           assert_true(entry.to_json().contains("\"mode\":\"sync\""))
+          assert_true(entry.to_json().contains("\"allowedOrigins\""))
         }
         None => abort("missing read command")
       }
@@ -123,6 +129,7 @@ test "permission manifest groups routes grants windows and denials" {
     .with_capability(
       @lepusa.Capability::new("read-main")
       .window("main")
+      .origin("https://app.example")
       .permission(FileSystemRead),
     )
     .with_capability(
@@ -141,10 +148,15 @@ test "permission manifest groups routes grants windows and denials" {
           assert_eq(permission.commands().length(), 1)
           assert_eq(permission.grants().length(), 1)
           assert_true(permission.allowed_windows().contains("main"))
+          assert_eq(permission.allowed_origins().length(), 1)
+          assert_eq(permission.allowed_origins()[0], "https://app.example")
+          assert_eq(permission.commands()[0].allowed_origins().length(), 1)
+          assert_eq(permission.grants()[0].origins().length(), 1)
           assert_eq(permission.denied_routes().length(), 0)
           assert_true(
             permission.to_json().contains("\"name\":\"filesystem.read\""),
           )
+          assert_true(permission.to_json().contains("\"allowedOrigins\""))
         }
         None => abort("missing read permission")
       }

@@ -654,6 +654,51 @@ test "bundled runtime dispatches sync official plugins" {
 }
 
 ///|
+test "bundled runtime enforces command manifest origins" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      { "label": "main", "allowedRoutes": ["log.write"] }
+    #|    ],
+    #|    "commandManifest": {
+    #|      "commands": [
+    #|        {
+    #|          "route": "log.write",
+    #|          "allowedWindows": ["main"],
+    #|          "allowedOrigins": ["https://app.example"]
+    #|        }
+    #|      ]
+    #|    },
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["log.write"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let allowed = manifest.dispatch_json(
+        id="log-ok",
+        window_label="main",
+        route="log.write",
+        payload="{\"message\":\"ready\"}",
+        origin="https://app.example",
+      )
+      assert_true(allowed.contains("\"id\":\"log-ok\""))
+      let denied = manifest.dispatch_json(
+        id="log-denied",
+        window_label="main",
+        route="log.write",
+        payload="{\"message\":\"ready\"}",
+        origin="https://evil.example",
+      )
+      assert_true(denied.contains("\"id\":\"log-denied\""))
+      assert_true(denied.contains("\"errorCode\":\"permission-denied\""))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 async test "bundled runtime owns bridge message transport" {
   let manifest =
     #|{

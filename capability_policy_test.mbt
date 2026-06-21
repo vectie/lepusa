@@ -25,17 +25,49 @@ test "capability policy explains allow and deny decisions" {
 }
 
 ///|
+test "capability policy can scope grants to origins" {
+  let policy = @lepusa.CapabilityPolicy::new(capabilities=[
+    @lepusa.Capability::new("remote-fs")
+    .window("main")
+    .origin("https://app.example")
+    .permission(FileSystemRead),
+  ])
+  let allowed = policy.evaluate(
+    window_label="main",
+    origin="https://app.example",
+    permission=FileSystemRead,
+  )
+  assert_true(allowed.allowed())
+  assert_eq(allowed.origin(), "https://app.example")
+  let denied = policy.evaluate(
+    window_label="main",
+    origin="https://evil.example",
+    permission=FileSystemRead,
+  )
+  assert_true(denied.denied())
+  assert_true(denied.reason().contains("origin https://evil.example"))
+  let origins = policy.allowed_origins(
+    window_label="main",
+    permission=FileSystemRead,
+  )
+  assert_eq(origins.length(), 1)
+  assert_eq(origins[0], "https://app.example")
+}
+
+///|
 test "capability policy validates capability set" {
   let policy = @lepusa.CapabilityPolicy::new(capabilities=[
     @lepusa.Capability::new("dup").permission(FileSystemRead),
     @lepusa.Capability::new("dup").permission(FileSystemWrite),
     @lepusa.Capability::new("empty"),
+    @lepusa.Capability::new("bad-origin").origin("").permission(Network),
   ])
   let problems = policy.validate()
   assert_true(problems.contains("capability name must be unique: dup"))
   assert_true(
     problems.contains("capability must include at least one permission"),
   )
+  assert_true(problems.contains("capability origin must not be empty"))
 }
 
 ///|
@@ -51,4 +83,5 @@ test "capability policy serializes grants for diagnostics" {
   assert_true(json.contains("\"name\":\"global-shell\""))
   assert_true(json.contains("\"permissions\":[\"shell\"]"))
   assert_true(json.contains("\"windows\":[\"main\"]"))
+  assert_true(json.contains("\"origins\":[]"))
 }

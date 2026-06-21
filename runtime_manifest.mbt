@@ -55,6 +55,7 @@ pub struct RuntimeVirtualAsset {
 pub struct RuntimeCapabilityGrant {
   name : String
   windows : Array[String]
+  origins : Array[String]
   permissions : Array[String]
 } derive(Debug, Eq)
 
@@ -455,6 +456,13 @@ pub fn RuntimeCapabilityGrant::windows(
 }
 
 ///|
+pub fn RuntimeCapabilityGrant::origins(
+  self : RuntimeCapabilityGrant,
+) -> Array[String] {
+  self.origins.copy()
+}
+
+///|
 pub fn RuntimeCapabilityGrant::permissions(
   self : RuntimeCapabilityGrant,
 ) -> Array[String] {
@@ -468,6 +476,7 @@ fn RuntimeCapabilityGrant::from_capability(
   {
     name: capability.name(),
     windows: capability.windows(),
+    origins: capability.origins(),
     permissions: capability
     .permissions()
     .map(fn(permission) { permission.name() }),
@@ -748,6 +757,7 @@ fn runtime_capability_grant_json(grant : RuntimeCapabilityGrant) -> String {
     "{",
     "\"name\":\{grant.name().json_string()},",
     "\"windows\":[\{grant.windows().map(fn(window) { window.json_string() }).join(",")}],",
+    "\"origins\":[\{grant.origins().map(fn(origin) { origin.json_string() }).join(",")}],",
     "\"permissions\":[\{grant.permissions().map(fn(permission) { permission.json_string() }).join(",")}]",
     "}",
   ].join("")

@@ -24,8 +24,15 @@ pub fn BundledRuntimeManifest::dispatch_json(
   window_label~ : String,
   route~ : String,
   payload? : String = "",
+  origin? : String = "",
 ) -> String {
-  BundledRuntime::new(self).dispatch_json(id~, window_label~, route~, payload~)
+  BundledRuntime::new(self).dispatch_json(
+    id~,
+    window_label~,
+    route~,
+    payload~,
+    origin~,
+  )
 }
 
 ///|
@@ -35,12 +42,14 @@ pub async fn BundledRuntimeManifest::dispatch_json_async(
   window_label~ : String,
   route~ : String,
   payload? : String = "",
+  origin? : String = "",
 ) -> String {
   BundledRuntime::new(self).dispatch_json_async(
     id~,
     window_label~,
     route~,
     payload~,
+    origin~,
   )
 }
 
@@ -51,8 +60,9 @@ pub fn BundledRuntime::dispatch_json(
   window_label~ : String,
   route~ : String,
   payload? : String = "",
+  origin? : String = "",
 ) -> String {
-  match self.dispatch(id~, window_label~, route~, payload~) {
+  match self.dispatch(id~, window_label~, route~, payload~, origin~) {
     Ok(response) => @runtime.encode_invoke_response_json(response)
     Err(response) => @runtime.encode_invoke_response_json(response)
   }
@@ -65,8 +75,9 @@ pub async fn BundledRuntime::dispatch_json_async(
   window_label~ : String,
   route~ : String,
   payload? : String = "",
+  origin? : String = "",
 ) -> String {
-  match self.dispatch_async(id~, window_label~, route~, payload~) {
+  match self.dispatch_async(id~, window_label~, route~, payload~, origin~) {
     Ok(response) => @runtime.encode_invoke_response_json(response)
     Err(response) => @runtime.encode_invoke_response_json(response)
   }
@@ -79,13 +90,14 @@ fn BundledRuntime::dispatch(
   window_label~ : String,
   route~ : String,
   payload~ : String,
+  origin~ : String,
 ) -> Result[@lepusa.InvokeResponse, @lepusa.InvokeResponse] {
   match parse_invoke_route(route) {
     Ok((plugin, command)) => {
       if !self.registered_routes().contains(route) {
         return Err(@lepusa.InvokeResponse::unknown_command(id, route))
       }
-      if !self.window_allows_route(window_label~, route~) {
+      if !self.window_allows_route(window_label~, route~, origin~) {
         return Err(@lepusa.InvokeResponse::permission_denied(id, route))
       }
       let request = @lepusa.InvokeRequest::new(
@@ -94,6 +106,7 @@ fn BundledRuntime::dispatch(
         plugin~,
         command~,
         payload~,
+        origin~,
       )
       let capability = @lepusa.Capability::new("bundled")
         .window(window_label)
@@ -117,13 +130,14 @@ async fn BundledRuntime::dispatch_async(
   window_label~ : String,
   route~ : String,
   payload~ : String,
+  origin~ : String,
 ) -> Result[@lepusa.InvokeResponse, @lepusa.InvokeResponse] {
   match parse_invoke_route(route) {
     Ok((plugin, command)) => {
       if !self.registered_routes().contains(route) {
         return Err(@lepusa.InvokeResponse::unknown_command(id, route))
       }
-      if !self.window_allows_route(window_label~, route~) {
+      if !self.window_allows_route(window_label~, route~, origin~) {
         return Err(@lepusa.InvokeResponse::permission_denied(id, route))
       }
       let request = @lepusa.InvokeRequest::new(
@@ -132,6 +146,7 @@ async fn BundledRuntime::dispatch_async(
         plugin~,
         command~,
         payload~,
+        origin~,
       )
       let capability = @lepusa.Capability::new("bundled")
         .window(window_label)
@@ -158,8 +173,9 @@ fn BundledRuntime::window_allows_route(
   self : BundledRuntime,
   window_label~ : String,
   route~ : String,
+  origin? : String = "",
 ) -> Bool {
-  self.manifest.window_allows_route(window_label~, route~)
+  self.manifest.window_allows_route(window_label~, route~, origin~)
 }
 
 ///|
@@ -221,7 +237,12 @@ fn BundledRuntimeManifest::window_allows_route(
   self : BundledRuntimeManifest,
   window_label~ : String,
   route~ : String,
+  origin? : String = "",
 ) -> Bool {
+  match self.command_manifest_allows_route(window_label~, route~, origin~) {
+    Some(allowed) => return allowed
+    None => ()
+  }
   for item in optional_array(self.runtime, "webviews").unwrap_or([]) {
     match item {
       Object(webview) =>
@@ -234,6 +255,43 @@ fn BundledRuntimeManifest::window_allows_route(
     }
   }
   false
+}
+
+///|
+fn BundledRuntimeManifest::command_manifest_allows_route(
+  self : BundledRuntimeManifest,
+  window_label~ : String,
+  route~ : String,
+  origin~ : String,
+) -> Bool? {
+  match optional_object(self.runtime, "commandManifest") {
+    None => None
+    Some(manifest) =>
+      match optional_array(manifest, "commands") {
+        None => None
+        Some(commands) => {
+          for item in commands {
+            match item {
+              Object(command) =>
+                if optional_string(command, "route").unwrap_or("") == route {
+                  let windows = strings_from_json_array(
+                    optional_array(command, "allowedWindows").unwrap_or([]),
+                  )
+                  let origins = strings_from_json_array(
+                    optional_array(command, "allowedOrigins").unwrap_or([]),
+                  )
+                  return Some(
+                    windows.contains(window_label) &&
+                    (origins.is_empty() || origins.contains(origin)),
+                  )
+                }
+              _ => ()
+            }
+          }
+          Some(false)
+        }
+      }
+  }
 }
 
 ///|

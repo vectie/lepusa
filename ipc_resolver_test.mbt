@@ -45,6 +45,8 @@ test "frontend bridge emits invoke resolver ids" {
             script.source().contains("const errorId = String(++nextId);"),
           )
           assert_true(script.source().contains("id: callbackId"))
+          assert_true(script.source().contains("const currentOrigin = () =>"))
+          assert_true(script.source().contains("origin: currentOrigin()"))
           assert_true(script.source().contains("callback_id: callbackId"))
           assert_true(script.source().contains("error_id: errorId"))
           assert_true(

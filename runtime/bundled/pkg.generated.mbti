@@ -282,8 +282,8 @@ pub async fn BundledRuntime::dispatch_bridge_message(Self, String, window_label?
 pub fn BundledRuntime::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntime::dispatch_bridge_script_bytes(Self, Bytes) -> Bytes
 pub async fn BundledRuntime::dispatch_bridge_script_bytes_async(Self, Bytes) -> Bytes
-pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
-pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
+pub fn BundledRuntime::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String, origin? : String) -> String
+pub async fn BundledRuntime::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String, origin? : String) -> String
 pub fn BundledRuntime::manifest(Self) -> BundledRuntimeManifest
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
 pub fn BundledRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
@@ -311,8 +311,8 @@ pub fn BundledRuntimeManifest::bridge_url(Self) -> String
 pub fn BundledRuntimeManifest::bundle_root(Self) -> String
 pub async fn BundledRuntimeManifest::dispatch_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
 pub fn BundledRuntimeManifest::dispatch_bridge_message_sync(Self, String, window_label? : String) -> Result[BundledBridgeDispatch, Array[String]]
-pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
-pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String) -> String
+pub fn BundledRuntimeManifest::dispatch_json(Self, id~ : String, window_label~ : String, route~ : String, payload? : String, origin? : String) -> String
+pub async fn BundledRuntimeManifest::dispatch_json_async(Self, id~ : String, window_label~ : String, route~ : String, payload? : String, origin? : String) -> String
 pub fn BundledRuntimeManifest::first_webview(Self) -> Result[BundledWebView, String]
 pub fn BundledRuntimeManifest::initial_load_url(Self, BundledWebView) -> Result[String, String]
 pub fn BundledRuntimeManifest::lifecycle_json(Self, BundledLifecycleEvent) -> String

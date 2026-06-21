@@ -105,12 +105,13 @@ pub fn Permission::name(self : Permission) -> String {
 pub struct Capability {
   name : String
   windows : Array[String]
+  origins : Array[String]
   permissions : Array[Permission]
 } derive(Debug, Eq)
 
 ///|
 pub fn Capability::new(name : String) -> Capability {
-  { name, windows: [], permissions: [] }
+  { name, windows: [], origins: [], permissions: [] }
 }
 
 ///|
@@ -118,6 +119,13 @@ pub fn Capability::window(self : Capability, label : String) -> Capability {
   let windows = self.windows.copy()
   windows.push(label)
   { ..self, windows, }
+}
+
+///|
+pub fn Capability::origin(self : Capability, origin : String) -> Capability {
+  let origins = self.origins.copy()
+  origins.push(origin)
+  { ..self, origins, }
 }
 
 ///|
@@ -140,10 +148,12 @@ pub fn Capability::allows(
   self : Capability,
   window_label~ : String,
   permission~ : Permission,
+  origin? : String = "",
 ) -> Bool {
   let window_allowed = self.windows.is_empty() ||
     self.windows.contains(window_label)
-  window_allowed && self.permissions.contains(permission)
+  let origin_allowed = self.origins.is_empty() || self.origins.contains(origin)
+  window_allowed && origin_allowed && self.permissions.contains(permission)
 }
 
 ///|
@@ -162,6 +172,11 @@ pub fn Capability::windows(self : Capability) -> Array[String] {
 }
 
 ///|
+pub fn Capability::origins(self : Capability) -> Array[String] {
+  self.origins.copy()
+}
+
+///|
 pub fn Capability::validate(self : Capability) -> Array[String] {
   let problems : Array[String] = []
   if self.name == "" {
@@ -169,6 +184,11 @@ pub fn Capability::validate(self : Capability) -> Array[String] {
   }
   if self.permissions.is_empty() {
     problems.push("capability must include at least one permission")
+  }
+  for origin in self.origins {
+    if origin == "" {
+      problems.push("capability origin must not be empty")
+    }
   }
   problems
 }

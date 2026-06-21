@@ -6,6 +6,7 @@ pub struct CommandManifestEntry {
   mode : CommandMode
   permission : Permission
   allowed_windows : Array[String]
+  allowed_origins : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -15,6 +16,7 @@ fn CommandManifestEntry::new(
   mode~ : CommandMode,
   permission~ : Permission,
   allowed_windows~ : Array[String],
+  allowed_origins~ : Array[String],
 ) -> CommandManifestEntry {
   {
     plugin,
@@ -23,6 +25,7 @@ fn CommandManifestEntry::new(
     mode,
     permission,
     allowed_windows: allowed_windows.copy(),
+    allowed_origins: allowed_origins.copy(),
   }
 }
 
@@ -61,11 +64,26 @@ pub fn CommandManifestEntry::allowed_windows(
 }
 
 ///|
+pub fn CommandManifestEntry::allowed_origins(
+  self : CommandManifestEntry,
+) -> Array[String] {
+  self.allowed_origins.copy()
+}
+
+///|
 pub fn CommandManifestEntry::allowed_in_window(
   self : CommandManifestEntry,
   window_label : String,
 ) -> Bool {
   self.allowed_windows.contains(window_label)
+}
+
+///|
+pub fn CommandManifestEntry::allowed_for_origin(
+  self : CommandManifestEntry,
+  origin : String,
+) -> Bool {
+  self.allowed_origins.is_empty() || self.allowed_origins.contains(origin)
 }
 
 ///|
@@ -77,7 +95,8 @@ pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
     "\"permission\":\{self.permission.name().json_string()},",
-    "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}]",
+    "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
+    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -106,7 +125,7 @@ pub fn CommandManifest::from_plugins(
     for command in plugin.commands() {
       let allowed_windows : Array[String] = []
       for window in windows {
-        if policy.allows(
+        if policy.allows_window(
             window_label=window.label(),
             permission=command.permission(),
           ) {
@@ -120,11 +139,40 @@ pub fn CommandManifest::from_plugins(
           mode=command.mode(),
           permission=command.permission(),
           allowed_windows~,
+          allowed_origins=command_allowed_origins(
+            policy,
+            allowed_windows,
+            command.permission(),
+          ),
         ),
       )
     }
   }
   CommandManifest::new(entries~)
+}
+
+///|
+fn command_allowed_origins(
+  policy : CapabilityPolicy,
+  windows : Array[String],
+  permission : Permission,
+) -> Array[String] {
+  let origins : Array[String] = []
+  for window in windows {
+    let window_origins = policy.allowed_origins(
+      window_label=window,
+      permission~,
+    )
+    if window_origins.is_empty() {
+      return []
+    }
+    for origin in window_origins {
+      if !origins.contains(origin) {
+        origins.push(origin)
+      }
+    }
+  }
+  origins
 }
 
 ///|
@@ -178,6 +226,20 @@ pub fn CommandManifest::allowed_routes(
     }
   }
   routes
+}
+
+///|
+pub fn CommandManifest::allows(
+  self : CommandManifest,
+  route : String,
+  window_label~ : String,
+  origin? : String = "",
+) -> Bool {
+  match self.entry(route) {
+    Some(entry) =>
+      entry.allowed_in_window(window_label) && entry.allowed_for_origin(origin)
+    None => false
+  }
 }
 
 ///|

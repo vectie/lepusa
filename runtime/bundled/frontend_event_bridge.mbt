@@ -26,6 +26,7 @@ fn BundledRuntime::dispatch_with_operations(
         window_label=request.window_label(),
         route=request.route(),
         payload=request.payload(),
+        origin=request.origin(),
       ) {
       Ok(response) | Err(response) => response
     }
@@ -47,6 +48,7 @@ async fn BundledRuntime::dispatch_with_operations_async(
         window_label=request.window_label(),
         route=request.route(),
         payload=request.payload(),
+        origin=request.origin(),
       ) {
       Ok(response) | Err(response) => response
     }

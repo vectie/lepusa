@@ -5,12 +5,14 @@ pub struct PermissionManifestCommand {
   route : String
   mode : CommandMode
   allowed_windows : Array[String]
+  allowed_origins : Array[String]
 } derive(Debug, Eq)
 
 ///|
 pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
+  origins : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -19,6 +21,7 @@ pub struct PermissionManifestPermission {
   commands : Array[PermissionManifestCommand]
   grants : Array[PermissionManifestGrant]
   allowed_windows : Array[String]
+  allowed_origins : Array[String]
   denied_routes : Array[String]
 } derive(Debug, Eq)
 
@@ -37,6 +40,7 @@ fn PermissionManifestCommand::from_entry(
     route: entry.route(),
     mode: entry.mode(),
     allowed_windows: entry.allowed_windows(),
+    allowed_origins: entry.allowed_origins(),
   }
 }
 
@@ -44,7 +48,11 @@ fn PermissionManifestCommand::from_entry(
 fn PermissionManifestGrant::from_capability(
   capability : Capability,
 ) -> PermissionManifestGrant {
-  { capability: capability.name(), windows: capability.windows() }
+  {
+    capability: capability.name(),
+    windows: capability.windows(),
+    origins: capability.origins(),
+  }
 }
 
 ///|
@@ -83,6 +91,13 @@ pub fn PermissionManifestCommand::allowed_windows(
 }
 
 ///|
+pub fn PermissionManifestCommand::allowed_origins(
+  self : PermissionManifestCommand,
+) -> Array[String] {
+  self.allowed_origins.copy()
+}
+
+///|
 pub fn PermissionManifestCommand::to_json(
   self : PermissionManifestCommand,
 ) -> String {
@@ -92,7 +107,8 @@ pub fn PermissionManifestCommand::to_json(
     "\"command\":\{self.command.json_string()},",
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
-    "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}]",
+    "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
+    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -112,13 +128,21 @@ pub fn PermissionManifestGrant::windows(
 }
 
 ///|
+pub fn PermissionManifestGrant::origins(
+  self : PermissionManifestGrant,
+) -> Array[String] {
+  self.origins.copy()
+}
+
+///|
 pub fn PermissionManifestGrant::to_json(
   self : PermissionManifestGrant,
 ) -> String {
   [
     "{",
     "\"capability\":\{self.capability.json_string()},",
-    "\"windows\":[\{self.windows.map(fn(window) { window.json_string() }).join(",")}]",
+    "\"windows\":[\{self.windows.map(fn(window) { window.json_string() }).join(",")}],",
+    "\"origins\":[\{self.origins.map(fn(origin) { origin.json_string() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -152,6 +176,13 @@ pub fn PermissionManifestPermission::allowed_windows(
 }
 
 ///|
+pub fn PermissionManifestPermission::allowed_origins(
+  self : PermissionManifestPermission,
+) -> Array[String] {
+  self.allowed_origins.copy()
+}
+
+///|
 pub fn PermissionManifestPermission::denied_routes(
   self : PermissionManifestPermission,
 ) -> Array[String] {
@@ -168,6 +199,7 @@ pub fn PermissionManifestPermission::to_json(
     "\"commands\":[\{self.commands.map(fn(command) { command.to_json() }).join(",")}],",
     "\"grants\":[\{self.grants.map(fn(grant) { grant.to_json() }).join(",")}],",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
+    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}],",
     "\"deniedRoutes\":[\{self.denied_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",
   ].join("")
@@ -193,6 +225,7 @@ pub fn PermissionManifest::from_command_manifest(
       commands,
       grants: permission_grants(capabilities, name),
       allowed_windows: permission_allowed_windows(commands),
+      allowed_origins: permission_allowed_origins(commands),
       denied_routes: commands
       .filter(fn(command) { command.allowed_windows().is_empty() })
       .map(fn(command) { command.route() }),
@@ -330,4 +363,19 @@ fn permission_allowed_windows(
     }
   }
   windows
+}
+
+///|
+fn permission_allowed_origins(
+  commands : Array[PermissionManifestCommand],
+) -> Array[String] {
+  let origins : Array[String] = []
+  for command in commands {
+    for origin in command.allowed_origins() {
+      if !origins.contains(origin) {
+        origins.push(origin)
+      }
+    }
+  }
+  origins
 }
