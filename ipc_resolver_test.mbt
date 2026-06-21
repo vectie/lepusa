@@ -47,6 +47,15 @@ test "frontend bridge emits invoke resolver ids" {
           assert_true(script.source().contains("id: callbackId"))
           assert_true(script.source().contains("callback_id: callbackId"))
           assert_true(script.source().contains("error_id: errorId"))
+          assert_true(script.source().contains("class LepusaInvokeError"))
+          assert_true(script.source().contains("const createInvokeError"))
+          assert_true(script.source().contains("response.errorCode"))
+          assert_true(
+            script
+            .source()
+            .contains("throw createInvokeError(response, route);"),
+          )
+          assert_true(script.source().contains("isInvokeError: (error) =>"))
         }
         Err(_) => abort("unexpected invalid bridge script")
       }
