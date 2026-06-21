@@ -145,25 +145,50 @@ test "windows backend exposes webview2 descriptor" {
     @runtime.NativeExecutableOperation::desktop_shell(
       @runtime.NativeDesktopShellOperation::new(
         domain="menu",
+        action="setAppMenu",
+        target="app",
+        window_label="main",
+        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"open\",\"label\":\"Open\"},{\"id\":\"sync\",\"label\":\"Sync\",\"kind\":\"check\",\"checked\":true}]}]}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
         action="setWindowMenu",
+        target="window",
+        window_label="main",
+        payload="{\"items\":[{\"id\":\"tools\",\"label\":\"Tools\",\"kind\":\"submenu\",\"items\":[{\"id\":\"inspect\",\"label\":\"Inspect\"}]}]}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="clearWindowMenu",
         target="window",
         window_label="main",
       ),
     ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="clearAppMenu",
+        target="app",
+        window_label="main",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 6)
-  assert_eq(execution.skipped_count(), 1)
+  assert_eq(execution.executed_count(), 10)
+  assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[1].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[2].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[3].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[4].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[5].status() is NativeOperationExecuted)
-  match execution.outcomes()[6].status() {
-    NativeOperationSkipped(message) =>
-      assert_true(message.contains("menu.setWindowMenu"))
-    _ => abort("expected native menu renderer to be skipped")
-  }
+  assert_true(execution.outcomes()[6].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[7].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[8].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[9].status() is NativeOperationExecuted)
 }
 
 ///|

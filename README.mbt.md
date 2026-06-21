@@ -753,15 +753,15 @@ validation at the official plugin boundary. The macOS, Linux, and Windows loops
 consume those records from bridge packets; app show/hide/setTheme/exit/restart are
 applied in the native loop, restart relaunches the current command line before
 closing the current window set, macOS also applies app dock visibility,
-macOS/Linux apply app and window menu bars, and macOS/Linux now apply tray
-operations for icon, tooltip, menu, menu popup, visibility, and destroy.
-Platform operation reports now mark supported app shell, macOS/Linux app-menu
-and window-menu, and macOS/Linux tray operations as executed, including macOS
-menu accelerator rendering for supported shortcut strings and macOS menu/tray
-plus Linux menu/tray item click dispatch to `menu.onItemClick` and
-`tray.onMenuItemClick`, while leaving remaining Windows tray/menu, non-macOS
-menu accelerator, and non-tray Windows menu item action work explicitly skipped
-until native OS renderers land.
+macOS/Linux/Windows apply app and window menu bars, and macOS/Linux now apply
+tray operations for icon, tooltip, menu, menu popup, visibility, and destroy.
+Platform operation reports now mark supported app shell, macOS/Linux/Windows
+app-menu and window-menu, and macOS/Linux tray operations as executed, including
+macOS menu accelerator rendering for supported shortcut strings and
+macOS menu/tray plus Linux/Windows menu and Linux tray item click dispatch to
+`menu.onItemClick` and `tray.onMenuItemClick`, while leaving remaining Windows
+tray and non-macOS menu accelerator work explicitly skipped until native OS
+renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

@@ -70,10 +70,20 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
       NativeOperationSkipped("Windows native effect is not registered: \{name}")
     },
     desktop_shell=fn(operation) {
-      @runtime.native_desktop_shell_platform_status(
-        operation,
-        platform_name="Windows",
-      )
+      if operation.domain() == "menu" &&
+        (
+          operation.action() == "setAppMenu" ||
+          operation.action() == "clearAppMenu" ||
+          operation.action() == "setWindowMenu" ||
+          operation.action() == "clearWindowMenu"
+        ) {
+        NativeOperationExecuted
+      } else {
+        @runtime.native_desktop_shell_platform_status(
+          operation,
+          platform_name="Windows",
+        )
+      }
     },
   )
 }
