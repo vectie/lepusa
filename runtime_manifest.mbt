@@ -13,6 +13,7 @@ pub struct RuntimeLaunchManifest {
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_manifest : CommandManifest
+  permission_manifest : PermissionManifest
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -149,6 +150,7 @@ pub fn RuntimePlan::launch_manifest(
       startup_actions,
       lifecycle_hooks,
       command_manifest: self.command_manifest(),
+      permission_manifest: self.permission_manifest(),
       command_routes: self.command_routes(),
       registered_routes: registered_routes.copy(),
     })
@@ -297,6 +299,13 @@ pub fn RuntimeLaunchManifest::command_manifest(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::permission_manifest(
+  self : RuntimeLaunchManifest,
+) -> PermissionManifest {
+  self.permission_manifest
+}
+
+///|
 pub fn RuntimeLaunchManifest::registered_routes(
   self : RuntimeLaunchManifest,
 ) -> Array[String] {
@@ -320,6 +329,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandManifest\":\{self.command_manifest.to_json()},",
+    "\"permissionManifest\":\{self.permission_manifest.to_json()},",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",

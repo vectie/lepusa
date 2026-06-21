@@ -632,6 +632,54 @@ pub fn Permission::command(String) -> Self
 pub fn Permission::name(Self) -> String
 pub fn Permission::named(String) -> Result[Self, String]
 
+pub struct PermissionManifest {
+  permissions : Array[PermissionManifestPermission]
+} derive(Eq, @debug.Debug)
+pub fn PermissionManifest::denied_routes(Self) -> Array[String]
+pub fn PermissionManifest::from_command_manifest(CommandManifest, capabilities~ : Array[Capability]) -> Self
+pub fn PermissionManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
+pub fn PermissionManifest::new(permissions? : Array[PermissionManifestPermission]) -> Self
+pub fn PermissionManifest::permission(Self, String) -> PermissionManifestPermission?
+pub fn PermissionManifest::permission_names(Self) -> Array[String]
+pub fn PermissionManifest::permissions(Self) -> Array[PermissionManifestPermission]
+pub fn PermissionManifest::to_json(Self) -> String
+
+pub struct PermissionManifestCommand {
+  plugin : String
+  command : String
+  route : String
+  mode : CommandMode
+  allowed_windows : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn PermissionManifestCommand::allowed_windows(Self) -> Array[String]
+pub fn PermissionManifestCommand::command(Self) -> String
+pub fn PermissionManifestCommand::mode(Self) -> CommandMode
+pub fn PermissionManifestCommand::plugin(Self) -> String
+pub fn PermissionManifestCommand::route(Self) -> String
+pub fn PermissionManifestCommand::to_json(Self) -> String
+
+pub struct PermissionManifestGrant {
+  capability : String
+  windows : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn PermissionManifestGrant::capability(Self) -> String
+pub fn PermissionManifestGrant::to_json(Self) -> String
+pub fn PermissionManifestGrant::windows(Self) -> Array[String]
+
+pub struct PermissionManifestPermission {
+  name : String
+  commands : Array[PermissionManifestCommand]
+  grants : Array[PermissionManifestGrant]
+  allowed_windows : Array[String]
+  denied_routes : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn PermissionManifestPermission::allowed_windows(Self) -> Array[String]
+pub fn PermissionManifestPermission::commands(Self) -> Array[PermissionManifestCommand]
+pub fn PermissionManifestPermission::denied_routes(Self) -> Array[String]
+pub fn PermissionManifestPermission::grants(Self) -> Array[PermissionManifestGrant]
+pub fn PermissionManifestPermission::name(Self) -> String
+pub fn PermissionManifestPermission::to_json(Self) -> String
+
 pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
@@ -922,6 +970,7 @@ pub struct RuntimeLaunchManifest {
   startup_actions : Array[RuntimeAction]
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_manifest : CommandManifest
+  permission_manifest : PermissionManifest
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -935,6 +984,7 @@ pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::file_system_scopes(Self) -> Array[FileSystemScope]
 pub fn RuntimeLaunchManifest::lifecycle_hooks(Self) -> Array[RuntimeLifecycleHook]
 pub fn RuntimeLaunchManifest::local_services(Self) -> Array[LocalService]
+pub fn RuntimeLaunchManifest::permission_manifest(Self) -> PermissionManifest
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
@@ -978,6 +1028,7 @@ pub fn RuntimePlan::file_system_scopes(Self) -> Array[FileSystemScope]
 pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
+pub fn RuntimePlan::permission_manifest(Self) -> PermissionManifest
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::window_command_routes(Self, String) -> Array[String]

@@ -109,6 +109,61 @@ test "command manifest can be constructed directly" {
 }
 
 ///|
+test "permission manifest groups routes grants windows and denials" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .window(label="settings", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("core")
+      .command_sync("read", permission=FileSystemRead)
+      .command_async("write", permission=FileSystemWrite)
+      .command_sync("admin", permission=Shell),
+    )
+    .with_capability(
+      @lepusa.Capability::new("read-main")
+      .window("main")
+      .permission(FileSystemRead),
+    )
+    .with_capability(
+      @lepusa.Capability::new("write-settings")
+      .window("settings")
+      .permission(FileSystemWrite),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => {
+      let manifest = plan.permission_manifest()
+      assert_true(manifest.permission_names().contains("filesystem.read"))
+      assert_true(manifest.permission_names().contains("filesystem.write"))
+      assert_true(manifest.permission_names().contains("shell"))
+      match manifest.permission("filesystem.read") {
+        Some(permission) => {
+          assert_eq(permission.commands().length(), 1)
+          assert_eq(permission.grants().length(), 1)
+          assert_true(permission.allowed_windows().contains("main"))
+          assert_eq(permission.denied_routes().length(), 0)
+          assert_true(
+            permission.to_json().contains("\"name\":\"filesystem.read\""),
+          )
+        }
+        None => abort("missing read permission")
+      }
+      match manifest.permission("shell") {
+        Some(permission) => {
+          assert_eq(permission.commands()[0].route(), "core.admin")
+          assert_eq(permission.allowed_windows().length(), 0)
+          assert_true(permission.denied_routes().contains("core.admin"))
+        }
+        None => abort("missing shell permission")
+      }
+      assert_true(manifest.denied_routes().contains("core.admin"))
+      assert_true(manifest.to_json().contains("\"permissions\""))
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "launch manifest exposes typed command manifest" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
@@ -130,6 +185,12 @@ test "launch manifest exposes typed command manifest" {
       match plan.launch_manifest(registered_routes=["core.read"]) {
         Ok(manifest) => {
           assert_eq(manifest.command_manifest().entries().length(), 2)
+          assert_true(
+            manifest
+            .permission_manifest()
+            .permission_names()
+            .contains("notification"),
+          )
           match manifest.command_manifest().entry("core.events") {
             Some(entry) => {
               assert_true(entry.mode() is Stream)
@@ -139,6 +200,7 @@ test "launch manifest exposes typed command manifest" {
           }
           let json = manifest.to_json()
           assert_true(json.contains("\"commandManifest\""))
+          assert_true(json.contains("\"permissionManifest\""))
           assert_true(json.contains("\"route\":\"core.events\""))
           assert_true(json.contains("\"mode\":\"stream\""))
           assert_true(

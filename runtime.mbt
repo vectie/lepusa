@@ -113,6 +113,16 @@ pub fn RuntimePlan::command_manifest(self : RuntimePlan) -> CommandManifest {
 }
 
 ///|
+pub fn RuntimePlan::permission_manifest(
+  self : RuntimePlan,
+) -> PermissionManifest {
+  PermissionManifest::from_command_manifest(
+    self.command_manifest(),
+    capabilities=self.capabilities(),
+  )
+}
+
+///|
 pub fn RuntimePlan::command_routes_by_mode(
   self : RuntimePlan,
   mode : CommandMode,

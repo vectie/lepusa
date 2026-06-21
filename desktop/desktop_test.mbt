@@ -45,6 +45,12 @@ test "desktop kit applies plugins and capabilities to app runtime" {
         Ok(plan) => {
           assert_true(plan.command_routes().contains("log.write"))
           assert_true(plan.command_routes().contains("clipboard.readText"))
+          let permissions = plan.permission_manifest()
+          assert_true(
+            permissions.permission_names().contains("custom:log.write"),
+          )
+          assert_true(permissions.permission_names().contains("clipboard"))
+          assert_eq(permissions.denied_routes().length(), 0)
           assert_true(plan.window_command_routes("main").contains("log.write"))
           assert_true(
             plan.window_command_routes("main").contains("clipboard.readText"),
