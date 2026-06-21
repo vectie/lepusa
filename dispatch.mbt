@@ -268,10 +268,8 @@ fn dispatch_command(
   capabilities : Array[Capability],
 ) -> InvokeResponse {
   let route = request.route()
-  if !capabilities.allow_invoke(
-      window_label=request.window_label(),
-      permission~,
-    ) {
+  let policy = CapabilityPolicy::new(capabilities~)
+  if !policy.allows(window_label=request.window_label(), permission~) {
     InvokeResponse::error(request.id(), "permission denied: \{route}")
   } else {
     match command.handler {
@@ -297,10 +295,8 @@ async fn dispatch_command_async(
   capabilities : Array[Capability],
 ) -> InvokeResponse {
   let route = request.route()
-  if !capabilities.allow_invoke(
-      window_label=request.window_label(),
-      permission~,
-    ) {
+  let policy = CapabilityPolicy::new(capabilities~)
+  if !policy.allows(window_label=request.window_label(), permission~) {
     InvokeResponse::error(request.id(), "permission denied: \{route}")
   } else {
     match command.handler {
@@ -316,18 +312,4 @@ async fn dispatch_command_async(
         }
     }
   }
-}
-
-///|
-fn Array::allow_invoke(
-  self : Array[Capability],
-  window_label~ : String,
-  permission~ : Permission,
-) -> Bool {
-  for capability in self {
-    if capability.allows(window_label~, permission~) {
-      return true
-    }
-  }
-  false
 }

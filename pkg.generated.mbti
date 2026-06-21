@@ -217,6 +217,31 @@ pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
 pub fn Capability::windows(Self) -> Array[String]
 
+pub struct CapabilityDecision {
+  allowed : Bool
+  window_label : String
+  permission : Permission
+  capability : String
+  reason : String
+} derive(Eq, @debug.Debug)
+pub fn CapabilityDecision::allowed(Self) -> Bool
+pub fn CapabilityDecision::capability(Self) -> String
+pub fn CapabilityDecision::denied(Self) -> Bool
+pub fn CapabilityDecision::permission(Self) -> Permission
+pub fn CapabilityDecision::reason(Self) -> String
+pub fn CapabilityDecision::to_json(Self) -> String
+pub fn CapabilityDecision::window_label(Self) -> String
+
+pub struct CapabilityPolicy {
+  capabilities : Array[Capability]
+} derive(Eq, @debug.Debug)
+pub fn CapabilityPolicy::allows(Self, window_label~ : String, permission~ : Permission) -> Bool
+pub fn CapabilityPolicy::capabilities(Self) -> Array[Capability]
+pub fn CapabilityPolicy::evaluate(Self, window_label~ : String, permission~ : Permission) -> CapabilityDecision
+pub fn CapabilityPolicy::new(capabilities? : Array[Capability]) -> Self
+pub fn CapabilityPolicy::to_json(Self) -> String
+pub fn CapabilityPolicy::validate(Self) -> Array[String]
+
 pub struct Cell {
   id : String
   html : Html
