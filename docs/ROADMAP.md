@@ -186,9 +186,10 @@
   their current WebView script-evaluation, window-control, and desktop-shell
   support, with app show/hide/setTheme/exit/restart reported as executed,
   native restart relaunching the current command line before exit, macOS dock
-  visibility and native nested app-menu set/clear reported as executed, and
-  remaining tray, window-menu, menu accelerator, and menu item action work
-  reported as skipped until concrete native renderers land; native
+  visibility, native nested app-menu set/clear, and macOS status-item tray
+  operations reported as executed, with remaining Linux/Windows tray,
+  window-menu, menu accelerator, and menu item action work reported as skipped
+  until concrete native renderers land; native
   loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
   Windows now route normal bridge handoffs and drain handoffs through one
@@ -308,9 +309,9 @@ Stabilize the cross-platform core set first:
   delegated sync state handlers, typed `desktop-shell` executable operations
   from approved bridge dispatches, native macOS/Linux/Windows packet consumers
   for app show/hide/setTheme/exit/restart including current-command relaunch
-  for restart, macOS dock visibility and nested app-menu set/clear handling,
-  and honest skipped execution reports for remaining tray/window-menu renderer
-  work exist
+  for restart, macOS dock visibility, nested app-menu set/clear, and
+  status-item tray handling, plus honest skipped execution reports for
+  remaining Linux/Windows tray and window-menu renderer work exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and

@@ -48,6 +48,7 @@ typedef void *(*LepusaMsgSendId)(void *, void *);
 typedef void *(*LepusaMsgSendIdId)(void *, void *, void *);
 typedef void *(*LepusaMsgSendIdIdIdId)(void *, void *, void *, void *, void *);
 typedef void *(*LepusaMsgSendIdCStr)(void *, void *, const char *);
+typedef void *(*LepusaMsgSendIdDouble)(void *, void *, double);
 typedef void *(*LepusaMsgSendIdULong)(void *, void *, unsigned long);
 typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
 typedef void *(*LepusaMsgSendIdRectId)(void *, void *, LepusaRect, void *);
@@ -101,6 +102,8 @@ typedef struct {
 static LepusaObjcGetClass lepusa_objc_get_class = NULL;
 static LepusaSelRegisterName lepusa_sel_register_name = NULL;
 static LepusaObjcMsgSend lepusa_objc_msg_send = NULL;
+static void *lepusa_macos_tray_item = NULL;
+static void *lepusa_macos_tray_menu = NULL;
 static LepusaObjcAllocateClassPair lepusa_objc_allocate_class_pair = NULL;
 static LepusaObjcRegisterClassPair lepusa_objc_register_class_pair = NULL;
 static LepusaClassAddMethod lepusa_class_add_method = NULL;
@@ -1839,6 +1842,177 @@ static void lepusa_clear_app_menu(void) {
   }
 }
 
+static void *lepusa_macos_tray_ensure_item(void) {
+  if (lepusa_macos_tray_item != NULL) {
+    return lepusa_macos_tray_item;
+  }
+  void *status_bar = lepusa_msg_id(lepusa_cls("NSStatusBar"), "systemStatusBar");
+  if (status_bar == NULL) {
+    return NULL;
+  }
+  lepusa_macos_tray_item = ((LepusaMsgSendIdDouble)lepusa_objc_msg_send)(
+    status_bar,
+    lepusa_sel("statusItemWithLength:"),
+    -1.0
+  );
+  void *button = lepusa_macos_tray_item == NULL ?
+    NULL :
+    lepusa_msg_id(lepusa_macos_tray_item, "button");
+  if (button != NULL) {
+    lepusa_msg_void_id(button, "setTitle:", lepusa_ns_string_from_range("L", 1));
+  }
+  return lepusa_macos_tray_item;
+}
+
+static int lepusa_json_payload_string(
+  const char *payload,
+  int32_t payload_len,
+  const char *field,
+  const char **value_out,
+  int32_t *value_len_out
+) {
+  if (payload == NULL ||
+      payload_len <= 0 ||
+      value_out == NULL ||
+      value_len_out == NULL) {
+    return 0;
+  }
+  const char *end = payload + payload_len;
+  const char *root = lepusa_json_skip_space(payload, end);
+  if (root >= end) {
+    return 0;
+  }
+  if (*root == '"') {
+    const char *string_end = lepusa_json_string_end(root + 1, end);
+    if (string_end == NULL) {
+      return 0;
+    }
+    *value_out = root + 1;
+    *value_len_out = (int32_t)(string_end - (root + 1));
+    return 1;
+  }
+  if (*root == '{' && field != NULL) {
+    return lepusa_json_member_string(
+      root,
+      end,
+      field,
+      value_out,
+      value_len_out
+    );
+  }
+  return 0;
+}
+
+static void lepusa_apply_tray_icon(
+  const char *payload,
+  int32_t payload_len
+) {
+  void *item = lepusa_macos_tray_ensure_item();
+  void *button = item == NULL ? NULL : lepusa_msg_id(item, "button");
+  if (button == NULL) {
+    return;
+  }
+  const char *path = NULL;
+  int32_t path_len = 0;
+  if (!lepusa_json_payload_string(
+        payload,
+        payload_len,
+        "iconPath",
+        &path,
+        &path_len
+      )) {
+    return;
+  }
+  void *image_alloc = lepusa_msg_id(lepusa_cls("NSImage"), "alloc");
+  void *image = image_alloc == NULL ?
+    NULL :
+    ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
+      image_alloc,
+      lepusa_sel("initWithContentsOfFile:"),
+      lepusa_ns_string_from_range(path, path_len)
+    );
+  if (image != NULL) {
+    lepusa_msg_void_int(image, "setTemplate:", 1);
+    lepusa_msg_void_id(button, "setImage:", image);
+    lepusa_msg_void_id(button, "setTitle:", lepusa_ns_string_from_range("", 0));
+  }
+}
+
+static void lepusa_apply_tray_tooltip(
+  const char *payload,
+  int32_t payload_len
+) {
+  void *item = lepusa_macos_tray_ensure_item();
+  void *button = item == NULL ? NULL : lepusa_msg_id(item, "button");
+  if (button == NULL) {
+    return;
+  }
+  const char *tooltip = NULL;
+  int32_t tooltip_len = 0;
+  if (lepusa_json_payload_string(
+        payload,
+        payload_len,
+        "tooltip",
+        &tooltip,
+        &tooltip_len
+      )) {
+    lepusa_msg_void_id(
+      button,
+      "setToolTip:",
+      lepusa_ns_string_from_range(tooltip, tooltip_len)
+    );
+  }
+}
+
+static void lepusa_apply_tray_menu(
+  const char *payload,
+  int32_t payload_len
+) {
+  void *item = lepusa_macos_tray_ensure_item();
+  if (item == NULL) {
+    return;
+  }
+  void *menu = lepusa_macos_menu_from_payload(payload, payload_len, "Tray", 4);
+  if (menu == NULL) {
+    return;
+  }
+  lepusa_macos_tray_menu = menu;
+  lepusa_msg_void_id(item, "setMenu:", menu);
+}
+
+static void lepusa_apply_tray_visible(
+  const char *payload,
+  int32_t payload_len
+) {
+  int visible = 1;
+  if (!lepusa_visibility_payload_value(payload, payload_len, &visible)) {
+    return;
+  }
+  void *item = lepusa_macos_tray_ensure_item();
+  if (item != NULL) {
+    lepusa_msg_void_int(item, "setVisible:", visible);
+  }
+}
+
+static void lepusa_show_tray_menu(void) {
+  void *item = lepusa_macos_tray_ensure_item();
+  if (item != NULL && lepusa_macos_tray_menu != NULL) {
+    lepusa_msg_void_id(item, "popUpStatusItemMenu:", lepusa_macos_tray_menu);
+  }
+}
+
+static void lepusa_destroy_tray(void) {
+  if (lepusa_macos_tray_item == NULL) {
+    return;
+  }
+  void *status_bar = lepusa_msg_id(lepusa_cls("NSStatusBar"), "systemStatusBar");
+  if (status_bar != NULL) {
+    lepusa_msg_void_id(status_bar, "removeStatusItem:", lepusa_macos_tray_item);
+  }
+  lepusa_macos_tray_item = NULL;
+  lepusa_macos_tray_menu = NULL;
+}
+
 static void lepusa_apply_desktop_shell_from_handoff_packet(
   LepusaBridgeContext *context,
   moonbit_bytes_t packet
@@ -1884,6 +2058,30 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     }
     if (lepusa_range_equals(record.action, record.action_len, "menu.clearAppMenu")) {
       lepusa_clear_app_menu();
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.setIcon")) {
+      lepusa_apply_tray_icon(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.setTooltip")) {
+      lepusa_apply_tray_tooltip(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.setMenu")) {
+      lepusa_apply_tray_menu(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.showMenu")) {
+      lepusa_show_tray_menu();
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.setVisible")) {
+      lepusa_apply_tray_visible(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "tray.destroy")) {
+      lepusa_destroy_tray();
       continue;
     }
     LepusaWindowSlot *slot = lepusa_find_window_slot(

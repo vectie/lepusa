@@ -74,6 +74,16 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
           operation.action() == "clearAppMenu"
         ) {
         NativeOperationExecuted
+      } else if operation.domain() == "tray" &&
+        (
+          operation.action() == "setIcon" ||
+          operation.action() == "setTooltip" ||
+          operation.action() == "setMenu" ||
+          operation.action() == "showMenu" ||
+          operation.action() == "setVisible" ||
+          operation.action() == "destroy"
+        ) {
+        NativeOperationExecuted
       } else if operation.domain() == "app" &&
         (
           operation.action() == "setDockVisibility" ||
