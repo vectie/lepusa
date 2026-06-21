@@ -95,7 +95,7 @@ test "linux backend exposes webkitgtk descriptor" {
         action="setAppMenu",
         target="app",
         window_label="main",
-        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"open\",\"label\":\"Open\"},{\"id\":\"sync\",\"label\":\"Sync\",\"kind\":\"check\",\"checked\":true}]}]}",
+        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"open\",\"label\":\"Open\",\"accelerator\":\"CmdOrCtrl+O\"},{\"id\":\"sync\",\"label\":\"Sync\",\"kind\":\"check\",\"checked\":true,\"accelerator\":\"CmdOrCtrl+Shift+S\"}]}]}",
       ),
     ),
     @runtime.NativeExecutableOperation::desktop_shell(
@@ -104,7 +104,7 @@ test "linux backend exposes webkitgtk descriptor" {
         action="setWindowMenu",
         target="window",
         window_label="main",
-        payload="{\"items\":[{\"id\":\"tools\",\"label\":\"Tools\",\"kind\":\"submenu\",\"items\":[{\"id\":\"inspect\",\"label\":\"Inspect\"}]}]}",
+        payload="{\"items\":[{\"id\":\"tools\",\"label\":\"Tools\",\"kind\":\"submenu\",\"items\":[{\"id\":\"inspect\",\"label\":\"Inspect\",\"accelerator\":\"CmdOrCtrl+I\"}]}]}",
       ),
     ),
     @runtime.NativeExecutableOperation::desktop_shell(

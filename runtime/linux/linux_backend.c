@@ -65,6 +65,18 @@ typedef void *(*LepusaGtkSeparatorMenuItemNew)(void);
 typedef void (*LepusaGtkCheckMenuItemSetActive)(void *, int);
 typedef void (*LepusaGtkMenuShellAppend)(void *, void *);
 typedef void (*LepusaGtkMenuPopupAtPointer)(void *, void *);
+typedef void *(*LepusaGtkAccelGroupNew)(void);
+typedef void (*LepusaGtkWindowAddAccelGroup)(void *, void *);
+typedef void (*LepusaGtkWindowRemoveAccelGroup)(void *, void *);
+typedef void (*LepusaGtkWidgetAddAccelerator)(
+  void *,
+  const char *,
+  void *,
+  unsigned int,
+  unsigned int,
+  int
+);
+typedef unsigned int (*LepusaGdkKeyvalFromName)(const char *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
@@ -126,6 +138,7 @@ typedef char *(*LepusaJscValueToString)(void *);
 typedef struct {
   void *glib;
   void *gio;
+  void *gdk;
   void *gtk;
   void *gobject;
   void *jsc;
@@ -165,6 +178,11 @@ typedef struct {
   LepusaGtkCheckMenuItemSetActive gtk_check_menu_item_set_active;
   LepusaGtkMenuShellAppend gtk_menu_shell_append;
   LepusaGtkMenuPopupAtPointer gtk_menu_popup_at_pointer;
+  LepusaGtkAccelGroupNew gtk_accel_group_new;
+  LepusaGtkWindowAddAccelGroup gtk_window_add_accel_group;
+  LepusaGtkWindowRemoveAccelGroup gtk_window_remove_accel_group;
+  LepusaGtkWidgetAddAccelerator gtk_widget_add_accelerator;
+  LepusaGdkKeyvalFromName gdk_keyval_from_name;
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
@@ -192,6 +210,7 @@ typedef struct {
   void *window;
   void *box;
   void *menu_bar;
+  void *accel_group;
   int has_window_menu;
   void *webview;
 } LepusaLinuxWindowSlot;
@@ -219,6 +238,12 @@ typedef struct {
   LepusaLinuxBytesCallback call_resolve_asset;
   void *resolve_asset;
 } LepusaLinuxBridgeContext;
+
+#define LEPUSA_GDK_SHIFT_MASK (1u << 0)
+#define LEPUSA_GDK_CONTROL_MASK (1u << 2)
+#define LEPUSA_GDK_ALT_MASK (1u << 3)
+#define LEPUSA_GDK_SUPER_MASK (1u << 26)
+#define LEPUSA_GTK_ACCEL_VISIBLE 1
 
 static int lepusa_linux_load_symbol(
   void *library,
@@ -248,8 +273,12 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
     dlclose(api->glib);
     return 0;
   }
+  api->gdk = dlopen("libgdk-3.so.0", RTLD_LAZY | RTLD_LOCAL);
   api->gtk = dlopen("libgtk-3.so.0", RTLD_LAZY | RTLD_LOCAL);
   if (api->gtk == NULL) {
+    if (api->gdk != NULL) {
+      dlclose(api->gdk);
+    }
     dlclose(api->gio);
     dlclose(api->glib);
     return 0;
@@ -257,6 +286,9 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   api->gobject = dlopen("libgobject-2.0.so.0", RTLD_LAZY | RTLD_LOCAL);
   if (api->gobject == NULL) {
     dlclose(api->gtk);
+    if (api->gdk != NULL) {
+      dlclose(api->gdk);
+    }
     dlclose(api->gio);
     dlclose(api->glib);
     return 0;
@@ -267,6 +299,9 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   if (api->webkit == NULL) {
     dlclose(api->gobject);
     dlclose(api->gtk);
+    if (api->gdk != NULL) {
+      dlclose(api->gdk);
+    }
     dlclose(api->gio);
     dlclose(api->glib);
     return 0;
@@ -278,6 +313,9 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
     dlclose(api->webkit);
     dlclose(api->gobject);
     dlclose(api->gtk);
+    if (api->gdk != NULL) {
+      dlclose(api->gdk);
+    }
     dlclose(api->gio);
     dlclose(api->glib);
     return 0;
@@ -318,6 +356,13 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_check_menu_item_set_active", (void **)&api->gtk_check_menu_item_set_active);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_menu_shell_append", (void **)&api->gtk_menu_shell_append);
   lepusa_linux_load_symbol(api->gtk, "gtk_menu_popup_at_pointer", (void **)&api->gtk_menu_popup_at_pointer);
+  lepusa_linux_load_symbol(api->gtk, "gtk_accel_group_new", (void **)&api->gtk_accel_group_new);
+  lepusa_linux_load_symbol(api->gtk, "gtk_window_add_accel_group", (void **)&api->gtk_window_add_accel_group);
+  lepusa_linux_load_symbol(api->gtk, "gtk_window_remove_accel_group", (void **)&api->gtk_window_remove_accel_group);
+  lepusa_linux_load_symbol(api->gtk, "gtk_widget_add_accelerator", (void **)&api->gtk_widget_add_accelerator);
+  if (api->gdk != NULL) {
+    lepusa_linux_load_symbol(api->gdk, "gdk_keyval_from_name", (void **)&api->gdk_keyval_from_name);
+  }
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
@@ -343,6 +388,9 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
     dlclose(api->webkit);
     dlclose(api->gobject);
     dlclose(api->gtk);
+    if (api->gdk != NULL) {
+      dlclose(api->gdk);
+    }
     dlclose(api->gio);
     dlclose(api->glib);
   }
@@ -836,6 +884,11 @@ static LepusaLinuxWindowSlot *lepusa_linux_register_window_slot(
   return slot;
 }
 
+static void lepusa_linux_clear_window_menu_bar(
+  LepusaLinuxBridgeContext *context,
+  LepusaLinuxWindowSlot *slot
+);
+
 static void lepusa_linux_remove_window_slot(
   LepusaLinuxBridgeContext *context,
   void *window
@@ -847,6 +900,7 @@ static void lepusa_linux_remove_window_slot(
     if (context->windows[i].window != window) {
       continue;
     }
+    lepusa_linux_clear_window_menu_bar(context, &context->windows[i]);
     for (int j = i; j + 1 < context->window_count; j++) {
       context->windows[j] = context->windows[j + 1];
     }
@@ -2020,13 +2074,228 @@ static int lepusa_linux_menu_action_equals(
      memcmp(action + 5, name, name_len) == 0);
 }
 
+static int lepusa_linux_range_iequals(
+  const char *value,
+  int32_t value_len,
+  const char *expected
+) {
+  if (value == NULL || expected == NULL || value_len < 0) {
+    return 0;
+  }
+  size_t expected_len = strlen(expected);
+  if ((size_t)value_len != expected_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i < value_len; i++) {
+    if (tolower((unsigned char)value[i]) !=
+        tolower((unsigned char)expected[i])) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static void lepusa_linux_trim_range(
+  const char **value,
+  int32_t *value_len
+) {
+  if (value == NULL || *value == NULL || value_len == NULL) {
+    return;
+  }
+  while (*value_len > 0 && isspace((unsigned char)(*value)[0])) {
+    (*value)++;
+    (*value_len)--;
+  }
+  while (*value_len > 0 &&
+         isspace((unsigned char)(*value)[*value_len - 1])) {
+    (*value_len)--;
+  }
+}
+
+static int lepusa_linux_accelerator_modifier(
+  const char *modifier,
+  int32_t modifier_len,
+  unsigned int *mask
+) {
+  if (mask == NULL || modifier == NULL || modifier_len <= 0) {
+    return 0;
+  }
+  if (lepusa_linux_range_iequals(modifier, modifier_len, "cmd") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "command") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "super") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "meta")) {
+    *mask |= LEPUSA_GDK_SUPER_MASK;
+    return 1;
+  }
+  if (lepusa_linux_range_iequals(modifier, modifier_len, "cmdorctrl") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "ctrl") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "control")) {
+    *mask |= LEPUSA_GDK_CONTROL_MASK;
+    return 1;
+  }
+  if (lepusa_linux_range_iequals(modifier, modifier_len, "alt") ||
+      lepusa_linux_range_iequals(modifier, modifier_len, "option")) {
+    *mask |= LEPUSA_GDK_ALT_MASK;
+    return 1;
+  }
+  if (lepusa_linux_range_iequals(modifier, modifier_len, "shift")) {
+    *mask |= LEPUSA_GDK_SHIFT_MASK;
+    return 1;
+  }
+  return 0;
+}
+
+static unsigned int lepusa_linux_accelerator_keyval(
+  LepusaLinuxBridgeContext *context,
+  const char *key,
+  int32_t key_len
+) {
+  if (key == NULL || key_len <= 0) {
+    return 0;
+  }
+  if (key_len == 1) {
+    unsigned char ch = (unsigned char)key[0];
+    if (ch >= 'A' && ch <= 'Z') {
+      ch = (unsigned char)tolower(ch);
+    }
+    return (unsigned int)ch;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "space")) {
+    return 0x20;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "tab")) {
+    return 0xff09;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "enter") ||
+      lepusa_linux_range_iequals(key, key_len, "return")) {
+    return 0xff0d;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "esc") ||
+      lepusa_linux_range_iequals(key, key_len, "escape")) {
+    return 0xff1b;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "delete")) {
+    return 0xffff;
+  }
+  if (lepusa_linux_range_iequals(key, key_len, "backspace")) {
+    return 0xff08;
+  }
+  if (context == NULL ||
+      context->api == NULL ||
+      context->api->gdk_keyval_from_name == NULL) {
+    return 0;
+  }
+  char *name = lepusa_linux_cstr_from_range(key, key_len);
+  if (name == NULL) {
+    return 0;
+  }
+  unsigned int keyval = context->api->gdk_keyval_from_name(name);
+  free(name);
+  return keyval;
+}
+
+static int lepusa_linux_parse_accelerator(
+  LepusaLinuxBridgeContext *context,
+  const char *accelerator,
+  int32_t accelerator_len,
+  unsigned int *keyval_out,
+  unsigned int *mask_out
+) {
+  if (accelerator == NULL ||
+      accelerator_len <= 0 ||
+      keyval_out == NULL ||
+      mask_out == NULL) {
+    return 0;
+  }
+  const char *end = accelerator + accelerator_len;
+  const char *part = accelerator;
+  unsigned int mask = 0;
+  while (part < end) {
+    const char *plus = part;
+    while (plus < end && *plus != '+') {
+      plus++;
+    }
+    const char *token = part;
+    int32_t token_len = (int32_t)(plus - part);
+    lepusa_linux_trim_range(&token, &token_len);
+    if (token_len <= 0) {
+      return 0;
+    }
+    if (plus >= end) {
+      unsigned int keyval = lepusa_linux_accelerator_keyval(
+        context,
+        token,
+        token_len
+      );
+      if (keyval == 0) {
+        return 0;
+      }
+      *keyval_out = keyval;
+      *mask_out = mask;
+      return 1;
+    }
+    if (!lepusa_linux_accelerator_modifier(token, token_len, &mask)) {
+      return 0;
+    }
+    part = plus + 1;
+  }
+  return 0;
+}
+
+static void lepusa_linux_apply_menu_item_accelerator(
+  LepusaLinuxBridgeContext *context,
+  void *item,
+  void *accel_group,
+  const char *object,
+  const char *end
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      item == NULL ||
+      accel_group == NULL ||
+      context->api->gtk_widget_add_accelerator == NULL) {
+    return;
+  }
+  const char *accelerator = NULL;
+  int32_t accelerator_len = 0;
+  if (!lepusa_linux_json_member_string_range(
+        object,
+        end,
+        "accelerator",
+        &accelerator,
+        &accelerator_len
+      )) {
+    return;
+  }
+  unsigned int keyval = 0;
+  unsigned int mask = 0;
+  if (!lepusa_linux_parse_accelerator(
+        context,
+        accelerator,
+        accelerator_len,
+        &keyval,
+        &mask
+      )) {
+    return;
+  }
+  context->api->gtk_widget_add_accelerator(
+    item,
+    "activate",
+    accel_group,
+    keyval,
+    mask,
+    LEPUSA_GTK_ACCEL_VISIBLE
+  );
+}
+
 static void lepusa_linux_add_menu_items_from_array(
   LepusaLinuxBridgeContext *context,
   void *menu,
   const char *array,
   const char *array_end,
   int depth,
-  const char *click_event
+  const char *click_event,
+  void *accel_group
 ) {
   if (context == NULL ||
       context->api == NULL ||
@@ -2120,7 +2389,8 @@ static void lepusa_linux_add_menu_items_from_array(
                     children,
                     children_end,
                     depth + 1,
-                    click_event
+                    click_event,
+                    accel_group
                   );
                   context->api->gtk_menu_item_set_submenu(item, submenu);
                 }
@@ -2142,6 +2412,13 @@ static void lepusa_linux_add_menu_items_from_array(
                   id,
                   id_len
                 );
+                lepusa_linux_apply_menu_item_accelerator(
+                  context,
+                  item,
+                  accel_group,
+                  cursor,
+                  item_end
+                );
               }
             }
           }
@@ -2161,7 +2438,8 @@ static void lepusa_linux_add_menu_items_from_array(
 static void *lepusa_linux_menu_bar_from_payload(
   LepusaLinuxBridgeContext *context,
   const char *payload,
-  int32_t payload_len
+  int32_t payload_len,
+  void *accel_group
 ) {
   if (context == NULL || context->api == NULL || payload == NULL || payload_len <= 0) {
     return NULL;
@@ -2199,7 +2477,8 @@ static void *lepusa_linux_menu_bar_from_payload(
     items,
     items_end,
     0,
-    "menu.onItemClick"
+    "menu.onItemClick",
+    accel_group
   );
   return menu_bar;
 }
@@ -2209,7 +2488,36 @@ static void lepusa_linux_clear_window_menu_bar(
   LepusaLinuxWindowSlot *slot
 ) {
   if (context == NULL || context->api == NULL || slot == NULL || slot->menu_bar == NULL) {
+    if (context != NULL &&
+        context->api != NULL &&
+        slot != NULL &&
+        slot->accel_group != NULL) {
+      if (slot->window != NULL &&
+          context->api->gtk_window_remove_accel_group != NULL) {
+        context->api->gtk_window_remove_accel_group(
+          slot->window,
+          slot->accel_group
+        );
+      }
+      if (context->api->g_object_unref != NULL) {
+        context->api->g_object_unref(slot->accel_group);
+      }
+      slot->accel_group = NULL;
+    }
     return;
+  }
+  if (slot->accel_group != NULL) {
+    if (slot->window != NULL &&
+        context->api->gtk_window_remove_accel_group != NULL) {
+      context->api->gtk_window_remove_accel_group(
+        slot->window,
+        slot->accel_group
+      );
+    }
+    if (context->api->g_object_unref != NULL) {
+      context->api->g_object_unref(slot->accel_group);
+    }
+    slot->accel_group = NULL;
   }
   context->api->gtk_widget_destroy(slot->menu_bar);
   slot->menu_bar = NULL;
@@ -2224,16 +2532,32 @@ static void lepusa_linux_set_window_menu_bar(
   if (context == NULL || context->api == NULL || slot == NULL || slot->box == NULL) {
     return;
   }
+  void *accel_group = NULL;
+  if (slot->window != NULL &&
+      context->api->gtk_accel_group_new != NULL &&
+      context->api->gtk_window_add_accel_group != NULL &&
+      context->api->gtk_window_remove_accel_group != NULL &&
+      context->api->gtk_widget_add_accelerator != NULL) {
+    accel_group = context->api->gtk_accel_group_new();
+  }
   void *menu_bar = lepusa_linux_menu_bar_from_payload(
     context,
     payload,
-    payload_len
+    payload_len,
+    accel_group
   );
   if (menu_bar == NULL) {
+    if (accel_group != NULL && context->api->g_object_unref != NULL) {
+      context->api->g_object_unref(accel_group);
+    }
     return;
   }
   lepusa_linux_clear_window_menu_bar(context, slot);
   slot->menu_bar = menu_bar;
+  slot->accel_group = accel_group;
+  if (slot->accel_group != NULL) {
+    context->api->gtk_window_add_accel_group(slot->window, slot->accel_group);
+  }
   context->api->gtk_box_pack_start(slot->box, menu_bar, 0, 0, 0);
   context->api->gtk_box_reorder_child(slot->box, menu_bar, 0);
   if (slot->window != NULL) {
