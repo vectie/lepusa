@@ -774,10 +774,10 @@ frame once, even when the same handoff also carries the plugin's
 `window-control close` response.
 macOS, Linux, and Windows consume `navigate-window` operations from the same
 handoff packet by loading the target URL in the live WebView after the approved
-MoonBit dispatch completes. The macOS and Linux loops now consume dynamic
-`open-window` records by creating labeled WKWebView/WebKitGTK windows with the
-carried bridge source, native hook, asset protocol, URL, title, size, and
-resizable flag. Source, bundled, and Windows runners pass URL-routed asset
+MoonBit dispatch completes. The macOS, Linux, and Windows loops now consume
+dynamic `open-window` records by creating labeled WKWebView/WebKitGTK/WebView2
+windows with the carried bridge source, native hook, asset protocol, URL, title,
+size, and resizable flag. Source and bundled runners pass URL-routed asset
 resolver callbacks into native loops, so dynamic WebViews can resolve assets
 for their own window labels.
 Platform packages now expose `operation_executor()` so source and packaged run

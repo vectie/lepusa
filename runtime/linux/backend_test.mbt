@@ -58,6 +58,12 @@ test "linux backend exposes webkitgtk descriptor" {
         payload="{\"title\":\"Ready\"}",
       ),
     ),
+    @runtime.NativeExecutableOperation::drain_bridge(
+      @runtime.NativeBridgeDrain::new(
+        window_label="main",
+        callback="bridge_loop_adapter().callbacks(main).drain_window_packet",
+      ),
+    ),
     @runtime.NativeExecutableOperation::close_window(
       @runtime.NativeWindowClose::new(window_label="main"),
     ),
@@ -170,7 +176,7 @@ test "linux backend exposes webkitgtk descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 17)
+  assert_eq(execution.executed_count(), 18)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[5].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[6].status() is NativeOperationExecuted)

@@ -61,6 +61,7 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
   @runtime.NativeOperationExecutor::new(
     open_window=fn(_) { NativeOperationExecuted },
     evaluate_script=fn(_) { NativeOperationExecuted },
+    drain_bridge=fn(_) { NativeOperationExecuted },
     close_window=fn(_) { NativeOperationExecuted },
     navigate_window=fn(_) { NativeOperationExecuted },
     run_effect=fn(name) {
