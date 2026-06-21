@@ -219,6 +219,22 @@ pub fn CommandRegistry::dispatch_with_permission(
 }
 
 ///|
+pub fn CommandRegistry::dispatch_with_profile(
+  self : CommandRegistry,
+  profile : SecurityProfile,
+  request : InvokeRequest,
+) -> InvokeResponse {
+  let authorization = profile.authorize_invoke(request)
+  if !authorization.allowed() {
+    return authorization.to_response(request.id())
+  }
+  match self.commands.get(request.route()) {
+    None => InvokeResponse::unknown_command(request.id(), request.route())
+    Some(command) => execute_command(request, command)
+  }
+}
+
+///|
 pub async fn CommandRegistry::dispatch_async(
   self : CommandRegistry,
   request : InvokeRequest,
@@ -261,6 +277,22 @@ pub async fn CommandRegistry::dispatch_with_permission_async(
 }
 
 ///|
+pub async fn CommandRegistry::dispatch_with_profile_async(
+  self : CommandRegistry,
+  profile : SecurityProfile,
+  request : InvokeRequest,
+) -> InvokeResponse {
+  let authorization = profile.authorize_invoke(request)
+  if !authorization.allowed() {
+    return authorization.to_response(request.id())
+  }
+  match self.commands.get(request.route()) {
+    None => InvokeResponse::unknown_command(request.id(), request.route())
+    Some(command) => execute_command_async(request, command)
+  }
+}
+
+///|
 fn dispatch_command(
   request : InvokeRequest,
   command : RegisteredCommand,
@@ -276,16 +308,7 @@ fn dispatch_command(
     ) {
     InvokeResponse::permission_denied(request.id(), route)
   } else {
-    match command.handler {
-      SyncCommandHandler(handler) =>
-        match handler(request.payload()) {
-          Ok(payload) => InvokeResponse::ok(request.id(), payload)
-          Err(message) =>
-            InvokeResponse::handler_error(request.id(), message, route~)
-        }
-      AsyncCommandHandler(_) =>
-        InvokeResponse::async_required(request.id(), route)
-    }
+    execute_command(request, command)
   }
 }
 
@@ -305,19 +328,46 @@ async fn dispatch_command_async(
     ) {
     InvokeResponse::permission_denied(request.id(), route)
   } else {
-    match command.handler {
-      SyncCommandHandler(handler) =>
-        match handler(request.payload()) {
-          Ok(payload) => InvokeResponse::ok(request.id(), payload)
-          Err(message) =>
-            InvokeResponse::handler_error(request.id(), message, route~)
-        }
-      AsyncCommandHandler(handler) =>
-        match handler(request.payload()) {
-          Ok(payload) => InvokeResponse::ok(request.id(), payload)
-          Err(message) =>
-            InvokeResponse::handler_error(request.id(), message, route~)
-        }
-    }
+    execute_command_async(request, command)
+  }
+}
+
+///|
+fn execute_command(
+  request : InvokeRequest,
+  command : RegisteredCommand,
+) -> InvokeResponse {
+  let route = request.route()
+  match command.handler {
+    SyncCommandHandler(handler) =>
+      match handler(request.payload()) {
+        Ok(payload) => InvokeResponse::ok(request.id(), payload)
+        Err(message) =>
+          InvokeResponse::handler_error(request.id(), message, route~)
+      }
+    AsyncCommandHandler(_) =>
+      InvokeResponse::async_required(request.id(), route)
+  }
+}
+
+///|
+async fn execute_command_async(
+  request : InvokeRequest,
+  command : RegisteredCommand,
+) -> InvokeResponse {
+  let route = request.route()
+  match command.handler {
+    SyncCommandHandler(handler) =>
+      match handler(request.payload()) {
+        Ok(payload) => InvokeResponse::ok(request.id(), payload)
+        Err(message) =>
+          InvokeResponse::handler_error(request.id(), message, route~)
+      }
+    AsyncCommandHandler(handler) =>
+      match handler(request.payload()) {
+        Ok(payload) => InvokeResponse::ok(request.id(), payload)
+        Err(message) =>
+          InvokeResponse::handler_error(request.id(), message, route~)
+      }
   }
 }

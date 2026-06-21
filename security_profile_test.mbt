@@ -51,6 +51,7 @@ fn security_profile_request(
   route : String,
   window_label? : String = "main",
   origin? : String = "https://app.example",
+  payload? : String = "",
 ) -> @lepusa.InvokeRequest {
   let mut plugin = ""
   let mut command = ""
@@ -64,7 +65,14 @@ fn security_profile_request(
       plugin = plugin + char.to_string()
     }
   }
-  @lepusa.InvokeRequest::new(id="1", window_label~, plugin~, command~, origin~)
+  @lepusa.InvokeRequest::new(
+    id="1",
+    window_label~,
+    plugin~,
+    command~,
+    payload~,
+    origin~,
+  )
 }
 
 ///|
@@ -202,4 +210,72 @@ test "app manager exposes live security profile from its registry" {
   assert_eq(profile.exposed_routes().length(), 1)
   assert_eq(profile.exposed_routes()[0], "fs.read")
   assert_true(profile.problems()[0].contains("fs.write"))
+}
+
+///|
+test "command registry dispatches through compiled security profile" {
+  let plan = security_profile_test_plan()
+  let profile = plan.security_profile(
+    registered_routes=["fs.read"],
+    check_handlers=true,
+  )
+  let registry = @lepusa.CommandRegistry::new().register_fn("fs.read", handler=fn(
+    payload,
+  ) {
+    Ok("read:\{payload}")
+  })
+  let allowed = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("fs.read", payload="/app/data/config.json"),
+  )
+  assert_true(allowed is InvokeOk("1", "read:/app/data/config.json"))
+
+  let denied_window = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("fs.read", window_label="settings"),
+  )
+  assert_true(denied_window.error_kind() is Some(PermissionDenied))
+
+  let missing_handler = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("fs.write", window_label="settings"),
+  )
+  assert_true(missing_handler.error_kind() is Some(UnknownCommand))
+
+  let undeclared = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("fs.delete"),
+  )
+  assert_true(undeclared.error_kind() is Some(UnknownCommand))
+}
+
+///|
+async test "command registry async dispatches through compiled security profile" {
+  let profile = security_profile_test_plan().security_profile(
+    registered_routes=["fs.write"],
+    check_handlers=true,
+  )
+  let registry = @lepusa.CommandRegistry::new().register_async_fn("fs.write", handler=fn(
+    payload,
+  ) {
+    Ok("write:\{payload}")
+  })
+  let response = registry.dispatch_with_profile_async(
+    profile,
+    security_profile_request(
+      "fs.write",
+      window_label="settings",
+      payload="/app/data/config.json",
+    ),
+  )
+  assert_true(response is InvokeOk("1", "write:/app/data/config.json"))
+  let sync_response = registry.dispatch_with_profile(
+    profile,
+    security_profile_request(
+      "fs.write",
+      window_label="settings",
+      payload="/app/data/config.json",
+    ),
+  )
+  assert_true(sync_response.error_kind() is Some(AsyncRequired))
 }

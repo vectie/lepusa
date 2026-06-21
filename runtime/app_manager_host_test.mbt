@@ -20,6 +20,11 @@ test "runtime host can be created from app manager boundary" {
   let host = RuntimeHost::from_manager(manager)
   assert_eq(host.plan().window_count(), 1)
   assert_eq(host.registry().routes()[0], "core.ping")
+  let profile = host.security_profile()
+  assert_true(profile.ok())
+  assert_true(profile.check_handlers())
+  assert_eq(profile.exposed_routes().length(), 1)
+  assert_eq(profile.exposed_routes()[0], "core.ping")
   let response = host.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",

@@ -43,6 +43,16 @@ pub fn RuntimeHost::audit(self : RuntimeHost) -> @lepusa.RuntimeAudit {
 }
 
 ///|
+pub fn RuntimeHost::security_profile(
+  self : RuntimeHost,
+) -> @lepusa.SecurityProfile {
+  self.plan.security_profile(
+    registered_routes=self.registry.routes(),
+    check_handlers=true,
+  )
+}
+
+///|
 pub fn RuntimeHost::snapshot(
   self : RuntimeHost,
 ) -> Result[RuntimeSession, Array[String]] {
@@ -130,31 +140,7 @@ pub fn RuntimeHost::dispatch(
   self : RuntimeHost,
   request : @lepusa.InvokeRequest,
 ) -> @lepusa.InvokeResponse {
-  let request_problems = request.validate()
-  if !request_problems.is_empty() {
-    return @lepusa.InvokeResponse::invalid_request(
-      request.id(),
-      request_problems[0],
-    )
-  }
-  let authorization = self.plan.authorize_invoke(
-    request,
-    registered_routes=self.registry.routes(),
-    check_registered=true,
-  )
-  if !authorization.allowed() {
-    return authorization.to_response(request.id())
-  }
-  match authorization.permission() {
-    None =>
-      @lepusa.InvokeResponse::unknown_command(request.id(), request.route())
-    Some(permission) =>
-      self.registry.dispatch_with_permission(
-        request,
-        permission~,
-        capabilities=self.plan.capabilities(),
-      )
-  }
+  self.registry.dispatch_with_profile(self.security_profile(), request)
 }
 
 ///|
@@ -162,29 +148,5 @@ pub async fn RuntimeHost::dispatch_async(
   self : RuntimeHost,
   request : @lepusa.InvokeRequest,
 ) -> @lepusa.InvokeResponse {
-  let request_problems = request.validate()
-  if !request_problems.is_empty() {
-    return @lepusa.InvokeResponse::invalid_request(
-      request.id(),
-      request_problems[0],
-    )
-  }
-  let authorization = self.plan.authorize_invoke(
-    request,
-    registered_routes=self.registry.routes(),
-    check_registered=true,
-  )
-  if !authorization.allowed() {
-    return authorization.to_response(request.id())
-  }
-  match authorization.permission() {
-    None =>
-      @lepusa.InvokeResponse::unknown_command(request.id(), request.route())
-    Some(permission) =>
-      self.registry.dispatch_with_permission_async(
-        request,
-        permission~,
-        capabilities=self.plan.capabilities(),
-      )
-  }
+  self.registry.dispatch_with_profile_async(self.security_profile(), request)
 }

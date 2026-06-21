@@ -900,6 +900,7 @@ pub fn RuntimeHost::prepare_bridge_message(Self, String, window_label? : String)
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::resolve_asset_json(Self, String) -> String
 pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]]
+pub fn RuntimeHost::security_profile(Self) -> @lepusa.SecurityProfile
 pub fn RuntimeHost::service_plan(Self) -> Result[RuntimeServicePlan, Array[String]]
 pub fn RuntimeHost::snapshot(Self) -> Result[RuntimeSession, Array[String]]
 pub fn RuntimeHost::startup_actions(Self) -> Result[Array[@lepusa.RuntimeAction], Array[String]]

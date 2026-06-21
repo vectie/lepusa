@@ -555,6 +555,8 @@ pub fn CommandRegistry::dispatch(Self, InvokeRequest, capabilities? : Array[Capa
 pub async fn CommandRegistry::dispatch_async(Self, InvokeRequest, capabilities? : Array[Capability]) -> InvokeResponse
 pub fn CommandRegistry::dispatch_with_permission(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
 pub async fn CommandRegistry::dispatch_with_permission_async(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
+pub fn CommandRegistry::dispatch_with_profile(Self, SecurityProfile, InvokeRequest) -> InvokeResponse
+pub async fn CommandRegistry::dispatch_with_profile_async(Self, SecurityProfile, InvokeRequest) -> InvokeResponse
 pub fn CommandRegistry::merge(Self, Self) -> Self
 pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
