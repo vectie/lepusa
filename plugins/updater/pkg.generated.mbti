@@ -20,6 +20,33 @@ pub fn registry(policy? : UpdaterPolicy, state? : UpdaterState) -> @lepusa.Comma
 // Errors
 
 // Types and methods
+pub struct UpdaterDecision {
+  kind : UpdaterDecisionKind
+  current_version : String
+  candidate_version : String?
+  target : @lepusa.BundleTarget
+  artifact_count : Int
+  trust : @lepusa.UpdateTrustReport
+  reason : String
+} derive(Eq, @debug.Debug)
+pub fn UpdaterDecision::artifact_count(Self) -> Int
+pub fn UpdaterDecision::candidate_version(Self) -> String?
+pub fn UpdaterDecision::current_version(Self) -> String
+pub fn UpdaterDecision::kind(Self) -> UpdaterDecisionKind
+pub fn UpdaterDecision::new(kind~ : UpdaterDecisionKind, current_version~ : String, candidate_version? : String, target~ : @lepusa.BundleTarget, artifact_count~ : Int, trust~ : @lepusa.UpdateTrustReport, reason~ : String) -> Self
+pub fn UpdaterDecision::reason(Self) -> String
+pub fn UpdaterDecision::target(Self) -> @lepusa.BundleTarget
+pub fn UpdaterDecision::to_json(Self) -> String
+pub fn UpdaterDecision::trust(Self) -> @lepusa.UpdateTrustReport
+pub fn UpdaterDecision::update_available(Self) -> Bool
+
+pub(all) enum UpdaterDecisionKind {
+  UpdateSelected
+  NoUpdate
+  UpdateRejected
+} derive(Eq, @debug.Debug)
+pub fn UpdaterDecisionKind::name(Self) -> String
+
 pub struct UpdaterPolicy {
   feed_url : String
   channel : String
@@ -31,6 +58,7 @@ pub fn UpdaterPolicy::channel(Self) -> String
 pub fn UpdaterPolicy::feed_url(Self) -> String
 pub fn UpdaterPolicy::new(feed_url~ : String, channel? : String, public_key? : String, allow_prerelease? : Bool) -> Self
 pub fn UpdaterPolicy::public_key(Self) -> String?
+pub fn UpdaterPolicy::select_update(Self, @lepusa.UpdateManifest, current_version~ : String, target~ : @lepusa.BundleTarget) -> UpdaterDecision
 pub fn UpdaterPolicy::validate(Self) -> Array[String]
 
 pub struct UpdaterState {
