@@ -151,6 +151,9 @@
   `window.close` dispatches now emit the matching `close-window` lifecycle
   cleanup operation beside the current native frame close control, and the
   macOS/Linux loops consume that typed close operation from bridge packets;
+  bridge handoff packets now use `lepusa-ops-v2` records that carry the
+  dynamic `open-window` URL, title, size, bridge source, native hook, and asset
+  protocol needed by native WebView creation handlers;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and

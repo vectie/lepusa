@@ -505,7 +505,7 @@ pub fn native_executable_operations_packet(
   operations : Array[NativeExecutableOperation],
 ) -> String {
   [
-    "lepusa-ops-v1\n",
+    "lepusa-ops-v2\n",
     "\{operations.length()}\n",
     operations.map(fn(operation) { operation.native_packet_record() }).join(""),
   ].join("")
@@ -515,8 +515,20 @@ pub fn native_executable_operations_packet(
 fn NativeExecutableOperation::native_packet_record(
   self : NativeExecutableOperation,
 ) -> String {
-  let (window_label, action, url, title, width, height, x, y, fullscreen) = match
-    self {
+  let (
+    window_label,
+    action,
+    url,
+    title,
+    width,
+    height,
+    x,
+    y,
+    fullscreen,
+    bridge_source,
+    native_hook,
+    asset_protocol,
+  ) = match self {
     NativeExecutableOpenWindow(open_plan) =>
       (
         open_plan.label(),
@@ -528,15 +540,31 @@ fn NativeExecutableOperation::native_packet_record(
         "",
         "",
         "",
+        open_plan.bridge_source(),
+        open_plan.native_hook(),
+        open_plan.asset_protocol(),
       )
     NativeExecutableCloseWindow(close) =>
-      (close.window_label(), "", "", "", "", "", "", "", "")
+      (close.window_label(), "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableEvaluateScript(script) =>
-      (script.window_label(), "", "", "", "", "", "", "", "")
+      (script.window_label(), "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableDrainBridge(drain) =>
-      (drain.window_label(), "", "", "", "", "", "", "", "")
+      (drain.window_label(), "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableNavigate(navigation) =>
-      (navigation.window_label(), "", navigation.url(), "", "", "", "", "", "")
+      (
+        navigation.window_label(),
+        "",
+        navigation.url(),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      )
     NativeExecutableWindowControl(control) =>
       (
         control.window_label(),
@@ -548,9 +576,14 @@ fn NativeExecutableOperation::native_packet_record(
         control.payload_int("x"),
         control.payload_int("y"),
         control.payload_bool("fullscreen"),
+        "",
+        "",
+        "",
       )
-    NativeExecutableRunEffect(name) => ("", name, "", "", "", "", "", "", "")
-    NativeExecutableStartService(_) => ("", "", "", "", "", "", "", "", "")
+    NativeExecutableRunEffect(name) =>
+      ("", name, "", "", "", "", "", "", "", "", "", "")
+    NativeExecutableStartService(_) =>
+      ("", "", "", "", "", "", "", "", "", "", "", "")
   }
   [
     packet_field(self.kind()),
@@ -563,6 +596,9 @@ fn NativeExecutableOperation::native_packet_record(
     packet_field(x),
     packet_field(y),
     packet_field(fullscreen),
+    packet_field(bridge_source),
+    packet_field(native_hook),
+    packet_field(asset_protocol),
   ].join("")
 }
 

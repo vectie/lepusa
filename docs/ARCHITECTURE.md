@@ -207,11 +207,13 @@ commands still return callback scripts immediately while async commands are
 captured for the backend drain/evaluate step.
 The C-facing callback now uses `handoff_packet_callback`: packets are encoded as
 `status\n<window>\n<body-byte-length>\n<body>\n<operation-packet>`. The final
-section is a versioned `lepusa-ops-v1` length-prefixed native operation packet
+section is a versioned `lepusa-ops-v2` length-prefixed native operation packet
 with normalized fields for follow-up operations. Immediate packets carry the
 JavaScript callback script plus executable operations, deferred packets carry
 the target window and queued task count, and error packets carry a diagnostic
-body. macOS and Linux WebView handlers parse that packet and only evaluate
+body. V2 operation records include dynamic `open-window` boot metadata: load
+URL, title, size, bridge source, native hook, and asset protocol. macOS and
+Linux WebView handlers parse that packet and only evaluate
 immediate scripts today, so deferred async work is explicit instead of being
 indistinguishable from an empty callback, while native operations such as
 `window-control` and `navigate-window` have a stable non-JSON packet slot.

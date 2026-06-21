@@ -724,11 +724,14 @@ test "bundled bridge dispatch lowers window open to native operation" {
         _ => abort("unexpected invalid bundled open handoff packet")
       }
       assert_true(packet.has_prefix("immediate\nmain\n"))
-      assert_true(packet.contains("lepusa-ops-v1\n3\n"))
+      assert_true(packet.contains("lepusa-ops-v2\n3\n"))
       assert_true(packet.contains("open-window"))
       assert_true(packet.contains("window-control"))
       assert_true(packet.contains("tools"))
       assert_true(packet.contains("lepusa://inline/tools/index.html"))
+      assert_true(packet.contains("__lepusaInvoke"))
+      assert_true(packet.contains("lepusa"))
+      assert_true(packet.contains("globalThis.__lepusaInvoke = function() {};"))
     }
     Err(problem) => abort(problem)
   }
@@ -774,7 +777,7 @@ test "bundled bridge dispatch lowers window close to native cleanup operation" {
         _ => abort("unexpected invalid bundled close handoff packet")
       }
       assert_true(packet.has_prefix("immediate\nmain\n"))
-      assert_true(packet.contains("lepusa-ops-v1\n3\n"))
+      assert_true(packet.contains("lepusa-ops-v2\n3\n"))
       assert_true(packet.contains("close-window"))
       assert_true(packet.contains("window-control"))
     }
@@ -1148,7 +1151,7 @@ async test "bundled runtime owns bridge message transport" {
           ) catch {
             _ => abort("unexpected invalid bundled bridge handoff packet bytes")
           }
-          assert_eq(deferred_packet, "deferred\nmain\n1\n1\nlepusa-ops-v1\n0\n")
+          assert_eq(deferred_packet, "deferred\nmain\n1\n1\nlepusa-ops-v2\n0\n")
           assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bundled callback drain json bytes")

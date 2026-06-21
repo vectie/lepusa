@@ -582,13 +582,15 @@ evaluating each callback script in the target WebView. Packaged runtimes expose
 the same shape as `BundledBridgeWorkQueue`.
 `handoff_packet_callback` is the native C/WebView ABI for that handoff: it
 returns `status\n<window>\n<body-byte-length>\n<body>\n<operation-packet>`
-where the final section is the versioned `lepusa-ops-v1` length-prefixed native
+where the final section is the versioned `lepusa-ops-v2` length-prefixed native
 operation packet. Immediate packets carry the callback script plus executable
 operations, deferred packets carry the queued task count, and error packets
-carry a diagnostic body. macOS and Linux parse this packet and evaluate only
-`immediate` scripts today, while the typed operation packet gives native loops a
-stable place to read follow-up operations such as `window-control` without
-JSON-scanning escaped payloads.
+carry a diagnostic body. The v2 operation records include dynamic `open-window`
+boot metadata: load URL, title, size, bridge source, native hook, and asset
+protocol. macOS and Linux parse this packet and evaluate only `immediate`
+scripts today, while the typed operation packet gives native loops a stable
+place to read follow-up operations such as `window-control` without JSON-scanning
+escaped payloads.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
 queue, native message callback, pending-state diagnostics, and drain operation
 into the object platform event loops should keep beside each WebView host.

@@ -594,6 +594,12 @@ typedef struct {
   int32_t y_len;
   const char *fullscreen;
   int32_t fullscreen_len;
+  const char *bridge_source;
+  int32_t bridge_source_len;
+  const char *native_hook;
+  int32_t native_hook_len;
+  const char *asset_protocol;
+  int32_t asset_protocol_len;
 } LepusaNativeOperationRecord;
 
 static int lepusa_range_equals(
@@ -663,6 +669,24 @@ static int lepusa_read_native_operation_record(
       end,
       &record->fullscreen,
       &record->fullscreen_len
+    ) &&
+    lepusa_read_packet_field(
+      cursor,
+      end,
+      &record->bridge_source,
+      &record->bridge_source_len
+    ) &&
+    lepusa_read_packet_field(
+      cursor,
+      end,
+      &record->native_hook,
+      &record->native_hook_len
+    ) &&
+    lepusa_read_packet_field(
+      cursor,
+      end,
+      &record->asset_protocol,
+      &record->asset_protocol_len
     );
 }
 
@@ -729,7 +753,7 @@ static int lepusa_handoff_operation_records(
   const char *end = operations + operations_len;
   const char *version = lepusa_find_newline(cursor, end);
   if (version == NULL ||
-      !lepusa_range_equals(cursor, (int32_t)(version - cursor), "lepusa-ops-v1")) {
+      !lepusa_range_equals(cursor, (int32_t)(version - cursor), "lepusa-ops-v2")) {
     return 0;
   }
   cursor = version + 1;
