@@ -1258,7 +1258,7 @@ test "bundle files include platform metadata" {
 }
 
 ///|
-test "windows bundle artifacts match generated command launcher" {
+test "windows bundle artifacts match generated native launcher source" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(
     source=@lepusa.Source::html("<main></main>"),
@@ -1273,7 +1273,7 @@ test "windows bundle artifacts match generated command launcher" {
       match @lepusa.BundleConfig::new(metadata, target=Windows).plan(runtime) {
         Ok(plan) => {
           assert_eq(plan.executable_name(), "windows-app")
-          assert_eq(plan.bundle_name(), "windows-app.cmd")
+          assert_eq(plan.bundle_name(), "windows-app.exe")
           assert_eq(plan.runtime_executable_name(), "lepusa-runtime.exe")
           assert_eq(
             plan.runtime_executable_path(),
@@ -1282,7 +1282,7 @@ test "windows bundle artifacts match generated command launcher" {
           let artifacts = plan.artifacts()
           assert_eq(artifacts.length(), 2)
           assert_true(artifacts[0].kind() is ExecutableArtifact)
-          assert_eq(artifacts[0].path(), "windows-app/windows-app.cmd")
+          assert_eq(artifacts[0].path(), "windows-app/windows-app.exe")
           assert_true(artifacts[1].kind() is InstallerArtifact)
           assert_eq(artifacts[1].path(), "windows-app-1.2.0-setup.exe")
           let dependencies = plan.runtime_dependencies()
@@ -1307,28 +1307,32 @@ test "windows bundle artifacts match generated command launcher" {
           assert_true(dependencies[1].to_json().contains("\"sourcePath\""))
           match plan.files() {
             Ok(files) => {
-              assert_eq(files.length(), 4)
+              assert_eq(files.length(), 5)
               assert_eq(files[0].path(), "windows-app/app.manifest.xml")
-              assert_eq(files[1].path(), "windows-app/windows-app.cmd")
+              assert_eq(files[1].path(), "windows-app/windows-app-launcher.c")
+              assert_true(files[1].content().contains("wWinMain"))
+              assert_true(files[1].content().contains("CreateProcessW"))
+              assert_true(files[1].content().contains("lepusa\\\\runtime.json"))
+              assert_eq(files[2].path(), "windows-app/windows-app.cmd")
               assert_true(
-                files[1]
+                files[2]
                 .content()
                 .contains("set \"RUNTIME=%APP_DIR%lepusa-runtime.exe\""),
               )
-              assert_true(files[1].content().contains("\"%RUNTIME%\" launch"))
+              assert_true(files[2].content().contains("\"%RUNTIME%\" launch"))
               assert_true(
-                files[2].content().contains("windows-app/windows-app.cmd"),
+                files[3].content().contains("windows-app/windows-app.exe"),
               )
-              assert_true(
-                files[2].content().contains("\"runtimeDependencies\""),
-              )
-              assert_true(files[2].content().contains("WebView2Loader.dll"))
-              assert_eq(files[3].path(), "windows-app/lepusa/distribution.json")
-              assert_true(files[3].content().contains("\"target\":\"windows\""))
               assert_true(
                 files[3].content().contains("\"runtimeDependencies\""),
               )
               assert_true(files[3].content().contains("WebView2Loader.dll"))
+              assert_eq(files[4].path(), "windows-app/lepusa/distribution.json")
+              assert_true(files[4].content().contains("\"target\":\"windows\""))
+              assert_true(
+                files[4].content().contains("\"runtimeDependencies\""),
+              )
+              assert_true(files[4].content().contains("WebView2Loader.dll"))
             }
             Err(_) => abort("unexpected invalid windows bundle files")
           }

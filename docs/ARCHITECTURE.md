@@ -706,9 +706,12 @@ exists.
 Generated macOS and Linux launchers keep a small shell wrapper around
 `lepusa-runtime launch --manifest <runtime.json>` instead of using `exec`. The
 wrapper traps `INT`, `TERM`, and `HUP`, waits on the runtime PID, and forwards
-termination so CLI smoke runs do not strand supervised local services. The macOS
-runtime also installs a native window delegate that stops tracked local services
-before terminating the app when the window closes.
+termination so CLI smoke runs do not strand supervised local services. Windows
+plans make the app `.exe` the primary launcher artifact and emit generated C
+source for a native wrapper that starts `lepusa-runtime.exe`, waits for
+completion, and returns the runtime exit code; the `.cmd` file remains a smoke
+fallback. The macOS runtime also installs a native window delegate that stops
+tracked local services before terminating the app when the window closes.
 Its post-write checks parse `lepusa/runtime.json`, prepare the bundled
 native launch session, and apply the target `NativeLaunchCapability`, so
 pre-install smoke verification cannot mark a Windows or async-bridge bundle
@@ -787,8 +790,8 @@ metadata plus shared runtime assets:
 
 - macOS: `Contents/Info.plist`, launcher stub, runtime and distribution
   manifests
-- Windows: app manifest, `.cmd` command launcher, runtime and distribution
-  manifests
+- Windows: app manifest, generated native launcher C source, `.cmd` smoke
+  fallback, runtime and distribution manifests
 - Linux: `.desktop` entry, executable launcher, runtime and distribution
   manifests
 

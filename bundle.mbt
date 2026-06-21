@@ -496,7 +496,7 @@ pub fn BundleConfig::plan(
     let executable_name = self.metadata.executable_name()
     let extension = match self.target {
       MacOS => ".app"
-      Windows => ".cmd"
+      Windows => ".exe"
       Linux => ""
     }
     Ok({

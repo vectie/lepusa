@@ -781,6 +781,9 @@ This data appears in `RuntimeSession::local_services()` and launch-manifest
 initialization scripts embedded in the runtime manifest. Passing `--json` emits
 target metadata, planned resources, runtime dependencies, signing prerequisites
 and steps, and planned bundle files for CI and native runner tooling.
+Windows bundle plans now make the app `.exe` the primary launcher artifact and
+emit generated native launcher C source plus a `.cmd` smoke fallback, so package
+generators do not need application-owned launcher code.
 The generated distribution manifest records those runtime dependencies beside
 artifacts, resources, signing data, runtime executable placement, and target
 metadata without requiring installer tooling to parse the launch manifest.
@@ -838,10 +841,12 @@ the reusable `BundleWriteResult` payload with written files,
 resources, runtime dependency checks, and verification checks for CI tooling.
 Generated desktop launcher stubs wrap
 `lepusa-runtime launch --manifest <runtime.json>` instead of replacing the
-launcher process with `exec`. The wrapper traps `INT`, `TERM`, and `HUP`, waits
-on the runtime PID, and forwards termination to the runtime so CLI smoke runs do
-not strand supervised local services. The macOS and Linux runtimes track all
-native windows and stop tracked local services only after the last WKWebView or
+launcher process with `exec`. POSIX wrappers trap `INT`, `TERM`, and `HUP`, wait
+on the runtime PID, and forward termination to the runtime so CLI smoke runs do
+not strand supervised local services. The Windows bundle also emits a native C
+launcher source that starts `lepusa-runtime.exe`, waits for completion, and
+returns the runtime exit code. The macOS and Linux runtimes track all native
+windows and stop tracked local services only after the last WKWebView or
 WebKitGTK window closes. The Linux package owns WebKitGTK source and
 packaged-window loops when GTK3 and WebKit2GTK are available, including a
 package-owned `lepusa://` URI scheme callback for MoonBit-resolved runtime,

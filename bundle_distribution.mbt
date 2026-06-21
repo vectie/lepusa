@@ -404,7 +404,7 @@ pub fn BundlePlan::artifacts(self : BundlePlan) -> Array[BundleArtifact] {
         BundleArtifact::new(
           kind=ExecutableArtifact,
           path="\{self.executable_name}/\{self.bundle_name()}",
-          description="Windows command launcher executable",
+          description="Windows native launcher executable built from the generated launcher source",
         ),
         BundleArtifact::new(
           kind=InstallerArtifact,

@@ -299,7 +299,7 @@ async test "bundle plan supports target selection" {
   let result = render_cli_async(["bundle-plan", "windows"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: windows"))
-  assert_true(result.output.contains("bundle: lepusa-example.cmd"))
+  assert_true(result.output.contains("bundle: lepusa-example.exe"))
   assert_true(
     result.output.contains(
       "runtime-executable: lepusa-example/lepusa-runtime.exe",
@@ -308,14 +308,14 @@ async test "bundle plan supports target selection" {
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("runtime-dependencies: 2"))
   assert_true(result.output.contains("signing-prerequisites: 3"))
-  assert_true(result.output.contains("files: 4"))
+  assert_true(result.output.contains("files: 5"))
   let json_result = render_cli_async(["bundle-plan", "windows", "--json"])
   assert_eq(json_result.exit_code, 0)
   assert_true(json_result.output.contains("\"target\":\"windows\""))
   assert_true(
     json_result.output.contains("\"identifier\":\"dev.vectie.lepusa.example\""),
   )
-  assert_true(json_result.output.contains("\"bundle\":\"lepusa-example.cmd\""))
+  assert_true(json_result.output.contains("\"bundle\":\"lepusa-example.exe\""))
   assert_true(
     json_result.output.contains(
       "\"runtimeExecutable\":\"lepusa-example/lepusa-runtime.exe\"",
@@ -341,6 +341,11 @@ async test "bundle plan supports target selection" {
   assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("\"signingSteps\":[]"))
   assert_true(json_result.output.contains("\"files\":["))
+  assert_true(
+    json_result.output.contains(
+      "\"path\":\"lepusa-example/lepusa-example-launcher.c\"",
+    ),
+  )
   assert_true(
     json_result.output.contains(
       "\"path\":\"lepusa-example/lepusa-example.cmd\"",
@@ -1969,6 +1974,7 @@ async test "bundle write gates missing windows runtime dependency" {
       "from _build/native/debug/build/cmd/runtime/WebView2Loader.dll",
     ),
   )
+  assert_true(@fs.exists(root + "/lepusa-example/lepusa-example-launcher.c"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa-example.cmd"))
   assert_true(@fs.exists(root + "/lepusa-example/lepusa/runtime.json"))
   let json_root = "/tmp/lepusa-windows-bundle-write-json-\{@async.now().to_int()}"

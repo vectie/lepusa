@@ -311,8 +311,9 @@ desktop core is reliable.
 ## Milestone 6: Bundling
 
 - macOS `.app` and DMG artifact paths are represented in `BundlePlan`.
-- Windows command launcher and installer artifact paths are represented in
-  `BundlePlan`; a native `.exe` wrapper remains future packaging work.
+- Windows native launcher executable and installer artifact paths are
+  represented in `BundlePlan`; `BundlePlan::files()` emits generated launcher C
+  source plus a `.cmd` smoke fallback for package generators and local checks.
 - Linux desktop integration and portable bundle artifact paths are represented
   in `BundlePlan`.
 - `BundlePlan::files()` emits platform metadata, launcher stubs, one runtime
