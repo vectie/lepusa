@@ -1,9 +1,13 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("notification")
-  .command_sync("show", permission=Notification)
-  .command_sync("permissionState", permission=Notification)
-  .command_sync("requestPermission", permission=Notification)
+  .command_sync("show", permission=Notification, affinity=MainThread)
+  .command_sync("permissionState", permission=Notification, affinity=MainThread)
+  .command_sync(
+    "requestPermission",
+    permission=Notification,
+    affinity=MainThread,
+  )
 }
 
 ///|

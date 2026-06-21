@@ -1,9 +1,9 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("dialog")
-  .command_async("message", permission=Dialog)
-  .command_async("confirm", permission=Dialog)
-  .command_async("prompt", permission=Dialog)
+  .command_async("message", permission=Dialog, affinity=MainThread)
+  .command_async("confirm", permission=Dialog, affinity=MainThread)
+  .command_async("prompt", permission=Dialog, affinity=MainThread)
 }
 
 ///|

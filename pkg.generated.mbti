@@ -452,6 +452,13 @@ pub fn Cmd::emit(Event, target? : EventTarget) -> Self
 pub fn Cmd::is_empty(Self) -> Bool
 pub fn Cmd::navigate(String, Source) -> Self
 
+pub(all) enum CommandExecutionAffinity {
+  MainThread
+  WorkerThread
+  AnyThread
+} derive(Eq, @debug.Debug)
+pub fn CommandExecutionAffinity::name(Self) -> String
+
 pub struct CommandManifest {
   entries : Array[CommandManifestEntry]
 } derive(Eq, @debug.Debug)
@@ -462,6 +469,7 @@ pub fn CommandManifest::entry(Self, String) -> CommandManifestEntry?
 pub fn CommandManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
 pub fn CommandManifest::new(entries? : Array[CommandManifestEntry]) -> Self
 pub fn CommandManifest::routes(Self) -> Array[String]
+pub fn CommandManifest::routes_by_affinity(Self, CommandExecutionAffinity) -> Array[String]
 pub fn CommandManifest::routes_by_mode(Self, CommandMode) -> Array[String]
 pub fn CommandManifest::to_json(Self) -> String
 
@@ -470,12 +478,14 @@ pub struct CommandManifestEntry {
   command : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
   allowed_windows : Array[String]
   allowed_origins : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn CommandManifestEntry::affinity(Self) -> CommandExecutionAffinity
 pub fn CommandManifestEntry::allowed_for_origin(Self, String) -> Bool
 pub fn CommandManifestEntry::allowed_in_window(Self, String) -> Bool
 pub fn CommandManifestEntry::allowed_origins(Self) -> Array[String]
@@ -519,16 +529,19 @@ pub fn CommandRegistry::validate(Self) -> Array[String]
 pub struct CommandSpec {
   name : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
 } derive(Eq, @debug.Debug)
+pub fn CommandSpec::affinity(Self) -> CommandExecutionAffinity
 pub fn CommandSpec::mode(Self) -> CommandMode
 pub fn CommandSpec::name(Self) -> String
-pub fn CommandSpec::new(String, mode? : CommandMode, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn CommandSpec::new(String, mode? : CommandMode, affinity? : CommandExecutionAffinity, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn CommandSpec::permission(Self) -> Permission
 pub fn CommandSpec::request_schema(Self) -> IpcSchema
 pub fn CommandSpec::response_schema(Self) -> IpcSchema
+pub fn CommandSpec::with_affinity(Self, CommandExecutionAffinity) -> Self
 pub fn CommandSpec::with_schema(Self, request? : IpcSchema, response? : IpcSchema) -> Self
 
 pub struct Event {
@@ -863,9 +876,11 @@ pub struct PermissionManifestCommand {
   command : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   allowed_windows : Array[String]
   allowed_origins : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn PermissionManifestCommand::affinity(Self) -> CommandExecutionAffinity
 pub fn PermissionManifestCommand::allowed_origins(Self) -> Array[String]
 pub fn PermissionManifestCommand::allowed_windows(Self) -> Array[String]
 pub fn PermissionManifestCommand::command(Self) -> String
@@ -905,13 +920,13 @@ pub struct Plugin {
   commands : Array[CommandSpec]
   lifecycle_hooks : Array[LifecycleHook]
 } derive(Eq, @debug.Debug)
-pub fn Plugin::command(Self, String, mode? : CommandMode, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
-pub fn Plugin::command_async(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
-pub fn Plugin::command_event(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command(Self, String, mode? : CommandMode, affinity? : CommandExecutionAffinity, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command_async(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
+pub fn Plugin::command_event(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
 pub fn Plugin::command_names(Self) -> Array[String]
 pub fn Plugin::command_routes(Self) -> Array[String]
-pub fn Plugin::command_stream(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
-pub fn Plugin::command_sync(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command_stream(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
+pub fn Plugin::command_sync(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
 pub fn Plugin::contract(Self) -> PluginContract
 pub fn Plugin::lifecycle_hooks(Self) -> Array[LifecycleHook]
@@ -928,10 +943,12 @@ pub struct PluginCommandContract {
   name : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
 } derive(Eq, @debug.Debug)
+pub fn PluginCommandContract::affinity(Self) -> CommandExecutionAffinity
 pub fn PluginCommandContract::from_command(plugin_name~ : String, CommandSpec) -> Self
 pub fn PluginCommandContract::mode(Self) -> CommandMode
 pub fn PluginCommandContract::name(Self) -> String
@@ -949,14 +966,17 @@ pub struct PluginContract {
   permissions : Array[String]
   problems : Array[String]
 } derive(Eq, @debug.Debug)
+pub fn PluginContract::any_thread_count(Self) -> Int
 pub fn PluginContract::async_count(Self) -> Int
 pub fn PluginContract::command_count(Self) -> Int
+pub fn PluginContract::command_count_by_affinity(Self, CommandExecutionAffinity) -> Int
 pub fn PluginContract::command_count_by_mode(Self, CommandMode) -> Int
 pub fn PluginContract::command_routes(Self) -> Array[String]
 pub fn PluginContract::commands(Self) -> Array[PluginCommandContract]
 pub fn PluginContract::event_count(Self) -> Int
 pub fn PluginContract::lifecycle_count(Self) -> Int
 pub fn PluginContract::lifecycle_hooks(Self) -> Array[PluginLifecycleContract]
+pub fn PluginContract::main_thread_count(Self) -> Int
 pub fn PluginContract::name(Self) -> String
 pub fn PluginContract::ok(Self) -> Bool
 pub fn PluginContract::permissions(Self) -> Array[String]
@@ -964,6 +984,7 @@ pub fn PluginContract::problems(Self) -> Array[String]
 pub fn PluginContract::stream_count(Self) -> Int
 pub fn PluginContract::sync_count(Self) -> Int
 pub fn PluginContract::to_json(Self) -> String
+pub fn PluginContract::worker_thread_count(Self) -> Int
 
 pub struct PluginLifecycleContract {
   event : LifecycleEvent

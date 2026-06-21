@@ -70,6 +70,7 @@ fn plugin_command_from_json(
     Object(object) => {
       let name = required_config_string(object, "name", problems)
       let mode = optional_config_string(object, "mode").unwrap_or("sync")
+      let affinity = command_affinity_from_object(object, problems)
       let permission = command_permission_from_object(
         object,
         route="\{plugin.name()}.\{name}",
@@ -82,14 +83,35 @@ fn plugin_command_from_json(
         object, "responseSchema", problems,
       )
       match mode {
-        "sync" => plugin.command_sync(name, permission?, request?, response?)
-        "async" => plugin.command_async(name, permission?, request?, response?)
+        "sync" =>
+          plugin.command_sync(name, permission?, request?, response?, affinity~)
+        "async" =>
+          plugin.command_async(
+            name,
+            permission?,
+            request?,
+            response?,
+            affinity~,
+          )
         "stream" =>
-          plugin.command_stream(name, permission?, request?, response?)
-        "event" => plugin.command_event(name, permission?, request?, response?)
+          plugin.command_stream(
+            name,
+            permission?,
+            request?,
+            response?,
+            affinity~,
+          )
+        "event" =>
+          plugin.command_event(
+            name,
+            permission?,
+            request?,
+            response?,
+            affinity~,
+          )
         value => {
           problems.push("unknown plugin command mode: \{value}")
-          plugin.command_sync(name, permission?, request?, response?)
+          plugin.command_sync(name, permission?, request?, response?, affinity~)
         }
       }
     }
@@ -97,6 +119,26 @@ fn plugin_command_from_json(
       problems.push("project plugin commands must be strings or objects")
       plugin
     }
+  }
+}
+
+///|
+fn command_affinity_from_object(
+  object : Map[String, Json],
+  problems : Array[String],
+) -> @lepusa.CommandExecutionAffinity {
+  match optional_config_string(object, "affinity") {
+    Some(value) =>
+      match value {
+        "main-thread" => MainThread
+        "worker-thread" => WorkerThread
+        "any-thread" => AnyThread
+        _ => {
+          problems.push("unknown plugin command affinity: \{value}")
+          AnyThread
+        }
+      }
+    None => AnyThread
   }
 }
 

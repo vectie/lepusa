@@ -207,13 +207,13 @@ pub fn TrayState::destroyed(self : TrayState) -> Bool {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("tray")
-  .command_sync("setIcon", permission=Tray)
-  .command_sync("setTooltip", permission=Tray)
-  .command_sync("setMenu", permission=Tray)
-  .command_sync("showMenu", permission=Tray)
-  .command_sync("setVisible", permission=Tray)
-  .command_sync("destroy", permission=Tray)
-  .command_event("onMenuItemClick", permission=Tray)
+  .command_sync("setIcon", permission=Tray, affinity=MainThread)
+  .command_sync("setTooltip", permission=Tray, affinity=MainThread)
+  .command_sync("setMenu", permission=Tray, affinity=MainThread)
+  .command_sync("showMenu", permission=Tray, affinity=MainThread)
+  .command_sync("setVisible", permission=Tray, affinity=MainThread)
+  .command_sync("destroy", permission=Tray, affinity=MainThread)
+  .command_event("onMenuItemClick", permission=Tray, affinity=MainThread)
 }
 
 ///|

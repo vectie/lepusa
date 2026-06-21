@@ -119,6 +119,7 @@ test "catalog exposes official plugin contracts" {
       assert_eq(contract.name(), "fs")
       assert_true(contract.command_routes().contains("fs.readText"))
       assert_true(contract.async_count() > 0)
+      assert_true(contract.worker_thread_count() > 0)
       assert_true(contract.permissions().contains("filesystem.read"))
     }
     None => abort("fs plugin contract did not resolve")
@@ -126,6 +127,7 @@ test "catalog exposes official plugin contracts" {
   match plugin_contract("tray") {
     Some(contract) => {
       assert_true(contract.event_count() > 0)
+      assert_true(contract.main_thread_count() > 0)
       assert_true(contract.command_routes().contains("tray.onMenuItemClick"))
     }
     None => abort("tray plugin contract did not resolve")

@@ -207,13 +207,13 @@ pub fn plugin() -> @lepusa.Plugin {
   .command_sync("name", permission=App)
   .command_sync("version", permission=App)
   .command_sync("identifier", permission=App)
-  .command_sync("show", permission=App)
-  .command_sync("hide", permission=App)
-  .command_sync("setTheme", permission=App)
-  .command_sync("setDockVisibility", permission=App)
-  .command_sync("exit", permission=App)
-  .command_sync("restart", permission=App)
-  .command_event("onThemeChanged", permission=App)
+  .command_sync("show", permission=App, affinity=MainThread)
+  .command_sync("hide", permission=App, affinity=MainThread)
+  .command_sync("setTheme", permission=App, affinity=MainThread)
+  .command_sync("setDockVisibility", permission=App, affinity=MainThread)
+  .command_sync("exit", permission=App, affinity=MainThread)
+  .command_sync("restart", permission=App, affinity=MainThread)
+  .command_event("onThemeChanged", permission=App, affinity=MainThread)
 }
 
 ///|

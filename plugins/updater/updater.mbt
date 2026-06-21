@@ -120,12 +120,16 @@ pub fn UpdaterState::last_action(self : UpdaterState) -> String {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("updater")
-  .command_async("check", permission=Updater)
-  .command_async("download", permission=Updater)
-  .command_async("install", permission=Updater)
-  .command_async("downloadAndInstall", permission=Updater)
-  .command_async("restart", permission=Updater)
-  .command_event("onUpdateAvailable", permission=Updater)
+  .command_async("check", permission=Updater, affinity=WorkerThread)
+  .command_async("download", permission=Updater, affinity=WorkerThread)
+  .command_async("install", permission=Updater, affinity=WorkerThread)
+  .command_async(
+    "downloadAndInstall",
+    permission=Updater,
+    affinity=WorkerThread,
+  )
+  .command_async("restart", permission=Updater, affinity=MainThread)
+  .command_event("onUpdateAvailable", permission=Updater, affinity=MainThread)
 }
 
 ///|

@@ -6,12 +6,14 @@ test "plugin contract reports declared command surface" {
       permission=FileSystemRead,
       request=@lepusa.IpcSchema::string(),
       response=@lepusa.IpcSchema::json(),
+      affinity=MainThread,
     )
     .command_async(
       "write",
       permission=FileSystemWrite,
       request=@lepusa.IpcSchema::object("WriteRequest", "{ path: string }"),
       response=@lepusa.IpcSchema::boolean(),
+      affinity=WorkerThread,
     )
     .command_event("changed")
     .with_lifecycle(PluginReady("demo"), @lepusa.Cmd::effect("demo.ready"))
@@ -23,6 +25,9 @@ test "plugin contract reports declared command surface" {
   assert_eq(contract.async_count(), 1)
   assert_eq(contract.event_count(), 1)
   assert_eq(contract.stream_count(), 0)
+  assert_eq(contract.main_thread_count(), 1)
+  assert_eq(contract.worker_thread_count(), 1)
+  assert_eq(contract.any_thread_count(), 1)
   assert_eq(contract.lifecycle_count(), 1)
   assert_true(contract.command_routes().contains("demo.read"))
   assert_true(contract.command_routes().contains("demo.write"))
@@ -32,6 +37,7 @@ test "plugin contract reports declared command surface" {
   let commands = contract.commands()
   assert_eq(commands[0].route(), "demo.read")
   assert_true(commands[0].mode() is Sync)
+  assert_true(commands[0].affinity() is MainThread)
   assert_true(commands[0].permission() is FileSystemRead)
   assert_eq(commands[0].request_schema().typescript(), "string")
   assert_false(contract.lifecycle_hooks()[0].command_empty())
@@ -39,6 +45,7 @@ test "plugin contract reports declared command surface" {
   assert_true(json.contains("\"name\":\"demo\""))
   assert_true(json.contains("\"route\":\"demo.read\""))
   assert_true(json.contains("\"mode\":\"async\""))
+  assert_true(json.contains("\"affinity\":\"worker-thread\""))
   assert_true(json.contains("\"plugin-ready\""))
 }
 

@@ -78,15 +78,19 @@ fn FsPolicy::find_scope(
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("fs")
-  .command_async("readText", permission=FileSystemRead)
-  .command_async("readBytes", permission=FileSystemRead)
-  .command_async("exists", permission=FileSystemRead)
-  .command_async("list", permission=FileSystemRead)
-  .command_async("metadata", permission=FileSystemRead)
-  .command_async("writeText", permission=FileSystemWrite)
-  .command_async("writeBytes", permission=FileSystemWrite)
-  .command_async("delete", permission=FileSystemWrite)
-  .command_async("createDir", permission=FileSystemWrite)
+  .command_async("readText", permission=FileSystemRead, affinity=WorkerThread)
+  .command_async("readBytes", permission=FileSystemRead, affinity=WorkerThread)
+  .command_async("exists", permission=FileSystemRead, affinity=WorkerThread)
+  .command_async("list", permission=FileSystemRead, affinity=WorkerThread)
+  .command_async("metadata", permission=FileSystemRead, affinity=WorkerThread)
+  .command_async("writeText", permission=FileSystemWrite, affinity=WorkerThread)
+  .command_async(
+    "writeBytes",
+    permission=FileSystemWrite,
+    affinity=WorkerThread,
+  )
+  .command_async("delete", permission=FileSystemWrite, affinity=WorkerThread)
+  .command_async("createDir", permission=FileSystemWrite, affinity=WorkerThread)
 }
 
 ///|

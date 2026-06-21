@@ -1,10 +1,10 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("shell")
-  .command_async("execute", permission=Shell)
-  .command_async("spawn", permission=Shell)
-  .command_async("kill", permission=Shell)
-  .command_async("stdinWrite", permission=Shell)
+  .command_async("execute", permission=Shell, affinity=WorkerThread)
+  .command_async("spawn", permission=Shell, affinity=WorkerThread)
+  .command_async("kill", permission=Shell, affinity=WorkerThread)
+  .command_async("stdinWrite", permission=Shell, affinity=WorkerThread)
 }
 
 ///|

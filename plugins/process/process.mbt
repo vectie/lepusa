@@ -1,11 +1,11 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("process")
-  .command_sync("info", permission=ProcessInfo)
-  .command_sync("cwd", permission=ProcessInfo)
-  .command_sync("env", permission=ProcessEnvironment)
-  .command_sync("setEnv", permission=ProcessEnvironment)
-  .command_async("exit", permission=ProcessControl)
+  .command_sync("info", permission=ProcessInfo, affinity=WorkerThread)
+  .command_sync("cwd", permission=ProcessInfo, affinity=WorkerThread)
+  .command_sync("env", permission=ProcessEnvironment, affinity=WorkerThread)
+  .command_sync("setEnv", permission=ProcessEnvironment, affinity=WorkerThread)
+  .command_async("exit", permission=ProcessControl, affinity=WorkerThread)
 }
 
 ///|

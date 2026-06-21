@@ -130,10 +130,10 @@ fn has_scope(scopes : Array[@lepusa.FileSystemScope], name : String) -> Bool {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("fileDialog")
-  .command_async("openFile", permission=FileDialog)
-  .command_async("openFiles", permission=FileDialog)
-  .command_async("openDirectory", permission=FileDialog)
-  .command_async("saveFile", permission=FileDialog)
+  .command_async("openFile", permission=FileDialog, affinity=MainThread)
+  .command_async("openFiles", permission=FileDialog, affinity=MainThread)
+  .command_async("openDirectory", permission=FileDialog, affinity=MainThread)
+  .command_async("saveFile", permission=FileDialog, affinity=MainThread)
 }
 
 ///|

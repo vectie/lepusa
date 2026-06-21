@@ -328,14 +328,14 @@ pub fn MenuItemKind::name(self : MenuItemKind) -> String {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("menu")
-  .command_sync("setAppMenu", permission=Menu)
-  .command_sync("setWindowMenu", permission=Menu)
-  .command_sync("clearAppMenu", permission=Menu)
-  .command_sync("clearWindowMenu", permission=Menu)
-  .command_sync("setItemEnabled", permission=Menu)
-  .command_sync("setItemChecked", permission=Menu)
-  .command_sync("activateItem", permission=Menu)
-  .command_event("onItemClick", permission=Menu)
+  .command_sync("setAppMenu", permission=Menu, affinity=MainThread)
+  .command_sync("setWindowMenu", permission=Menu, affinity=MainThread)
+  .command_sync("clearAppMenu", permission=Menu, affinity=MainThread)
+  .command_sync("clearWindowMenu", permission=Menu, affinity=MainThread)
+  .command_sync("setItemEnabled", permission=Menu, affinity=MainThread)
+  .command_sync("setItemChecked", permission=Menu, affinity=MainThread)
+  .command_sync("activateItem", permission=Menu, affinity=MainThread)
+  .command_event("onItemClick", permission=Menu, affinity=MainThread)
 }
 
 ///|

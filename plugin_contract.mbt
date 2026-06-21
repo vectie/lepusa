@@ -4,6 +4,7 @@ pub struct PluginCommandContract {
   name : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
@@ -20,6 +21,7 @@ pub fn PluginCommandContract::from_command(
     name,
     route: "\{plugin_name}.\{name}",
     mode: command.mode(),
+    affinity: command.affinity(),
     permission: command.permission(),
     request_schema: command.request_schema(),
     response_schema: command.response_schema(),
@@ -44,6 +46,13 @@ pub fn PluginCommandContract::route(self : PluginCommandContract) -> String {
 ///|
 pub fn PluginCommandContract::mode(self : PluginCommandContract) -> CommandMode {
   self.mode
+}
+
+///|
+pub fn PluginCommandContract::affinity(
+  self : PluginCommandContract,
+) -> CommandExecutionAffinity {
+  self.affinity
 }
 
 ///|
@@ -75,6 +84,7 @@ pub fn PluginCommandContract::to_json(self : PluginCommandContract) -> String {
     "\"name\":\{self.name.json_string()},",
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
+    "\"affinity\":\{self.affinity.name().json_string()},",
     "\"permission\":\{self.permission.name().json_string()},",
     "\"request\":\{self.request_schema.to_json()},",
     "\"response\":\{self.response_schema.to_json()}",
@@ -218,6 +228,21 @@ pub fn PluginContract::event_count(self : PluginContract) -> Int {
 }
 
 ///|
+pub fn PluginContract::main_thread_count(self : PluginContract) -> Int {
+  self.command_count_by_affinity(MainThread)
+}
+
+///|
+pub fn PluginContract::worker_thread_count(self : PluginContract) -> Int {
+  self.command_count_by_affinity(WorkerThread)
+}
+
+///|
+pub fn PluginContract::any_thread_count(self : PluginContract) -> Int {
+  self.command_count_by_affinity(AnyThread)
+}
+
+///|
 pub fn PluginContract::command_count_by_mode(
   self : PluginContract,
   mode : CommandMode,
@@ -225,6 +250,20 @@ pub fn PluginContract::command_count_by_mode(
   let mut count = 0
   for command in self.commands {
     if command.mode() == mode {
+      count += 1
+    }
+  }
+  count
+}
+
+///|
+pub fn PluginContract::command_count_by_affinity(
+  self : PluginContract,
+  affinity : CommandExecutionAffinity,
+) -> Int {
+  let mut count = 0
+  for command in self.commands {
+    if command.affinity() == affinity {
       count += 1
     }
   }
@@ -255,6 +294,9 @@ fn PluginContract::counts_json(self : PluginContract) -> String {
     "\"async\":\{self.async_count()},",
     "\"stream\":\{self.stream_count()},",
     "\"event\":\{self.event_count()},",
+    "\"mainThread\":\{self.main_thread_count()},",
+    "\"workerThread\":\{self.worker_thread_count()},",
+    "\"anyThread\":\{self.any_thread_count()},",
     "\"lifecycle\":\{self.lifecycle_count()}",
     "}",
   ].join("")

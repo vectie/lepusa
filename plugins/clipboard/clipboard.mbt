@@ -1,9 +1,9 @@
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("clipboard")
-  .command_sync("readText", permission=Clipboard)
-  .command_sync("writeText", permission=Clipboard)
-  .command_sync("clear", permission=Clipboard)
+  .command_sync("readText", permission=Clipboard, affinity=MainThread)
+  .command_sync("writeText", permission=Clipboard, affinity=MainThread)
+  .command_sync("clear", permission=Clipboard, affinity=MainThread)
 }
 
 ///|

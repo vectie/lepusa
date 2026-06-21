@@ -4,6 +4,7 @@ pub struct CommandManifestEntry {
   command : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
@@ -16,6 +17,7 @@ fn CommandManifestEntry::new(
   plugin~ : String,
   command~ : String,
   mode~ : CommandMode,
+  affinity~ : CommandExecutionAffinity,
   permission~ : Permission,
   request_schema~ : IpcSchema,
   response_schema~ : IpcSchema,
@@ -27,6 +29,7 @@ fn CommandManifestEntry::new(
     command,
     route: "\{plugin}.\{command}",
     mode,
+    affinity,
     permission,
     request_schema,
     response_schema,
@@ -53,6 +56,13 @@ pub fn CommandManifestEntry::route(self : CommandManifestEntry) -> String {
 ///|
 pub fn CommandManifestEntry::mode(self : CommandManifestEntry) -> CommandMode {
   self.mode
+}
+
+///|
+pub fn CommandManifestEntry::affinity(
+  self : CommandManifestEntry,
+) -> CommandExecutionAffinity {
+  self.affinity
 }
 
 ///|
@@ -114,6 +124,7 @@ pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
     "\"command\":\{self.command.json_string()},",
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
+    "\"affinity\":\{self.affinity.name().json_string()},",
     "\"permission\":\{self.permission.name().json_string()},",
     "\"requestSchema\":\{self.request_schema.to_json()},",
     "\"responseSchema\":\{self.response_schema.to_json()},",
@@ -159,6 +170,7 @@ pub fn CommandManifest::from_plugins(
           plugin=plugin.name(),
           command=command.name(),
           mode=command.mode(),
+          affinity=command.affinity(),
           permission=command.permission(),
           request_schema=command.request_schema(),
           response_schema=command.response_schema(),
@@ -232,6 +244,20 @@ pub fn CommandManifest::routes_by_mode(
   let routes : Array[String] = []
   for entry in self.entries {
     if entry.mode() == mode {
+      routes.push(entry.route())
+    }
+  }
+  routes
+}
+
+///|
+pub fn CommandManifest::routes_by_affinity(
+  self : CommandManifest,
+  affinity : CommandExecutionAffinity,
+) -> Array[String] {
+  let routes : Array[String] = []
+  for entry in self.entries {
+    if entry.affinity() == affinity {
       routes.push(entry.route())
     }
   }

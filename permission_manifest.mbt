@@ -4,6 +4,7 @@ pub struct PermissionManifestCommand {
   command : String
   route : String
   mode : CommandMode
+  affinity : CommandExecutionAffinity
   allowed_windows : Array[String]
   allowed_origins : Array[String]
 } derive(Debug, Eq)
@@ -39,6 +40,7 @@ fn PermissionManifestCommand::from_entry(
     command: entry.command(),
     route: entry.route(),
     mode: entry.mode(),
+    affinity: entry.affinity(),
     allowed_windows: entry.allowed_windows(),
     allowed_origins: entry.allowed_origins(),
   }
@@ -84,6 +86,13 @@ pub fn PermissionManifestCommand::mode(
 }
 
 ///|
+pub fn PermissionManifestCommand::affinity(
+  self : PermissionManifestCommand,
+) -> CommandExecutionAffinity {
+  self.affinity
+}
+
+///|
 pub fn PermissionManifestCommand::allowed_windows(
   self : PermissionManifestCommand,
 ) -> Array[String] {
@@ -107,6 +116,7 @@ pub fn PermissionManifestCommand::to_json(
     "\"command\":\{self.command.json_string()},",
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
+    "\"affinity\":\{self.affinity.name().json_string()},",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
     "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
     "}",

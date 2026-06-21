@@ -21,8 +21,9 @@ test "runtime command manifest projects modes permissions and windows" {
           "ReadRequest", "{ readonly path: string }",
         ),
         response=@lepusa.IpcSchema::string(),
+        affinity=MainThread,
       )
-      .command_async("write", permission=FileSystemWrite)
+      .command_async("write", permission=FileSystemWrite, affinity=WorkerThread)
       .command_stream("events", permission=Notification),
     )
     .with_capability(
@@ -47,11 +48,14 @@ test "runtime command manifest projects modes permissions and windows" {
       assert_eq(manifest.routes_by_mode(Sync)[0], "core.read")
       assert_eq(manifest.routes_by_mode(Async)[0], "core.write")
       assert_eq(manifest.routes_by_mode(Stream)[0], "core.events")
+      assert_eq(manifest.routes_by_affinity(MainThread)[0], "core.read")
+      assert_eq(manifest.routes_by_affinity(WorkerThread)[0], "core.write")
       match manifest.entry("core.read") {
         Some(entry) => {
           assert_eq(entry.plugin(), "core")
           assert_eq(entry.command(), "read")
           assert_true(entry.mode() is Sync)
+          assert_true(entry.affinity() is MainThread)
           assert_true(entry.permission() is FileSystemRead)
           assert_eq(entry.allowed_windows().length(), 1)
           assert_eq(entry.allowed_origins().length(), 1)
@@ -67,6 +71,7 @@ test "runtime command manifest projects modes permissions and windows" {
           )
           assert_eq(entry.response_schema().typescript(), "string")
           assert_true(entry.to_json().contains("\"mode\":\"sync\""))
+          assert_true(entry.to_json().contains("\"affinity\":\"main-thread\""))
           assert_true(entry.to_json().contains("\"requestSchema\""))
           assert_true(entry.to_json().contains("\"responseSchema\""))
           assert_true(entry.to_json().contains("\"allowedOrigins\""))
@@ -166,6 +171,7 @@ test "permission manifest groups routes grants windows and denials" {
           assert_eq(permission.allowed_origins().length(), 1)
           assert_eq(permission.allowed_origins()[0], "https://app.example")
           assert_eq(permission.commands()[0].allowed_origins().length(), 1)
+          assert_true(permission.commands()[0].affinity() is AnyThread)
           assert_eq(permission.grants()[0].origins().length(), 1)
           assert_eq(permission.denied_routes().length(), 0)
           assert_true(
