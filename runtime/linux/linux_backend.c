@@ -156,10 +156,17 @@ typedef struct {
 } LepusaLinuxWindowSlot;
 
 typedef struct {
+  char window_label[128];
+  char callback[256];
+} LepusaLinuxBridgeDrainRequest;
+
+typedef struct {
   void *window;
   void *webview;
   LepusaLinuxWindowSlot windows[32];
   int window_count;
+  LepusaLinuxBridgeDrainRequest drain_requests[32];
+  int drain_request_count;
   LepusaLinuxWebKit *api;
   LepusaLinuxBytesCallback call_dispatch;
   void *dispatch;
@@ -756,6 +763,35 @@ static void lepusa_linux_register_window_slot(
   slot->webview = webview;
 }
 
+static void lepusa_linux_register_bridge_drain_request(
+  LepusaLinuxBridgeContext *context,
+  const char *window_label,
+  int32_t window_label_len,
+  const char *callback,
+  int32_t callback_len
+) {
+  if (context == NULL || callback == NULL || callback_len <= 0) {
+    return;
+  }
+  if (context->drain_request_count >= 32) {
+    return;
+  }
+  LepusaLinuxBridgeDrainRequest *request =
+    &context->drain_requests[context->drain_request_count++];
+  lepusa_linux_copy_label_range(
+    request->window_label,
+    sizeof(request->window_label),
+    window_label,
+    window_label_len
+  );
+  lepusa_linux_copy_label_range(
+    request->callback,
+    sizeof(request->callback),
+    callback,
+    callback_len
+  );
+}
+
 static LepusaLinuxWindowSlot *lepusa_linux_window_slot_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1172,6 +1208,41 @@ static void lepusa_linux_apply_navigation_from_handoff_packet(
   }
 }
 
+static void lepusa_linux_apply_bridge_drains_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || packet == NULL) {
+    return;
+  }
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "drain-bridge-window"
+        )) {
+      continue;
+    }
+    lepusa_linux_register_bridge_drain_request(
+      context,
+      record.window,
+      record.window_len,
+      record.action,
+      record.action_len
+    );
+  }
+}
+
 static void lepusa_linux_apply_evaluate_scripts_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1518,6 +1589,7 @@ static void lepusa_linux_script_message_received(
     free(script_text);
   }
   lepusa_linux_apply_evaluate_scripts_from_handoff_packet(context, packet);
+  lepusa_linux_apply_bridge_drains_from_handoff_packet(context, packet);
   lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
@@ -1938,15 +2010,17 @@ int32_t lepusa_linux_run_webview(
     return 5;
   }
   LepusaLinuxBridgeContext bridge_context = {
-    window,
-    webview,
-    { 0 },
-    0,
-    &api,
-    call_dispatch,
-    dispatch,
-    call_resolve_asset,
-    resolve_asset
+    .window = window,
+    .webview = webview,
+    .windows = { 0 },
+    .window_count = 0,
+    .drain_requests = { 0 },
+    .drain_request_count = 0,
+    .api = &api,
+    .call_dispatch = call_dispatch,
+    .dispatch = dispatch,
+    .call_resolve_asset = call_resolve_asset,
+    .resolve_asset = resolve_asset
   };
   if (asset_protocol_text[0] != '\0' &&
       call_resolve_asset != NULL &&

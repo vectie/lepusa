@@ -616,7 +616,9 @@ UTF-8 handoff packet carrying the same typed `evaluate-script` operations, plus
 the window and packet-drain callback a platform loop must schedule. Deferred
 handoff packets carry that `drain-bridge-window` operation immediately, so
 native loops can enqueue the event-loop wakeup from the same packet they return
-to the WebView callback.
+to the WebView callback. The native C loops parse and retain those drain
+requests; the remaining async bridge gap is executing that retained request
+through a MoonBit async callback/wakeup ABI.
 `NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
 platform packages provide handlers for `drain-bridge-window`,
 `evaluate-script`, `navigate-window`, `run-effect`, and service operations, then
@@ -921,10 +923,11 @@ The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
 responses. Native loops now understand the typed packet format needed to
-evaluate queued callback scripts, but launch paths still refuse async bridge
-routes with an explicit scheduler requirement until a backend launch capability
-declares that its event loop can wake and drain queued completions without
-blocking the WebView callback. That launch capability now carries an
+evaluate queued callback scripts and retain deferred drain requests, but launch
+paths still refuse async bridge routes with an explicit scheduler requirement
+until a backend launch capability declares that its event loop can wake and
+drain queued completions without blocking the WebView callback. That launch
+capability now carries an
 `asyncBridgeDrainMessage` field, which distinguishes the final async
 MoonBit-to-native callback ABI work from WebView dependency, script evaluation,
 or creation-loop failures. Launch-session JSON also carries

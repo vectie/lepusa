@@ -1382,6 +1382,11 @@ struct LepusaWindowsWindowSlot {
   LepusaWindowsWebView2Context *context;
 };
 
+typedef struct {
+  char window_label[128];
+  char callback[256];
+} LepusaWindowsBridgeDrainRequest;
+
 struct LepusaWindowsWebView2Context {
   HINSTANCE instance;
   ICoreWebView2Environment *environment;
@@ -1403,6 +1408,8 @@ struct LepusaWindowsWebView2Context {
   int live_windows;
   LepusaWindowsWindowSlot windows[32];
   int window_count;
+  LepusaWindowsBridgeDrainRequest drain_requests[32];
+  int drain_request_count;
   LepusaWindowsEnvironmentCompletedHandler environment_handler;
   moonbit_bytes_t initial_open_packet;
 };
@@ -1500,6 +1507,35 @@ static LepusaWindowsWindowSlot *lepusa_windows_find_window_slot(
     }
   }
   return context->window_count > 0 ? &context->windows[0] : NULL;
+}
+
+static void lepusa_windows_register_bridge_drain_request(
+  LepusaWindowsWebView2Context *context,
+  const char *window_label,
+  int32_t window_label_len,
+  const char *callback,
+  int32_t callback_len
+) {
+  if (context == NULL || callback == NULL || callback_len <= 0) {
+    return;
+  }
+  if (context->drain_request_count >= 32) {
+    return;
+  }
+  LepusaWindowsBridgeDrainRequest *request =
+    &context->drain_requests[context->drain_request_count++];
+  lepusa_windows_copy_label_range(
+    request->window_label,
+    sizeof(request->window_label),
+    window_label,
+    window_label_len
+  );
+  lepusa_windows_copy_label_range(
+    request->callback,
+    sizeof(request->callback),
+    callback,
+    callback_len
+  );
 }
 
 static LepusaWindowsWindowSlot *lepusa_windows_window_slot_from_handoff_packet(
@@ -1652,6 +1688,11 @@ static void lepusa_windows_apply_evaluate_scripts_from_handoff_packet(
   moonbit_bytes_t packet
 );
 
+static void lepusa_windows_apply_bridge_drains_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+);
+
 static void lepusa_windows_execute_script_bytes(
   LepusaWindowsWindowSlot *slot,
   moonbit_bytes_t script
@@ -1712,6 +1753,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
     script
   );
   lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
+  lepusa_windows_apply_bridge_drains_from_handoff_packet(context, packet);
   lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
   return S_OK;
@@ -2085,6 +2127,40 @@ static void lepusa_windows_apply_evaluate_scripts_from_handoff_packet(
       );
       lepusa_windows_execute_script_bytes(slot, script);
     }
+  }
+}
+
+static void lepusa_windows_apply_bridge_drains_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+) {
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (context == NULL ||
+      packet == NULL ||
+      !lepusa_windows_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaWindowsNativeOperationRecord record;
+    if (!lepusa_windows_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_windows_range_equals(
+          record.kind,
+          record.kind_len,
+          "drain-bridge-window"
+        )) {
+      continue;
+    }
+    lepusa_windows_register_bridge_drain_request(
+      context,
+      record.window,
+      record.window_len,
+      record.action,
+      record.action_len
+    );
   }
 }
 
