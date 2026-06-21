@@ -292,7 +292,11 @@ pub fn ProjectManifest::runtime_plan(
   if problems.is_empty() {
     match self.app(root).runtime_plan(config=self.runtime) {
       Ok(plan) =>
-        Ok(plan.with_file_system_scopes(self.filesystem_scopes.copy()))
+        Ok(
+          plan
+          .with_app_metadata(self.metadata)
+          .with_file_system_scopes(self.filesystem_scopes.copy()),
+        )
       Err(problems) => Err(problems)
     }
   } else {

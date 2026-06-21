@@ -1,5 +1,6 @@
 import {
   "vectie/lepusa",
+  "vectie/lepusa/plugins/app",
   "vectie/lepusa/plugins/catalog",
   "vectie/lepusa/runtime",
 }

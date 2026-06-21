@@ -13,6 +13,7 @@ test "desktop kit installs official plugin metadata and handlers together" {
 ///|
 test "desktop kit installs sync-safe official profile" {
   let names = sync_plugin_names()
+  assert_true(names.contains("app"))
   assert_true(names.contains("log"))
   assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
@@ -23,6 +24,7 @@ test "desktop kit installs sync-safe official profile" {
     assert_true(kit.plugin_names().contains(name))
   }
   let registry = kit.registry()
+  assert_true(registry.sync_routes().contains("app.info"))
   assert_true(registry.sync_routes().contains("log.write"))
   assert_true(registry.sync_routes().contains("window.close"))
   assert_true(registry.sync_routes().contains("windowState.set"))
@@ -85,9 +87,21 @@ test "desktop project builds launchable sync plugin host" {
     .with_sync_plugins()
   match project.runtime_host() {
     Ok(host) => {
+      assert_true(host.sync_command_routes().contains("app.info"))
       assert_true(host.sync_command_routes().contains("autoLaunch.status"))
       assert_true(host.sync_command_routes().contains("window.close"))
       assert_true(host.sync_command_routes().contains("windowState.set"))
+      let response = host.dispatch(
+        @lepusa.InvokeRequest::new(
+          id="app-info",
+          window_label="main",
+          plugin="app",
+          command="info",
+        ),
+      )
+      assert_true(
+        response.payload().unwrap_or("").contains("\"name\":\"Lepusa Sync\""),
+      )
       assert_eq(host.async_command_routes().length(), 0)
     }
     Err(problems) => abort(problems.join("; "))

@@ -3,6 +3,7 @@ package "vectie/lepusa/plugins/catalog"
 
 import {
   "vectie/lepusa",
+  "vectie/lepusa/plugins/app",
 }
 
 // Values
@@ -24,12 +25,14 @@ pub fn sync_plugin_names() -> Array[String]
 
 // Types and methods
 pub struct CatalogContext {
+  app_info : @app.AppInfo
   filesystem_scopes : Array[@lepusa.FileSystemScope]
   local_services : Array[@lepusa.LocalService]
 }
+pub fn CatalogContext::app_info(Self) -> @app.AppInfo
 pub fn CatalogContext::filesystem_scopes(Self) -> Array[@lepusa.FileSystemScope]
 pub fn CatalogContext::local_services(Self) -> Array[@lepusa.LocalService]
-pub fn CatalogContext::new(filesystem_scopes? : Array[@lepusa.FileSystemScope], local_services? : Array[@lepusa.LocalService]) -> Self
+pub fn CatalogContext::new(app_info? : @app.AppInfo, filesystem_scopes? : Array[@lepusa.FileSystemScope], local_services? : Array[@lepusa.LocalService]) -> Self
 
 // Type aliases
 

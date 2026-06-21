@@ -1,0 +1,84 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/app"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, state? : AppState) -> @lepusa.CommandRegistry
+
+pub fn registry(state? : AppState) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub(all) enum AppControlAction {
+  Show
+  Hide
+  SetTheme
+  SetDockVisibility
+  Exit
+  Restart
+} derive(Eq, @debug.Debug)
+pub fn AppControlAction::name(Self) -> String
+
+pub struct AppControlOperation {
+  action : AppControlAction
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn AppControlOperation::action(Self) -> AppControlAction
+pub fn AppControlOperation::new(action~ : AppControlAction, payload? : String) -> Self
+pub fn AppControlOperation::payload(Self) -> String
+pub fn AppControlOperation::to_json(Self) -> String
+
+pub struct AppInfo {
+  name : String
+  version : String
+  identifier : String
+} derive(Eq, @debug.Debug)
+pub fn AppInfo::default() -> Self
+pub fn AppInfo::from_metadata(@lepusa.AppMetadata) -> Self
+pub fn AppInfo::identifier(Self) -> String
+pub fn AppInfo::name(Self) -> String
+pub fn AppInfo::new(name~ : String, version~ : String, identifier~ : String) -> Self
+pub fn AppInfo::validate(Self) -> Array[String]
+pub fn AppInfo::version(Self) -> String
+
+pub struct AppState {
+  info : AppInfo
+  mut visible : Bool
+  mut theme : AppTheme
+  mut dock_visible : Bool
+  mut exit_requested : Bool
+  mut restart_requested : Bool
+  operations : Array[AppControlOperation]
+}
+pub fn AppState::dock_visible(Self) -> Bool
+pub fn AppState::exit_requested(Self) -> Bool
+pub fn AppState::info(Self) -> AppInfo
+pub fn AppState::last(Self) -> AppControlOperation?
+pub fn AppState::new(info? : AppInfo, visible? : Bool, theme? : AppTheme, dock_visible? : Bool) -> Self
+pub fn AppState::operations(Self) -> Array[AppControlOperation]
+pub fn AppState::restart_requested(Self) -> Bool
+pub fn AppState::theme(Self) -> AppTheme
+pub fn AppState::visible(Self) -> Bool
+
+pub(all) enum AppTheme {
+  System
+  Light
+  Dark
+} derive(Eq, @debug.Debug)
+pub fn AppTheme::name(Self) -> String
+
+// Type aliases
+
+// Traits
+

@@ -203,6 +203,7 @@ pub fn DesktopKit::validate(self : DesktopKit) -> Array[String] {
 ///|
 pub fn DesktopKit::registry(self : DesktopKit) -> @lepusa.CommandRegistry {
   self.registry_with_context(
+    app_info=@app.AppInfo::default(),
     filesystem_scopes=self.filesystem_scopes,
     local_services=self.local_services,
   )
@@ -217,6 +218,7 @@ pub fn DesktopKit::registry_for_plan(
     Ok(context) =>
       Ok(
         self.registry_with_context(
+          app_info=context.app_info(),
           filesystem_scopes=context.filesystem_scopes(),
           local_services=context.local_services(),
         ),
@@ -239,10 +241,12 @@ pub fn DesktopKit::registered_routes_for_plan(
 ///|
 fn DesktopKit::registry_with_context(
   self : DesktopKit,
+  app_info~ : @app.AppInfo,
   filesystem_scopes~ : Array[@lepusa.FileSystemScope],
   local_services~ : Array[@lepusa.LocalService],
 ) -> @lepusa.CommandRegistry {
   let context = @catalog.CatalogContext::new(
+    app_info~,
     filesystem_scopes~,
     local_services~,
   )
@@ -312,11 +316,20 @@ fn DesktopKit::context_for_plan(
     Ok(manifest) =>
       Ok(
         @catalog.CatalogContext::new(
+          app_info=app_info_for_plan(plan),
           filesystem_scopes=self.scopes_with_plan(plan),
           local_services=self.services_with_plan(manifest.local_services()),
         ),
       )
     Err(problems) => Err(problems)
+  }
+}
+
+///|
+fn app_info_for_plan(plan : @lepusa.RuntimePlan) -> @app.AppInfo {
+  match plan.app_metadata() {
+    Some(metadata) => @app.AppInfo::from_metadata(metadata)
+    None => @app.AppInfo::default()
   }
 }
 

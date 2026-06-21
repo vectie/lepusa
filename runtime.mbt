@@ -35,6 +35,7 @@ pub fn RuntimeConfig::validate(self : RuntimeConfig) -> Array[String] {
 
 ///|
 pub struct RuntimePlan {
+  app_metadata : AppMetadata?
   launch : LaunchPlan
   backend : RuntimeBackend
   devtools : Bool
@@ -43,6 +44,11 @@ pub struct RuntimePlan {
   windows : Array[ResolvedWindow]
   filesystem_scopes : Array[FileSystemScope]
 } derive(Debug, Eq)
+
+///|
+pub fn RuntimePlan::app_metadata(self : RuntimePlan) -> AppMetadata? {
+  self.app_metadata
+}
 
 ///|
 pub fn RuntimePlan::backend(self : RuntimePlan) -> RuntimeBackend {
@@ -130,6 +136,14 @@ fn RuntimePlan::with_file_system_scopes(
 }
 
 ///|
+fn RuntimePlan::with_app_metadata(
+  self : RuntimePlan,
+  metadata : AppMetadata,
+) -> RuntimePlan {
+  { ..self, app_metadata: Some(metadata) }
+}
+
+///|
 pub fn RuntimePlan::command_permission(
   self : RuntimePlan,
   route : String,
@@ -172,6 +186,7 @@ pub fn App::runtime_plan(
       }
       if problems.is_empty() {
         Ok({
+          app_metadata: None,
           launch,
           backend: config.backend,
           devtools: config.devtools,

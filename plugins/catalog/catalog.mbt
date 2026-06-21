@@ -12,6 +12,7 @@ priv struct CatalogRegistration {
 
 ///|
 pub struct CatalogContext {
+  app_info : @app.AppInfo
   filesystem_scopes : Array[@lepusa.FileSystemScope]
   local_services : Array[@lepusa.LocalService]
 }
@@ -63,13 +64,20 @@ pub fn register_with_context(
 
 ///|
 pub fn CatalogContext::new(
+  app_info? : @app.AppInfo = @app.AppInfo::default(),
   filesystem_scopes? : Array[@lepusa.FileSystemScope] = [],
   local_services? : Array[@lepusa.LocalService] = [],
 ) -> CatalogContext {
   {
+    app_info,
     filesystem_scopes: filesystem_scopes.copy(),
     local_services: local_services.copy(),
   }
+}
+
+///|
+pub fn CatalogContext::app_info(self : CatalogContext) -> @app.AppInfo {
+  self.app_info
 }
 
 ///|
@@ -99,14 +107,15 @@ pub fn plugin_names() -> Array[String] {
 ///|
 pub fn sync_plugin_names() -> Array[String] {
   [
-    "autoLaunch", "clipboard", "deepLink", "localhost", "log", "notification", "opener",
-    "serviceDiscovery", "singleInstance", "store", "tray", "window", "windowState",
+    "app", "autoLaunch", "clipboard", "deepLink", "localhost", "log", "notification",
+    "opener", "serviceDiscovery", "singleInstance", "store", "tray", "window", "windowState",
   ]
 }
 
 ///|
 fn catalog_plugins() -> Array[CatalogPlugin] {
   [
+    { name: "app", load: fn() { @app.plugin() } },
     { name: "autoLaunch", load: fn() { @auto_launch.plugin() } },
     { name: "clipboard", load: fn() { @clipboard.plugin() } },
     { name: "deepLink", load: fn() { @deep_link.plugin() } },
@@ -132,6 +141,15 @@ fn catalog_plugins() -> Array[CatalogPlugin] {
 ///|
 fn catalog_registrations() -> Array[CatalogRegistration] {
   [
+    {
+      name: "app",
+      register: fn(registry, context) {
+        @app.register(
+          registry,
+          state=@app.AppState::new(info=context.app_info()),
+        )
+      },
+    },
     {
       name: "autoLaunch",
       register: fn(registry, _) { @auto_launch.register(registry) },

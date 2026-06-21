@@ -1,7 +1,8 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 19)
+  assert_eq(names.length(), 20)
+  assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
@@ -21,6 +22,7 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("updater"))
   assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
+  assert_true(plugin("app").unwrap().command_routes().contains("app.info"))
   assert_true(
     plugin("autoLaunch").unwrap().command_routes().contains("autoLaunch.status"),
   )
@@ -101,6 +103,7 @@ test "catalog plugin names resolve to plugins" {
 ///|
 test "catalog exposes sync-safe official plugin profile" {
   let names = sync_plugin_names()
+  assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
@@ -138,6 +141,7 @@ test "catalog exposes sync-safe official plugin profile" {
 ///|
 test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
+  let registry = register(registry, "app")
   let registry = register(registry, "autoLaunch")
   let registry = register(registry, "clipboard")
   let registry = register(registry, "deepLink")
@@ -157,6 +161,8 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "windowState")
   let registry = register(registry, "tray")
   let registry = register(registry, "updater")
+  assert_true(registry.contains("app.info"))
+  assert_true(registry.contains("app.setTheme"))
   assert_true(registry.contains("autoLaunch.status"))
   assert_true(registry.contains("autoLaunch.setEnabled"))
   assert_true(registry.contains("clipboard.readText"))
@@ -184,7 +190,8 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 19)
+  assert_eq(names.length(), 20)
+  assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))

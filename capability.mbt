@@ -1,5 +1,6 @@
 ///|
 pub(all) enum Permission {
+  App
   FileSystemRead
   FileSystemWrite
   FileDialog
@@ -32,6 +33,7 @@ pub fn Permission::command(route : String) -> Permission {
 ///|
 pub fn Permission::named(name : String) -> Result[Permission, String] {
   match name {
+    "app" => Ok(App)
     "filesystem.read" => Ok(FileSystemRead)
     "filesystem.write" => Ok(FileSystemWrite)
     "file-dialog" => Ok(FileDialog)
@@ -70,6 +72,7 @@ pub fn Permission::named(name : String) -> Result[Permission, String] {
 ///|
 pub fn Permission::name(self : Permission) -> String {
   match self {
+    App => "app"
     FileSystemRead => "filesystem.read"
     FileSystemWrite => "filesystem.write"
     FileDialog => "file-dialog"
