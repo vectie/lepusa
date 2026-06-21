@@ -67,6 +67,7 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
       NativeOperationSkipped("macOS native effect is not registered: \{name}")
     },
     control_window=fn(_) { NativeOperationExecuted },
+    desktop_shell=fn(_) { NativeOperationExecuted },
   )
 }
 

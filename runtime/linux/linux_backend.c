@@ -1206,6 +1206,66 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
   }
 }
 
+static void lepusa_linux_close_all_windows(LepusaLinuxBridgeContext *context) {
+  if (context == NULL || context->api == NULL) {
+    return;
+  }
+  for (int i = context->window_count - 1; i >= 0; i--) {
+    void *window = context->windows[i].window;
+    if (window != NULL) {
+      context->api->gtk_widget_destroy(window);
+    }
+  }
+}
+
+static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || context->api == NULL || packet == NULL) {
+    return;
+  }
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "desktop-shell"
+        )) {
+      continue;
+    }
+    if (lepusa_linux_range_equals(record.action, record.action_len, "app.exit") ||
+        lepusa_linux_range_equals(record.action, record.action_len, "app.restart")) {
+      lepusa_linux_close_all_windows(context);
+      continue;
+    }
+    LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    void *window = slot == NULL ? NULL : slot->window;
+    if (window == NULL) {
+      continue;
+    }
+    if (lepusa_linux_range_equals(record.action, record.action_len, "app.show")) {
+      context->api->gtk_widget_show_all(window);
+      context->api->gtk_window_present(window);
+    } else if (lepusa_linux_range_equals(record.action, record.action_len, "app.hide")) {
+      context->api->gtk_widget_hide(window);
+    }
+  }
+}
+
 static void lepusa_linux_apply_navigation_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1533,6 +1593,7 @@ static void lepusa_linux_apply_operations_from_handoff_packet(
   lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
+  lepusa_linux_apply_desktop_shell_from_handoff_packet(context, packet);
 }
 
 static moonbit_bytes_t lepusa_linux_bridge_drain_request_message(

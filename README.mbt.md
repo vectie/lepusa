@@ -749,7 +749,10 @@ Capability-approved `app.*`, `menu.*`, and `tray.*` bridge dispatches lower
 successful plugin responses into a typed `desktop-shell` executable operation.
 This gives platform menu, tray, dock, and app-shell implementations one stable
 native-operation contract while MoonBit keeps permission checks and payload
-validation at the official plugin boundary.
+validation at the official plugin boundary. The macOS, Linux, and Windows loops
+consume those records from bridge packets; app show/hide/exit/restart are
+applied in the native loop, and menu/tray records are accepted through the same
+operation path for concrete OS shell renderers.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

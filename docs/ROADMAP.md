@@ -179,10 +179,12 @@
   lifetime across dynamic windows and quit service supervision only after the
   last native window closes;
   `NativeOperationExecutor` now gives platform loops one typed execution report
-  boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
+  boundary for startup, lifecycle, bridge-drain, dynamic window, and desktop
+  shell operations,
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
-  their current WebView script-evaluation and window-control support; native
+  their current WebView script-evaluation, window-control, and desktop-shell
+  support; native
   loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
   Windows now route normal bridge handoffs and drain handoffs through one
@@ -300,7 +302,8 @@ Stabilize the cross-platform core set first:
   sync primary-state handlers exist
 - tray/menu/app shell: initial status icon/menu/app control contracts,
   delegated sync state handlers, and typed `desktop-shell` executable
-  operations from approved bridge dispatches exist
+  operations from approved bridge dispatches plus native macOS/Linux/Windows
+  packet consumers for app show/hide/exit/restart exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and

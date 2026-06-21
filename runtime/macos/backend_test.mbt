@@ -132,8 +132,15 @@ test "macos backend exposes wkwebview descriptor" {
         url="lepusa://inline/main/index.html",
       ),
     ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="app",
+        action="exit",
+        window_label="main",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 4)
+  assert_eq(execution.executed_count(), 5)
   assert_eq(execution.skipped_count(), 0)
 }
 

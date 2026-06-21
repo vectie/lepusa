@@ -69,6 +69,7 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     run_effect=fn(name) {
       NativeOperationSkipped("Windows native effect is not registered: \{name}")
     },
+    desktop_shell=fn(_) { NativeOperationExecuted },
   )
 }
 

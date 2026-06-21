@@ -3091,6 +3091,66 @@ static void lepusa_windows_apply_window_controls_from_handoff_packet(
   }
 }
 
+static void lepusa_windows_close_all_windows(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return;
+  }
+  for (int i = context->window_count - 1; i >= 0; i--) {
+    HWND hwnd = context->windows[i].hwnd;
+    if (hwnd != NULL) {
+      DestroyWindow(hwnd);
+    }
+  }
+}
+
+static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+) {
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (context == NULL ||
+      packet == NULL ||
+      !lepusa_windows_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaWindowsNativeOperationRecord record;
+    if (!lepusa_windows_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_windows_range_equals(
+          record.kind,
+          record.kind_len,
+          "desktop-shell"
+        )) {
+      continue;
+    }
+    if (lepusa_windows_range_equals(record.action, record.action_len, "app.exit") ||
+        lepusa_windows_range_equals(record.action, record.action_len, "app.restart")) {
+      lepusa_windows_close_all_windows(context);
+      continue;
+    }
+    LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    if (slot == NULL || slot->hwnd == NULL) {
+      continue;
+    }
+    if (lepusa_windows_range_equals(record.action, record.action_len, "app.show")) {
+      ShowWindow(slot->hwnd, SW_SHOW);
+      SetForegroundWindow(slot->hwnd);
+    } else if (lepusa_windows_range_equals(record.action, record.action_len, "app.hide")) {
+      ShowWindow(slot->hwnd, SW_HIDE);
+    }
+  }
+}
+
 static void lepusa_windows_apply_operations_from_handoff_packet(
   LepusaWindowsWebView2Context *context,
   moonbit_bytes_t packet
@@ -3100,6 +3160,7 @@ static void lepusa_windows_apply_operations_from_handoff_packet(
   lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
   lepusa_windows_apply_window_controls_from_handoff_packet(context, packet);
+  lepusa_windows_apply_desktop_shell_from_handoff_packet(context, packet);
 }
 
 static HRESULT STDMETHODCALLTYPE lepusa_windows_environment_invoke(

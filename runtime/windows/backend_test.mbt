@@ -120,12 +120,20 @@ test "windows backend exposes webview2 descriptor" {
         payload="{\"title\":\"Renamed\"}",
       ),
     ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="app",
+        action="exit",
+        window_label="main",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 3)
+  assert_eq(execution.executed_count(), 4)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[1].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[2].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[3].status() is NativeOperationExecuted)
 }
 
 ///|
