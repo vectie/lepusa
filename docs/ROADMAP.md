@@ -183,7 +183,10 @@
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
   loops now execute retained async bridge drain requests through packetized
-  `lepusa-drain-v1` callbacks from the platform event loop.
+  `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
+  Windows now route normal bridge handoffs and drain handoffs through one
+  native packet-application path and drain bounded follow-up work until the
+  queue is empty.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

@@ -672,6 +672,9 @@ minimal Win32/WebView2 COM creation loop for native windows once
 discoverable WebView2 Runtime are available, and wires WebView2 messages
 through the MoonBit handoff callback into `ExecuteScript` for sync bridge
 responses and packetized follow-up evaluation.
+Native bridge callbacks on macOS, Linux, and Windows now flow through one
+packet-application path per backend; async drain callbacks use that same path
+and continue draining bounded follow-up work until the queue is empty.
 Windows custom asset serving, sync response evaluation, dynamic windows, window
 controls, and async bridge drain/wakeup support are reported through the same
 native capability and operation boundaries as the other platform packages.

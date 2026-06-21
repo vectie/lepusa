@@ -1714,6 +1714,11 @@ static void lepusa_windows_process_bridge_drain_requests(
   LepusaWindowsWebView2Context *context
 );
 
+static void lepusa_windows_apply_operations_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+);
+
 static void lepusa_windows_execute_script_bytes(
   LepusaWindowsWindowSlot *slot,
   moonbit_bytes_t script
@@ -1773,12 +1778,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
     target_slot == NULL ? source_slot : target_slot,
     script
   );
-  lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
-  lepusa_windows_apply_bridge_drains_from_handoff_packet(context, packet);
-  lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
-  lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
-  lepusa_windows_apply_window_controls_from_handoff_packet(context, packet);
-  lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
+  lepusa_windows_apply_operations_from_handoff_packet(context, packet);
   lepusa_windows_process_bridge_drain_requests(context);
   return S_OK;
 }
@@ -2256,32 +2256,32 @@ static void lepusa_windows_process_bridge_drain_requests(
       context->drain_request_count <= 0) {
     return;
   }
-  LepusaWindowsBridgeDrainRequest requests[32];
-  int request_count = context->drain_request_count;
-  if (request_count > 32) {
-    request_count = 32;
-  }
-  for (int i = 0; i < request_count; i++) {
-    requests[i] = context->drain_requests[i];
-  }
-  context->drain_request_count = 0;
-  for (int i = 0; i < request_count; i++) {
-    moonbit_bytes_t request = lepusa_windows_bridge_drain_request_message(
-      requests[i].window_label
-    );
-    moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
-    moonbit_bytes_t script =
-      lepusa_windows_immediate_script_from_handoff_packet(packet);
-    LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
-      context,
-      requests[i].window_label,
-      (int32_t)strlen(requests[i].window_label)
-    );
-    lepusa_windows_execute_script_bytes(slot, script);
-    lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
-    lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
-    lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
-    lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
+  int rounds = 0;
+  while (context->drain_request_count > 0 && rounds++ < 32) {
+    LepusaWindowsBridgeDrainRequest requests[32];
+    int request_count = context->drain_request_count;
+    if (request_count > 32) {
+      request_count = 32;
+    }
+    for (int i = 0; i < request_count; i++) {
+      requests[i] = context->drain_requests[i];
+    }
+    context->drain_request_count = 0;
+    for (int i = 0; i < request_count; i++) {
+      moonbit_bytes_t request = lepusa_windows_bridge_drain_request_message(
+        requests[i].window_label
+      );
+      moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
+      moonbit_bytes_t script =
+        lepusa_windows_immediate_script_from_handoff_packet(packet);
+      LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
+        context,
+        requests[i].window_label,
+        (int32_t)strlen(requests[i].window_label)
+      );
+      lepusa_windows_execute_script_bytes(slot, script);
+      lepusa_windows_apply_operations_from_handoff_packet(context, packet);
+    }
   }
 }
 
@@ -3089,6 +3089,17 @@ static void lepusa_windows_apply_window_controls_from_handoff_packet(
       lepusa_windows_apply_window_control(slot, &record);
     }
   }
+}
+
+static void lepusa_windows_apply_operations_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+) {
+  lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
+  lepusa_windows_apply_bridge_drains_from_handoff_packet(context, packet);
+  lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
+  lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
+  lepusa_windows_apply_window_controls_from_handoff_packet(context, packet);
 }
 
 static HRESULT STDMETHODCALLTYPE lepusa_windows_environment_invoke(
