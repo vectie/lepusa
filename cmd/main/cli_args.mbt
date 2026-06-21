@@ -118,5 +118,6 @@ fn is_boolean_flag(arg : String) -> Bool {
   arg == "--launch" ||
   arg == "--json" ||
   arg == "--async-bridge" ||
-  arg == "--strict"
+  arg == "--strict" ||
+  arg == "--allow-restart"
 }

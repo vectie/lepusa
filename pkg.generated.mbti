@@ -1743,6 +1743,7 @@ pub fn UpdateManifest::artifacts(Self) -> Array[UpdateManifestArtifact]
 pub fn UpdateManifest::channel(Self) -> String
 pub fn UpdateManifest::identifier(Self) -> String
 pub fn UpdateManifest::new(identifier~ : String, product_name~ : String, version~ : String, channel? : String, public_key? : String, artifacts~ : Array[UpdateManifestArtifact]) -> Self
+pub fn UpdateManifest::parse(String) -> Result[Self, Array[String]]
 pub fn UpdateManifest::product_name(Self) -> String
 pub fn UpdateManifest::public_key(Self) -> String?
 pub fn UpdateManifest::to_json(Self) -> String

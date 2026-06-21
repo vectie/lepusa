@@ -42,6 +42,7 @@ test "help text names available commands" {
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
     ),
   )
+  assert_true(result.output.contains("lepusa deploy-dry-run <update.json>"))
   assert_true(result.output.contains("--project <lepusa.json>"))
   assert_true(result.output.contains("--workspace <lepusa-root>"))
 }
@@ -2218,6 +2219,104 @@ async test "build and bundle aliases materialize planned files" {
   ).text()
   assert_true(linux_runtime_json.contains("\"target\":\"linux\""))
   assert_true(linux_runtime_json.contains("\"productName\":\"Lepusa Example\""))
+}
+
+///|
+async test "deploy dry-run executes real update manifest metadata" {
+  let root = "/tmp/lepusa-deploy-dry-run-\{@async.now().to_int()}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  let update_path = root + "/update.json"
+  let manifest = @lepusa.UpdateManifest::new(
+    identifier="dev.vectie.deploy-cli",
+    product_name="Deploy CLI",
+    version="5.0.0",
+    public_key="ed25519:cli-key",
+    artifacts=[
+      @lepusa.UpdateManifestArtifact::new(
+        target=Linux,
+        kind=PortableDirectoryArtifact,
+        path="deploy-cli",
+        url="https://updates.example.com/deploy-cli",
+        sha256="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        signature="sig-app",
+      ),
+      @lepusa.UpdateManifestArtifact::new(
+        target=Linux,
+        kind=DesktopEntryArtifact,
+        path="deploy-cli/deploy-cli.desktop",
+        url="https://updates.example.com/deploy-cli/deploy-cli.desktop",
+        sha256="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        signature="sig-desktop",
+      ),
+    ],
+  )
+  @fs.write_file(
+    update_path,
+    manifest.to_json(),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "deploy-dry-run", update_path, "linux", "/opt/deploy-cli", "/var/lib/lepusa/deploy-cli",
+    "4.0.0",
+  ])
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("Lepusa deployment execution"))
+  assert_true(result.output.contains("identifier: dev.vectie.deploy-cli"))
+  assert_true(result.output.contains("target: linux"))
+  assert_true(result.output.contains("mode: update-install"))
+  assert_true(result.output.contains("committed: true"))
+  assert_true(result.output.contains("step: verify-artifact-signature"))
+  assert_true(
+    result.output.contains("step: restart-application status=skipped"),
+  )
+  let json = render_cli_async([
+    "deploy-dry-run", update_path, "linux", "/opt/deploy-cli", "/var/lib/lepusa/deploy-cli",
+    "--allow-restart", "--json",
+  ])
+  assert_eq(json.exit_code, 0)
+  assert_true(json.output.contains("\"dryRun\":true"))
+  assert_true(json.output.contains("\"committed\":true"))
+  assert_true(json.output.contains("\"mode\":\"fresh-install\""))
+  assert_true(json.output.contains("\"status\":\"completed\""))
+  assert_true(json.output.contains("\"kind\":\"restart-application\""))
+}
+
+///|
+async test "deploy dry-run rejects unsigned update manifest" {
+  let root = "/tmp/lepusa-deploy-unsigned-\{@async.now().to_int()}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  let update_path = root + "/update.json"
+  let manifest = @lepusa.UpdateManifest::new(
+    identifier="dev.vectie.deploy-unsigned",
+    product_name="Unsigned Deploy",
+    version="1.0.0",
+    artifacts=[
+      @lepusa.UpdateManifestArtifact::new(
+        target=Linux,
+        kind=PortableDirectoryArtifact,
+        path="unsigned",
+        url="https://updates.example.com/unsigned",
+        sha256="cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      ),
+    ],
+  )
+  @fs.write_file(
+    update_path,
+    manifest.to_json(),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let result = render_cli_async([
+    "deploy-dry-run", update_path, "linux", "/opt/unsigned", "/var/lib/lepusa/unsigned",
+  ])
+  assert_eq(result.exit_code, 1)
+  assert_true(result.output.contains("Lepusa deploy dry-run"))
+  assert_true(
+    result.output.contains(
+      "update public key is required for trusted native updates",
+    ),
+  )
 }
 
 ///|

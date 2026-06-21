@@ -5,6 +5,7 @@ import {
   "moonbitlang/x/sys",
   "vectie/lepusa",
   "vectie/lepusa/bundle",
+  "vectie/lepusa/deployment",
   "vectie/lepusa/frontend",
   "vectie/lepusa/project",
   "vectie/lepusa/runtime",
