@@ -57,6 +57,9 @@ test "linux backend exposes webkitgtk descriptor" {
         payload="{\"title\":\"Ready\"}",
       ),
     ),
+    @runtime.NativeExecutableOperation::close_window(
+      @runtime.NativeWindowClose::new(window_label="main"),
+    ),
     @runtime.NativeExecutableOperation::navigate(
       @runtime.NativeNavigation::new(
         window_label="main",
@@ -64,10 +67,10 @@ test "linux backend exposes webkitgtk descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 2)
+  assert_eq(execution.executed_count(), 3)
   assert_eq(execution.skipped_count(), 1)
   assert_eq(
-    execution.outcomes()[2].status().message(),
+    execution.outcomes()[3].status().message(),
     "Linux native navigation after launch is not wired yet",
   )
 }

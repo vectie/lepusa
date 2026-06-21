@@ -149,7 +149,8 @@
   same app-facing bridge boundary, lowering approved dispatches into
   `open-window` executable operations, and approved source or packaged
   `window.close` dispatches now emit the matching `close-window` lifecycle
-  cleanup operation beside the current native frame close control;
+  cleanup operation beside the current native frame close control, and the
+  macOS/Linux loops consume that typed close operation from bridge packets;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and
@@ -157,8 +158,9 @@
   their current WebView script-evaluation and window-control support; launch
   capability now gates maximum live WebView count so current single-window
   native loops do not silently run partial multi-window apps; native async bridge
-  drain/evaluate scheduling in the C/WebView loops, true multi-window native
-  loops, and the Windows WebView creation loop remain.
+  drain/evaluate scheduling in the C/WebView loops, dynamic `open-window`
+  creation for true multi-window native loops, and the Windows WebView creation
+  loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

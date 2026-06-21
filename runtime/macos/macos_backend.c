@@ -792,10 +792,18 @@ static void lepusa_apply_window_controls_from_handoff_packet(
   if (!lepusa_handoff_operation_records(packet, &cursor, &end, &count)) {
     return;
   }
+  int closed = 0;
   for (int32_t i = 0; i < count; i++) {
     LepusaNativeOperationRecord record;
     if (!lepusa_read_native_operation_record(&cursor, end, &record)) {
       return;
+    }
+    if (lepusa_range_equals(record.kind, record.kind_len, "close-window")) {
+      if (!closed) {
+        ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("close"));
+        closed = 1;
+      }
+      continue;
     }
     if (!lepusa_range_equals(
           record.kind,
@@ -888,7 +896,10 @@ static void lepusa_apply_window_controls_from_handoff_packet(
         lepusa_msg_void_id(window, "zoom:", NULL);
       }
     } else if (lepusa_range_equals(record.action, record.action_len, "close")) {
-      ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("close"));
+      if (!closed) {
+        ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("close"));
+        closed = 1;
+      }
     }
   }
 }

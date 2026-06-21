@@ -730,8 +730,11 @@ work.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
-`navigate-window` operations from the same handoff packet by loading the target
-URL in the live WebView after the approved MoonBit dispatch completes.
+typed `close-window` records by closing the live native frame once, even when
+the same handoff also carries the plugin's `window-control close` response.
+They also consume `navigate-window` operations from the same handoff packet by
+loading the target URL in the live WebView after the approved MoonBit dispatch
+completes.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation and window-control support
 instead of the generic skipped-operation fallback.

@@ -59,6 +59,7 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
 pub fn operation_executor() -> @runtime.NativeOperationExecutor {
   @runtime.NativeOperationExecutor::new(
     evaluate_script=fn(_) { NativeOperationExecuted },
+    close_window=fn(_) { NativeOperationExecuted },
     navigate_window=fn(_) {
       NativeOperationSkipped(
         "Linux native navigation after launch is not wired yet",

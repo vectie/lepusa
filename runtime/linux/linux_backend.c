@@ -738,10 +738,22 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
   if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
     return;
   }
+  int closed = 0;
   for (int32_t i = 0; i < count; i++) {
     LepusaLinuxNativeOperationRecord record;
     if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
       return;
+    }
+    if (lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "close-window"
+        )) {
+      if (!closed) {
+        context->api->gtk_widget_destroy(context->window);
+        closed = 1;
+      }
+      continue;
     }
     if (!lepusa_linux_range_equals(
           record.kind,
@@ -822,7 +834,10 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
                )) {
       context->api->gtk_window_unmaximize(context->window);
     } else if (lepusa_linux_range_equals(record.action, record.action_len, "close")) {
-      context->api->gtk_widget_destroy(context->window);
+      if (!closed) {
+        context->api->gtk_widget_destroy(context->window);
+        closed = 1;
+      }
     }
   }
 }

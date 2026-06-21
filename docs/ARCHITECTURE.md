@@ -633,8 +633,10 @@ and native frame work stay visible as separate steps.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
-`navigate-window` operations from that packet by loading the target URL in the
-live WebView after MoonBit dispatch succeeds. The Windows
+typed `close-window` records by closing the live native frame once, even when
+the same handoff also carries the plugin's `window-control close` response.
+They also consume `navigate-window` operations from that packet by loading the
+target URL in the live WebView after MoonBit dispatch succeeds. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows currently
