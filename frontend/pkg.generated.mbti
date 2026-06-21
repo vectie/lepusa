@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/frontend"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct FrontendApiBundle {
+  config : FrontendApiConfig
+  command_manifest : @lepusa.CommandManifest
+  javascript : String
+  typescript : String
+} derive(Eq, @debug.Debug)
+pub fn FrontendApiBundle::command_manifest(Self) -> @lepusa.CommandManifest
+pub fn FrontendApiBundle::config(Self) -> FrontendApiConfig
+pub fn FrontendApiBundle::from_command_manifest(@lepusa.CommandManifest, config? : FrontendApiConfig) -> Result[Self, Array[String]]
+pub fn FrontendApiBundle::from_launch_manifest(@lepusa.RuntimeLaunchManifest, config? : FrontendApiConfig) -> Result[Self, Array[String]]
+pub fn FrontendApiBundle::from_runtime_plan(@lepusa.RuntimePlan, config? : FrontendApiConfig) -> Result[Self, Array[String]]
+pub fn FrontendApiBundle::javascript(Self) -> String
+pub fn FrontendApiBundle::to_json(Self) -> String
+pub fn FrontendApiBundle::typescript(Self) -> String
+
+pub struct FrontendApiConfig {
+  global_name : String
+  module_name : String
+} derive(Eq, @debug.Debug)
+pub fn FrontendApiConfig::global_name(Self) -> String
+pub fn FrontendApiConfig::module_name(Self) -> String
+pub fn FrontendApiConfig::new(global_name? : String, module_name? : String) -> Self
+pub fn FrontendApiConfig::validate(Self) -> Array[String]
+
+// Type aliases
+
+// Traits

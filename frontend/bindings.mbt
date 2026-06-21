@@ -1,0 +1,341 @@
+///|
+pub struct FrontendApiConfig {
+  global_name : String
+  module_name : String
+} derive(Debug, Eq)
+
+///|
+pub struct FrontendApiBundle {
+  config : FrontendApiConfig
+  command_manifest : @lepusa.CommandManifest
+  javascript : String
+  typescript : String
+} derive(Debug, Eq)
+
+///|
+pub fn FrontendApiConfig::new(
+  global_name? : String = "lepusa",
+  module_name? : String = "lepusa-api",
+) -> FrontendApiConfig {
+  { global_name, module_name }
+}
+
+///|
+pub fn FrontendApiConfig::global_name(self : FrontendApiConfig) -> String {
+  self.global_name
+}
+
+///|
+pub fn FrontendApiConfig::module_name(self : FrontendApiConfig) -> String {
+  self.module_name
+}
+
+///|
+pub fn FrontendApiConfig::validate(self : FrontendApiConfig) -> Array[String] {
+  let problems : Array[String] = []
+  if self.global_name == "" {
+    problems.push("frontend api global name is required")
+  }
+  if self.module_name == "" {
+    problems.push("frontend api module name is required")
+  }
+  problems
+}
+
+///|
+pub fn FrontendApiBundle::from_runtime_plan(
+  plan : @lepusa.RuntimePlan,
+  config? : FrontendApiConfig = FrontendApiConfig::new(),
+) -> Result[FrontendApiBundle, Array[String]] {
+  FrontendApiBundle::from_command_manifest(plan.command_manifest(), config~)
+}
+
+///|
+pub fn FrontendApiBundle::from_launch_manifest(
+  manifest : @lepusa.RuntimeLaunchManifest,
+  config? : FrontendApiConfig = FrontendApiConfig::new(),
+) -> Result[FrontendApiBundle, Array[String]] {
+  FrontendApiBundle::from_command_manifest(manifest.command_manifest(), config~)
+}
+
+///|
+pub fn FrontendApiBundle::from_command_manifest(
+  manifest : @lepusa.CommandManifest,
+  config? : FrontendApiConfig = FrontendApiConfig::new(),
+) -> Result[FrontendApiBundle, Array[String]] {
+  let problems = config.validate()
+  if !problems.is_empty() {
+    return Err(problems)
+  }
+  Ok({
+    config,
+    command_manifest: manifest,
+    javascript: frontend_api_javascript(manifest, config),
+    typescript: frontend_api_typescript(manifest, config),
+  })
+}
+
+///|
+pub fn FrontendApiBundle::config(self : FrontendApiBundle) -> FrontendApiConfig {
+  self.config
+}
+
+///|
+pub fn FrontendApiBundle::command_manifest(
+  self : FrontendApiBundle,
+) -> @lepusa.CommandManifest {
+  self.command_manifest
+}
+
+///|
+pub fn FrontendApiBundle::javascript(self : FrontendApiBundle) -> String {
+  self.javascript
+}
+
+///|
+pub fn FrontendApiBundle::typescript(self : FrontendApiBundle) -> String {
+  self.typescript
+}
+
+///|
+pub fn FrontendApiBundle::to_json(self : FrontendApiBundle) -> String {
+  [
+    "{",
+    "\"moduleName\":\{self.config.module_name().json_literal()},",
+    "\"globalName\":\{self.config.global_name().json_literal()},",
+    "\"commandManifest\":\{self.command_manifest.to_json()},",
+    "\"javascript\":\{self.javascript.json_literal()},",
+    "\"typescript\":\{self.typescript.json_literal()}",
+    "}",
+  ].join("")
+}
+
+///|
+fn frontend_api_javascript(
+  manifest : @lepusa.CommandManifest,
+  config : FrontendApiConfig,
+) -> String {
+  let route_literals = manifest
+    .routes()
+    .map(fn(route) { route.json_literal() })
+    .join(", ")
+  let export_aliases : Array[String] = []
+  for plugin in manifest_plugins(manifest) {
+    if plugin.is_js_identifier() && !plugin.is_js_reserved_word() {
+      export_aliases.push(
+        "export const \{plugin} = commands[\{plugin.json_literal()}];",
+      )
+    }
+  }
+  [
+    "const globalName = \{config.global_name().json_literal()};",
+    "const routeList = [\{route_literals}];",
+    "const getApi = () => {",
+    "  const api = globalThis[globalName];",
+    "  if (!api) {",
+    "    throw new Error(`Missing Lepusa frontend bridge: ${globalName}`);",
+    "  }",
+    "  return api;",
+    "};",
+    "",
+    "export const commandManifest = \{manifest.to_json()};",
+    "export const routes = Object.freeze(routeList.slice());",
+    "export const can = (route) => getApi().can(route);",
+    "export const invoke = (route, payload = null) => getApi().invoke(route, payload);",
+    "export const listen = (name, handler) => getApi().listen(name, handler);",
+    "export const unlisten = (name, handler) => getApi().unlisten(name, handler);",
+    "export const command = (route) => getApi().command(route);",
+    "",
+    "const makeInvoker = (route) => (payload = null) => invoke(route, payload);",
+    "const commandTree = {};",
+    "for (const route of routeList) {",
+    "  const parts = route.split('.').filter(Boolean);",
+    "  const leaf = parts.pop();",
+    "  let scope = commandTree;",
+    "  for (const part of parts) {",
+    "    scope = scope[part] ||= {};",
+    "  }",
+    "  scope[leaf] = makeInvoker(route);",
+    "}",
+    "",
+    "const freezeTree = (value) => {",
+    "  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {",
+    "    return value;",
+    "  }",
+    "  for (const key of Object.keys(value)) {",
+    "    freezeTree(value[key]);",
+    "  }",
+    "  return Object.freeze(value);",
+    "};",
+    "",
+    "export const commands = freezeTree(commandTree);",
+    export_aliases.join("\n"),
+    "",
+    "export default Object.freeze({",
+    "  commandManifest,",
+    "  routes,",
+    "  can,",
+    "  invoke,",
+    "  listen,",
+    "  unlisten,",
+    "  command,",
+    "  commands,",
+    "});",
+    "",
+  ]
+  .filter(fn(line) { line != "" })
+  .join("\n") +
+  "\n"
+}
+
+///|
+fn frontend_api_typescript(
+  manifest : @lepusa.CommandManifest,
+  config : FrontendApiConfig,
+) -> String {
+  let route_union = if manifest.routes().is_empty() {
+    "string"
+  } else {
+    manifest.routes().map(fn(route) { route.json_literal() }).join(" | ")
+  }
+  let command_tree = typescript_command_tree(manifest)
+  let export_aliases : Array[String] = []
+  for plugin in manifest_plugins(manifest) {
+    if plugin.is_js_identifier() && !plugin.is_js_reserved_word() {
+      export_aliases.push(
+        "export declare const \{plugin}: typeof commands[\{plugin.json_literal()}];",
+      )
+    }
+  }
+  [
+    "// Generated Lepusa frontend API declarations for \{config.module_name()}",
+    "export type LepusaRoute = \{route_union};",
+    "export type LepusaPayload = unknown;",
+    "export type LepusaEvent = { name: string; payload?: string };",
+    "export type LepusaUnlisten = () => boolean;",
+    "export type LepusaEventHandler = (payload: unknown, event: LepusaEvent) => void;",
+    "",
+    "export declare const commandManifest: \{manifest.to_json()};",
+    "export declare const routes: readonly LepusaRoute[];",
+    "export declare function can(route: string): boolean;",
+    "export declare function invoke<T = unknown>(route: LepusaRoute, payload?: LepusaPayload): Promise<T>;",
+    "export declare function listen(name: string, handler: LepusaEventHandler): LepusaUnlisten;",
+    "export declare function unlisten(name: string, handler: LepusaEventHandler): boolean;",
+    "export declare function command<T = unknown>(route: LepusaRoute): (payload?: LepusaPayload) => Promise<T>;",
+    "export declare const commands: \{command_tree};",
+    export_aliases.join("\n"),
+    "",
+    "declare const api: {",
+    "  commandManifest: typeof commandManifest;",
+    "  routes: typeof routes;",
+    "  can: typeof can;",
+    "  invoke: typeof invoke;",
+    "  listen: typeof listen;",
+    "  unlisten: typeof unlisten;",
+    "  command: typeof command;",
+    "  commands: typeof commands;",
+    "};",
+    "export default api;",
+    "",
+  ]
+  .filter(fn(line) { line != "" })
+  .join("\n") +
+  "\n"
+}
+
+///|
+fn typescript_command_tree(manifest : @lepusa.CommandManifest) -> String {
+  if manifest.entries().is_empty() {
+    return "Record<string, never>"
+  }
+  let plugin_blocks : Array[String] = []
+  for plugin in manifest_plugins(manifest) {
+    let command_lines : Array[String] = []
+    for entry in manifest.entries() {
+      if entry.plugin() == plugin {
+        command_lines.push(
+          "    \{entry.command().typescript_property_name()}: (payload?: LepusaPayload) => Promise<unknown>;",
+        )
+      }
+    }
+    plugin_blocks.push(
+      "  \{plugin.typescript_property_name()}: {\n\{command_lines.join("\n")}\n  };",
+    )
+  }
+  "{\n\{plugin_blocks.join("\n")}\n}"
+}
+
+///|
+fn manifest_plugins(manifest : @lepusa.CommandManifest) -> Array[String] {
+  let plugins : Array[String] = []
+  for entry in manifest.entries() {
+    if !plugins.contains(entry.plugin()) {
+      plugins.push(entry.plugin())
+    }
+  }
+  plugins
+}
+
+///|
+fn String::typescript_property_name(self : String) -> String {
+  if self.is_js_identifier() && !self.is_js_reserved_word() {
+    self
+  } else {
+    self.json_literal()
+  }
+}
+
+///|
+fn String::is_js_identifier(self : String) -> Bool {
+  if self == "" {
+    return false
+  }
+  let chars = self.to_array()
+  match chars.get(0) {
+    Some(first) => if !first.is_js_identifier_start() { return false }
+    None => return false
+  }
+  for index in 1..<chars.length() {
+    match chars.get(index) {
+      Some(char) => if !char.is_js_identifier_part() { return false }
+      None => ()
+    }
+  }
+  true
+}
+
+///|
+fn Char::is_js_identifier_start(self : Char) -> Bool {
+  self == '_' ||
+  self == '$' ||
+  (self >= 'a' && self <= 'z') ||
+  (self >= 'A' && self <= 'Z')
+}
+
+///|
+fn Char::is_js_identifier_part(self : Char) -> Bool {
+  self.is_js_identifier_start() || (self >= '0' && self <= '9')
+}
+
+///|
+fn String::is_js_reserved_word(self : String) -> Bool {
+  [
+    "await", "break", "case", "catch", "class", "const", "continue", "debugger",
+    "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally",
+    "for", "function", "if", "import", "in", "instanceof", "new", "null", "return",
+    "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while",
+    "with", "yield",
+  ].contains(self)
+}
+
+///|
+fn String::json_literal(self : String) -> String {
+  "\"" +
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="\n", new="\\n")
+  .replace_all(old="\r", new="\\r")
+  .replace_all(old="\t", new="\\t") +
+  "\""
+}
