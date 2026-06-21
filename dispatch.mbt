@@ -14,6 +14,7 @@ pub type OperationScopeResolver = (InvokeRequest) -> Result[
 enum RegisteredCommandHandler {
   SyncCommandHandler(CommandHandler)
   AsyncCommandHandler(AsyncCommandHandler)
+  StreamCommandHandler(CommandHandler)
 }
 
 ///|
@@ -42,6 +43,16 @@ pub fn RegisteredCommand::new_async(
   handler~ : AsyncCommandHandler,
 ) -> RegisteredCommand {
   { route, permission, operation_scope, handler: AsyncCommandHandler(handler) }
+}
+
+///|
+pub fn RegisteredCommand::new_stream(
+  route : String,
+  permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
+  handler~ : CommandHandler,
+) -> RegisteredCommand {
+  { route, permission, operation_scope, handler: StreamCommandHandler(handler) }
 }
 
 ///|
@@ -81,6 +92,7 @@ pub fn RegisteredCommand::mode(self : RegisteredCommand) -> CommandMode {
   match self.handler {
     SyncCommandHandler(_) => Sync
     AsyncCommandHandler(_) => Async
+    StreamCommandHandler(_) => Stream
   }
 }
 
@@ -136,6 +148,24 @@ pub fn CommandRegistry::register_async_fn(
 ) -> CommandRegistry {
   self.register(
     RegisteredCommand::new_async(route, permission~, operation_scope?, handler~),
+  )
+}
+
+///|
+pub fn CommandRegistry::register_stream_fn(
+  self : CommandRegistry,
+  route : String,
+  permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
+  handler~ : CommandHandler,
+) -> CommandRegistry {
+  self.register(
+    RegisteredCommand::new_stream(
+      route,
+      permission~,
+      operation_scope?,
+      handler~,
+    ),
   )
 }
 
@@ -462,6 +492,12 @@ fn execute_command(
         Err(message) =>
           InvokeResponse::handler_error(request.id(), message, route~)
       }
+    StreamCommandHandler(handler) =>
+      match handler(request.payload()) {
+        Ok(payload) => InvokeResponse::ok(request.id(), payload)
+        Err(message) =>
+          InvokeResponse::handler_error(request.id(), message, route~)
+      }
     AsyncCommandHandler(_) =>
       InvokeResponse::async_required(request.id(), route)
   }
@@ -475,6 +511,12 @@ async fn execute_command_async(
   let route = request.route()
   match command.handler {
     SyncCommandHandler(handler) =>
+      match handler(request.payload()) {
+        Ok(payload) => InvokeResponse::ok(request.id(), payload)
+        Err(message) =>
+          InvokeResponse::handler_error(request.id(), message, route~)
+      }
+    StreamCommandHandler(handler) =>
       match handler(request.payload()) {
         Ok(payload) => InvokeResponse::ok(request.id(), payload)
         Err(message) =>

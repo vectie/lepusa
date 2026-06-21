@@ -181,19 +181,21 @@ fn render_doctor_native_launch_gate(
   host : @runtime.RuntimeHost,
 ) -> String {
   match native_runtime_for_target(target, host) {
-    Ok(runtime) =>
+    Ok(runtime) => {
+      let contract = native_backend_contract_for_target(target, runtime)
       match verify_native_dry_run(target, runtime) {
         Ok(session) => {
           let base = "target=\{target.name()} webviews=\{session.webviews().length()} startup=\{session.execution().startup_operations().length()} lifecycle=\{session.execution().lifecycle_steps().length()}"
-          match doctor_native_launch_blocker(target, session) {
-            None => "[ok] native-launch: \{base} can-launch=true\n"
-            Some(problem) =>
-              "[warn] native-launch: \{base} can-launch=false reason=\{problem}\n"
+          if contract.can_launch() {
+            "[ok] native-launch: \{base} can-launch=true contract-ok=true\n"
+          } else {
+            "[warn] native-launch: \{base} can-launch=false contract-ok=false reason=\{native_contract_blocker(contract)}\n"
           }
         }
         Err(problems) =>
           "[warn] native-launch: target=\{target.name()} can-launch=false reason=\{problems.join("; ")}\n"
       }
+    }
     Err(problems) =>
       "[warn] native-launch: target=\{target.name()} can-launch=false reason=\{problems.join("; ")}\n"
   }
@@ -205,10 +207,15 @@ fn render_doctor_native_launch_json(
   host : @runtime.RuntimeHost,
 ) -> String {
   match native_runtime_for_target(target, host) {
-    Ok(runtime) =>
+    Ok(runtime) => {
+      let contract = native_backend_contract_for_target(target, runtime)
       match verify_native_dry_run(target, runtime) {
         Ok(session) => {
-          let blocker = doctor_native_launch_blocker(target, session)
+          let blocker = if contract.can_launch() {
+            None
+          } else {
+            Some(native_contract_blocker(contract))
+          }
           let blocker_json = match blocker {
             Some(problem) => cli_json_string(problem)
             None => "null"
@@ -220,14 +227,16 @@ fn render_doctor_native_launch_json(
             "\"webviews\":\{session.webviews().length()},",
             "\"startup\":\{session.execution().startup_operations().length()},",
             "\"lifecycle\":\{session.execution().lifecycle_steps().length()},",
-            "\"canLaunch\":\{cli_json_bool(blocker is None)},",
-            "\"blocker\":\{blocker_json}",
+            "\"canLaunch\":\{cli_json_bool(contract.can_launch())},",
+            "\"blocker\":\{blocker_json},",
+            "\"backendContract\":\{contract.to_json()}",
             "}",
           ].join("")
         }
         Err(problems) =>
           render_doctor_native_launch_error_json(target, problems)
       }
+    }
     Err(problems) => render_doctor_native_launch_error_json(target, problems)
   }
 }
@@ -248,17 +257,6 @@ fn render_doctor_native_launch_error_json(
     "\"blocker\":\{cli_json_string(problems.join("; "))}",
     "}",
   ].join("")
-}
-
-///|
-fn doctor_native_launch_blocker(
-  target : @lepusa.BundleTarget,
-  session : @runtime.NativeLaunchSession,
-) -> String? {
-  session.launch_blocker_with_capability(
-    verify_target_display_name(target),
-    native_launch_capability_for_target(target),
-  )
 }
 
 ///|
@@ -515,13 +513,38 @@ fn native_target_launch_status(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
 ) -> (Bool, String) {
+  let contract = native_backend_contract_for_target(target, runtime)
   match verify_native_dry_run(target, runtime) {
-    Ok(session) =>
-      match doctor_native_launch_blocker(target, session) {
-        Some(problem) => (false, problem)
-        None => (true, "")
+    Ok(_) =>
+      if contract.can_launch() {
+        (true, "")
+      } else {
+        (false, native_contract_blocker(contract))
       }
     Err(problems) => (false, problems.join("; "))
+  }
+}
+
+///|
+fn native_backend_contract_for_target(
+  target : @lepusa.BundleTarget,
+  runtime : @runtime.NativeRuntime,
+) -> @runtime.NativeBackendContract {
+  runtime.backend_contract(
+    capability=native_launch_capability_for_target(target),
+    platform_name=verify_target_display_name(target),
+  )
+}
+
+///|
+fn native_contract_blocker(contract : @runtime.NativeBackendContract) -> String {
+  match contract.launch_blocker() {
+    Some(message) => message
+    None =>
+      match contract.problems().get(0) {
+        Some(problem) => problem
+        None => ""
+      }
   }
 }
 

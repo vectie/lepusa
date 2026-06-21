@@ -149,3 +149,42 @@ test "invoke contract report catches handler manifest drift" {
   )
   assert_true(report.to_json().contains("\"ok\":false"))
 }
+
+///|
+test "invoke contract accepts registered stream handlers" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.events"),
+    )
+  let plan = match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => plan
+    Err(problems) => abort(problems.join(", "))
+  }
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(_) { Ok("{\"channel\":\"events\"}") },
+  )
+  let profile = plan.security_profile(
+    registered_routes=registry.routes(),
+    check_handlers=true,
+  )
+  let report = registry.invoke_contract_report(profile)
+  assert_true(report.ok())
+  let contract = invoke_contract_by_route(report.contracts(), "core.events")
+  assert_true(contract.registered_mode() is Some(Stream))
+  assert_true(contract.dispatchable())
+  let response = registry.dispatch_with_profile(
+    profile,
+    @lepusa.InvokeRequest::new(
+      id="stream",
+      window_label="main",
+      plugin="core",
+      command="events",
+    ),
+  )
+  assert_true(response is InvokeOk("stream", "{\"channel\":\"events\"}"))
+}
