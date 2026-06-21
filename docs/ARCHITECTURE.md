@@ -651,16 +651,18 @@ WebViews can resolve assets for their own window labels. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows now owns a
-minimal Win32/WebView2 COM creation loop for dependency-backed native windows,
-while custom asset serving, sync bridge response evaluation, and async bridge
-drain remain separately reported capabilities. Each platform package exposes a
-shared `runtime.NativeBackendPreflight`, so diagnostics separate host dependency
+minimal Win32/WebView2 COM creation loop for dependency-backed native windows
+and wires WebView2 messages through the MoonBit handoff callback into
+`ExecuteScript` for sync bridge responses. Custom asset serving, Windows
+dynamic native `open-window` creation, and async bridge drain/evaluate support
+remain separately reported capabilities. Each platform package exposes a shared
+`runtime.NativeBackendPreflight`, so diagnostics separate host dependency
 availability, WebView creation-loop support, sync bridge response evaluation,
 and async bridge drain support without duplicating CLI-specific checks. Its JSON
 reports the collapsed human `problem` plus `problemKind`, `dependencyProblem`,
 `webviewCreationProblem`, `syncBridgeEvaluateProblem`, and
-`asyncBridgeDrainProblem`, which lets CI distinguish machine setup issues
-from framework backend implementation gaps.
+`asyncBridgeDrainProblem`, which lets CI distinguish machine setup issues from
+framework backend implementation gaps.
 
 ## Bundling
 

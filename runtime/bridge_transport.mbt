@@ -1494,7 +1494,7 @@ pub fn native_webview2_bridge_hook_script(hook : String) -> String {
     "        return;",
     "      }",
     "      pending.set(String(request.id || \"\"), { resolve, reject });",
-    "      webview.postMessage(JSON.stringify({ hook: nativeHook, request }));",
+    "      webview.postMessage(JSON.stringify(request));",
   ])
 }
 

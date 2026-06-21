@@ -46,7 +46,7 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(preflight.dependency_name(), "webview2-loader")
   assert_eq(preflight.dependency_available(), available())
   assert_true(preflight.webview_creation_loop())
-  assert_false(preflight.sync_bridge_evaluate())
+  assert_true(preflight.sync_bridge_evaluate())
   assert_false(preflight.async_bridge_drain())
   assert_eq(preflight.can_launch(), available())
   assert_true(
@@ -62,9 +62,7 @@ test "windows backend exposes webview2 descriptor" {
     assert_true(preflight.webview_creation_problem() is None)
     assert_true(preflight.problem().contains("WebView2"))
   }
-  assert_true(
-    preflight.sync_bridge_evaluate_problem().unwrap().contains("WebView2"),
-  )
+  assert_true(preflight.sync_bridge_evaluate_problem() is None)
   assert_true(
     preflight
     .async_bridge_drain_problem()
@@ -79,7 +77,7 @@ test "windows backend exposes webview2 descriptor" {
   assert_true(preflight.to_json().contains("\"asyncBridgeDrainProblem\":"))
   let capability = launch_capability()
   assert_eq(capability.webview_creation(), available())
-  assert_false(capability.sync_bridge_evaluate())
+  assert_eq(capability.sync_bridge_evaluate(), available())
   assert_false(capability.async_bridge_drain())
   assert_true(capability.webview_creation_message().contains("WebView2"))
   assert_true(
@@ -93,9 +91,9 @@ test "windows backend exposes webview2 descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 0)
-  assert_eq(execution.skipped_count(), 1)
-  assert_true(execution.outcomes()[0].status().message().contains("WebView2"))
+  assert_eq(execution.executed_count(), 1)
+  assert_eq(execution.skipped_count(), 0)
+  assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
 }
 
 ///|

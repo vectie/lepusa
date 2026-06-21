@@ -3432,11 +3432,7 @@ test "native bridge hook scripts cover webkit and webview2 transports" {
   assert_false(webkit.contains("chrome.webview"))
   let webview2 = native_webview2_bridge_hook_script("__lepusaInvoke")
   assert_true(webview2.contains("chrome.webview"))
-  assert_true(
-    webview2.contains(
-      "postMessage(JSON.stringify({ hook: nativeHook, request }))",
-    ),
-  )
+  assert_true(webview2.contains("postMessage(JSON.stringify(request))"))
   assert_true(webview2.contains("__lepusaInvokeResponse"))
   assert_true(webview2.contains("Missing Lepusa Windows WebView2 bridge"))
   assert_false(webview2.contains("messageHandlers"))
