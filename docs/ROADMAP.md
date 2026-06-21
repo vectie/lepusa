@@ -144,7 +144,10 @@
   `open_window` resolves a new `WindowConfig` into session assets, services,
   bridge/webview boot data, and an `open-window` operation, while
   `request_window_close` and `close_window` separate close-request hooks from
-  final asset/listener cleanup and the `close-window` operation;
+  final asset/listener cleanup and the `close-window` operation; the official
+  `window.open` plugin route now gives frontend code the same app-facing
+  bridge boundary, lowering approved dispatches into `open-window` executable
+  operations;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and

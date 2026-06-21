@@ -63,6 +63,15 @@ pub fn WindowControlState::new() -> Self
 pub fn WindowControlState::operations(Self) -> Array[WindowControlOperation]
 pub fn WindowControlState::record(Self, WindowControlOperation) -> Unit
 
+pub struct WindowOpenOperation {
+  window_label : String
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn WindowOpenOperation::new(window_label~ : String, payload~ : String) -> Self
+pub fn WindowOpenOperation::payload(Self) -> String
+pub fn WindowOpenOperation::to_json(Self) -> String
+pub fn WindowOpenOperation::window_label(Self) -> String
+
 // Type aliases
 
 // Traits

@@ -796,9 +796,12 @@ handoff routes. `@lepusa/plugins/tray` declares system tray icon, menu, and
 menu-click routes, plus delegated sync tray state handlers.
 `@lepusa/plugins/auto_launch` declares launch-at-login
 status and enablement routes, plus delegated sync enablement handlers.
-`@lepusa/plugins/window` declares sync-safe window control routes such as
-close, focus, minimize, maximize, fullscreen, title, size, position, show, and
-hide, plus event declarations for close/focus/resize notifications.
+`@lepusa/plugins/window` declares sync-safe dynamic window and control routes
+such as open, close, focus, minimize, maximize, fullscreen, title, size,
+position, show, and hide, plus event declarations for close/focus/resize
+notifications. Approved `window.open` bridge dispatches parse the same
+`WindowConfig` payload contract as the runtime lifecycle layer and lower to
+typed `open-window` executable operations.
 `@lepusa/plugins/window_state` declares window
 geometry persistence routes. `@lepusa/plugins/updater` declares update check,
 download, install, and restart routes, plus delegated update lifecycle handlers.

@@ -1,7 +1,9 @@
 # Lepusa Window Plugin
 
-`vectie/lepusa/plugins/window` declares sync-safe window control routes and a
-deterministic registry contract for native backends.
+`vectie/lepusa/plugins/window` declares sync-safe window open/control routes and
+a deterministic registry contract for native backends. `window.open` accepts a
+`WindowConfig`-shaped JSON payload with a label and source, then the runtime
+bridge lowers approved dispatches to a typed `open-window` operation.
 
 ```mbt check
 ///|

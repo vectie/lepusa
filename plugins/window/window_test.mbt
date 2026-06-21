@@ -13,11 +13,13 @@ test "window plugin declares sync window commands" {
   assert_true(declared.command_routes().contains("window.setTitle"))
   assert_true(declared.command_routes().contains("window.show"))
   assert_true(declared.command_routes().contains("window.unmaximize"))
+  assert_true(declared.command_routes().contains("window.open"))
   assert_true(declared.command_routes().contains("window.onCloseRequested"))
   let commands = declared.commands()
   assert_true(commands[0].mode() is Sync)
   assert_true(commands[0].permission() is Window)
-  assert_true(commands[11].mode() is Event)
+  assert_true(commands[11].mode() is Sync)
+  assert_true(commands[12].mode() is Event)
 }
 
 ///|
@@ -60,7 +62,8 @@ test "window registry records control operations" {
   )
   assert_true(registry.contains("window.setTitle"))
   assert_true(registry.contains("window.close"))
-  assert_eq(registry.sync_routes().length(), 11)
+  assert_true(registry.contains("window.open"))
+  assert_eq(registry.sync_routes().length(), 12)
   let grant = capability_for_window("main")
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -97,6 +100,45 @@ test "window registry records control operations" {
   assert_eq(
     denied.error_message().unwrap_or(""),
     "window control is not allowed for window: settings",
+  )
+}
+
+///|
+test "window registry validates and queues open operations" {
+  let registry = registry()
+  let grant = capability_for_window("main")
+  let payload = "{\"label\":\"tools\",\"title\":\"Tools\",\"width\":480,\"height\":360,\"source\":{\"kind\":\"html\",\"content\":\"<aside>tools</aside>\"}}"
+  let response = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="open",
+      window_label="main",
+      plugin="window",
+      command="open",
+      payload~,
+    ),
+    capabilities=[grant],
+  )
+  assert_true(response is InvokeOk("open", _))
+  assert_true(response.payload().unwrap_or("").contains("\"action\":\"open\""))
+  assert_true(
+    response.payload().unwrap_or("").contains("\"windowLabel\":\"tools\""),
+  )
+  assert_true(
+    response.payload().unwrap_or("").contains("\"status\":\"queued\""),
+  )
+  let invalid = registry.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="bad",
+      window_label="main",
+      plugin="window",
+      command="open",
+      payload="{\"label\":\"tools\"}",
+    ),
+    capabilities=[grant],
+  )
+  assert_eq(
+    invalid.error_message().unwrap_or(""),
+    "window open source is required",
   )
 }
 

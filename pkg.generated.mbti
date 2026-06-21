@@ -1953,6 +1953,7 @@ pub struct WindowConfig {
 } derive(Eq, @debug.Debug)
 pub fn WindowConfig::label(Self) -> String
 pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn WindowConfig::parse_open_payload(String) -> Result[Self, String]
 pub fn WindowConfig::resolve(Self, asset_protocol? : String) -> Result[ResolvedWindow, Array[String]]
 pub fn WindowConfig::validate(Self) -> Array[String]
 pub fn WindowConfig::with_source(Self, Source) -> Self

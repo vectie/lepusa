@@ -18,7 +18,9 @@ fn RuntimeHost::dispatch_with_operations(
   if is_frontend_event_emit_request(request) {
     self.dispatch_frontend_event_emit(request)
   } else {
-    (self.dispatch(request), [])
+    let response = self.dispatch(request)
+    let operations = self.dispatch_followup_operations(request, response)
+    (response, operations)
   }
 }
 
@@ -30,7 +32,9 @@ async fn RuntimeHost::dispatch_with_operations_async(
   if is_frontend_event_emit_request(request) {
     self.dispatch_frontend_event_emit(request)
   } else {
-    (self.dispatch_async(request), [])
+    let response = self.dispatch_async(request)
+    let operations = self.dispatch_followup_operations(request, response)
+    (response, operations)
   }
 }
 
@@ -96,6 +100,47 @@ fn native_executable_operations_from_runtime(
     native.push(NativeOperation::from_runtime(operation).executable())
   }
   native
+}
+
+///|
+fn RuntimeHost::dispatch_followup_operations(
+  self : RuntimeHost,
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[NativeExecutableOperation] {
+  let operations : Array[NativeExecutableOperation] = []
+  for operation in self.window_open_followup_operations(request, response) {
+    operations.push(operation)
+  }
+  operations
+}
+
+///|
+fn RuntimeHost::window_open_followup_operations(
+  self : RuntimeHost,
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[NativeExecutableOperation] {
+  if request.plugin() != "window" || request.command() != "open" {
+    return []
+  }
+  match response.payload() {
+    None => []
+    Some(_) =>
+      match @lepusa.WindowConfig::parse_open_payload(request.payload()) {
+        Err(_) => []
+        Ok(window) =>
+          match self.snapshot() {
+            Err(_) => []
+            Ok(session) =>
+              match session.open_window(window) {
+                Err(_) => []
+                Ok(step) =>
+                  native_executable_operations_from_runtime(step.operations())
+              }
+          }
+      }
+  }
 }
 
 ///|

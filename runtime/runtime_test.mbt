@@ -2738,6 +2738,71 @@ test "bridge dispatch lowers approved window responses to native operations" {
 }
 
 ///|
+test "bridge dispatch lowers approved window open to native operation" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Runtime",
+      source=@lepusa.Source::html("<main>runtime</main>"),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("window").command_sync("open", permission=Window),
+    )
+    .with_capability(
+      @lepusa.Capability::new("window").window("main").permission(Window),
+    )
+  let plan = match
+    app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid window open plan")
+  }
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "window.open",
+    permission=Window,
+    handler=fn(_) { Ok("{\"status\":\"queued\"}") },
+  )
+  let host = RuntimeHost::new(plan, registry~)
+  let message = "{\"id\":\"open\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"open\",\"payload\":\"{\\\"label\\\":\\\"tools\\\",\\\"title\\\":\\\"Tools\\\",\\\"width\\\":480,\\\"height\\\":360,\\\"source\\\":{\\\"kind\\\":\\\"html\\\",\\\"content\\\":\\\"<aside>tools</aside>\\\"}}\"}"
+  match host.prepare_bridge_message(message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      let operations = dispatch.operations()
+      assert_eq(operations.length(), 2)
+      assert_eq(operations[0].kind(), "evaluate-script")
+      assert_eq(operations[1].kind(), "open-window")
+      match operations[1].open_window_plan() {
+        Some(open_plan) => {
+          assert_eq(open_plan.label(), "tools")
+          assert_eq(open_plan.window().title(), "Tools")
+          assert_eq(open_plan.url(), "lepusa://inline/tools/index.html")
+          assert_true(open_plan.bridge_source().contains("__lepusaInvoke"))
+        }
+        None => abort("expected open-window operation")
+      }
+      assert_true(dispatch.to_json().contains("\"kind\":\"open-window\""))
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid window open packet bytes")
+      }
+      assert_true(packet.has_prefix("immediate\nmain\n"))
+      assert_true(packet.contains("lepusa-ops-v1\n2\n"))
+      assert_true(packet.contains("open-window"))
+      assert_true(packet.contains("tools"))
+      assert_true(packet.contains("lepusa://inline/tools/index.html"))
+    }
+    Err(_) => abort("unexpected bridge prepare failure")
+  }
+}
+
+///|
 async test "runtime host dispatches async bridge handlers" {
   let registry = @lepusa.CommandRegistry::new().register_async_fn(
     "core.invoke",

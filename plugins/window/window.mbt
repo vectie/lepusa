@@ -173,6 +173,7 @@ pub fn plugin() -> @lepusa.Plugin {
   .command_sync("setTitle", permission=Window, affinity=MainThread)
   .command_sync("show", permission=Window, affinity=MainThread)
   .command_sync("unmaximize", permission=Window, affinity=MainThread)
+  .command_sync("open", permission=Window, affinity=MainThread)
   .command_event("onCloseRequested", permission=Window, affinity=MainThread)
   .command_event("onFocusChanged", permission=Window, affinity=MainThread)
   .command_event("onResized", permission=Window, affinity=MainThread)
@@ -238,6 +239,9 @@ pub fn register(
   })
   .register_fn("window.unmaximize", permission=Window, handler=payload => {
     handle_control(policy, state, payload, action=Unmaximize)
+  })
+  .register_fn("window.open", permission=Window, handler=payload => {
+    handle_open(payload)
   })
 }
 

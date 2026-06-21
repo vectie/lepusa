@@ -411,11 +411,12 @@ policy metadata. Its portable registry validates and tracks icon, tooltip,
 menu, visibility, and destroy state through sync handlers, then delegates status
 icon creation and OS menu behavior to native backends.
 
-`@lepusa/plugins/window` defines window control routes such as `window.close`,
-`window.focus`, `window.minimize`, `window.maximize`, `window.setTitle`,
-`window.setSize`, and `window.setFullscreen`. Its portable registry records
-sync control operations for the target window; native backends own the actual
-window-manager calls.
+`@lepusa/plugins/window` defines window routes such as `window.open`,
+`window.close`, `window.focus`, `window.minimize`, `window.maximize`,
+`window.setTitle`, `window.setSize`, and `window.setFullscreen`. Its portable
+registry validates dynamic open payloads and records sync control operations
+for the target window; native backends own the actual WebView/window-manager
+calls.
 
 `@lepusa/plugins/auto_launch` defines launch-at-login routes such as
 `autoLaunch.status`, `autoLaunch.enable`, `autoLaunch.disable`, and
