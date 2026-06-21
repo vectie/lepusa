@@ -18,6 +18,7 @@ fn project_registry_from_plugins(
 ///|
 fn project_plugins_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> Array[@lepusa.Plugin] {
   let plugins : Array[@lepusa.Plugin] = []
@@ -26,7 +27,7 @@ fn project_plugins_from_object(
       for item in items {
         match item {
           Object(plugin_object) =>
-            plugins.push(plugin_from_object(plugin_object, problems))
+            plugins.push(plugin_from_object(plugin_object, base_dir~, problems))
           _ => problems.push("project plugins entries must be objects")
         }
       }
@@ -38,6 +39,7 @@ fn project_plugins_from_object(
 ///|
 fn plugin_from_object(
   object : Map[String, Json],
+  base_dir~ : String,
   problems : Array[String],
 ) -> @lepusa.Plugin {
   let name = required_config_string(object, "name", problems)
@@ -53,6 +55,7 @@ fn plugin_from_object(
         None => ()
       }
   }
+  plugin = plugin_lifecycle_from_object(plugin, object, base_dir~, problems)
   plugin
 }
 
@@ -117,6 +120,69 @@ fn command_schema_from_object(
       None
     }
     None => None
+  }
+}
+
+///|
+fn plugin_lifecycle_from_object(
+  plugin : @lepusa.Plugin,
+  object : Map[String, Json],
+  base_dir~ : String,
+  problems : Array[String],
+) -> @lepusa.Plugin {
+  let mut plugin = plugin
+  match optional_config_array(object, "lifecycle") {
+    Some(items) =>
+      for item in items {
+        plugin = plugin_lifecycle_hook_from_json(
+          plugin,
+          item,
+          base_dir~,
+          problems,
+        )
+      }
+    None => ()
+  }
+  plugin
+}
+
+///|
+fn plugin_lifecycle_hook_from_json(
+  plugin : @lepusa.Plugin,
+  json : Json,
+  base_dir~ : String,
+  problems : Array[String],
+) -> @lepusa.Plugin {
+  match json {
+    Object(object) => {
+      let event = required_config_string(object, "event", problems)
+      let command = match object.get("command") {
+        Some(command_json) =>
+          command_from_json(
+            command_json,
+            "plugin lifecycle command",
+            base_dir~,
+            problems,
+          )
+        None => {
+          problems.push("project plugin lifecycle command is required")
+          @lepusa.Cmd::batch([])
+        }
+      }
+      match event {
+        "setup" => plugin.on_setup(command)
+        "ready" => plugin.on_ready(command)
+        "will-exit" => plugin.on_will_exit(command)
+        value => {
+          problems.push("unknown plugin lifecycle event: \{value}")
+          plugin
+        }
+      }
+    }
+    _ => {
+      problems.push("project plugin lifecycle entries must be objects")
+      plugin
+    }
   }
 }
 

@@ -80,6 +80,54 @@ test "project config parses command request and response schemas" {
 }
 
 ///|
+test "project config parses plugin lifecycle hooks" {
+  let config =
+    #|{
+    #|  "identifier": "dev.vectie.plugin.lifecycle",
+    #|  "productName": "PluginLifecycle",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Lifecycle" },
+    #|  "plugins": [{
+    #|    "name": "log",
+    #|    "commands": ["write"],
+    #|    "lifecycle": [
+    #|      { "event": "setup", "command": "log.setup" },
+    #|      { "event": "ready", "command": { "emit": "log-ready" } },
+    #|      { "event": "will-exit", "command": "log.flush" }
+    #|    ]
+    #|  }],
+    #|  "capabilities": [{
+    #|    "name": "main",
+    #|    "windows": ["main"],
+    #|    "commands": ["log.write"]
+    #|  }]
+    #|}
+    #|
+  match ProjectConfig::parse(config) {
+    Ok(project) =>
+      match project.manifest().runtime_plan(project.root()) {
+        Ok(plan) => {
+          match plan.lifecycle_actions(PluginSetup("log")) {
+            Ok(actions) => assert_true(actions[0] is RuntimeEffect("log.setup"))
+            Err(problems) => abort(problems.join(", "))
+          }
+          match plan.lifecycle_actions(PluginWillExit("log")) {
+            Ok(actions) => assert_true(actions[0] is RuntimeEffect("log.flush"))
+            Err(problems) => abort(problems.join(", "))
+          }
+          let hooks = plan.lifecycle_hooks().unwrap()
+          assert_eq(hooks.length(), 3)
+          assert_true(hooks[0].event() is PluginSetup("log"))
+          assert_true(hooks[1].event() is PluginReady("log"))
+          assert_true(hooks[2].event() is PluginWillExit("log"))
+        }
+        Err(problems) => abort(problems.join(", "))
+      }
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
 async test "project config loads file relative resources" {
   let root = "/tmp/lepusa-project-load-\{@async.now().to_int()}"
   @fs.mkdir(root + "/dist", recursive=true, permission=0o755)

@@ -74,11 +74,12 @@ pub fn CommandSpec::with_schema(
 pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Debug, Eq)
 
 ///|
 pub fn Plugin::new(name : String) -> Plugin {
-  { name, commands: [] }
+  { name, commands: [], lifecycle_hooks: [] }
 }
 
 ///|
@@ -154,6 +155,37 @@ pub fn Plugin::commands(self : Plugin) -> Array[CommandSpec] {
 }
 
 ///|
+pub fn Plugin::with_lifecycle(
+  self : Plugin,
+  event : LifecycleEvent,
+  command : Cmd,
+) -> Plugin {
+  let lifecycle_hooks = self.lifecycle_hooks.copy()
+  lifecycle_hooks.push(LifecycleHook::new(event, command))
+  { ..self, lifecycle_hooks, }
+}
+
+///|
+pub fn Plugin::on_setup(self : Plugin, command : Cmd) -> Plugin {
+  self.with_lifecycle(PluginSetup(self.name), command)
+}
+
+///|
+pub fn Plugin::on_ready(self : Plugin, command : Cmd) -> Plugin {
+  self.with_lifecycle(PluginReady(self.name), command)
+}
+
+///|
+pub fn Plugin::on_will_exit(self : Plugin, command : Cmd) -> Plugin {
+  self.with_lifecycle(PluginWillExit(self.name), command)
+}
+
+///|
+pub fn Plugin::lifecycle_hooks(self : Plugin) -> Array[LifecycleHook] {
+  self.lifecycle_hooks.copy()
+}
+
+///|
 pub fn Plugin::command_names(self : Plugin) -> Array[String] {
   self.commands.map(fn(command) { command.name() })
 }
@@ -184,6 +216,17 @@ pub fn Plugin::validate(self : Plugin) -> Array[String] {
     }
     for problem in command.response_schema().validate() {
       problems.push(problem)
+    }
+  }
+  for hook in self.lifecycle_hooks {
+    match hook.event().plugin_name() {
+      Some(name) =>
+        if name != self.name {
+          problems.push(
+            "plugin lifecycle hook belongs to another plugin: \{name}",
+          )
+        }
+      None => problems.push("plugin lifecycle hook must use a plugin event")
     }
   }
   problems

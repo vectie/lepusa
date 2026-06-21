@@ -72,6 +72,24 @@ fn parse_lifecycle_event_args(
     None => Err("lifecycle event is required")
     Some("app-started") => Ok(@lepusa.LifecycleEvent::app_started())
     Some("app-will-exit") => Ok(@lepusa.LifecycleEvent::app_will_exit())
+    Some("plugin-setup") =>
+      match values.get(1) {
+        Some(name) if name != "" =>
+          Ok(@lepusa.LifecycleEvent::plugin_setup(name))
+        _ => Err("lifecycle plugin is required")
+      }
+    Some("plugin-ready") =>
+      match values.get(1) {
+        Some(name) if name != "" =>
+          Ok(@lepusa.LifecycleEvent::plugin_ready(name))
+        _ => Err("lifecycle plugin is required")
+      }
+    Some("plugin-will-exit") =>
+      match values.get(1) {
+        Some(name) if name != "" =>
+          Ok(@lepusa.LifecycleEvent::plugin_will_exit(name))
+        _ => Err("lifecycle plugin is required")
+      }
     Some("window-close-requested") =>
       match values.get(1) {
         Some(label) if label != "" =>

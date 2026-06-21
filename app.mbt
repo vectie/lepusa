@@ -191,8 +191,8 @@ pub fn App::validate(self : App) -> Array[String] {
       problems.push(problem)
     }
   }
-  for hook in self.lifecycle_hooks {
-    for problem in hook.event().validate(windows) {
+  for hook in self.materialized_lifecycle_hooks() {
+    for problem in hook.event().validate(windows, plugins=self.plugins) {
       problems.push(problem)
     }
   }
@@ -230,7 +230,7 @@ pub fn App::launch_plan(self : App) -> Result[LaunchPlan, Array[String]] {
       plugins: self.plugins.copy(),
       capabilities: self.capabilities.copy(),
       startup: self.startup,
-      lifecycle_hooks: self.lifecycle_hooks.copy(),
+      lifecycle_hooks: self.materialized_lifecycle_hooks(),
     })
   } else {
     Err(problems)
@@ -244,4 +244,15 @@ fn App::materialized_windows(self : App) -> Array[WindowConfig] {
     windows.push(window.with_default_source(self.root))
   }
   windows
+}
+
+///|
+fn App::materialized_lifecycle_hooks(self : App) -> Array[LifecycleHook] {
+  let hooks = self.lifecycle_hooks.copy()
+  for plugin in self.plugins {
+    for hook in plugin.lifecycle_hooks() {
+      hooks.push(hook)
+    }
+  }
+  hooks
 }

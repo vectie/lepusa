@@ -208,6 +208,10 @@ pub fn LifecycleEvent::to_json(self : LifecycleEvent) -> String {
   match self {
     AppStarted => "{\"kind\":\"app-started\"}"
     AppWillExit => "{\"kind\":\"app-will-exit\"}"
+    PluginSetup(name) => plugin_lifecycle_event_json("plugin-setup", name)
+    PluginReady(name) => plugin_lifecycle_event_json("plugin-ready", name)
+    PluginWillExit(name) =>
+      plugin_lifecycle_event_json("plugin-will-exit", name)
     WindowCloseRequested(label) =>
       [
         "{",
@@ -223,6 +227,16 @@ pub fn LifecycleEvent::to_json(self : LifecycleEvent) -> String {
         "}",
       ].join("")
   }
+}
+
+///|
+fn plugin_lifecycle_event_json(kind : String, name : String) -> String {
+  [
+    "{",
+    "\"kind\":\{kind.json_string()},",
+    "\"plugin\":\{name.json_string()}",
+    "}",
+  ].join("")
 }
 
 ///|

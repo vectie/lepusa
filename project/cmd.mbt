@@ -73,6 +73,24 @@ fn lifecycle_event_from_object(
   match event {
     "app-started" => Some(@lepusa.LifecycleEvent::app_started())
     "app-will-exit" => Some(@lepusa.LifecycleEvent::app_will_exit())
+    "plugin-setup" =>
+      Some(
+        @lepusa.LifecycleEvent::plugin_setup(
+          required_config_string(object, "plugin", problems),
+        ),
+      )
+    "plugin-ready" =>
+      Some(
+        @lepusa.LifecycleEvent::plugin_ready(
+          required_config_string(object, "plugin", problems),
+        ),
+      )
+    "plugin-will-exit" =>
+      Some(
+        @lepusa.LifecycleEvent::plugin_will_exit(
+          required_config_string(object, "plugin", problems),
+        ),
+      )
     "window-close-requested" =>
       Some(
         @lepusa.LifecycleEvent::window_close_requested(

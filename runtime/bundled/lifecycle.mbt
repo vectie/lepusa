@@ -2,6 +2,7 @@
 pub struct BundledLifecycleEvent {
   kind : String
   label : String
+  plugin : String
 } derive(Debug, Eq)
 
 ///|
@@ -12,12 +13,33 @@ pub struct BundledLifecyclePlan {
 
 ///|
 pub fn BundledLifecycleEvent::app_started() -> BundledLifecycleEvent {
-  { kind: "app-started", label: "" }
+  { kind: "app-started", label: "", plugin: "" }
 }
 
 ///|
 pub fn BundledLifecycleEvent::app_will_exit() -> BundledLifecycleEvent {
-  { kind: "app-will-exit", label: "" }
+  { kind: "app-will-exit", label: "", plugin: "" }
+}
+
+///|
+pub fn BundledLifecycleEvent::plugin_setup(
+  plugin : String,
+) -> Result[BundledLifecycleEvent, String] {
+  bundled_plugin_lifecycle_event("plugin-setup", plugin)
+}
+
+///|
+pub fn BundledLifecycleEvent::plugin_ready(
+  plugin : String,
+) -> Result[BundledLifecycleEvent, String] {
+  bundled_plugin_lifecycle_event("plugin-ready", plugin)
+}
+
+///|
+pub fn BundledLifecycleEvent::plugin_will_exit(
+  plugin : String,
+) -> Result[BundledLifecycleEvent, String] {
+  bundled_plugin_lifecycle_event("plugin-will-exit", plugin)
 }
 
 ///|
@@ -27,7 +49,7 @@ pub fn BundledLifecycleEvent::window_close_requested(
   if label == "" {
     Err("lifecycle window is required")
   } else {
-    Ok({ kind: "window-close-requested", label })
+    Ok({ kind: "window-close-requested", label, plugin: "" })
   }
 }
 
@@ -38,7 +60,7 @@ pub fn BundledLifecycleEvent::window_closed(
   if label == "" {
     Err("lifecycle window is required")
   } else {
-    Ok({ kind: "window-closed", label })
+    Ok({ kind: "window-closed", label, plugin: "" })
   }
 }
 
@@ -50,6 +72,11 @@ pub fn BundledLifecycleEvent::kind(self : BundledLifecycleEvent) -> String {
 ///|
 pub fn BundledLifecycleEvent::label(self : BundledLifecycleEvent) -> String {
   self.label
+}
+
+///|
+pub fn BundledLifecycleEvent::plugin(self : BundledLifecycleEvent) -> String {
+  self.plugin
 }
 
 ///|
@@ -153,6 +180,18 @@ fn bundled_lifecycle_event_from_json(
   match optional_string(object, "kind") {
     Some("app-started") => Ok(BundledLifecycleEvent::app_started())
     Some("app-will-exit") => Ok(BundledLifecycleEvent::app_will_exit())
+    Some("plugin-setup") =>
+      BundledLifecycleEvent::plugin_setup(
+        optional_string(object, "plugin").unwrap_or(""),
+      )
+    Some("plugin-ready") =>
+      BundledLifecycleEvent::plugin_ready(
+        optional_string(object, "plugin").unwrap_or(""),
+      )
+    Some("plugin-will-exit") =>
+      BundledLifecycleEvent::plugin_will_exit(
+        optional_string(object, "plugin").unwrap_or(""),
+      )
     Some("window-close-requested") =>
       BundledLifecycleEvent::window_close_requested(
         optional_string(object, "label").unwrap_or(""),
@@ -193,13 +232,21 @@ fn runtime_lifecycle_event_matches(
   event : BundledLifecycleEvent,
 ) -> Bool {
   optional_string(object, "kind").unwrap_or("") == event.kind &&
-  optional_string(object, "label").unwrap_or("") == event.label
+  optional_string(object, "label").unwrap_or("") == event.label &&
+  optional_string(object, "plugin").unwrap_or("") == event.plugin
 }
 
 ///|
 fn runtime_lifecycle_event_json(event : BundledLifecycleEvent) -> String {
-  if event.label == "" {
+  if event.label == "" && event.plugin == "" {
     "{\"kind\":\{event.kind.json_string()}}"
+  } else if event.plugin != "" {
+    [
+      "{",
+      "\"kind\":\{event.kind.json_string()},",
+      "\"plugin\":\{event.plugin.json_string()}",
+      "}",
+    ].join("")
   } else {
     [
       "{",
@@ -207,5 +254,17 @@ fn runtime_lifecycle_event_json(event : BundledLifecycleEvent) -> String {
       "\"label\":\{event.label.json_string()}",
       "}",
     ].join("")
+  }
+}
+
+///|
+fn bundled_plugin_lifecycle_event(
+  kind : String,
+  plugin : String,
+) -> Result[BundledLifecycleEvent, String] {
+  if plugin == "" {
+    Err("lifecycle plugin is required")
+  } else {
+    Ok({ kind, label: "", plugin })
   }
 }

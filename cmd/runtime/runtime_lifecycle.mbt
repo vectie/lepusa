@@ -38,6 +38,24 @@ fn runtime_lifecycle_event_arg(
     None => Err("lifecycle event is required")
     Some("app-started") => Ok(@bundled.BundledLifecycleEvent::app_started())
     Some("app-will-exit") => Ok(@bundled.BundledLifecycleEvent::app_will_exit())
+    Some("plugin-setup") =>
+      match args.get(2) {
+        Some(plugin) if plugin != "" && plugin != "--manifest" =>
+          @bundled.BundledLifecycleEvent::plugin_setup(plugin)
+        _ => Err("lifecycle plugin is required")
+      }
+    Some("plugin-ready") =>
+      match args.get(2) {
+        Some(plugin) if plugin != "" && plugin != "--manifest" =>
+          @bundled.BundledLifecycleEvent::plugin_ready(plugin)
+        _ => Err("lifecycle plugin is required")
+      }
+    Some("plugin-will-exit") =>
+      match args.get(2) {
+        Some(plugin) if plugin != "" && plugin != "--manifest" =>
+          @bundled.BundledLifecycleEvent::plugin_will_exit(plugin)
+        _ => Err("lifecycle plugin is required")
+      }
     Some("window-close-requested") =>
       match args.get(2) {
         Some(label) if label != "" && label != "--manifest" =>

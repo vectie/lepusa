@@ -237,7 +237,7 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
     }
   }
   for hook in self.lifecycle_hooks {
-    for problem in hook.event().validate(self.windows) {
+    for problem in hook.event().validate(self.windows, plugins=self.plugins) {
       problems.push(problem)
     }
   }

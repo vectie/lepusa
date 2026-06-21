@@ -65,7 +65,7 @@ fn loaded_project_from_object(
     None => @lepusa.RuntimeConfig::system_webview()
   }
   let windows = project_windows_from_object(object, base_dir~, problems)
-  let plugins = project_plugins_from_object(object, problems)
+  let plugins = project_plugins_from_object(object, base_dir~, problems)
   let capabilities = project_capabilities_from_object(object, problems)
   let filesystem_scopes = project_filesystem_scopes_from_object(
     object,

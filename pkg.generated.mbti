@@ -682,11 +682,17 @@ pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
 pub(all) enum LifecycleEvent {
   AppStarted
   AppWillExit
+  PluginSetup(String)
+  PluginReady(String)
+  PluginWillExit(String)
   WindowCloseRequested(String)
   WindowClosed(String)
 } derive(Eq, @debug.Debug)
 pub fn LifecycleEvent::app_started() -> Self
 pub fn LifecycleEvent::app_will_exit() -> Self
+pub fn LifecycleEvent::plugin_ready(String) -> Self
+pub fn LifecycleEvent::plugin_setup(String) -> Self
+pub fn LifecycleEvent::plugin_will_exit(String) -> Self
 pub fn LifecycleEvent::to_json(Self) -> String
 pub fn LifecycleEvent::window_close_requested(String) -> Self
 pub fn LifecycleEvent::window_closed(String) -> Self
@@ -843,6 +849,7 @@ pub fn PermissionManifestPermission::to_json(Self) -> String
 pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
+  lifecycle_hooks : Array[LifecycleHook]
 } derive(Eq, @debug.Debug)
 pub fn Plugin::command(Self, String, mode? : CommandMode, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::command_async(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
@@ -852,9 +859,14 @@ pub fn Plugin::command_routes(Self) -> Array[String]
 pub fn Plugin::command_stream(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::command_sync(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
+pub fn Plugin::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self
+pub fn Plugin::on_ready(Self, Cmd) -> Self
+pub fn Plugin::on_setup(Self, Cmd) -> Self
+pub fn Plugin::on_will_exit(Self, Cmd) -> Self
 pub fn Plugin::validate(Self) -> Array[String]
+pub fn Plugin::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 
 pub struct ProjectManifest {
   metadata : AppMetadata
