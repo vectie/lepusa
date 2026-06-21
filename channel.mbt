@@ -263,6 +263,19 @@ pub fn ChannelTable::close_all(self : ChannelTable) -> Array[ResourceEntry] {
 }
 
 ///|
+pub fn ChannelTable::leak_report(self : ChannelTable) -> ResourceLeakReport {
+  ResourceLeakReport::new(resources=self.resource_entries())
+}
+
+///|
+pub fn ChannelTable::cleanup_report(
+  self : ChannelTable,
+) -> ResourceCleanupReport {
+  let closed = self.close_all()
+  ResourceCleanupReport::new(closed~, remaining=self.resource_entries())
+}
+
+///|
 pub fn ChannelTable::to_json(self : ChannelTable) -> String {
   [
     "{",

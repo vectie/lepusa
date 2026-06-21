@@ -97,6 +97,7 @@ test "app manager owns dispatch resources channels events and state" {
   assert_true(json.contains("\"registeredCommands\":[\"core.ping\"]"))
   assert_true(json.contains("\"id\":\"resource-1\""))
   assert_true(json.contains("\"id\":\"channel-1\""))
+  assert_true(json.contains("\"resourceLeaks\""))
   assert_true(json.contains("\"state\""))
 }
 
@@ -138,6 +139,35 @@ test "app manager closes generic resources and channel resources by handle" {
     Err(problem) => assert_eq(problem, "resource not found: missing")
   }
   assert_eq(manager.resource_count(), 0)
+}
+
+///|
+test "app manager reports and closes leaked resources on shutdown" {
+  let manager = match
+    manager_test_app().manager(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(manager) => manager
+    Err(_) => abort("unexpected invalid manager")
+  }
+  ignore(
+    manager.open_resource(
+      @lepusa.ResourceDescriptor::new(kind="watcher", owner="core"),
+    ),
+  )
+  let channel = match manager.open_channel(owner="core", name="logs") {
+    Ok(channel) => channel
+    Err(_) => abort("unexpected invalid channel")
+  }
+  ignore(manager.end_channel(channel.id()))
+  let leaks = manager.resource_leak_report()
+  assert_true(leaks.leaked())
+  assert_eq(leaks.count(), 2)
+  assert_true(leaks.kinds().contains("watcher"))
+  assert_true(leaks.kinds().contains("channel"))
+  let cleanup = manager.close_all_resources()
+  assert_true(cleanup.ok())
+  assert_eq(cleanup.closed_count(), 2)
+  assert_eq(manager.resource_count(), 0)
+  assert_true(manager.resource_leak_report().ok())
 }
 
 ///|

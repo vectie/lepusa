@@ -125,3 +125,23 @@ test "channel cancellation and close clean up resources" {
   assert_eq(closed[0].id(), second.id())
   assert_eq(table.count(), 0)
 }
+
+///|
+test "channel table reports leaked channels and cleanup" {
+  let table = @lepusa.ChannelTable::new()
+  let first = match table.open(owner="core", name="logs") {
+    Ok(channel) => channel
+    Err(_) => abort("unexpected invalid first channel")
+  }
+  ignore(table.open(owner="core", name="events"))
+  ignore(table.end(first.id()))
+  let report = table.leak_report()
+  assert_true(report.leaked())
+  assert_eq(report.count(), 2)
+  assert_eq(report.resources()[0].kind(), "channel")
+  assert_true(report.messages()[0].contains("owned by core"))
+  let cleanup = table.cleanup_report()
+  assert_true(cleanup.ok())
+  assert_eq(cleanup.closed_count(), 2)
+  assert_eq(table.count(), 0)
+}

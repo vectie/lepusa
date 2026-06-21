@@ -416,6 +416,19 @@ pub fn ResourceTable::close_all(self : ResourceTable) -> Array[ResourceEntry] {
 }
 
 ///|
+pub fn ResourceTable::leak_report(self : ResourceTable) -> ResourceLeakReport {
+  ResourceLeakReport::new(resources=self.entries())
+}
+
+///|
+pub fn ResourceTable::cleanup_report(
+  self : ResourceTable,
+) -> ResourceCleanupReport {
+  let closed = self.close_all()
+  ResourceCleanupReport::new(closed~, remaining=self.entries())
+}
+
+///|
 pub fn ResourceTable::to_json(self : ResourceTable) -> String {
   [
     "{",

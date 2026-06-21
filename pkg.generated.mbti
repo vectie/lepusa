@@ -52,6 +52,7 @@ pub fn AppManager::cancel_channel(Self, String) -> Result[ChannelMessage, String
 pub fn AppManager::capability_count(Self) -> Int
 pub fn AppManager::channel(Self, String) -> Channel?
 pub fn AppManager::channel_count(Self) -> Int
+pub fn AppManager::close_all_resources(Self) -> ResourceCleanupReport
 pub fn AppManager::close_resource(Self, String) -> Result[ResourceEntry, String]
 pub fn AppManager::close_resource_handle(Self, ResourceHandle) -> Result[ResourceEntry, String]
 pub fn AppManager::command_routes(Self) -> Array[String]
@@ -78,6 +79,7 @@ pub fn AppManager::resource_count(Self) -> Int
 pub fn AppManager::resource_handles(Self) -> Array[ResourceHandle]
 pub fn AppManager::resource_handles_by_kind(Self, String) -> Array[ResourceHandle]
 pub fn AppManager::resource_handles_by_owner(Self, String) -> Array[ResourceHandle]
+pub fn AppManager::resource_leak_report(Self) -> ResourceLeakReport
 pub fn AppManager::resources(Self) -> Array[ResourceEntry]
 pub fn AppManager::send_channel(Self, String, String) -> Result[ChannelMessage, String]
 pub fn AppManager::state(Self, String) -> AppStateEntry?
@@ -434,6 +436,7 @@ pub struct ChannelTable {
 }
 pub fn ChannelTable::cancel(Self, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::channels(Self) -> Array[Channel]
+pub fn ChannelTable::cleanup_report(Self) -> ResourceCleanupReport
 pub fn ChannelTable::close(Self, String) -> Result[ResourceEntry, String]
 pub fn ChannelTable::close_all(Self) -> Array[ResourceEntry]
 pub fn ChannelTable::contains(Self, String) -> Bool
@@ -443,6 +446,7 @@ pub fn ChannelTable::end(Self, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::fail(Self, String, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::get(Self, String) -> Channel?
 pub fn ChannelTable::ids(Self) -> Array[String]
+pub fn ChannelTable::leak_report(Self) -> ResourceLeakReport
 pub fn ChannelTable::new() -> Self
 pub fn ChannelTable::open(Self, owner? : String, name? : String, metadata? : String) -> Result[Channel, Array[String]]
 pub fn ChannelTable::resource_entries(Self) -> Array[ResourceEntry]
@@ -1164,6 +1168,19 @@ pub fn ResolvedWindow::title_bar(Self) -> TitleBarStyle
 pub fn ResolvedWindow::url(Self) -> String
 pub fn ResolvedWindow::width(Self) -> Int
 
+pub struct ResourceCleanupReport {
+  closed : Array[ResourceEntry]
+  remaining : Array[ResourceEntry]
+} derive(Eq, @debug.Debug)
+pub fn ResourceCleanupReport::closed(Self) -> Array[ResourceEntry]
+pub fn ResourceCleanupReport::closed_count(Self) -> Int
+pub fn ResourceCleanupReport::leak_report(Self) -> ResourceLeakReport
+pub fn ResourceCleanupReport::new(closed? : Array[ResourceEntry], remaining? : Array[ResourceEntry]) -> Self
+pub fn ResourceCleanupReport::ok(Self) -> Bool
+pub fn ResourceCleanupReport::remaining(Self) -> Array[ResourceEntry]
+pub fn ResourceCleanupReport::remaining_count(Self) -> Int
+pub fn ResourceCleanupReport::to_json(Self) -> String
+
 pub struct ResourceDescriptor {
   kind : String
   owner : String
@@ -1213,12 +1230,27 @@ pub fn ResourceHandle::owner(Self) -> String
 pub fn ResourceHandle::to_json(Self) -> String
 pub fn ResourceHandle::validate(Self) -> Array[String]
 
+pub struct ResourceLeakReport {
+  resources : Array[ResourceEntry]
+} derive(Eq, @debug.Debug)
+pub fn ResourceLeakReport::count(Self) -> Int
+pub fn ResourceLeakReport::handles(Self) -> Array[ResourceHandle]
+pub fn ResourceLeakReport::kinds(Self) -> Array[String]
+pub fn ResourceLeakReport::leaked(Self) -> Bool
+pub fn ResourceLeakReport::messages(Self) -> Array[String]
+pub fn ResourceLeakReport::new(resources? : Array[ResourceEntry]) -> Self
+pub fn ResourceLeakReport::ok(Self) -> Bool
+pub fn ResourceLeakReport::owners(Self) -> Array[String]
+pub fn ResourceLeakReport::resources(Self) -> Array[ResourceEntry]
+pub fn ResourceLeakReport::to_json(Self) -> String
+
 pub struct ResourceTable {
   mut next_sequence : Int
   id_prefix : String
   entries : Map[String, ResourceEntry]
   order : Array[String]
 }
+pub fn ResourceTable::cleanup_report(Self) -> ResourceCleanupReport
 pub fn ResourceTable::close(Self, String) -> Result[ResourceEntry, String]
 pub fn ResourceTable::close_all(Self) -> Array[ResourceEntry]
 pub fn ResourceTable::close_handle(Self, ResourceHandle) -> Result[ResourceEntry, String]
@@ -1237,6 +1269,7 @@ pub fn ResourceTable::handles_by_owner(Self, String) -> Array[ResourceHandle]
 pub fn ResourceTable::id_prefix(Self) -> String
 pub fn ResourceTable::ids(Self) -> Array[String]
 pub fn ResourceTable::is_empty(Self) -> Bool
+pub fn ResourceTable::leak_report(Self) -> ResourceLeakReport
 pub fn ResourceTable::new() -> Self
 pub fn ResourceTable::open(Self, ResourceDescriptor) -> Result[ResourceEntry, Array[String]]
 pub fn ResourceTable::to_json(Self) -> String

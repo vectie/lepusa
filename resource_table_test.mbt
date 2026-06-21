@@ -132,3 +132,33 @@ test "resource table close all drains active resources" {
   assert_eq(closed[1].closed(), true)
   assert_eq(table.entries().length(), 0)
 }
+
+///|
+test "resource table reports leaks and cleanup results" {
+  let table = @lepusa.ResourceTable::new()
+  ignore(
+    table.open(@lepusa.ResourceDescriptor::new(kind="process", owner="core")),
+  )
+  ignore(
+    table.open(@lepusa.ResourceDescriptor::new(kind="watcher", owner="core")),
+  )
+  let report = table.leak_report()
+  assert_true(report.leaked())
+  assert_false(report.ok())
+  assert_eq(report.count(), 2)
+  assert_eq(report.handles()[0].id(), "resource-1")
+  assert_true(report.kinds().contains("process"))
+  assert_true(report.kinds().contains("watcher"))
+  assert_true(report.owners().contains("core"))
+  assert_true(
+    report.messages()[0].contains("resource still open: resource-1 process"),
+  )
+  assert_true(report.to_json().contains("\"ok\":false"))
+  let cleanup = table.cleanup_report()
+  assert_true(cleanup.ok())
+  assert_eq(cleanup.closed_count(), 2)
+  assert_eq(cleanup.remaining_count(), 0)
+  assert_eq(cleanup.leak_report().count(), 0)
+  assert_true(cleanup.to_json().contains("\"closedCount\":2"))
+  assert_true(table.leak_report().ok())
+}

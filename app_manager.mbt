@@ -274,6 +274,22 @@ pub fn AppManager::resources(self : AppManager) -> Array[ResourceEntry] {
 }
 
 ///|
+pub fn AppManager::resource_leak_report(
+  self : AppManager,
+) -> ResourceLeakReport {
+  ResourceLeakReport::new(resources=self.resources())
+}
+
+///|
+pub fn AppManager::close_all_resources(
+  self : AppManager,
+) -> ResourceCleanupReport {
+  let closed = self.resources.close_all()
+  closed.append(self.channels.close_all())
+  ResourceCleanupReport::new(closed~, remaining=self.resources())
+}
+
+///|
 pub fn AppManager::resource_handles(self : AppManager) -> Array[ResourceHandle] {
   self.resources().map(fn(entry) { entry.handle() })
 }
@@ -538,6 +554,7 @@ pub fn AppManager::to_json(self : AppManager) -> String {
     "\"commands\":[\{self.command_routes().map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredCommands\":[\{self.registered_routes().map(fn(route) { route.json_string() }).join(",")}],",
     "\"resources\":[\{self.resources().map(fn(entry) { entry.to_json() }).join(",")}],",
+    "\"resourceLeaks\":\{self.resource_leak_report().to_json()},",
     "\"channels\":\{self.channels.to_json()},",
     "\"events\":\{self.events.to_json()},",
     "\"state\":\{self.state.to_json()}",
