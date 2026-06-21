@@ -949,6 +949,7 @@ pub struct RuntimeSession {
   lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
+  event_bus : @lepusa.EventBus
   bridge_source : String
 } derive(Eq, @debug.Debug)
 pub fn RuntimeSession::apply_actions(Self, Array[@lepusa.RuntimeAction]) -> Result[RuntimeStep, Array[String]]
@@ -958,17 +959,24 @@ pub fn RuntimeSession::bridge_source(Self) -> String
 pub fn RuntimeSession::bridge_url(Self) -> String
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
+pub fn RuntimeSession::event_deliveries(Self, @lepusa.Event, target? : @lepusa.EventTarget) -> Result[Array[@lepusa.EventDelivery], Array[String]]
+pub fn RuntimeSession::event_listener_count(Self) -> Int
+pub fn RuntimeSession::event_listeners(Self) -> Array[@lepusa.EventListener]
 pub fn RuntimeSession::file_system_scopes(Self) -> Array[@lepusa.FileSystemScope]
 pub fn RuntimeSession::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::lifecycle_hooks(Self) -> Array[@lepusa.RuntimeLifecycleHook]
 pub fn RuntimeSession::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[RuntimeStep, Array[String]]
+pub fn RuntimeSession::listen_event(Self, String, target? : @lepusa.EventTarget, once? : Bool) -> Result[@lepusa.EventListener, Array[String]]
 pub fn RuntimeSession::local_services(Self) -> Array[@lepusa.LocalService]
+pub fn RuntimeSession::once_event(Self, String, target? : @lepusa.EventTarget) -> Result[@lepusa.EventListener, Array[String]]
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
+pub fn RuntimeSession::remove_event_target(Self, @lepusa.EventTarget) -> Array[@lepusa.EventListener]
 pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]
 pub fn RuntimeSession::resolve_asset_json(Self, String) -> String
 pub fn RuntimeSession::startup_actions(Self) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::to_json(Self) -> String
+pub fn RuntimeSession::unlisten_event(Self, String) -> Result[@lepusa.EventListener, String]
 pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
 pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
 

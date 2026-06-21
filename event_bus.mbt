@@ -18,7 +18,7 @@ pub struct EventBus {
   mut next_listener_sequence : Int
   listeners : Map[String, EventListener]
   order : Array[String]
-}
+} derive(Debug, Eq)
 
 ///|
 pub fn EventTarget::kind(self : EventTarget) -> String {

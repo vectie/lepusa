@@ -398,7 +398,7 @@ pub struct EventBus {
   mut next_listener_sequence : Int
   listeners : Map[String, EventListener]
   order : Array[String]
-}
+} derive(Eq, @debug.Debug)
 pub fn EventBus::clear(Self) -> Array[EventListener]
 pub fn EventBus::emit(Self, Event, target? : EventTarget) -> Result[Array[EventDelivery], Array[String]]
 pub fn EventBus::listen(Self, String, target? : EventTarget, once? : Bool) -> Result[EventListener, Array[String]]

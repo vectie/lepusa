@@ -12,6 +12,7 @@ pub struct RuntimeSession {
   lifecycle_hooks : Array[@lepusa.RuntimeLifecycleHook]
   command_routes : Array[String]
   registered_routes : Array[String]
+  event_bus : @lepusa.EventBus
   bridge_source : String
 } derive(Debug, Eq)
 
@@ -89,6 +90,7 @@ fn RuntimeSession::from_plan(
     lifecycle_hooks,
     command_routes: plan.command_routes(),
     registered_routes,
+    event_bus: @lepusa.EventBus::new(),
     bridge_source,
   }
 }
@@ -214,6 +216,62 @@ pub fn RuntimeSession::registered_routes(
 }
 
 ///|
+pub fn RuntimeSession::event_listeners(
+  self : RuntimeSession,
+) -> Array[@lepusa.EventListener] {
+  self.event_bus.listeners()
+}
+
+///|
+pub fn RuntimeSession::event_listener_count(self : RuntimeSession) -> Int {
+  self.event_bus.listener_count()
+}
+
+///|
+pub fn RuntimeSession::listen_event(
+  self : RuntimeSession,
+  name : String,
+  target? : @lepusa.EventTarget = AppTarget,
+  once? : Bool = false,
+) -> Result[@lepusa.EventListener, Array[String]] {
+  self.event_bus.listen(name, target~, once~)
+}
+
+///|
+pub fn RuntimeSession::once_event(
+  self : RuntimeSession,
+  name : String,
+  target? : @lepusa.EventTarget = AppTarget,
+) -> Result[@lepusa.EventListener, Array[String]] {
+  self.event_bus.once(name, target~)
+}
+
+///|
+pub fn RuntimeSession::unlisten_event(
+  self : RuntimeSession,
+  id : String,
+) -> Result[@lepusa.EventListener, String] {
+  self.event_bus.unlisten(id)
+}
+
+///|
+pub fn RuntimeSession::remove_event_target(
+  self : RuntimeSession,
+  target : @lepusa.EventTarget,
+) -> Array[@lepusa.EventListener] {
+  self.event_bus.remove_target(target)
+}
+
+///|
+pub fn RuntimeSession::event_deliveries(
+  self : RuntimeSession,
+  event : @lepusa.Event,
+  target? : @lepusa.EventTarget = AppTarget,
+) -> Result[Array[@lepusa.EventDelivery], Array[String]] {
+  self.event_bus.emit(event, target~)
+}
+
+///|
 pub fn RuntimeSession::bridge_source(self : RuntimeSession) -> String {
   self.bridge_source
 }
@@ -235,7 +293,8 @@ pub fn RuntimeSession::to_json(self : RuntimeSession) -> String {
     "\"startupActions\":[\{self.startup_actions.map(fn(action) { action.to_json() }).join(",")}],",
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
-    "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
+    "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}],",
+    "\"eventBus\":\{self.event_bus.to_json()}",
     "}",
   ].join("")
 }
