@@ -98,19 +98,20 @@ pub fn RuntimePlan::command_routes(self : RuntimePlan) -> Array[String] {
 }
 
 ///|
+pub fn RuntimePlan::command_manifest(self : RuntimePlan) -> CommandManifest {
+  CommandManifest::from_plugins(
+    plugins=self.launch.plugins(),
+    capabilities=self.capabilities(),
+    windows=self.windows(),
+  )
+}
+
+///|
 pub fn RuntimePlan::command_routes_by_mode(
   self : RuntimePlan,
   mode : CommandMode,
 ) -> Array[String] {
-  let routes : Array[String] = []
-  for plugin in self.launch.plugins() {
-    for command in plugin.commands() {
-      if command.mode() == mode {
-        routes.push("\{plugin.name()}.\{command.name()}")
-      }
-    }
-  }
-  routes
+  self.command_manifest().routes_by_mode(mode)
 }
 
 ///|
@@ -148,17 +149,7 @@ pub fn RuntimePlan::window_command_routes(
   self : RuntimePlan,
   window_label : String,
 ) -> Array[String] {
-  let routes : Array[String] = []
-  let policy = CapabilityPolicy::new(capabilities=self.capabilities())
-  for plugin in self.launch.plugins() {
-    for command in plugin.commands() {
-      let route = "\{plugin.name()}.\{command.name()}"
-      if policy.allows(window_label~, permission=command.permission()) {
-        routes.push(route)
-      }
-    }
-  }
-  routes
+  self.command_manifest().allowed_routes(window_label)
 }
 
 ///|

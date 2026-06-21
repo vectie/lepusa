@@ -318,12 +318,42 @@ pub fn Cmd::emit(Event, target? : EventTarget) -> Self
 pub fn Cmd::is_empty(Self) -> Bool
 pub fn Cmd::navigate(String, Source) -> Self
 
+pub struct CommandManifest {
+  entries : Array[CommandManifestEntry]
+} derive(Eq, @debug.Debug)
+pub fn CommandManifest::allowed_routes(Self, String) -> Array[String]
+pub fn CommandManifest::entries(Self) -> Array[CommandManifestEntry]
+pub fn CommandManifest::entry(Self, String) -> CommandManifestEntry?
+pub fn CommandManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
+pub fn CommandManifest::new(entries? : Array[CommandManifestEntry]) -> Self
+pub fn CommandManifest::routes(Self) -> Array[String]
+pub fn CommandManifest::routes_by_mode(Self, CommandMode) -> Array[String]
+pub fn CommandManifest::to_json(Self) -> String
+
+pub struct CommandManifestEntry {
+  plugin : String
+  command : String
+  route : String
+  mode : CommandMode
+  permission : Permission
+  allowed_windows : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn CommandManifestEntry::allowed_in_window(Self, String) -> Bool
+pub fn CommandManifestEntry::allowed_windows(Self) -> Array[String]
+pub fn CommandManifestEntry::command(Self) -> String
+pub fn CommandManifestEntry::mode(Self) -> CommandMode
+pub fn CommandManifestEntry::permission(Self) -> Permission
+pub fn CommandManifestEntry::plugin(Self) -> String
+pub fn CommandManifestEntry::route(Self) -> String
+pub fn CommandManifestEntry::to_json(Self) -> String
+
 pub(all) enum CommandMode {
   Sync
   Async
   Stream
   Event
 } derive(Eq, @debug.Debug)
+pub fn CommandMode::name(Self) -> String
 
 pub struct CommandRegistry {
   commands : Map[String, RegisteredCommand]
@@ -890,6 +920,7 @@ pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
+pub fn RuntimePlan::command_manifest(Self) -> CommandManifest
 pub fn RuntimePlan::command_permission(Self, String) -> Permission?
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::command_routes_by_mode(Self, CommandMode) -> Array[String]

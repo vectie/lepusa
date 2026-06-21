@@ -7,6 +7,16 @@ pub(all) enum CommandMode {
 } derive(Debug, Eq)
 
 ///|
+pub fn CommandMode::name(self : CommandMode) -> String {
+  match self {
+    Sync => "sync"
+    Async => "async"
+    Stream => "stream"
+    Event => "event"
+  }
+}
+
+///|
 pub struct CommandSpec {
   name : String
   mode : CommandMode
