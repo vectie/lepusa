@@ -1500,47 +1500,149 @@ static const char *lepusa_json_string_end(const char *cursor, const char *end) {
   return NULL;
 }
 
-static int lepusa_json_next_label(
-  const char **cursor,
-  const char *end,
-  const char **label_out,
-  int32_t *label_len_out
+static const char *lepusa_json_container_end(
+  const char *cursor,
+  const char *end
 ) {
-  if (cursor == NULL ||
-      *cursor == NULL ||
-      label_out == NULL ||
-      label_len_out == NULL) {
+  if (cursor >= end || (*cursor != '{' && *cursor != '[')) {
+    return NULL;
+  }
+  char open = *cursor;
+  char close = open == '{' ? '}' : ']';
+  int depth = 0;
+  while (cursor < end) {
+    if (*cursor == '"') {
+      cursor = lepusa_json_string_end(cursor + 1, end);
+      if (cursor == NULL) {
+        return NULL;
+      }
+    } else if (*cursor == open) {
+      depth++;
+    } else if (*cursor == close) {
+      depth--;
+      if (depth == 0) {
+        return cursor;
+      }
+    }
+    cursor++;
+  }
+  return NULL;
+}
+
+static const char *lepusa_json_value_end(const char *cursor, const char *end) {
+  cursor = lepusa_json_skip_space(cursor, end);
+  if (cursor >= end) {
+    return NULL;
+  }
+  if (*cursor == '"') {
+    const char *value_end = lepusa_json_string_end(cursor + 1, end);
+    return value_end == NULL ? NULL : value_end + 1;
+  }
+  if (*cursor == '{' || *cursor == '[') {
+    const char *value_end = lepusa_json_container_end(cursor, end);
+    return value_end == NULL ? NULL : value_end + 1;
+  }
+  while (cursor < end && *cursor != ',' && *cursor != '}' && *cursor != ']') {
+    cursor++;
+  }
+  return cursor;
+}
+
+static int lepusa_json_find_member_value(
+  const char *object,
+  const char *end,
+  const char *key,
+  const char **value_out,
+  const char **value_end_out
+) {
+  if (object == NULL ||
+      object >= end ||
+      *object != '{' ||
+      key == NULL ||
+      value_out == NULL ||
+      value_end_out == NULL) {
     return 0;
   }
-  const char *pattern = "\"label\"";
-  size_t pattern_len = strlen(pattern);
-  const char *p = *cursor;
-  while (p + pattern_len <= end) {
-    if (memcmp(p, pattern, pattern_len) != 0) {
-      p++;
-      continue;
+  const char *object_end = lepusa_json_container_end(object, end);
+  if (object_end == NULL) {
+    return 0;
+  }
+  size_t key_len = strlen(key);
+  const char *cursor = object + 1;
+  while (cursor < object_end) {
+    cursor = lepusa_json_skip_space(cursor, object_end);
+    if (cursor >= object_end || *cursor != '"') {
+      break;
     }
-    const char *value = lepusa_json_skip_space(p + pattern_len, end);
-    if (value >= end || *value != ':') {
-      p++;
-      continue;
+    const char *member_key = cursor + 1;
+    const char *member_key_end = lepusa_json_string_end(member_key, object_end);
+    if (member_key_end == NULL) {
+      return 0;
     }
-    value = lepusa_json_skip_space(value + 1, end);
-    if (value >= end || *value != '"') {
-      p++;
-      continue;
+    cursor = lepusa_json_skip_space(member_key_end + 1, object_end);
+    if (cursor >= object_end || *cursor != ':') {
+      return 0;
     }
-    value++;
-    const char *value_end = lepusa_json_string_end(value, end);
+    const char *value = lepusa_json_skip_space(cursor + 1, object_end);
+    const char *value_end = lepusa_json_value_end(value, object_end);
     if (value_end == NULL) {
       return 0;
     }
-    *label_out = value;
-    *label_len_out = (int32_t)(value_end - value);
-    *cursor = value_end + 1;
-    return 1;
+    if ((int32_t)key_len == (int32_t)(member_key_end - member_key) &&
+        memcmp(member_key, key, key_len) == 0) {
+      *value_out = value;
+      *value_end_out = value_end;
+      return 1;
+    }
+    cursor = lepusa_json_skip_space(value_end, object_end);
+    if (cursor < object_end && *cursor == ',') {
+      cursor++;
+    }
   }
   return 0;
+}
+
+static int lepusa_json_member_string(
+  const char *object,
+  const char *end,
+  const char *key,
+  const char **value_out,
+  int32_t *value_len_out
+) {
+  const char *value = NULL;
+  const char *value_end = NULL;
+  if (!lepusa_json_find_member_value(object, end, key, &value, &value_end) ||
+      value >= value_end ||
+      *value != '"') {
+    return 0;
+  }
+  const char *string_end = lepusa_json_string_end(value + 1, value_end);
+  if (string_end == NULL) {
+    return 0;
+  }
+  *value_out = value + 1;
+  *value_len_out = (int32_t)(string_end - (value + 1));
+  return 1;
+}
+
+static int lepusa_json_member_bool(
+  const char *object,
+  const char *end,
+  const char *key,
+  int default_value
+) {
+  const char *value = NULL;
+  const char *value_end = NULL;
+  if (!lepusa_json_find_member_value(object, end, key, &value, &value_end)) {
+    return default_value;
+  }
+  if (value_end - value == 4 && memcmp(value, "true", 4) == 0) {
+    return 1;
+  }
+  if (value_end - value == 5 && memcmp(value, "false", 5) == 0) {
+    return 0;
+  }
+  return default_value;
 }
 
 static void *lepusa_macos_menu_with_title(const char *title, int32_t title_len) {
@@ -1552,6 +1654,13 @@ static void *lepusa_macos_menu_with_title(const char *title, int32_t title_len) 
     menu_alloc,
     lepusa_sel("initWithTitle:"),
     lepusa_ns_string_from_range(title, title_len)
+  );
+}
+
+static void *lepusa_macos_separator_menu_item(void) {
+  return ((LepusaMsgSendId)lepusa_objc_msg_send)(
+    lepusa_cls("NSMenuItem"),
+    lepusa_sel("separatorItem")
   );
 }
 
@@ -1575,26 +1684,147 @@ static void *lepusa_macos_menu_item_with_label(
   );
 }
 
+static void lepusa_macos_add_menu_items_from_array(
+  void *menu,
+  const char *array,
+  const char *end,
+  int depth
+) {
+  if (menu == NULL || array == NULL || array >= end || *array != '[' || depth > 8) {
+    return;
+  }
+  const char *array_end = lepusa_json_container_end(array, end);
+  if (array_end == NULL) {
+    return;
+  }
+  const char *cursor = array + 1;
+  while (cursor < array_end) {
+    cursor = lepusa_json_skip_space(cursor, array_end);
+    if (cursor < array_end && *cursor == ',') {
+      cursor++;
+      continue;
+    }
+    if (cursor >= array_end || *cursor != '{') {
+      break;
+    }
+    const char *item_end = lepusa_json_container_end(cursor, array_end);
+    if (item_end == NULL) {
+      break;
+    }
+    const char *kind = NULL;
+    int32_t kind_len = 0;
+    (void)lepusa_json_member_string(cursor, item_end + 1, "kind", &kind, &kind_len);
+    void *item = NULL;
+    if (lepusa_range_equals(kind, kind_len, "separator")) {
+      item = lepusa_macos_separator_menu_item();
+    } else {
+      const char *label = NULL;
+      int32_t label_len = 0;
+      if (lepusa_json_member_string(
+            cursor,
+            item_end + 1,
+            "label",
+            &label,
+            &label_len
+          )) {
+        item = lepusa_macos_menu_item_with_label(label, label_len);
+        if (item != NULL) {
+          int enabled = lepusa_json_member_bool(
+            cursor,
+            item_end + 1,
+            "enabled",
+            1
+          );
+          int checked = lepusa_json_member_bool(
+            cursor,
+            item_end + 1,
+            "checked",
+            0
+          );
+          lepusa_msg_void_int(item, "setEnabled:", enabled);
+          if (checked || lepusa_range_equals(kind, kind_len, "check")) {
+            lepusa_msg_void_int(item, "setState:", checked ? 1 : 0);
+          }
+          const char *children = NULL;
+          const char *children_end = NULL;
+          if (lepusa_range_equals(kind, kind_len, "submenu") &&
+              lepusa_json_find_member_value(
+                cursor,
+                item_end + 1,
+                "items",
+                &children,
+                &children_end
+              ) &&
+              children < children_end &&
+              *children == '[') {
+            void *submenu = lepusa_macos_menu_with_title(label, label_len);
+            if (submenu != NULL) {
+              lepusa_macos_add_menu_items_from_array(
+                submenu,
+                children,
+                children_end,
+                depth + 1
+              );
+              lepusa_msg_void_id(item, "setSubmenu:", submenu);
+            }
+          }
+        }
+      }
+    }
+    if (item != NULL) {
+      lepusa_msg_void_id(menu, "addItem:", item);
+    }
+    cursor = item_end + 1;
+  }
+}
+
+static void *lepusa_macos_menu_from_payload(
+  const char *payload,
+  int32_t payload_len,
+  const char *title,
+  int32_t title_len
+) {
+  if (payload == NULL || payload_len <= 0) {
+    return NULL;
+  }
+  void *menu = lepusa_macos_menu_with_title(title, title_len);
+  if (menu == NULL) {
+    return NULL;
+  }
+  const char *end = payload + payload_len;
+  const char *items = NULL;
+  const char *items_end = NULL;
+  const char *root = lepusa_json_skip_space(payload, end);
+  if (root < end && *root == '[') {
+    items = root;
+    items_end = lepusa_json_container_end(items, end);
+    if (items_end != NULL) {
+      items_end++;
+    }
+  } else {
+    if (!lepusa_json_find_member_value(
+          root,
+          end,
+          "items",
+          &items,
+          &items_end
+        ) ||
+        items >= items_end ||
+        *items != '[') {
+      return menu;
+    }
+  }
+  lepusa_macos_add_menu_items_from_array(menu, items, items_end, 0);
+  return menu;
+}
+
 static void lepusa_apply_app_menu(
   const char *payload,
   int32_t payload_len
 ) {
-  if (payload == NULL || payload_len <= 0) {
-    return;
-  }
-  void *menu = lepusa_macos_menu_with_title("Lepusa", 6);
+  void *menu = lepusa_macos_menu_from_payload(payload, payload_len, "Lepusa", 6);
   if (menu == NULL) {
     return;
-  }
-  const char *cursor = payload;
-  const char *end = payload + payload_len;
-  const char *label = NULL;
-  int32_t label_len = 0;
-  while (lepusa_json_next_label(&cursor, end, &label, &label_len)) {
-    void *item = lepusa_macos_menu_item_with_label(label, label_len);
-    if (item != NULL) {
-      lepusa_msg_void_id(menu, "addItem:", item);
-    }
   }
   void *application = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
   if (application != NULL) {

@@ -654,9 +654,10 @@ capability and registry boundary. Native macOS, Linux, and Windows loops parse
 those records from `lepusa-ops-v3` packets; app
 show/hide/setTheme/exit/restart execute inside the event loop, restart
 relaunches the current command line before the current window set closes, and
-macOS also applies app dock visibility plus app-menu set/clear operations.
-Remaining tray, window-menu, menu item action, and richer menu renderer work is
-still reported as skipped until concrete OS menu and status-item renderers land.
+macOS also applies app dock visibility plus nested app-menu set/clear
+operations. Remaining tray, window-menu, menu accelerator, and menu item action
+work is still reported as skipped until concrete OS menu and status-item
+renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and
