@@ -168,7 +168,7 @@ test "macos backend exposes wkwebview descriptor" {
         action="setAppMenu",
         target="app",
         window_label="main",
-        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"new\",\"label\":\"New\"},{\"kind\":\"separator\",\"label\":\"\"},{\"id\":\"autosave\",\"label\":\"Autosave\",\"kind\":\"check\",\"checked\":true}]}]}",
+        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"new\",\"label\":\"New\",\"accelerator\":\"CmdOrCtrl+N\"},{\"kind\":\"separator\",\"label\":\"\"},{\"id\":\"autosave\",\"label\":\"Autosave\",\"kind\":\"check\",\"checked\":true,\"accelerator\":\"CmdOrCtrl+Shift+A\"}]}]}",
       ),
     ),
     @runtime.NativeExecutableOperation::desktop_shell(

@@ -187,9 +187,9 @@
   support, with app show/hide/setTheme/exit/restart reported as executed,
   native restart relaunching the current command line before exit, macOS dock
   visibility, native nested app-menu set/clear, and macOS status-item tray
-  operations reported as executed, with remaining Linux/Windows tray,
-  window-menu, menu accelerator, and menu item action work reported as skipped
-  until concrete native renderers land; native
+  operations and macOS menu accelerators reported as executed, with remaining
+  Linux/Windows tray, window-menu, non-macOS menu accelerator, and menu item
+  action work reported as skipped until concrete native renderers land; native
   loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
   Windows now route normal bridge handoffs and drain handoffs through one

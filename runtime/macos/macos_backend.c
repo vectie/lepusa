@@ -41,6 +41,10 @@ static const unsigned long LEPUSA_NS_WINDOW_STYLE_MINIATURIZABLE = 1UL << 2;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_RESIZABLE = 1UL << 3;
 static const unsigned long LEPUSA_NS_WINDOW_STYLE_FULLSCREEN = 1UL << 14;
 static const unsigned long LEPUSA_NS_BACKING_STORE_BUFFERED = 2UL;
+static const unsigned long LEPUSA_NS_EVENT_MODIFIER_FLAG_SHIFT = 1UL << 17;
+static const unsigned long LEPUSA_NS_EVENT_MODIFIER_FLAG_CONTROL = 1UL << 18;
+static const unsigned long LEPUSA_NS_EVENT_MODIFIER_FLAG_OPTION = 1UL << 19;
+static const unsigned long LEPUSA_NS_EVENT_MODIFIER_FLAG_COMMAND = 1UL << 20;
 static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_REGULAR = 0;
 static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_ACCESSORY = 1;
 
@@ -63,6 +67,7 @@ typedef void (*LepusaMsgSendVoidIdId)(void *, void *, void *, void *);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
 typedef void (*LepusaMsgSendVoidPoint)(void *, void *, LepusaPoint);
 typedef void (*LepusaMsgSendVoidSize)(void *, void *, LepusaSize);
+typedef void (*LepusaMsgSendVoidULong)(void *, void *, unsigned long);
 typedef int (*LepusaMsgSendInt)(void *, void *);
 typedef int (*LepusaMsgSendIntInt)(void *, void *, int);
 typedef unsigned long (*LepusaMsgSendULong)(void *, void *);
@@ -1648,6 +1653,224 @@ static int lepusa_json_member_bool(
   return default_value;
 }
 
+static int lepusa_range_iequals(
+  const char *value,
+  int32_t value_len,
+  const char *expected
+) {
+  if (value == NULL || expected == NULL) {
+    return 0;
+  }
+  size_t expected_len = strlen(expected);
+  if (value_len != (int32_t)expected_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i < value_len; i++) {
+    if (tolower((unsigned char)value[i]) !=
+        tolower((unsigned char)expected[i])) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+static void lepusa_trim_range(
+  const char **value,
+  int32_t *value_len
+) {
+  if (value == NULL || *value == NULL || value_len == NULL) {
+    return;
+  }
+  while (*value_len > 0 && isspace((unsigned char)(*value)[0])) {
+    (*value)++;
+    (*value_len)--;
+  }
+  while (*value_len > 0 &&
+         isspace((unsigned char)(*value)[*value_len - 1])) {
+    (*value_len)--;
+  }
+}
+
+static int lepusa_macos_accelerator_key_string(
+  const char *key,
+  int32_t key_len,
+  const char **mapped_key,
+  int32_t *mapped_key_len
+) {
+  if (key == NULL || key_len <= 0 || mapped_key == NULL || mapped_key_len == NULL) {
+    return 0;
+  }
+  if (key_len == 1) {
+    *mapped_key = key;
+    *mapped_key_len = key_len;
+    return 1;
+  }
+  if (lepusa_range_iequals(key, key_len, "space")) {
+    *mapped_key = " ";
+    *mapped_key_len = 1;
+    return 1;
+  }
+  if (lepusa_range_iequals(key, key_len, "tab")) {
+    *mapped_key = "\t";
+    *mapped_key_len = 1;
+    return 1;
+  }
+  if (lepusa_range_iequals(key, key_len, "enter") ||
+      lepusa_range_iequals(key, key_len, "return")) {
+    *mapped_key = "\r";
+    *mapped_key_len = 1;
+    return 1;
+  }
+  if (lepusa_range_iequals(key, key_len, "esc") ||
+      lepusa_range_iequals(key, key_len, "escape")) {
+    *mapped_key = "\033";
+    *mapped_key_len = 1;
+    return 1;
+  }
+  if (lepusa_range_iequals(key, key_len, "delete") ||
+      lepusa_range_iequals(key, key_len, "backspace")) {
+    *mapped_key = "\177";
+    *mapped_key_len = 1;
+    return 1;
+  }
+  *mapped_key = key;
+  *mapped_key_len = key_len;
+  return 1;
+}
+
+static int lepusa_macos_accelerator_modifier(
+  const char *modifier,
+  int32_t modifier_len,
+  unsigned long *mask
+) {
+  if (mask == NULL || modifier == NULL || modifier_len <= 0) {
+    return 0;
+  }
+  if (lepusa_range_iequals(modifier, modifier_len, "cmd") ||
+      lepusa_range_iequals(modifier, modifier_len, "command") ||
+      lepusa_range_iequals(modifier, modifier_len, "cmdorctrl") ||
+      lepusa_range_iequals(modifier, modifier_len, "super") ||
+      lepusa_range_iequals(modifier, modifier_len, "meta")) {
+    *mask |= LEPUSA_NS_EVENT_MODIFIER_FLAG_COMMAND;
+    return 1;
+  }
+  if (lepusa_range_iequals(modifier, modifier_len, "ctrl") ||
+      lepusa_range_iequals(modifier, modifier_len, "control")) {
+    *mask |= LEPUSA_NS_EVENT_MODIFIER_FLAG_CONTROL;
+    return 1;
+  }
+  if (lepusa_range_iequals(modifier, modifier_len, "alt") ||
+      lepusa_range_iequals(modifier, modifier_len, "option")) {
+    *mask |= LEPUSA_NS_EVENT_MODIFIER_FLAG_OPTION;
+    return 1;
+  }
+  if (lepusa_range_iequals(modifier, modifier_len, "shift")) {
+    *mask |= LEPUSA_NS_EVENT_MODIFIER_FLAG_SHIFT;
+    return 1;
+  }
+  return 0;
+}
+
+static int lepusa_macos_parse_accelerator(
+  const char *accelerator,
+  int32_t accelerator_len,
+  const char **key_out,
+  int32_t *key_len_out,
+  unsigned long *mask_out
+) {
+  if (accelerator == NULL ||
+      accelerator_len <= 0 ||
+      key_out == NULL ||
+      key_len_out == NULL ||
+      mask_out == NULL) {
+    return 0;
+  }
+  const char *end = accelerator + accelerator_len;
+  const char *part = accelerator;
+  unsigned long mask = 0;
+  while (part < end) {
+    const char *plus = part;
+    while (plus < end && *plus != '+') {
+      plus++;
+    }
+    const char *token = part;
+    int32_t token_len = (int32_t)(plus - part);
+    lepusa_trim_range(&token, &token_len);
+    if (token_len <= 0) {
+      return 0;
+    }
+    if (plus >= end) {
+      const char *mapped_key = NULL;
+      int32_t mapped_key_len = 0;
+      if (!lepusa_macos_accelerator_key_string(
+            token,
+            token_len,
+            &mapped_key,
+            &mapped_key_len
+          )) {
+        return 0;
+      }
+      *key_out = mapped_key;
+      *key_len_out = mapped_key_len;
+      *mask_out = mask;
+      return 1;
+    }
+    if (!lepusa_macos_accelerator_modifier(token, token_len, &mask)) {
+      return 0;
+    }
+    part = plus + 1;
+  }
+  return 0;
+}
+
+static void lepusa_macos_apply_menu_item_accelerator(
+  void *item,
+  const char *object,
+  const char *end
+) {
+  if (item == NULL || object == NULL) {
+    return;
+  }
+  const char *accelerator = NULL;
+  int32_t accelerator_len = 0;
+  if (!lepusa_json_member_string(
+        object,
+        end,
+        "accelerator",
+        &accelerator,
+        &accelerator_len
+      )) {
+    return;
+  }
+  const char *key = NULL;
+  int32_t key_len = 0;
+  unsigned long mask = 0;
+  if (!lepusa_macos_parse_accelerator(
+        accelerator,
+        accelerator_len,
+        &key,
+        &key_len,
+        &mask
+      )) {
+    return;
+  }
+  char lower_key[2] = { 0, 0 };
+  if (key_len == 1 && key[0] >= 'A' && key[0] <= 'Z') {
+    lower_key[0] = (char)tolower((unsigned char)key[0]);
+    key = lower_key;
+  }
+  lepusa_msg_void_id(
+    item,
+    "setKeyEquivalent:",
+    lepusa_ns_string_from_range(key, key_len)
+  );
+  ((LepusaMsgSendVoidULong)lepusa_objc_msg_send)(
+    item,
+    lepusa_sel("setKeyEquivalentModifierMask:"),
+    mask
+  );
+}
+
 static void *lepusa_macos_menu_with_title(const char *title, int32_t title_len) {
   void *menu_alloc = lepusa_msg_id(lepusa_cls("NSMenu"), "alloc");
   if (menu_alloc == NULL) {
@@ -1745,6 +1968,7 @@ static void lepusa_macos_add_menu_items_from_array(
             0
           );
           lepusa_msg_void_int(item, "setEnabled:", enabled);
+          lepusa_macos_apply_menu_item_accelerator(item, cursor, item_end + 1);
           if (checked || lepusa_range_equals(kind, kind_len, "check")) {
             lepusa_msg_void_int(item, "setState:", checked ? 1 : 0);
           }

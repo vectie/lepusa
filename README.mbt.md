@@ -756,7 +756,8 @@ closing the current window set, and macOS also applies app dock visibility plus
 nested app-menu set/clear operations and status-item tray operations for icon,
 tooltip, menu, menu popup, visibility, and destroy. Platform operation reports
 now mark supported app shell, macOS app-menu, and macOS tray operations as
-executed while leaving remaining Linux/Windows tray, window-menu, menu
+executed, including macOS menu accelerator rendering for supported shortcut
+strings, while leaving remaining Linux/Windows tray, window-menu, non-macOS menu
 accelerator, and menu item action work explicitly skipped until native OS
 renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
