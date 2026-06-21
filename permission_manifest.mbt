@@ -7,6 +7,7 @@ pub struct PermissionManifestCommand {
   affinity : CommandExecutionAffinity
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -14,6 +15,7 @@ pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
 
@@ -24,6 +26,7 @@ pub struct PermissionManifestPermission {
   grants : Array[PermissionManifestGrant]
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
   denied_routes : Array[String]
 } derive(Debug, Eq)
 
@@ -44,6 +47,7 @@ fn PermissionManifestCommand::from_entry(
     affinity: entry.affinity(),
     allowed_windows: entry.allowed_windows(),
     allowed_origins: entry.allowed_origins(),
+    allowed_platforms: entry.allowed_platforms(),
   }
 }
 
@@ -55,6 +59,7 @@ fn PermissionManifestGrant::from_capability(
     capability: capability.name(),
     windows: capability.windows(),
     origins: capability.origins(),
+    platforms: capability.platforms(),
     operation_scopes: capability.operation_scopes(),
   }
 }
@@ -109,6 +114,13 @@ pub fn PermissionManifestCommand::allowed_origins(
 }
 
 ///|
+pub fn PermissionManifestCommand::allowed_platforms(
+  self : PermissionManifestCommand,
+) -> Array[String] {
+  self.allowed_platforms.copy()
+}
+
+///|
 pub fn PermissionManifestCommand::to_json(
   self : PermissionManifestCommand,
 ) -> String {
@@ -120,7 +132,8 @@ pub fn PermissionManifestCommand::to_json(
     "\"mode\":\{self.mode.name().json_string()},",
     "\"affinity\":\{self.affinity.name().json_string()},",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
-    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
+    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"allowedPlatforms\":[\{self.allowed_platforms.map(fn(platform) { platform.json_string() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -147,6 +160,13 @@ pub fn PermissionManifestGrant::origins(
 }
 
 ///|
+pub fn PermissionManifestGrant::platforms(
+  self : PermissionManifestGrant,
+) -> Array[String] {
+  self.platforms.copy()
+}
+
+///|
 pub fn PermissionManifestGrant::operation_scopes(
   self : PermissionManifestGrant,
 ) -> Array[OperationScope] {
@@ -162,6 +182,7 @@ pub fn PermissionManifestGrant::to_json(
     "\"capability\":\{self.capability.json_string()},",
     "\"windows\":[\{self.windows.map(fn(window) { window.json_string() }).join(",")}],",
     "\"origins\":[\{self.origins.map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"platforms\":[\{self.platforms.map(fn(platform) { platform.json_string() }).join(",")}],",
     "\"operationScopes\":[\{self.operation_scopes.map(fn(scope) { scope.to_json() }).join(",")}]",
     "}",
   ].join("")
@@ -203,6 +224,13 @@ pub fn PermissionManifestPermission::allowed_origins(
 }
 
 ///|
+pub fn PermissionManifestPermission::allowed_platforms(
+  self : PermissionManifestPermission,
+) -> Array[String] {
+  self.allowed_platforms.copy()
+}
+
+///|
 pub fn PermissionManifestPermission::denied_routes(
   self : PermissionManifestPermission,
 ) -> Array[String] {
@@ -220,6 +248,7 @@ pub fn PermissionManifestPermission::to_json(
     "\"grants\":[\{self.grants.map(fn(grant) { grant.to_json() }).join(",")}],",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
     "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"allowedPlatforms\":[\{self.allowed_platforms.map(fn(platform) { platform.json_string() }).join(",")}],",
     "\"deniedRoutes\":[\{self.denied_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",
   ].join("")
@@ -246,6 +275,7 @@ pub fn PermissionManifest::from_command_manifest(
       grants: permission_grants(capabilities, name),
       allowed_windows: permission_allowed_windows(commands),
       allowed_origins: permission_allowed_origins(commands),
+      allowed_platforms: permission_allowed_platforms(commands),
       denied_routes: commands
       .filter(fn(command) { command.allowed_windows().is_empty() })
       .map(fn(command) { command.route() }),
@@ -259,9 +289,10 @@ pub fn PermissionManifest::from_plugins(
   plugins~ : Array[Plugin],
   capabilities~ : Array[Capability],
   windows~ : Array[ResolvedWindow],
+  platform? : String = "",
 ) -> PermissionManifest {
   PermissionManifest::from_command_manifest(
-    CommandManifest::from_plugins(plugins~, capabilities~, windows~),
+    CommandManifest::from_plugins(plugins~, capabilities~, windows~, platform~),
     capabilities~,
   )
 }
@@ -398,4 +429,19 @@ fn permission_allowed_origins(
     }
   }
   origins
+}
+
+///|
+fn permission_allowed_platforms(
+  commands : Array[PermissionManifestCommand],
+) -> Array[String] {
+  let platforms : Array[String] = []
+  for command in commands {
+    for platform in command.allowed_platforms() {
+      if !platforms.contains(platform) {
+        platforms.push(platform)
+      }
+    }
+  }
+  platforms
 }

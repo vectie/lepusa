@@ -9,19 +9,21 @@ pub struct RuntimeConfig {
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
+  platform : String
 } derive(Debug, Eq)
 
 ///|
 pub fn RuntimeConfig::system_webview(
   devtools? : Bool = false,
   asset_protocol? : String = "lepusa",
+  platform? : String = "",
 ) -> RuntimeConfig {
-  { backend: SystemWebView, devtools, asset_protocol }
+  { backend: SystemWebView, devtools, asset_protocol, platform }
 }
 
 ///|
-pub fn RuntimeConfig::headless() -> RuntimeConfig {
-  { backend: Headless, devtools: false, asset_protocol: "lepusa" }
+pub fn RuntimeConfig::headless(platform? : String = "") -> RuntimeConfig {
+  { backend: Headless, devtools: false, asset_protocol: "lepusa", platform }
 }
 
 ///|
@@ -34,12 +36,18 @@ pub fn RuntimeConfig::validate(self : RuntimeConfig) -> Array[String] {
 }
 
 ///|
+pub fn RuntimeConfig::platform(self : RuntimeConfig) -> String {
+  self.platform
+}
+
+///|
 pub struct RuntimePlan {
   app_metadata : AppMetadata?
   launch : LaunchPlan
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
+  platform : String
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
   filesystem_scopes : Array[FileSystemScope]
@@ -66,6 +74,11 @@ pub fn RuntimeBackend::name(self : RuntimeBackend) -> String {
 ///|
 pub fn RuntimePlan::asset_protocol(self : RuntimePlan) -> String {
   self.asset_protocol
+}
+
+///|
+pub fn RuntimePlan::platform(self : RuntimePlan) -> String {
+  self.platform
 }
 
 ///|
@@ -109,6 +122,7 @@ pub fn RuntimePlan::command_manifest(self : RuntimePlan) -> CommandManifest {
     plugins=self.launch.plugins(),
     capabilities=self.capabilities(),
     windows=self.windows(),
+    platform=self.platform(),
   )
 }
 
@@ -201,6 +215,7 @@ pub fn App::runtime_plan(
           backend: config.backend,
           devtools: config.devtools,
           asset_protocol: config.asset_protocol,
+          platform: config.platform,
           command_routes: launch.command_routes(),
           windows,
           filesystem_scopes: [],

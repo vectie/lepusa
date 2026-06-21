@@ -20,6 +20,26 @@ fn authorization_test_plan() -> @lepusa.RuntimePlan {
 }
 
 ///|
+fn platform_authorization_plan(platform : String) -> @lepusa.RuntimePlan {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("shell").command_sync("open", permission=Shell),
+    )
+    .with_capability(
+      @lepusa.Capability::new("linux-shell")
+      .window("main")
+      .platform("linux")
+      .permission(Shell),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless(platform~)) {
+    Ok(plan) => plan
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
 fn authorization_request(
   route : String,
   window_label? : String = "main",
@@ -88,4 +108,29 @@ test "runtime invoke authorization explains route decisions" {
   )
   assert_true(unknown.kind() is RuntimeInvokeUnknownCommand)
   assert_true(unknown.to_response("1").error_kind() is Some(UnknownCommand))
+}
+
+///|
+test "runtime invoke authorization enforces platform-scoped capabilities" {
+  let linux = platform_authorization_plan("linux")
+  assert_eq(linux.platform(), "linux")
+  let allowed = linux.authorize_invoke(
+    authorization_request("shell.open", origin=""),
+    registered_routes=["shell.open"],
+    check_registered=true,
+  )
+  if !(allowed.kind() is RuntimeInvokeAuthorized) {
+    abort(allowed.to_json())
+  }
+  assert_eq(allowed.capability(), "linux-shell")
+
+  let macos = platform_authorization_plan("macos")
+  assert_eq(macos.platform(), "macos")
+  let denied = macos.authorize_invoke(
+    authorization_request("shell.open", origin=""),
+    registered_routes=["shell.open"],
+    check_registered=true,
+  )
+  assert_true(denied.kind() is RuntimeInvokePermissionDenied)
+  assert_true(denied.reason().contains("platform macos"))
 }

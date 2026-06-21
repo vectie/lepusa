@@ -1,6 +1,7 @@
 ///|
 pub struct RuntimeLaunchManifest {
   backend : String
+  platform : String
   asset_protocol : String
   devtools : Bool
   bridge_url : String
@@ -57,6 +58,7 @@ pub struct RuntimeCapabilityGrant {
   name : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   permissions : Array[String]
   operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
@@ -154,6 +156,7 @@ pub fn RuntimePlan::launch_manifest(
     )
     Ok({
       backend: self.backend().name(),
+      platform: self.platform(),
       asset_protocol: self.asset_protocol(),
       devtools: self.devtools(),
       bridge_url: "\{self.asset_protocol()}://runtime/bridge.js",
@@ -249,6 +252,11 @@ fn RuntimeVirtualAsset::from_file(
 ///|
 pub fn RuntimeLaunchManifest::backend(self : RuntimeLaunchManifest) -> String {
   self.backend
+}
+
+///|
+pub fn RuntimeLaunchManifest::platform(self : RuntimeLaunchManifest) -> String {
+  self.platform
 }
 
 ///|
@@ -366,6 +374,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
   [
     "{",
     "\"backend\":\{self.backend.json_string()},",
+    "\"platform\":\{self.platform.json_string()},",
     "\"assetProtocol\":\{self.asset_protocol.json_string()},",
     "\"devtools\":\{self.devtools.json_bool()},",
     "\"bridgeUrl\":\{self.bridge_url.json_string()},",
@@ -512,6 +521,13 @@ pub fn RuntimeCapabilityGrant::origins(
 }
 
 ///|
+pub fn RuntimeCapabilityGrant::platforms(
+  self : RuntimeCapabilityGrant,
+) -> Array[String] {
+  self.platforms.copy()
+}
+
+///|
 pub fn RuntimeCapabilityGrant::permissions(
   self : RuntimeCapabilityGrant,
 ) -> Array[String] {
@@ -533,6 +549,7 @@ fn RuntimeCapabilityGrant::from_capability(
     name: capability.name(),
     windows: capability.windows(),
     origins: capability.origins(),
+    platforms: capability.platforms(),
     permissions: capability
     .permissions()
     .map(fn(permission) { permission.name() }),
@@ -815,6 +832,7 @@ fn runtime_capability_grant_json(grant : RuntimeCapabilityGrant) -> String {
     "\"name\":\{grant.name().json_string()},",
     "\"windows\":[\{grant.windows().map(fn(window) { window.json_string() }).join(",")}],",
     "\"origins\":[\{grant.origins().map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"platforms\":[\{grant.platforms().map(fn(platform) { platform.json_string() }).join(",")}],",
     "\"permissions\":[\{grant.permissions().map(fn(permission) { permission.json_string() }).join(",")}],",
     "\"operationScopes\":[\{grant.operation_scopes().map(fn(scope) { scope.to_json() }).join(",")}]",
     "}",

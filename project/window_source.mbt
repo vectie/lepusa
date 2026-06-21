@@ -42,10 +42,15 @@ fn runtime_config_from_object(
   let asset_protocol = optional_config_string(object, "assetProtocol").unwrap_or(
     "lepusa",
   )
+  let platform = optional_config_string(object, "platform").unwrap_or("")
   match backend {
     "system-webview" =>
-      @lepusa.RuntimeConfig::system_webview(devtools~, asset_protocol~)
-    "headless" => @lepusa.RuntimeConfig::headless()
+      @lepusa.RuntimeConfig::system_webview(
+        devtools~,
+        asset_protocol~,
+        platform~,
+      )
+    "headless" => @lepusa.RuntimeConfig::headless(platform~)
     value => {
       problems.push("unknown runtime backend: \{value}")
       @lepusa.RuntimeConfig::system_webview()

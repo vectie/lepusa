@@ -1002,6 +1002,7 @@ pub fn RuntimeServicePlan::validate(Self) -> Array[String]
 
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend
+  platform : String
   devtools : Bool
   asset_protocol : String
   windows : Array[RuntimeWindow]
@@ -1033,6 +1034,7 @@ pub fn RuntimeSession::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[Ru
 pub fn RuntimeSession::listen_event(Self, String, target? : @lepusa.EventTarget, once? : Bool) -> Result[@lepusa.EventListener, Array[String]]
 pub fn RuntimeSession::local_services(Self) -> Array[@lepusa.LocalService]
 pub fn RuntimeSession::once_event(Self, String, target? : @lepusa.EventTarget) -> Result[@lepusa.EventListener, Array[String]]
+pub fn RuntimeSession::platform(Self) -> String
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
 pub fn RuntimeSession::remove_event_target(Self, @lepusa.EventTarget) -> Array[@lepusa.EventListener]

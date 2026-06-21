@@ -39,6 +39,26 @@ fn capability_from_object(
       }
     None => ()
   }
+  match optional_config_array(object, "origins") {
+    Some(origins) =>
+      for origin in origins {
+        match origin {
+          String(value) => capability = capability.origin(value)
+          _ => problems.push("project capability origins must be strings")
+        }
+      }
+    None => ()
+  }
+  match optional_config_array(object, "platforms") {
+    Some(platforms) =>
+      for platform in platforms {
+        match platform {
+          String(value) => capability = capability.platform(value)
+          _ => problems.push("project capability platforms must be strings")
+        }
+      }
+    None => ()
+  }
   match optional_config_array(object, "commands") {
     Some(commands) =>
       for command in commands {

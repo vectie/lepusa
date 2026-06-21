@@ -13,6 +13,7 @@ pub struct RuntimeInvokeAuthorization {
   route : String
   window_label : String
   origin : String
+  platform : String
   permission : Permission?
   registered : Bool
   capability : String
@@ -35,6 +36,7 @@ pub fn RuntimeInvokeAuthorizationKind::name(
 ///|
 fn RuntimeInvokeAuthorization::allow(
   request : InvokeRequest,
+  platform~ : String,
   permission~ : Permission,
   registered~ : Bool,
   capability~ : String,
@@ -44,6 +46,7 @@ fn RuntimeInvokeAuthorization::allow(
     route: request.route(),
     window_label: request.window_label(),
     origin: request.origin(),
+    platform,
     permission: Some(permission),
     registered,
     capability,
@@ -55,6 +58,7 @@ fn RuntimeInvokeAuthorization::allow(
 fn RuntimeInvokeAuthorization::deny(
   kind~ : RuntimeInvokeAuthorizationKind,
   request : InvokeRequest,
+  platform? : String = "",
   permission? : Permission,
   registered~ : Bool,
   reason~ : String,
@@ -64,6 +68,7 @@ fn RuntimeInvokeAuthorization::deny(
     route: request.route(),
     window_label: request.window_label(),
     origin: request.origin(),
+    platform,
     permission,
     registered,
     capability: "",
@@ -117,6 +122,13 @@ pub fn RuntimeInvokeAuthorization::origin(
   self : RuntimeInvokeAuthorization,
 ) -> String {
   self.origin
+}
+
+///|
+pub fn RuntimeInvokeAuthorization::platform(
+  self : RuntimeInvokeAuthorization,
+) -> String {
+  self.platform
 }
 
 ///|
@@ -178,6 +190,7 @@ pub fn RuntimeInvokeAuthorization::to_json(
     "\"route\":\{self.route.json_string()},",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"origin\":\{self.origin.json_string()},",
+    "\"platform\":\{self.platform.json_string()},",
     "\"permission\":\{permission.json_string()},",
     "\"registered\":\{self.registered.json_bool()},",
     "\"capability\":\{self.capability.json_string()},",
@@ -207,6 +220,7 @@ pub fn RuntimePlan::authorize_invoke(
       RuntimeInvokeAuthorization::deny(
         kind=RuntimeInvokeUnknownCommand,
         request,
+        platform=self.platform(),
         registered~,
         reason="command is not declared: \{route}",
       )
@@ -215,6 +229,7 @@ pub fn RuntimePlan::authorize_invoke(
         return RuntimeInvokeAuthorization::deny(
           kind=RuntimeInvokeUnregisteredCommand,
           request,
+          platform=self.platform(),
           permission=entry.permission(),
           registered~,
           reason="command has no registered native handler: \{route}",
@@ -224,10 +239,12 @@ pub fn RuntimePlan::authorize_invoke(
         window_label=request.window_label(),
         permission=entry.permission(),
         origin=request.origin(),
+        platform=self.platform(),
       )
       if decision.allowed() {
         RuntimeInvokeAuthorization::allow(
           request,
+          platform=self.platform(),
           permission=entry.permission(),
           registered~,
           capability=decision.capability(),
@@ -236,6 +253,7 @@ pub fn RuntimePlan::authorize_invoke(
         RuntimeInvokeAuthorization::deny(
           kind=RuntimeInvokePermissionDenied,
           request,
+          platform=self.platform(),
           permission=entry.permission(),
           registered~,
           reason=decision.reason(),

@@ -106,13 +106,21 @@ pub struct Capability {
   name : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   permissions : Array[Permission]
   operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
 
 ///|
 pub fn Capability::new(name : String) -> Capability {
-  { name, windows: [], origins: [], permissions: [], operation_scopes: [] }
+  {
+    name,
+    windows: [],
+    origins: [],
+    platforms: [],
+    permissions: [],
+    operation_scopes: [],
+  }
 }
 
 ///|
@@ -127,6 +135,13 @@ pub fn Capability::origin(self : Capability, origin : String) -> Capability {
   let origins = self.origins.copy()
   origins.push(origin)
   { ..self, origins, }
+}
+
+///|
+pub fn Capability::platform(self : Capability, platform : String) -> Capability {
+  let platforms = self.platforms.copy()
+  platforms.push(platform)
+  { ..self, platforms, }
 }
 
 ///|
@@ -182,11 +197,17 @@ pub fn Capability::allows(
   window_label~ : String,
   permission~ : Permission,
   origin? : String = "",
+  platform? : String = "",
 ) -> Bool {
   let window_allowed = self.windows.is_empty() ||
     self.windows.contains(window_label)
   let origin_allowed = self.origins.is_empty() || self.origins.contains(origin)
-  window_allowed && origin_allowed && self.permissions.contains(permission)
+  let platform_allowed = self.platforms.is_empty() ||
+    self.platforms.contains(platform)
+  window_allowed &&
+  origin_allowed &&
+  platform_allowed &&
+  self.permissions.contains(permission)
 }
 
 ///|
@@ -196,8 +217,9 @@ pub fn Capability::allows_operation(
   permission~ : Permission,
   scope~ : OperationScope,
   origin? : String = "",
+  platform? : String = "",
 ) -> Bool {
-  self.allows(window_label~, permission~, origin~) &&
+  self.allows(window_label~, permission~, origin~, platform~) &&
   self.operation_scopes.any(fn(allowed) { allowed.allows(scope) })
 }
 
@@ -219,6 +241,11 @@ pub fn Capability::windows(self : Capability) -> Array[String] {
 ///|
 pub fn Capability::origins(self : Capability) -> Array[String] {
   self.origins.copy()
+}
+
+///|
+pub fn Capability::platforms(self : Capability) -> Array[String] {
+  self.platforms.copy()
 }
 
 ///|
@@ -246,6 +273,11 @@ pub fn Capability::validate(self : Capability) -> Array[String] {
   for origin in self.origins {
     if origin == "" {
       problems.push("capability origin must not be empty")
+    }
+  }
+  for platform in self.platforms {
+    if platform == "" {
+      problems.push("capability platform must not be empty")
     }
   }
   let seen_scopes : Array[String] = []

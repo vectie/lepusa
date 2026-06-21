@@ -10,6 +10,7 @@ pub struct CommandManifestEntry {
   response_schema : IpcSchema
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
 } derive(Debug, Eq)
 
 ///|
@@ -23,6 +24,7 @@ fn CommandManifestEntry::new(
   response_schema~ : IpcSchema,
   allowed_windows~ : Array[String],
   allowed_origins~ : Array[String],
+  allowed_platforms~ : Array[String],
 ) -> CommandManifestEntry {
   {
     plugin,
@@ -35,6 +37,7 @@ fn CommandManifestEntry::new(
     response_schema,
     allowed_windows: allowed_windows.copy(),
     allowed_origins: allowed_origins.copy(),
+    allowed_platforms: allowed_platforms.copy(),
   }
 }
 
@@ -101,6 +104,13 @@ pub fn CommandManifestEntry::allowed_origins(
 }
 
 ///|
+pub fn CommandManifestEntry::allowed_platforms(
+  self : CommandManifestEntry,
+) -> Array[String] {
+  self.allowed_platforms.copy()
+}
+
+///|
 pub fn CommandManifestEntry::allowed_in_window(
   self : CommandManifestEntry,
   window_label : String,
@@ -117,6 +127,14 @@ pub fn CommandManifestEntry::allowed_for_origin(
 }
 
 ///|
+pub fn CommandManifestEntry::allowed_on_platform(
+  self : CommandManifestEntry,
+  platform : String,
+) -> Bool {
+  self.allowed_platforms.is_empty() || self.allowed_platforms.contains(platform)
+}
+
+///|
 pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
   [
     "{",
@@ -129,7 +147,8 @@ pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
     "\"requestSchema\":\{self.request_schema.to_json()},",
     "\"responseSchema\":\{self.response_schema.to_json()},",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
-    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
+    "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"allowedPlatforms\":[\{self.allowed_platforms.map(fn(platform) { platform.json_string() }).join(",")}]",
     "}",
   ].join("")
 }
@@ -151,6 +170,7 @@ pub fn CommandManifest::from_plugins(
   plugins~ : Array[Plugin],
   capabilities~ : Array[Capability],
   windows~ : Array[ResolvedWindow],
+  platform? : String = "",
 ) -> CommandManifest {
   let entries : Array[CommandManifestEntry] = []
   let policy = CapabilityPolicy::new(capabilities~)
@@ -161,6 +181,7 @@ pub fn CommandManifest::from_plugins(
         if policy.allows_window(
             window_label=window.label(),
             permission=command.permission(),
+            platform~,
           ) {
           allowed_windows.push(window.label())
         }
@@ -179,6 +200,12 @@ pub fn CommandManifest::from_plugins(
             policy,
             allowed_windows,
             command.permission(),
+            platform,
+          ),
+          allowed_platforms=command_allowed_platforms(
+            policy,
+            allowed_windows,
+            command.permission(),
           ),
         ),
       )
@@ -192,12 +219,14 @@ fn command_allowed_origins(
   policy : CapabilityPolicy,
   windows : Array[String],
   permission : Permission,
+  platform : String,
 ) -> Array[String] {
   let origins : Array[String] = []
   for window in windows {
     let window_origins = policy.allowed_origins(
       window_label=window,
       permission~,
+      platform~,
     )
     if window_origins.is_empty() {
       return []
@@ -209,6 +238,47 @@ fn command_allowed_origins(
     }
   }
   origins
+}
+
+///|
+fn command_allowed_platforms(
+  policy : CapabilityPolicy,
+  windows : Array[String],
+  permission : Permission,
+) -> Array[String] {
+  let platforms : Array[String] = []
+  for capability in policy.capabilities() {
+    let permission_allowed = capability.permissions().contains(permission)
+    if permission_allowed &&
+      command_capability_applies_to_windows(capability, windows) {
+      let capability_platforms = capability.platforms()
+      if capability_platforms.is_empty() {
+        return []
+      }
+      for platform in capability_platforms {
+        if !platforms.contains(platform) {
+          platforms.push(platform)
+        }
+      }
+    }
+  }
+  platforms
+}
+
+///|
+fn command_capability_applies_to_windows(
+  capability : Capability,
+  windows : Array[String],
+) -> Bool {
+  if capability.windows().is_empty() {
+    return true
+  }
+  for window in windows {
+    if capability.windows().contains(window) {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -284,10 +354,13 @@ pub fn CommandManifest::allows(
   route : String,
   window_label~ : String,
   origin? : String = "",
+  platform? : String = "",
 ) -> Bool {
   match self.entry(route) {
     Some(entry) =>
-      entry.allowed_in_window(window_label) && entry.allowed_for_origin(origin)
+      entry.allowed_in_window(window_label) &&
+      entry.allowed_for_origin(origin) &&
+      entry.allowed_on_platform(platform)
     None => false
   }
 }

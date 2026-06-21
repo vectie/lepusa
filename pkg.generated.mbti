@@ -314,11 +314,12 @@ pub struct Capability {
   name : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   permissions : Array[Permission]
   operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
-pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
-pub fn Capability::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
+pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission, origin? : String, platform? : String) -> Bool
+pub fn Capability::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String, platform? : String) -> Bool
 pub fn Capability::command(Self, String) -> Self
 pub fn Capability::name(Self) -> String
 pub fn Capability::new(String) -> Self
@@ -330,6 +331,8 @@ pub fn Capability::origins(Self) -> Array[String]
 pub fn Capability::path_scope(Self, root~ : String, writable? : Bool) -> Self
 pub fn Capability::permission(Self, Permission) -> Self
 pub fn Capability::permissions(Self) -> Array[Permission]
+pub fn Capability::platform(Self, String) -> Self
+pub fn Capability::platforms(Self) -> Array[String]
 pub fn Capability::shell_scope(Self, String) -> Self
 pub fn Capability::url_scope(Self, String) -> Self
 pub fn Capability::validate(Self) -> Array[String]
@@ -382,6 +385,7 @@ pub struct CapabilityDecision {
   allowed : Bool
   window_label : String
   origin : String
+  platform : String
   permission : Permission
   capability : String
   reason : String
@@ -391,6 +395,7 @@ pub fn CapabilityDecision::capability(Self) -> String
 pub fn CapabilityDecision::denied(Self) -> Bool
 pub fn CapabilityDecision::origin(Self) -> String
 pub fn CapabilityDecision::permission(Self) -> Permission
+pub fn CapabilityDecision::platform(Self) -> String
 pub fn CapabilityDecision::reason(Self) -> String
 pub fn CapabilityDecision::to_json(Self) -> String
 pub fn CapabilityDecision::window_label(Self) -> String
@@ -405,13 +410,13 @@ pub fn CapabilityIssueSeverity::name(Self) -> String
 pub struct CapabilityPolicy {
   capabilities : Array[Capability]
 } derive(Eq, @debug.Debug)
-pub fn CapabilityPolicy::allowed_origins(Self, window_label~ : String, permission~ : Permission) -> Array[String]
-pub fn CapabilityPolicy::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
-pub fn CapabilityPolicy::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
-pub fn CapabilityPolicy::allows_window(Self, window_label~ : String, permission~ : Permission) -> Bool
+pub fn CapabilityPolicy::allowed_origins(Self, window_label~ : String, permission~ : Permission, platform? : String) -> Array[String]
+pub fn CapabilityPolicy::allows(Self, window_label~ : String, permission~ : Permission, origin? : String, platform? : String) -> Bool
+pub fn CapabilityPolicy::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String, platform? : String) -> Bool
+pub fn CapabilityPolicy::allows_window(Self, window_label~ : String, permission~ : Permission, platform? : String) -> Bool
 pub fn CapabilityPolicy::capabilities(Self) -> Array[Capability]
-pub fn CapabilityPolicy::evaluate(Self, window_label~ : String, permission~ : Permission, origin? : String) -> CapabilityDecision
-pub fn CapabilityPolicy::evaluate_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> CapabilityDecision
+pub fn CapabilityPolicy::evaluate(Self, window_label~ : String, permission~ : Permission, origin? : String, platform? : String) -> CapabilityDecision
+pub fn CapabilityPolicy::evaluate_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String, platform? : String) -> CapabilityDecision
 pub fn CapabilityPolicy::new(capabilities? : Array[Capability]) -> Self
 pub fn CapabilityPolicy::to_json(Self) -> String
 pub fn CapabilityPolicy::validate(Self) -> Array[String]
@@ -506,10 +511,10 @@ pub struct CommandManifest {
   entries : Array[CommandManifestEntry]
 } derive(Eq, @debug.Debug)
 pub fn CommandManifest::allowed_routes(Self, String) -> Array[String]
-pub fn CommandManifest::allows(Self, String, window_label~ : String, origin? : String) -> Bool
+pub fn CommandManifest::allows(Self, String, window_label~ : String, origin? : String, platform? : String) -> Bool
 pub fn CommandManifest::entries(Self) -> Array[CommandManifestEntry]
 pub fn CommandManifest::entry(Self, String) -> CommandManifestEntry?
-pub fn CommandManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
+pub fn CommandManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow], platform? : String) -> Self
 pub fn CommandManifest::new(entries? : Array[CommandManifestEntry]) -> Self
 pub fn CommandManifest::routes(Self) -> Array[String]
 pub fn CommandManifest::routes_by_affinity(Self, CommandExecutionAffinity) -> Array[String]
@@ -527,11 +532,14 @@ pub struct CommandManifestEntry {
   response_schema : IpcSchema
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn CommandManifestEntry::affinity(Self) -> CommandExecutionAffinity
 pub fn CommandManifestEntry::allowed_for_origin(Self, String) -> Bool
 pub fn CommandManifestEntry::allowed_in_window(Self, String) -> Bool
+pub fn CommandManifestEntry::allowed_on_platform(Self, String) -> Bool
 pub fn CommandManifestEntry::allowed_origins(Self) -> Array[String]
+pub fn CommandManifestEntry::allowed_platforms(Self) -> Array[String]
 pub fn CommandManifestEntry::allowed_windows(Self) -> Array[String]
 pub fn CommandManifestEntry::command(Self) -> String
 pub fn CommandManifestEntry::mode(Self) -> CommandMode
@@ -996,7 +1004,7 @@ pub struct PermissionManifest {
 } derive(Eq, @debug.Debug)
 pub fn PermissionManifest::denied_routes(Self) -> Array[String]
 pub fn PermissionManifest::from_command_manifest(CommandManifest, capabilities~ : Array[Capability]) -> Self
-pub fn PermissionManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
+pub fn PermissionManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow], platform? : String) -> Self
 pub fn PermissionManifest::new(permissions? : Array[PermissionManifestPermission]) -> Self
 pub fn PermissionManifest::permission(Self, String) -> PermissionManifestPermission?
 pub fn PermissionManifest::permission_names(Self) -> Array[String]
@@ -1011,9 +1019,11 @@ pub struct PermissionManifestCommand {
   affinity : CommandExecutionAffinity
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn PermissionManifestCommand::affinity(Self) -> CommandExecutionAffinity
 pub fn PermissionManifestCommand::allowed_origins(Self) -> Array[String]
+pub fn PermissionManifestCommand::allowed_platforms(Self) -> Array[String]
 pub fn PermissionManifestCommand::allowed_windows(Self) -> Array[String]
 pub fn PermissionManifestCommand::command(Self) -> String
 pub fn PermissionManifestCommand::mode(Self) -> CommandMode
@@ -1025,11 +1035,13 @@ pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
 pub fn PermissionManifestGrant::capability(Self) -> String
 pub fn PermissionManifestGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn PermissionManifestGrant::origins(Self) -> Array[String]
+pub fn PermissionManifestGrant::platforms(Self) -> Array[String]
 pub fn PermissionManifestGrant::to_json(Self) -> String
 pub fn PermissionManifestGrant::windows(Self) -> Array[String]
 
@@ -1039,9 +1051,11 @@ pub struct PermissionManifestPermission {
   grants : Array[PermissionManifestGrant]
   allowed_windows : Array[String]
   allowed_origins : Array[String]
+  allowed_platforms : Array[String]
   denied_routes : Array[String]
 } derive(Eq, @debug.Debug)
 pub fn PermissionManifestPermission::allowed_origins(Self) -> Array[String]
+pub fn PermissionManifestPermission::allowed_platforms(Self) -> Array[String]
 pub fn PermissionManifestPermission::allowed_windows(Self) -> Array[String]
 pub fn PermissionManifestPermission::commands(Self) -> Array[PermissionManifestCommand]
 pub fn PermissionManifestPermission::denied_routes(Self) -> Array[String]
@@ -1504,6 +1518,7 @@ pub struct RuntimeCapabilityGrant {
   name : String
   windows : Array[String]
   origins : Array[String]
+  platforms : Array[String]
   permissions : Array[String]
   operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
@@ -1511,15 +1526,18 @@ pub fn RuntimeCapabilityGrant::name(Self) -> String
 pub fn RuntimeCapabilityGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn RuntimeCapabilityGrant::origins(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::permissions(Self) -> Array[String]
+pub fn RuntimeCapabilityGrant::platforms(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::windows(Self) -> Array[String]
 
 pub struct RuntimeConfig {
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
+  platform : String
 } derive(Eq, @debug.Debug)
-pub fn RuntimeConfig::headless() -> Self
-pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String) -> Self
+pub fn RuntimeConfig::headless(platform? : String) -> Self
+pub fn RuntimeConfig::platform(Self) -> String
+pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String, platform? : String) -> Self
 pub fn RuntimeConfig::validate(Self) -> Array[String]
 
 pub struct RuntimeInvokeAuthorization {
@@ -1527,6 +1545,7 @@ pub struct RuntimeInvokeAuthorization {
   route : String
   window_label : String
   origin : String
+  platform : String
   permission : Permission?
   registered : Bool
   capability : String
@@ -1537,6 +1556,7 @@ pub fn RuntimeInvokeAuthorization::capability(Self) -> String
 pub fn RuntimeInvokeAuthorization::kind(Self) -> RuntimeInvokeAuthorizationKind
 pub fn RuntimeInvokeAuthorization::origin(Self) -> String
 pub fn RuntimeInvokeAuthorization::permission(Self) -> Permission?
+pub fn RuntimeInvokeAuthorization::platform(Self) -> String
 pub fn RuntimeInvokeAuthorization::reason(Self) -> String
 pub fn RuntimeInvokeAuthorization::registered(Self) -> Bool
 pub fn RuntimeInvokeAuthorization::route(Self) -> String
@@ -1570,6 +1590,7 @@ pub(all) enum RuntimeLaunchAssetBody {
 
 pub struct RuntimeLaunchManifest {
   backend : String
+  platform : String
   asset_protocol : String
   devtools : Bool
   bridge_url : String
@@ -1599,6 +1620,7 @@ pub fn RuntimeLaunchManifest::file_system_scopes(Self) -> Array[FileSystemScope]
 pub fn RuntimeLaunchManifest::lifecycle_hooks(Self) -> Array[RuntimeLifecycleHook]
 pub fn RuntimeLaunchManifest::local_services(Self) -> Array[LocalService]
 pub fn RuntimeLaunchManifest::permission_manifest(Self) -> PermissionManifest
+pub fn RuntimeLaunchManifest::platform(Self) -> String
 pub fn RuntimeLaunchManifest::protocol_mappings(Self) -> Array[RuntimeProtocolBinding]
 pub fn RuntimeLaunchManifest::registered_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::resolve_asset(Self, String) -> Result[RuntimeLaunchAsset, String]
@@ -1622,6 +1644,7 @@ pub struct RuntimePlan {
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
+  platform : String
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
   filesystem_scopes : Array[FileSystemScope]
@@ -1647,6 +1670,7 @@ pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String], re
 pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
 pub fn RuntimePlan::permission_manifest(Self) -> PermissionManifest
+pub fn RuntimePlan::platform(Self) -> String
 pub fn RuntimePlan::plugin_count(Self) -> Int
 pub fn RuntimePlan::security_profile(Self, registered_routes? : Array[String], check_handlers? : Bool) -> SecurityProfile
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
@@ -1729,6 +1753,7 @@ pub struct SecurityProfile {
   runtime_audit : RuntimeAudit
   registered_routes : Array[String]
   check_handlers : Bool
+  platform : String
 } derive(Eq, @debug.Debug)
 pub fn SecurityProfile::allowed_origins(Self, window_label~ : String, permission~ : Permission) -> Array[String]
 pub fn SecurityProfile::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
@@ -1748,6 +1773,7 @@ pub fn SecurityProfile::from_plan(RuntimePlan, registered_routes? : Array[String
 pub fn SecurityProfile::info_count(Self) -> Int
 pub fn SecurityProfile::ok(Self) -> Bool
 pub fn SecurityProfile::permission_manifest(Self) -> PermissionManifest
+pub fn SecurityProfile::platform(Self) -> String
 pub fn SecurityProfile::problems(Self) -> Array[String]
 pub fn SecurityProfile::registered_routes(Self) -> Array[String]
 pub fn SecurityProfile::runtime_audit(Self) -> RuntimeAudit

@@ -274,6 +274,10 @@ Command rules:
 - `RuntimeLaunchManifest.capabilities` carries the capability grants as native
   runtime data, so packaged apps and platform diagnostics can inspect the same
   permissions that dispatch enforces.
+- Capabilities can scope grants by `windows`, `origins`, and `platforms`; empty
+  arrays mean all. Runtime dispatch evaluates platform-scoped grants against
+  `RuntimeConfig.platform`, using target names such as `macos`, `linux`, and
+  `windows`.
 - Built-in permission names for project manifests are `filesystem.read`,
   `filesystem.write`, `file-dialog`, `network`, `shell`, `dialog`, `opener`,
   `clipboard`, `notification`, `localhost`, `deep-link`, `single-instance`,
@@ -303,6 +307,7 @@ Use a small manifest format before inventing a large policy engine:
     {
       "name": "main-dialog",
       "windows": ["main"],
+      "platforms": ["linux", "windows"],
       "permissions": ["dialog"]
     }
   ]

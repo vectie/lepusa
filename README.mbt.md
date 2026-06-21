@@ -256,6 +256,9 @@ opening only the first window.
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
 routes for metadata and bundling.
+Capability grants can also name `origins` and `platforms`; platform-scoped
+commands are authorized against `RuntimeConfig.platform` and appear in runtime
+manifests for native diagnostics.
 
 Lifecycle hooks lower to the same backend action model as startup commands, so
 platform backends can handle shutdown and window-close events without reading

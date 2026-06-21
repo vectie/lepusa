@@ -7,6 +7,7 @@ pub struct SecurityProfile {
   runtime_audit : RuntimeAudit
   registered_routes : Array[String]
   check_handlers : Bool
+  platform : String
 } derive(Debug, Eq)
 
 ///|
@@ -35,6 +36,7 @@ pub fn SecurityProfile::from_plan(
     runtime_audit,
     registered_routes,
     check_handlers,
+    platform: plan.platform(),
   }
 }
 
@@ -103,6 +105,11 @@ pub fn SecurityProfile::check_handlers(self : SecurityProfile) -> Bool {
 }
 
 ///|
+pub fn SecurityProfile::platform(self : SecurityProfile) -> String {
+  self.platform
+}
+
+///|
 pub fn SecurityProfile::ok(self : SecurityProfile) -> Bool {
   self.capability_report.ok() && self.runtime_audit.ok()
 }
@@ -157,7 +164,11 @@ pub fn SecurityProfile::allowed_origins(
   window_label~ : String,
   permission~ : Permission,
 ) -> Array[String] {
-  self.capability_policy.allowed_origins(window_label~, permission~)
+  self.capability_policy.allowed_origins(
+    window_label~,
+    permission~,
+    platform=self.platform,
+  )
 }
 
 ///|
@@ -167,7 +178,12 @@ pub fn SecurityProfile::allows(
   permission~ : Permission,
   origin? : String = "",
 ) -> Bool {
-  self.capability_policy.allows(window_label~, permission~, origin~)
+  self.capability_policy.allows(
+    window_label~,
+    permission~,
+    origin~,
+    platform=self.platform,
+  )
 }
 
 ///|
@@ -177,7 +193,12 @@ pub fn SecurityProfile::evaluate(
   permission~ : Permission,
   origin? : String = "",
 ) -> CapabilityDecision {
-  self.capability_policy.evaluate(window_label~, permission~, origin~)
+  self.capability_policy.evaluate(
+    window_label~,
+    permission~,
+    origin~,
+    platform=self.platform,
+  )
 }
 
 ///|
@@ -193,6 +214,7 @@ pub fn SecurityProfile::allows_operation(
     permission~,
     scope~,
     origin~,
+    platform=self.platform,
   )
 }
 
@@ -209,6 +231,7 @@ pub fn SecurityProfile::evaluate_operation(
     permission~,
     scope~,
     origin~,
+    platform=self.platform,
   )
 }
 
@@ -238,6 +261,7 @@ pub fn SecurityProfile::to_json(self : SecurityProfile) -> String {
     "\"warningCount\":\{self.warning_count()},",
     "\"infoCount\":\{self.info_count()},",
     "\"checkHandlers\":\{self.check_handlers.json_bool()},",
+    "\"platform\":\{self.platform.json_string()},",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"exposedRoutes\":[\{self.exposed_routes().map(fn(route) { route.json_string() }).join(",")}],",
     "\"problems\":[\{self.problems().map(fn(problem) { problem.json_string() }).join(",")}],",
@@ -267,6 +291,7 @@ fn SecurityProfile::authorize_request(
       RuntimeInvokeAuthorization::deny(
         kind=RuntimeInvokeUnknownCommand,
         request,
+        platform=self.platform,
         registered~,
         reason="command is not declared: \{route}",
       )
@@ -277,6 +302,7 @@ fn SecurityProfile::authorize_request(
         return RuntimeInvokeAuthorization::deny(
           kind=RuntimeInvokeUnregisteredCommand,
           request,
+          platform=self.platform,
           permission=entry.permission(),
           registered~,
           reason="command has no registered native handler: \{route}",
@@ -289,17 +315,20 @@ fn SecurityProfile::authorize_request(
             permission=entry.permission(),
             scope~,
             origin=request.origin(),
+            platform=self.platform,
           )
         None =>
           self.capability_policy.evaluate(
             window_label=request.window_label(),
             permission=entry.permission(),
             origin=request.origin(),
+            platform=self.platform,
           )
       }
       if decision.allowed() {
         RuntimeInvokeAuthorization::allow(
           request,
+          platform=self.platform,
           permission=entry.permission(),
           registered~,
           capability=decision.capability(),
@@ -308,6 +337,7 @@ fn SecurityProfile::authorize_request(
         RuntimeInvokeAuthorization::deny(
           kind=RuntimeInvokePermissionDenied,
           request,
+          platform=self.platform,
           permission=entry.permission(),
           registered~,
           reason=decision.reason(),

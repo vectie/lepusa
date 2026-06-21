@@ -35,12 +35,14 @@ test "runtime command manifest projects modes permissions and windows" {
     .with_capability(
       @lepusa.Capability::new("settings-write")
       .window("settings")
+      .platform("linux")
       .permission(FileSystemWrite),
     )
     .with_capability(
       @lepusa.Capability::new("all-events").permission(Notification),
     )
-  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+  match
+    app.runtime_plan(config=@lepusa.RuntimeConfig::headless(platform="linux")) {
     Ok(plan) => {
       let manifest = plan.command_manifest()
       assert_eq(manifest.entries().length(), 3)
@@ -59,6 +61,7 @@ test "runtime command manifest projects modes permissions and windows" {
           assert_true(entry.permission() is FileSystemRead)
           assert_eq(entry.allowed_windows().length(), 1)
           assert_eq(entry.allowed_origins().length(), 1)
+          assert_eq(entry.allowed_platforms().length(), 0)
           assert_eq(entry.allowed_origins()[0], "https://app.example")
           assert_true(entry.allowed_in_window("main"))
           assert_false(entry.allowed_in_window("settings"))
@@ -91,7 +94,53 @@ test "runtime command manifest projects modes permissions and windows" {
       assert_true(manifest.allowed_routes("main").contains("core.events"))
       assert_eq(plan.window_command_routes("settings").length(), 2)
       assert_true(plan.window_command_routes("settings").contains("core.write"))
+      match manifest.entry("core.write") {
+        Some(entry) => {
+          assert_eq(entry.allowed_platforms().length(), 1)
+          assert_eq(entry.allowed_platforms()[0], "linux")
+          assert_true(entry.allowed_on_platform("linux"))
+          assert_false(entry.allowed_on_platform("macos"))
+        }
+        None => abort("missing write command")
+      }
       assert_true(plan.command_manifest().to_json().contains("\"commands\""))
+      assert_true(
+        plan.command_manifest().to_json().contains("\"allowedPlatforms\""),
+      )
+    }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime command manifest denies platform-specific grants off target" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("shell").command_sync("open", permission=Shell),
+    )
+    .with_capability(
+      @lepusa.Capability::new("linux-shell")
+      .window("main")
+      .platform("linux")
+      .permission(Shell),
+    )
+  match
+    app.runtime_plan(config=@lepusa.RuntimeConfig::headless(platform="macos")) {
+    Ok(plan) => {
+      let manifest = plan.command_manifest()
+      match manifest.entry("shell.open") {
+        Some(entry) => {
+          assert_eq(entry.allowed_windows().length(), 0)
+          assert_eq(entry.allowed_platforms().length(), 0)
+        }
+        None => abort("missing shell command")
+      }
+      assert_false(
+        manifest.allows("shell.open", window_label="main", platform="macos"),
+      )
+      assert_eq(plan.window_command_routes("main").length(), 0)
     }
     Err(_) => abort("unexpected invalid runtime plan")
   }
@@ -172,9 +221,11 @@ test "permission manifest groups routes grants windows and denials" {
           assert_true(permission.allowed_windows().contains("main"))
           assert_eq(permission.allowed_origins().length(), 1)
           assert_eq(permission.allowed_origins()[0], "https://app.example")
+          assert_eq(permission.allowed_platforms().length(), 0)
           assert_eq(permission.commands()[0].allowed_origins().length(), 1)
           assert_true(permission.commands()[0].affinity() is AnyThread)
           assert_eq(permission.grants()[0].origins().length(), 1)
+          assert_eq(permission.grants()[0].platforms().length(), 0)
           assert_eq(permission.grants()[0].operation_scopes().length(), 1)
           assert_eq(
             permission.grants()[0].operation_scopes()[0].root(),

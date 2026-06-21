@@ -29,6 +29,51 @@ test "project config parses app manifest boundary" {
 }
 
 ///|
+test "project config parses runtime and capability platform scopes" {
+  let config =
+    #|{
+    #|  "identifier": "dev.vectie.platform",
+    #|  "productName": "Platform",
+    #|  "version": "0.1.0",
+    #|  "runtime": { "backend": "headless", "platform": "linux" },
+    #|  "window": { "label": "main", "title": "Platform" },
+    #|  "plugins": [{
+    #|    "name": "shell",
+    #|    "commands": [{ "name": "open", "permission": "shell" }]
+    #|  }],
+    #|  "capabilities": [{
+    #|    "name": "linux-shell",
+    #|    "windows": ["main"],
+    #|    "platforms": ["linux"],
+    #|    "origins": ["https://app.example"],
+    #|    "permissions": ["shell"]
+    #|  }]
+    #|}
+    #|
+  match ProjectConfig::parse(config) {
+    Ok(project) =>
+      match project.manifest().runtime_plan(project.root()) {
+        Ok(plan) => {
+          assert_eq(plan.platform(), "linux")
+          assert_true(plan.window_command_routes("main").contains("shell.open"))
+          let capability = plan.capabilities()[0]
+          assert_eq(capability.platforms()[0], "linux")
+          assert_eq(capability.origins()[0], "https://app.example")
+          match plan.command_manifest().entry("shell.open") {
+            Some(entry) => {
+              assert_eq(entry.allowed_platforms()[0], "linux")
+              assert_true(entry.allowed_for_origin("https://app.example"))
+            }
+            None => abort("missing shell command")
+          }
+        }
+        Err(problems) => abort(problems.join(", "))
+      }
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
 test "project config parses capability operation scopes" {
   let config =
     #|{

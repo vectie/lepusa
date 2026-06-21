@@ -1,6 +1,7 @@
 ///|
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend
+  platform : String
   devtools : Bool
   asset_protocol : String
   windows : Array[RuntimeWindow]
@@ -79,6 +80,7 @@ fn RuntimeSession::from_plan(
   }
   {
     backend: plan.backend(),
+    platform: plan.platform(),
     devtools: plan.devtools(),
     asset_protocol: plan.asset_protocol(),
     windows,
@@ -144,6 +146,11 @@ fn RuntimeVirtualFile::from_file(
 ///|
 pub fn RuntimeSession::backend(self : RuntimeSession) -> @lepusa.RuntimeBackend {
   self.backend
+}
+
+///|
+pub fn RuntimeSession::platform(self : RuntimeSession) -> String {
+  self.platform
 }
 
 ///|
@@ -281,6 +288,7 @@ pub fn RuntimeSession::to_json(self : RuntimeSession) -> String {
   [
     "{",
     "\"backend\":\{self.backend().name().json_string()},",
+    "\"platform\":\{self.platform.json_string()},",
     "\"devtools\":\{self.devtools.json_bool()},",
     "\"assetProtocol\":\{self.asset_protocol.json_string()},",
     "\"bridgeUrl\":\{self.bridge_url().json_string()},",

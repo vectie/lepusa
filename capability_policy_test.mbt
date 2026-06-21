@@ -55,6 +55,34 @@ test "capability policy can scope grants to origins" {
 }
 
 ///|
+test "capability policy can scope grants to platforms" {
+  let policy = @lepusa.CapabilityPolicy::new(capabilities=[
+    @lepusa.Capability::new("linux-shell")
+    .window("main")
+    .platform("linux")
+    .permission(Shell),
+  ])
+  let allowed = policy.evaluate(
+    window_label="main",
+    platform="linux",
+    permission=Shell,
+  )
+  assert_true(allowed.allowed())
+  assert_eq(allowed.platform(), "linux")
+  let denied = policy.evaluate(
+    window_label="main",
+    platform="macos",
+    permission=Shell,
+  )
+  assert_true(denied.denied())
+  assert_true(denied.reason().contains("platform macos"))
+  assert_false(policy.allows(window_label="main", permission=Shell))
+  assert_true(
+    policy.allows(window_label="main", platform="linux", permission=Shell),
+  )
+}
+
+///|
 test "capability policy scopes sensitive operations deny by default" {
   let policy = @lepusa.CapabilityPolicy::new(capabilities=[
     @lepusa.Capability::new("main-files")
@@ -103,6 +131,7 @@ test "capability policy validates capability set" {
     @lepusa.Capability::new("dup").permission(FileSystemWrite),
     @lepusa.Capability::new("empty"),
     @lepusa.Capability::new("bad-origin").origin("").permission(Network),
+    @lepusa.Capability::new("bad-platform").platform("").permission(Network),
   ])
   let problems = policy.validate()
   assert_true(problems.contains("capability name must be unique: dup"))
@@ -110,6 +139,7 @@ test "capability policy validates capability set" {
     problems.contains("capability must include at least one permission"),
   )
   assert_true(problems.contains("capability origin must not be empty"))
+  assert_true(problems.contains("capability platform must not be empty"))
   assert_true(
     @lepusa.Capability::new("bad-scope")
     .permission(Shell)
@@ -133,5 +163,6 @@ test "capability policy serializes grants for diagnostics" {
   assert_true(json.contains("\"permissions\":[\"shell\"]"))
   assert_true(json.contains("\"windows\":[\"main\"]"))
   assert_true(json.contains("\"origins\":[]"))
+  assert_true(json.contains("\"platforms\":[]"))
   assert_true(json.contains("\"operationScopes\""))
 }
