@@ -1271,6 +1271,19 @@ static void lepusa_close_all_windows(LepusaBridgeContext *context) {
   }
 }
 
+static int lepusa_app_shell_action_equals(
+  const char *action,
+  int32_t action_len,
+  const char *name
+) {
+  size_t name_len = strlen(name);
+  return lepusa_range_equals(action, action_len, name) ||
+    (action != NULL &&
+     action_len == (int32_t)(name_len + 4) &&
+     memcmp(action, "app.", 4) == 0 &&
+     memcmp(action + 4, name, name_len) == 0);
+}
+
 static void lepusa_apply_desktop_shell_from_handoff_packet(
   LepusaBridgeContext *context,
   moonbit_bytes_t packet
@@ -1292,8 +1305,8 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     if (!lepusa_range_equals(record.kind, record.kind_len, "desktop-shell")) {
       continue;
     }
-    if (lepusa_range_equals(record.action, record.action_len, "app.exit") ||
-        lepusa_range_equals(record.action, record.action_len, "app.restart")) {
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "exit") ||
+        lepusa_app_shell_action_equals(record.action, record.action_len, "restart")) {
       lepusa_close_all_windows(context);
       continue;
     }
@@ -1306,9 +1319,9 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     if (window == NULL) {
       continue;
     }
-    if (lepusa_range_equals(record.action, record.action_len, "app.show")) {
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "show")) {
       lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
-    } else if (lepusa_range_equals(record.action, record.action_len, "app.hide")) {
+    } else if (lepusa_app_shell_action_equals(record.action, record.action_len, "hide")) {
       lepusa_msg_void_id(window, "orderOut:", NULL);
     }
   }

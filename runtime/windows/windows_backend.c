@@ -3105,6 +3105,19 @@ static void lepusa_windows_close_all_windows(
   }
 }
 
+static int lepusa_windows_app_shell_action_equals(
+  const char *action,
+  int32_t action_len,
+  const char *name
+) {
+  size_t name_len = strlen(name);
+  return lepusa_windows_range_equals(action, action_len, name) ||
+    (action != NULL &&
+     action_len == (int32_t)(name_len + 4) &&
+     memcmp(action, "app.", 4) == 0 &&
+     memcmp(action + 4, name, name_len) == 0);
+}
+
 static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
   LepusaWindowsWebView2Context *context,
   moonbit_bytes_t packet
@@ -3129,8 +3142,8 @@ static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
         )) {
       continue;
     }
-    if (lepusa_windows_range_equals(record.action, record.action_len, "app.exit") ||
-        lepusa_windows_range_equals(record.action, record.action_len, "app.restart")) {
+    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "exit") ||
+        lepusa_windows_app_shell_action_equals(record.action, record.action_len, "restart")) {
       lepusa_windows_close_all_windows(context);
       continue;
     }
@@ -3142,10 +3155,10 @@ static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
     if (slot == NULL || slot->hwnd == NULL) {
       continue;
     }
-    if (lepusa_windows_range_equals(record.action, record.action_len, "app.show")) {
+    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "show")) {
       ShowWindow(slot->hwnd, SW_SHOW);
       SetForegroundWindow(slot->hwnd);
-    } else if (lepusa_windows_range_equals(record.action, record.action_len, "app.hide")) {
+    } else if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "hide")) {
       ShowWindow(slot->hwnd, SW_HIDE);
     }
   }

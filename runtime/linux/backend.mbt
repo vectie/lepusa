@@ -67,7 +67,12 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
       NativeOperationSkipped("Linux native effect is not registered: \{name}")
     },
     control_window=fn(_) { NativeOperationExecuted },
-    desktop_shell=fn(_) { NativeOperationExecuted },
+    desktop_shell=fn(operation) {
+      @runtime.native_desktop_shell_platform_status(
+        operation,
+        platform_name="Linux",
+      )
+    },
   )
 }
 

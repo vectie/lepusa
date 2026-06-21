@@ -136,6 +136,45 @@ test "native operation executor runs executable operation batches" {
 }
 
 ///|
+test "native desktop shell platform status is honest about renderer coverage" {
+  let app_exit = NativeDesktopShellOperation::new(
+    domain="app",
+    action="app.exit",
+    window_label="main",
+  )
+  assert_true(app_exit.native_app_window_action())
+  assert_true(
+    native_desktop_shell_platform_status(app_exit, platform_name="Test")
+    is NativeOperationExecuted,
+  )
+  let menu = NativeDesktopShellOperation::new(
+    domain="menu",
+    action="setAppMenu",
+    target="app",
+    window_label="main",
+  )
+  assert_false(menu.native_app_window_action())
+  match native_desktop_shell_platform_status(menu, platform_name="Test") {
+    NativeOperationSkipped(message) => {
+      assert_true(message.contains("desktop shell renderer is not registered"))
+      assert_true(message.contains("menu.setAppMenu"))
+    }
+    _ => abort("expected menu renderer to be skipped")
+  }
+  let app_theme = NativeDesktopShellOperation::new(
+    domain="app",
+    action="app.setTheme",
+    window_label="main",
+  )
+  assert_false(app_theme.native_app_window_action())
+  match native_desktop_shell_platform_status(app_theme, platform_name="Test") {
+    NativeOperationSkipped(message) =>
+      assert_true(message.contains("app.setTheme"))
+    _ => abort("expected unsupported app shell action to be skipped")
+  }
+}
+
+///|
 test "native operation executor runs dynamic window operations" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(

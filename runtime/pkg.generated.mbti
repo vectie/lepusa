@@ -23,6 +23,8 @@ pub fn native_bridge_response_script(String, String) -> String
 
 pub fn native_desktop_shell_operation_from_bridge_response(String, String) -> NativeDesktopShellOperation?
 
+pub fn native_desktop_shell_platform_status(NativeDesktopShellOperation, platform_name~ : String) -> NativeOperationExecutionStatus
+
 pub fn native_direct_load_url(String) -> Bool
 
 pub fn native_executable_operations_packet(Array[NativeExecutableOperation]) -> String
@@ -403,6 +405,7 @@ pub struct NativeDesktopShellOperation {
 } derive(Eq, @debug.Debug)
 pub fn NativeDesktopShellOperation::action(Self) -> String
 pub fn NativeDesktopShellOperation::domain(Self) -> String
+pub fn NativeDesktopShellOperation::native_app_window_action(Self) -> Bool
 pub fn NativeDesktopShellOperation::new(domain~ : String, action~ : String, target? : String, window_label? : String, payload? : String) -> Self
 pub fn NativeDesktopShellOperation::payload(Self) -> String
 pub fn NativeDesktopShellOperation::target(Self) -> String

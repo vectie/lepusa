@@ -161,6 +161,54 @@ pub fn NativeOperationExecutor::execute_app_will_exit(
 }
 
 ///|
+pub fn NativeDesktopShellOperation::native_app_window_action(
+  self : NativeDesktopShellOperation,
+) -> Bool {
+  self.domain() == "app" &&
+  (
+    self.action() == "show" ||
+    self.action() == "hide" ||
+    self.action() == "exit" ||
+    self.action() == "restart" ||
+    self.action() == "app.show" ||
+    self.action() == "app.hide" ||
+    self.action() == "app.exit" ||
+    self.action() == "app.restart"
+  )
+}
+
+///|
+pub fn native_desktop_shell_platform_status(
+  operation : NativeDesktopShellOperation,
+  platform_name~ : String,
+) -> NativeOperationExecutionStatus {
+  if operation.native_app_window_action() {
+    NativeOperationExecuted
+  } else {
+    NativeOperationSkipped(
+      "\{platform_name} native desktop shell renderer is not registered: \{native_desktop_shell_route(operation)}",
+    )
+  }
+}
+
+///|
+fn native_desktop_shell_route(
+  operation : NativeDesktopShellOperation,
+) -> String {
+  let domain = operation.domain()
+  let action = operation.action()
+  if domain != "" && action.has_prefix("\{domain}.") {
+    action
+  } else if domain == "" {
+    action
+  } else if action == "" {
+    domain
+  } else {
+    "\{domain}.\{action}"
+  }
+}
+
+///|
 pub fn NativeOperationExecutionStatus::name(
   self : NativeOperationExecutionStatus,
 ) -> String {
