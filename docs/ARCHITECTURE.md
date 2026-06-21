@@ -771,6 +771,15 @@ same manifest to target-aware package commands, expected outputs, and blockers.
 `package.ps1`), with Windows also receiving a generated NSIS script. Lepusa
 still does not execute external signing or installer tools inside the core
 writer; it produces the contract and scripts that release automation can run.
+`BundleDistributionManifest::install_smoke_plan()` is the post-install
+handoff. It computes the installed runtime manifest path, required installed
+bundle files, runtime dependency files with concrete paths, and a small
+`lepusa-runtime` command sequence for manifest inspection, dry-run native
+planning, async bridge launch-session, bridge asset resolution, and optional GUI
+launch. `@lepusa/bundle.write_install_smoke_plan` persists that contract as
+`install-smoke-plan.json`, `install-smoke-checklist.md`, and a target
+shell/PowerShell script, keeping clean-machine validation outside installer
+policy while still making it reproducible.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume
@@ -936,7 +945,10 @@ lepusa verify [macos|windows|linux]
   -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, bundle contracts, release-readiness, and package-readiness; strict mode fails release/package readiness issues
 
 lepusa publish-plan [macos|windows|linux]
-  -> derives the third-party project ship path from lepusa.json: strict verify, bundle-write, distribution manifest path, release handoff, package handoff, and final package script command, with JSON output for CI
+  -> derives the third-party project ship path from lepusa.json: strict verify, bundle-write, distribution manifest path, release handoff, package handoff, final package script command, and install-smoke handoff, with JSON output for CI
+
+lepusa bundle-install-smoke-write <lepusa/distribution.json> [out-dir] [install-root]
+  -> writes post-install smoke JSON, checklist, and script for validating an installed app on a clean machine
 
 lepusa bridge-task <window> <plugin.command> [payload]
   -> emits source-project bridge task message plus scheduling metadata for native handlers

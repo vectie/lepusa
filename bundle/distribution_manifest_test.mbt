@@ -128,6 +128,33 @@ test "distribution manifest parser exposes installer-facing bundle data" {
                 .to_json()
                 .contains("\"packageKind\":\"linux-portable-archive\""),
               )
+              let smoke = manifest.install_smoke_plan(
+                install_root="/opt/distribution-app",
+              )
+              assert_true(smoke.ready())
+              assert_eq(smoke.install_root(), "/opt/distribution-app")
+              assert_eq(
+                smoke.runtime_manifest_path(),
+                "/opt/distribution-app/distribution-app/lepusa/runtime.json",
+              )
+              assert_eq(smoke.commands().length(), 5)
+              assert_eq(smoke.checks().length(), 4)
+              assert_eq(smoke.script_name(), "install-smoke.sh")
+              assert_eq(smoke.commands()[0].tool(), "lepusa-runtime")
+              assert_true(
+                smoke.commands()[2].arguments().contains("--async-bridge"),
+              )
+              assert_eq(smoke.checks()[0].kind(), "runtime-manifest")
+              assert_true(
+                smoke
+                .summary()
+                .contains(
+                  "runtime-manifest: /opt/distribution-app/distribution-app/lepusa/runtime.json",
+                ),
+              )
+              assert_true(
+                smoke.to_json().contains("\"scriptName\":\"install-smoke.sh\""),
+              )
             }
             Err(problem) => abort("unexpected invalid distribution: \{problem}")
           }
@@ -267,6 +294,26 @@ test "package plan emits windows package scripts" {
         installer.contains("OutFile \"package-data-1.0.0-setup.exe\""),
       )
       assert_true(installer.contains("File /r \"package-data\\*\""))
+      let smoke = manifest.install_smoke_plan(install_root="C:/Program Files")
+      assert_true(smoke.ready())
+      assert_eq(smoke.script_name(), "install-smoke.ps1")
+      assert_eq(
+        smoke.runtime_manifest_path(),
+        "C:/Program Files/package-data/lepusa/runtime.json",
+      )
+      assert_eq(smoke.checks().length(), 5)
+      assert_true(
+        smoke
+        .to_json()
+        .contains(
+          "\"runtimeManifest\":\"C:/Program Files/package-data/lepusa/runtime.json\"",
+        ),
+      )
+      let smoke_script = smoke.install_smoke_script()
+      assert_true(smoke_script.contains("Test-Path"))
+      assert_true(smoke_script.contains("launch-session"))
+      assert_true(smoke_script.contains("--async-bridge"))
+      assert_true(smoke_script.contains("lepusa://runtime/bridge.js"))
     }
     Err(problem) => abort("unexpected invalid distribution: \{problem}")
   }

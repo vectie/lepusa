@@ -42,6 +42,8 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bundle-release-write"))
   assert_true(result.output.contains("lepusa bundle-package-plan"))
   assert_true(result.output.contains("lepusa bundle-package-write"))
+  assert_true(result.output.contains("lepusa bundle-install-smoke-plan"))
+  assert_true(result.output.contains("lepusa bundle-install-smoke-write"))
   assert_true(
     result.output.contains("lepusa publish-plan [macos|windows|linux] [--json]"),
   )
@@ -76,11 +78,23 @@ async test "publish plan renders third-party release commands" {
   assert_true(result.output.contains("release-ready: true"))
   assert_true(
     result.output.contains(
+      "install-smoke-root: _build/lepusa-install-smoke-linux",
+    ),
+  )
+  assert_true(result.output.contains("install-root: /opt"))
+  assert_true(
+    result.output.contains(
       "release-readiness: required release steps have data",
     ),
   )
   assert_true(result.output.contains("package-ready: true"))
   assert_true(result.output.contains("package-kind: linux-portable-archive"))
+  assert_true(result.output.contains("install-smoke-ready: true"))
+  assert_true(
+    result.output.contains(
+      "install-smoke-script: _build/lepusa-install-smoke-linux/install-smoke.sh",
+    ),
+  )
   assert_true(
     result.output.contains(
       "command: verify lepusa verify linux --strict --project examples/static/lepusa.json",
@@ -106,6 +120,11 @@ async test "publish plan renders third-party release commands" {
       "command: package-script BUNDLE_ROOT=_build/lepusa-bundle-linux sh _build/lepusa-package-linux/package.sh",
     ),
   )
+  assert_true(
+    result.output.contains(
+      "command: install-smoke-write lepusa bundle-install-smoke-write _build/lepusa-bundle-linux/lepusa-static-example/lepusa/distribution.json _build/lepusa-install-smoke-linux /opt",
+    ),
+  )
   let json_result = render_cli_async([
     "publish-plan", "linux", "--project", "examples/static/lepusa.json", "--json",
   ])
@@ -116,12 +135,19 @@ async test "publish plan renders third-party release commands" {
   )
   assert_true(json_result.output.contains("\"releaseReady\":true"))
   assert_true(json_result.output.contains("\"packageReady\":true"))
+  assert_true(json_result.output.contains("\"installSmokeReady\":true"))
+  assert_true(
+    json_result.output.contains(
+      "\"installSmokeRoot\":\"_build/lepusa-install-smoke-linux\"",
+    ),
+  )
   assert_true(
     json_result.output.contains("\"packageKind\":\"linux-portable-archive\""),
   )
   assert_true(json_result.output.contains("\"commands\":["))
   assert_true(json_result.output.contains("\"name\":\"verify\""))
   assert_true(json_result.output.contains("\"name\":\"package-script\""))
+  assert_true(json_result.output.contains("\"name\":\"install-smoke-write\""))
   assert_true(
     json_result.output.contains(
       "\"command\":\"lepusa verify linux --strict --project examples/static/lepusa.json\"",
@@ -2199,6 +2225,77 @@ async test "bundle write materializes planned files" {
   assert_true(
     package_write_json.output.contains(
       "\"files\":[\"\{package_json_root}/package-plan.json\",\"\{package_json_root}/package-checklist.md\",\"\{package_json_root}/package.sh\"]",
+    ),
+  )
+  let install_root = "/tmp/lepusa-installed-\{@async.now().to_int()}"
+  let smoke_result = render_cli_async([
+    "bundle-install-smoke-plan", distribution_path, install_root,
+  ])
+  assert_eq(smoke_result.exit_code, 0)
+  assert_true(smoke_result.output.contains("Lepusa install smoke plan"))
+  assert_true(smoke_result.output.contains("install-root: \{install_root}"))
+  assert_true(
+    smoke_result.output.contains(
+      "runtime-manifest: \{install_root}/lepusa-example/lepusa/runtime.json",
+    ),
+  )
+  assert_true(smoke_result.output.contains("commands: 5"))
+  assert_true(smoke_result.output.contains("checks: 4"))
+  assert_true(
+    smoke_result.output.contains("command: check async bridge session"),
+  )
+  assert_true(smoke_result.output.contains("check: runtime-executable"))
+  let smoke_json = render_cli_async([
+    "bundle-install-smoke-plan", distribution_path, install_root, "--json",
+  ])
+  assert_eq(smoke_json.exit_code, 0)
+  assert_true(smoke_json.output.contains("\"ready\":true"))
+  assert_true(smoke_json.output.contains("\"scriptName\":\"install-smoke.sh\""))
+  assert_true(
+    smoke_json.output.contains(
+      "\"runtimeManifest\":\"\{install_root}/lepusa-example/lepusa/runtime.json\"",
+    ),
+  )
+  assert_true(smoke_json.output.contains("\"name\":\"resolve bridge asset\""))
+  let smoke_write_root = "/tmp/lepusa-install-smoke-write-\{@async.now().to_int()}"
+  let smoke_write = render_cli_async([
+    "bundle-install-smoke-write", distribution_path, smoke_write_root, install_root,
+  ])
+  assert_eq(smoke_write.exit_code, 0)
+  assert_true(smoke_write.output.contains("Lepusa bundle install smoke write"))
+  assert_true(smoke_write.output.contains("root: \{smoke_write_root}"))
+  assert_true(smoke_write.output.contains("install-root: \{install_root}"))
+  assert_true(smoke_write.output.contains("commands: 5"))
+  assert_true(smoke_write.output.contains("checks: 4"))
+  assert_true(smoke_write.output.contains("files: 3"))
+  let smoke_plan_path = smoke_write_root + "/install-smoke-plan.json"
+  let smoke_checklist_path = smoke_write_root + "/install-smoke-checklist.md"
+  let smoke_script_path = smoke_write_root + "/install-smoke.sh"
+  assert_true(@fs.exists(smoke_plan_path))
+  assert_true(@fs.exists(smoke_checklist_path))
+  assert_true(@fs.exists(smoke_script_path))
+  let smoke_plan = @fs.read_file(smoke_plan_path).text()
+  assert_true(smoke_plan.contains("\"runtimeManifest\""))
+  assert_true(smoke_plan.contains("\"resolve bridge asset\""))
+  let smoke_checklist = @fs.read_file(smoke_checklist_path).text()
+  assert_true(smoke_checklist.contains("# Lepusa Install Smoke Checklist"))
+  assert_true(smoke_checklist.contains("[ ] runtime-manifest"))
+  assert_true(smoke_checklist.contains("[-] launch installed app"))
+  let smoke_script = @fs.read_file(smoke_script_path).text()
+  assert_true(smoke_script.contains("lepusa-runtime"))
+  assert_true(smoke_script.contains("launch-session"))
+  assert_true(smoke_script.contains("--async-bridge"))
+  assert_true(smoke_script.contains("lepusa://runtime/bridge.js"))
+  let smoke_write_json_root = "/tmp/lepusa-install-smoke-write-json-\{@async.now().to_int()}"
+  let smoke_write_json = render_cli_async([
+    "bundle-install-smoke-write", distribution_path, smoke_write_json_root, install_root,
+    "--json",
+  ])
+  assert_eq(smoke_write_json.exit_code, 0)
+  assert_true(smoke_write_json.output.contains("\"ready\":true"))
+  assert_true(
+    smoke_write_json.output.contains(
+      "\"files\":[\"\{smoke_write_json_root}/install-smoke-plan.json\",\"\{smoke_write_json_root}/install-smoke-checklist.md\",\"\{smoke_write_json_root}/install-smoke.sh\"]",
     ),
   )
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"

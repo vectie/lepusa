@@ -195,6 +195,8 @@ moon run cmd/main --target native -- bundle-release-plan _build/lepusa-bundle/le
 moon run cmd/main --target native -- bundle-release-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-release
 moon run cmd/main --target native -- bundle-package-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json --json
 moon run cmd/main --target native -- bundle-package-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-package
+moon run cmd/main --target native -- bundle-install-smoke-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json /Applications
+moon run cmd/main --target native -- bundle-install-smoke-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-install-smoke /Applications
 moon run cmd/main --target native -- publish-plan linux --project examples/static/lepusa.json
 moon run cmd/main --target native -- publish-plan linux --project examples/static/lepusa.json --json
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -847,9 +849,19 @@ contract into target-aware package commands, expected outputs, and blockers.
 `package.ps1`); Windows also receives an `installer.nsi` script for the setup
 artifact. `lepusa bundle-package-plan` and `lepusa bundle-package-write` are the
 CLI wrappers.
+`BundleDistributionManifest::install_smoke_plan()` adds the post-install gate:
+installed runtime manifest path, required installed files, runtime dependency
+files when applicable, and `lepusa-runtime` commands for manifest inspection,
+dry-run launch planning, async bridge launch-session, bridge asset resolution,
+and optional GUI launch. `@lepusa/bundle.write_install_smoke_plan` writes
+`install-smoke-plan.json`, `install-smoke-checklist.md`, and
+`install-smoke.sh`/`install-smoke.ps1`; `lepusa bundle-install-smoke-plan` and
+`lepusa bundle-install-smoke-write` expose the same contract for clean-machine
+validation.
 For app authors, `lepusa publish-plan [target] --project lepusa.json` combines
-the strict verifier, `bundle-write`, release handoff, package handoff, and final
-package script invocation into one target-aware checklist without writing files.
+the strict verifier, `bundle-write`, release handoff, package handoff, final
+package script invocation, and install-smoke handoff into one target-aware
+checklist without writing files.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

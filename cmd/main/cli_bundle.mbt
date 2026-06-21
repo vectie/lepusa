@@ -110,6 +110,56 @@ async fn render_bundle_package_write_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bundle_install_smoke_plan_async(
+  args : Array[String],
+) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-install-smoke-plan") {
+    Ok(manifest) => {
+      let values = positional_args(args)
+      let install_root = values.get(1).unwrap_or("_build/lepusa-install-smoke")
+      let plan = manifest.install_smoke_plan(install_root~)
+      if has_flag(args, "--json") {
+        ok(plan.to_json() + "\n")
+      } else {
+        ok(plan.summary())
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
+async fn render_bundle_install_smoke_write_async(
+  args : Array[String],
+) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-install-smoke-write") {
+    Ok(manifest) => {
+      let values = positional_args(args)
+      let out_dir = values.get(1).unwrap_or("_build/lepusa-install-smoke-plan")
+      let install_root = values.get(2).unwrap_or("_build/lepusa-install-smoke")
+      let plan = manifest.install_smoke_plan(install_root~)
+      match @bundle.write_install_smoke_plan(plan, out_dir) {
+        Ok(result) => {
+          let output = if has_flag(args, "--json") {
+            result.to_json() + "\n"
+          } else {
+            render_bundle_install_smoke_write_summary(result)
+          }
+          if result.ready() {
+            ok(output)
+          } else {
+            fail(output)
+          }
+        }
+        Err(problems) =>
+          fail(render_problems("Lepusa bundle install smoke write", problems))
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
 async fn read_bundle_distribution_manifest(
   args : Array[String],
   command : String,
@@ -265,6 +315,24 @@ fn render_bundle_package_write_summary(
   "package-kind: \{plan.package_kind()}\n" +
   "commands: \{plan.commands().length()}\n" +
   "outputs: \{plan.outputs().length()}\n" +
+  "files: \{result.files().length()}\n" +
+  "plan: \{result.plan_path()}\n" +
+  "checklist: \{result.checklist_path()}\n" +
+  "script: \{result.script_path()}\n"
+}
+
+///|
+fn render_bundle_install_smoke_write_summary(
+  result : @bundle.BundleInstallSmokeWriteResult,
+) -> String {
+  let plan = result.plan()
+  "Lepusa bundle install smoke write\n" +
+  "root: \{result.root()}\n" +
+  "ready: \{result.ready().to_string()}\n" +
+  "install-root: \{plan.install_root()}\n" +
+  "runtime-manifest: \{plan.runtime_manifest_path()}\n" +
+  "commands: \{plan.commands().length()}\n" +
+  "checks: \{plan.checks().length()}\n" +
   "files: \{result.files().length()}\n" +
   "plan: \{result.plan_path()}\n" +
   "checklist: \{result.checklist_path()}\n" +

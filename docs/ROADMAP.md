@@ -240,7 +240,9 @@
   - `lepusa bundle-release-plan [--json]`: lowers packaged distribution metadata into ordered release steps for dependency validation, resource staging, signing, and artifact collection.
   - `lepusa bundle-package-plan [--json]`: lowers packaged distribution metadata into target-aware packaging commands, expected outputs, and blockers.
   - `lepusa bundle-package-write [--json]`: writes `package-plan.json`, `package-checklist.md`, and a target package script for release automation.
-  - `lepusa publish-plan [--json]`: derives the target-aware third-party project ship path from `lepusa.json`, including strict verification, bundle materialization, distribution manifest path, release/package handoff roots, final package script command, and release/package readiness.
+  - `lepusa bundle-install-smoke-plan [--json]`: lowers packaged distribution metadata into clean-machine installed-file checks and `lepusa-runtime` smoke commands.
+  - `lepusa bundle-install-smoke-write [--json]`: writes `install-smoke-plan.json`, `install-smoke-checklist.md`, and a target install-smoke script for post-install validation.
+  - `lepusa publish-plan [--json]`: derives the target-aware third-party project ship path from `lepusa.json`, including strict verification, bundle materialization, distribution manifest path, release/package/install-smoke handoff roots, final package script command, and release/package/install-smoke readiness.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.
@@ -371,6 +373,12 @@ desktop core is reliable.
   `package-plan.json`, `package-checklist.md`, and `package.sh`/`package.ps1`
   handoff artifacts so release automation has one package contract before it
   executes external signing or installer tools.
+- `BundleInstallSmokePlan` now lowers the same distribution manifest into a
+  post-install validation contract: installed runtime manifest, required bundle
+  files, runtime dependency files when they have paths, runtime dry-run,
+  async-bridge launch-session, bridge asset resolution, and optional GUI launch.
+  `bundle-install-smoke-write` persists that contract as JSON, checklist, and a
+  target shell/PowerShell script for clean-machine validation.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof
