@@ -38,6 +38,11 @@ test "linux backend exposes webkitgtk descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  assert_true(
+    capability
+    .async_bridge_drain_message()
+    .contains("async MoonBit-to-native callback ABI"),
+  )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
       @runtime.NativeEvaluationScript::new(
@@ -195,7 +200,9 @@ test "linux launch reports async bridge scheduler requirement" {
         Ok(result) =>
           match result.status() {
             RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
+              assert_true(
+                message.contains("async MoonBit-to-native callback ABI"),
+              )
             _ => abort("unexpected Linux async launch status")
           }
         Err(_) => abort("unexpected invalid Linux async launch plan")
@@ -212,7 +219,9 @@ test "linux launch reports async bridge scheduler requirement" {
         Ok(result) =>
           match result.status() {
             RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
+              assert_true(
+                message.contains("async MoonBit-to-native callback ABI"),
+              )
             _ => abort("unexpected Linux bundled async launch status")
           }
         Err(_) => abort("unexpected invalid Linux bundled async launch plan")

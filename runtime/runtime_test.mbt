@@ -907,6 +907,12 @@ test "native launch capability gates webview and async bridge loops" {
     .unwrap()
     .contains("1 async command route"),
   )
+  assert_true(
+    sync_only
+    .launch_blocker("Test", async_scheduler)
+    .unwrap()
+    .contains("native async bridge drain/evaluate support is unavailable"),
+  )
   let unavailable = NativeLaunchCapability::new(
     webview_creation=false,
     async_bridge_drain=false,
@@ -926,6 +932,21 @@ test "native launch capability gates webview and async bridge loops" {
     no_sync_bridge.launch_blocker("Test", sync_scheduler).unwrap(),
     "sync bridge missing",
   )
+  let custom_async_blocker = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=false,
+    async_bridge_drain_message="event loop callback missing",
+  )
+  assert_eq(
+    custom_async_blocker.async_bridge_drain_message(),
+    "event loop callback missing",
+  )
+  assert_true(
+    custom_async_blocker
+    .launch_blocker("Test", async_scheduler)
+    .unwrap()
+    .contains("event loop callback missing"),
+  )
   let async_capable = NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=true,
@@ -942,6 +963,7 @@ test "native launch capability gates webview and async bridge loops" {
     .to_json()
     .contains("\"asyncBridgeDrainStrategy\":\"event-loop\""),
   )
+  assert_true(async_capable.to_json().contains("\"asyncBridgeDrainMessage\""))
   assert_true(async_capable.to_json().contains("\"maxWebviews\":1"))
   let multi_window_capable = NativeLaunchCapability::new(
     webview_creation=true,

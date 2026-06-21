@@ -176,6 +176,7 @@ pub fn NativeBackendPreflight::launch_capability(
     async_bridge_drain=self.async_bridge_drain,
     webview_creation_message=self.problem(),
     sync_bridge_evaluate_message=self.sync_bridge_evaluate_message,
+    async_bridge_drain_message=self.async_bridge_drain_message,
   )
 }
 

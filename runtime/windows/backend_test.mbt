@@ -69,7 +69,10 @@ test "windows backend exposes webview2 descriptor" {
     preflight.sync_bridge_evaluate_problem().unwrap().contains("WebView2"),
   )
   assert_true(
-    preflight.async_bridge_drain_problem().unwrap().contains("WebView2"),
+    preflight
+    .async_bridge_drain_problem()
+    .unwrap()
+    .contains("event-loop callback ABI"),
   )
   assert_true(preflight.to_json().contains("\"canLaunch\":false"))
   assert_true(preflight.to_json().contains("\"problemKind\":"))
@@ -82,6 +85,9 @@ test "windows backend exposes webview2 descriptor" {
   assert_false(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
   assert_true(capability.webview_creation_message().contains("WebView2"))
+  assert_true(
+    capability.async_bridge_drain_message().contains("event-loop callback ABI"),
+  )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
       @runtime.NativeEvaluationScript::new(

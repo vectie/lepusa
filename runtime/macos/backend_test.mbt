@@ -103,6 +103,11 @@ test "macos backend exposes wkwebview descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  assert_true(
+    capability
+    .async_bridge_drain_message()
+    .contains("async MoonBit-to-native callback ABI"),
+  )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
       @runtime.NativeEvaluationScript::new(
@@ -328,6 +333,12 @@ test "macos backend marks async bridge routes" {
             .unwrap()
             .contains("1 async command route"),
           )
+          assert_true(
+            plan
+            .launch_blocker_with_capability("macOS", launch_capability())
+            .unwrap()
+            .contains("async MoonBit-to-native callback ABI"),
+          )
         }
         Err(_) => abort("unexpected invalid async macOS run plan")
       }
@@ -343,7 +354,9 @@ test "macos open-window launch reports unsupported async bridge routes" {
         Ok(result) =>
           match result.status() {
             RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
+              assert_true(
+                message.contains("async MoonBit-to-native callback ABI"),
+              )
             _ => abort("unexpected async macOS launch status")
           }
         Err(_) => abort("unexpected invalid async macOS run")

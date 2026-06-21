@@ -122,8 +122,10 @@
   declare `NativeLaunchCapability` for WebView creation, sync bridge response
   evaluation, and async bridge drain/evaluate support; scheduler, launch
   capability, and bridge-loop JSON now expose the concrete async drain strategy
-  (`unavailable` or `event-loop`) so platform readiness can distinguish the
-  callback shape from the remaining native pump; source and packaged run plans
+  (`unavailable` or `event-loop`) plus a platform-specific
+  `asyncBridgeDrainMessage`, so readiness can distinguish route scheduling from
+  the remaining async MoonBit-to-native callback ABI; source and packaged run
+  plans
   now build capability-aware launch sessions for open-window runners before
   they pass the queue-backed handoff callback into native message handlers;
   source and bundled bridge adapters now expose a structured

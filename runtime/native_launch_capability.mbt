@@ -6,6 +6,7 @@ pub struct NativeLaunchCapability {
   max_webviews : Int
   webview_creation_message : String
   sync_bridge_evaluate_message : String
+  async_bridge_drain_message : String
 } derive(Debug, Eq)
 
 ///|
@@ -16,6 +17,7 @@ pub fn NativeLaunchCapability::new(
   max_webviews? : Int = 1,
   webview_creation_message? : String = "native WebView creation loop is unavailable",
   sync_bridge_evaluate_message? : String = "native sync bridge response evaluation is unavailable",
+  async_bridge_drain_message? : String = "native async bridge drain/evaluate support is unavailable",
 ) -> NativeLaunchCapability {
   {
     webview_creation,
@@ -24,6 +26,7 @@ pub fn NativeLaunchCapability::new(
     max_webviews,
     webview_creation_message,
     sync_bridge_evaluate_message,
+    async_bridge_drain_message,
   }
 }
 
@@ -70,6 +73,13 @@ pub fn NativeLaunchCapability::sync_bridge_evaluate_message(
 }
 
 ///|
+pub fn NativeLaunchCapability::async_bridge_drain_message(
+  self : NativeLaunchCapability,
+) -> String {
+  self.async_bridge_drain_message
+}
+
+///|
 pub fn NativeLaunchCapability::bridge_mode(
   self : NativeLaunchCapability,
 ) -> NativeBridgeSchedulerMode {
@@ -98,10 +108,19 @@ pub fn NativeLaunchCapability::launch_blocker(
   } else if !scheduler.sync_routes().is_empty() && !self.sync_bridge_evaluate {
     Some(self.sync_bridge_evaluate_message)
   } else if scheduler.requires_async_dispatch() && !self.async_bridge_drain {
-    Some(scheduler.async_bridge_launch_message(platform_name))
+    Some(self.async_bridge_launch_message(platform_name, scheduler))
   } else {
     None
   }
+}
+
+///|
+pub fn NativeLaunchCapability::async_bridge_launch_message(
+  self : NativeLaunchCapability,
+  platform_name : String,
+  scheduler : NativeBridgeScheduler,
+) -> String {
+  "\{scheduler.async_bridge_launch_message(platform_name)}: \{self.async_bridge_drain_message}"
 }
 
 ///|
@@ -138,7 +157,8 @@ pub fn NativeLaunchCapability::to_json(self : NativeLaunchCapability) -> String 
     "\"maxWebviews\":\{self.max_webviews},",
     "\"bridgeMode\":\{self.bridge_mode().name().json_string()},",
     "\"webviewCreationMessage\":\{self.webview_creation_message.json_string()},",
-    "\"syncBridgeEvaluateMessage\":\{self.sync_bridge_evaluate_message.json_string()}",
+    "\"syncBridgeEvaluateMessage\":\{self.sync_bridge_evaluate_message.json_string()},",
+    "\"asyncBridgeDrainMessage\":\{self.async_bridge_drain_message.json_string()}",
     "}",
   ].join("")
 }

@@ -450,14 +450,17 @@ pub struct NativeLaunchCapability {
   max_webviews : Int
   webview_creation_message : String
   sync_bridge_evaluate_message : String
+  async_bridge_drain_message : String
 } derive(Eq, @debug.Debug)
 pub fn NativeLaunchCapability::async_bridge_drain(Self) -> Bool
+pub fn NativeLaunchCapability::async_bridge_drain_message(Self) -> String
 pub fn NativeLaunchCapability::async_bridge_drain_strategy(Self) -> NativeBridgeDrainStrategy
+pub fn NativeLaunchCapability::async_bridge_launch_message(Self, String, NativeBridgeScheduler) -> String
 pub fn NativeLaunchCapability::bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchCapability::can_launch(Self, NativeBridgeScheduler) -> Bool
 pub fn NativeLaunchCapability::launch_blocker(Self, String, NativeBridgeScheduler) -> String?
 pub fn NativeLaunchCapability::max_webviews(Self) -> Int
-pub fn NativeLaunchCapability::new(webview_creation~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, max_webviews? : Int, webview_creation_message? : String, sync_bridge_evaluate_message? : String) -> Self
+pub fn NativeLaunchCapability::new(webview_creation~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, max_webviews? : Int, webview_creation_message? : String, sync_bridge_evaluate_message? : String, async_bridge_drain_message? : String) -> Self
 pub fn NativeLaunchCapability::sync_bridge_evaluate(Self) -> Bool
 pub fn NativeLaunchCapability::sync_bridge_evaluate_message(Self) -> String
 pub fn NativeLaunchCapability::to_json(Self) -> String

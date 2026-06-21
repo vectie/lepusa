@@ -241,10 +241,12 @@ through `launchCapability`, `backendPreflight`, `targetCanLaunch`, and
 `targetLaunchBlocker`. Passing `--async-bridge` records an async-capable request;
 platforms that cannot drain async completions keep the effective session
 sync-only, report `bridgeModeGranted: false`, and expose a `drainStrategy` of
-`unavailable`. Async-capable sessions advertise an `event-loop` drain strategy:
-the native message handler may queue deferred work synchronously, then the host
-event loop must drain and evaluate completion scripts after leaving the WebView
-callback.
+`unavailable`. The target launch blocker now includes the backend's concrete
+`asyncBridgeDrainMessage`, so macOS/Linux report the missing async
+MoonBit-to-native callback ABI separately from route scheduling metadata.
+Async-capable sessions advertise an `event-loop` drain strategy: the native
+message handler may queue deferred work synchronously, then the host event loop
+must drain and evaluate completion scripts after leaving the WebView callback.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
@@ -898,8 +900,11 @@ WKUserScript, together with a native hook bootstrap and
 responses. Native launch paths refuse async bridge routes with an explicit
 scheduler requirement until a backend launch capability declares that its event
 loop can drain queued completions and evaluate the resulting scripts without
-blocking the WebView callback. Launch-session JSON also carries
-`asyncBridgeExecutor`, which names `NativeRuntime::bridge_async_dispatch_callback`
+blocking the WebView callback. That launch capability now carries an
+`asyncBridgeDrainMessage` field, which distinguishes the final async callback
+ABI work from WebView dependency or creation-loop failures. Launch-session JSON
+also carries `asyncBridgeExecutor`, which names
+`NativeRuntime::bridge_async_dispatch_callback`
 and its UTF-8 bridge-message to JavaScript-callback-script byte contract. The
 same `bridgeScheduler` field appears in source and bundled bootstrap JSON so
 platform loops and CLI diagnostics read one launch policy.

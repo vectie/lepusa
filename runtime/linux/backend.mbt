@@ -34,6 +34,7 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
     async_bridge_drain=false,
     webview_creation_message="Linux WebKitGTK launch loop is unavailable",
     sync_bridge_evaluate_message="Linux WebKitGTK sync bridge response evaluation is unavailable",
+    async_bridge_drain_message="Linux WebKitGTK async bridge drain/evaluate support needs an async MoonBit-to-native callback ABI",
   )
 }
 
