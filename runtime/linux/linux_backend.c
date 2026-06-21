@@ -31,6 +31,7 @@ static LepusaLinuxServiceProcess lepusa_linux_service_processes[64];
 static volatile sig_atomic_t lepusa_linux_service_signal_handlers_installed = 0;
 
 typedef int (*LepusaGtkInitCheck)(int *, char ***);
+typedef void *(*LepusaGtkSettingsGetDefault)(void);
 typedef void *(*LepusaGtkWindowNew)(int);
 typedef void (*LepusaGtkWindowSetTitle)(void *, const char *);
 typedef void (*LepusaGtkWindowSetDefaultSize)(void *, int, int);
@@ -50,6 +51,7 @@ typedef void (*LepusaGtkWindowUnfullscreen)(void *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
+typedef void (*LepusaGObjectSet)(void *, const char *, ...);
 typedef void (*LepusaGObjectUnref)(void *);
 typedef void *(*LepusaGMemoryInputStreamNewFromData)(
   const void *,
@@ -112,6 +114,7 @@ typedef struct {
   void *jsc;
   void *webkit;
   LepusaGtkInitCheck gtk_init_check;
+  LepusaGtkSettingsGetDefault gtk_settings_get_default;
   LepusaGtkWindowNew gtk_window_new;
   LepusaGtkWindowSetTitle gtk_window_set_title;
   LepusaGtkWindowSetDefaultSize gtk_window_set_default_size;
@@ -131,6 +134,7 @@ typedef struct {
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
+  LepusaGObjectSet g_object_set;
   LepusaGObjectUnref g_object_unref;
   LepusaGMemoryInputStreamNewFromData g_memory_input_stream_new_from_data;
   LepusaGSignalConnectData g_signal_connect_data;
@@ -239,6 +243,7 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   }
   int ok = 1;
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_init_check", (void **)&api->gtk_init_check);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_settings_get_default", (void **)&api->gtk_settings_get_default);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_new", (void **)&api->gtk_window_new);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_title", (void **)&api->gtk_window_set_title);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_set_default_size", (void **)&api->gtk_window_set_default_size);
@@ -258,6 +263,7 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
+  ok = ok && lepusa_linux_load_symbol(api->gobject, "g_object_set", (void **)&api->g_object_set);
   ok = ok && lepusa_linux_load_symbol(api->gobject, "g_object_unref", (void **)&api->g_object_unref);
   ok = ok && lepusa_linux_load_symbol(api->gio, "g_memory_input_stream_new_from_data", (void **)&api->g_memory_input_stream_new_from_data);
   ok = ok && lepusa_linux_load_symbol(api->gobject, "g_signal_connect_data", (void **)&api->g_signal_connect_data);
@@ -1231,6 +1237,71 @@ static int lepusa_linux_app_shell_action_equals(
      memcmp(action + 4, name, name_len) == 0);
 }
 
+static int lepusa_linux_range_contains_text(
+  const char *value,
+  int32_t value_len,
+  const char *needle
+) {
+  if (value == NULL || value_len <= 0 || needle == NULL) {
+    return 0;
+  }
+  size_t needle_len = strlen(needle);
+  if (needle_len == 0 || value_len < (int32_t)needle_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i <= value_len - (int32_t)needle_len; i++) {
+    if (memcmp(value + i, needle, needle_len) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int lepusa_linux_theme_payload_prefers_dark(
+  const char *payload,
+  int32_t payload_len,
+  int *dark_out
+) {
+  if (dark_out == NULL) {
+    return 0;
+  }
+  if (payload_len <= 0 ||
+      lepusa_linux_range_contains_text(payload, payload_len, "system") ||
+      lepusa_linux_range_contains_text(payload, payload_len, "light")) {
+    *dark_out = 0;
+    return 1;
+  }
+  if (lepusa_linux_range_contains_text(payload, payload_len, "dark")) {
+    *dark_out = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static void lepusa_linux_apply_app_theme(
+  LepusaLinuxBridgeContext *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  int prefer_dark = 0;
+  if (context == NULL ||
+      context->api == NULL ||
+      context->api->gtk_settings_get_default == NULL ||
+      context->api->g_object_set == NULL ||
+      !lepusa_linux_theme_payload_prefers_dark(payload, payload_len, &prefer_dark)) {
+    return;
+  }
+  void *settings = context->api->gtk_settings_get_default();
+  if (settings != NULL) {
+    context->api->g_object_set(
+      settings,
+      "gtk-application-prefer-dark-theme",
+      prefer_dark,
+      NULL
+    );
+  }
+}
+
 static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1259,6 +1330,10 @@ static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
     if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "exit") ||
         lepusa_linux_app_shell_action_equals(record.action, record.action_len, "restart")) {
       lepusa_linux_close_all_windows(context);
+      continue;
+    }
+    if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "setTheme")) {
+      lepusa_linux_apply_app_theme(context, record.url, record.url_len);
       continue;
     }
     LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(

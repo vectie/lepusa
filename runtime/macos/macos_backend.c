@@ -1284,6 +1284,83 @@ static int lepusa_app_shell_action_equals(
      memcmp(action + 4, name, name_len) == 0);
 }
 
+static int lepusa_range_contains_text(
+  const char *value,
+  int32_t value_len,
+  const char *needle
+) {
+  if (value == NULL || value_len <= 0 || needle == NULL) {
+    return 0;
+  }
+  size_t needle_len = strlen(needle);
+  if (needle_len == 0 || value_len < (int32_t)needle_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i <= value_len - (int32_t)needle_len; i++) {
+    if (memcmp(value + i, needle, needle_len) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int lepusa_theme_payload_prefers_dark(
+  const char *payload,
+  int32_t payload_len,
+  int *dark_out
+) {
+  if (dark_out == NULL) {
+    return 0;
+  }
+  if (payload_len <= 0 ||
+      lepusa_range_contains_text(payload, payload_len, "system") ||
+      lepusa_range_contains_text(payload, payload_len, "light")) {
+    *dark_out = 0;
+    return 1;
+  }
+  if (lepusa_range_contains_text(payload, payload_len, "dark")) {
+    *dark_out = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static void lepusa_apply_app_theme(
+  LepusaBridgeContext *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  int prefer_dark = 0;
+  if (context == NULL ||
+      !lepusa_theme_payload_prefers_dark(payload, payload_len, &prefer_dark)) {
+    return;
+  }
+  void *appearance = NULL;
+  if (payload_len > 0 &&
+      !lepusa_range_contains_text(payload, payload_len, "system")) {
+    const char *appearance_name = prefer_dark ?
+      "NSAppearanceNameDarkAqua" :
+      "NSAppearanceNameAqua";
+    appearance = ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
+      lepusa_cls("NSAppearance"),
+      lepusa_sel("appearanceNamed:"),
+      lepusa_ns_string_from_range(
+        appearance_name,
+        (int32_t)strlen(appearance_name)
+      )
+    );
+  }
+  void *application = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+  if (application != NULL) {
+    lepusa_msg_void_id(application, "setAppearance:", appearance);
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (context->windows[i].window != NULL) {
+      lepusa_msg_void_id(context->windows[i].window, "setAppearance:", appearance);
+    }
+  }
+}
+
 static void lepusa_apply_desktop_shell_from_handoff_packet(
   LepusaBridgeContext *context,
   moonbit_bytes_t packet
@@ -1308,6 +1385,10 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     if (lepusa_app_shell_action_equals(record.action, record.action_len, "exit") ||
         lepusa_app_shell_action_equals(record.action, record.action_len, "restart")) {
       lepusa_close_all_windows(context);
+      continue;
+    }
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "setTheme")) {
+      lepusa_apply_app_theme(context, record.url, record.url_len);
       continue;
     }
     LepusaWindowSlot *slot = lepusa_find_window_slot(

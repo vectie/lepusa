@@ -129,6 +129,14 @@ test "windows backend exposes webview2 descriptor" {
     ),
     @runtime.NativeExecutableOperation::desktop_shell(
       @runtime.NativeDesktopShellOperation::new(
+        domain="app",
+        action="setTheme",
+        window_label="main",
+        payload="\"system\"",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
         domain="menu",
         action="setWindowMenu",
         target="window",
@@ -136,13 +144,14 @@ test "windows backend exposes webview2 descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 4)
+  assert_eq(execution.executed_count(), 5)
   assert_eq(execution.skipped_count(), 1)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[1].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[2].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[3].status() is NativeOperationExecuted)
-  match execution.outcomes()[4].status() {
+  assert_true(execution.outcomes()[4].status() is NativeOperationExecuted)
+  match execution.outcomes()[5].status() {
     NativeOperationSkipped(message) =>
       assert_true(message.contains("menu.setWindowMenu"))
     _ => abort("expected native menu renderer to be skipped")

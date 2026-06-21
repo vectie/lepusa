@@ -141,6 +141,14 @@ test "macos backend exposes wkwebview descriptor" {
     ),
     @runtime.NativeExecutableOperation::desktop_shell(
       @runtime.NativeDesktopShellOperation::new(
+        domain="app",
+        action="setTheme",
+        window_label="main",
+        payload="\"dark\"",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
         domain="menu",
         action="setAppMenu",
         target="app",
@@ -148,9 +156,10 @@ test "macos backend exposes wkwebview descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 5)
+  assert_eq(execution.executed_count(), 6)
   assert_eq(execution.skipped_count(), 1)
-  match execution.outcomes()[5].status() {
+  assert_true(execution.outcomes()[5].status() is NativeOperationExecuted)
+  match execution.outcomes()[6].status() {
     NativeOperationSkipped(message) =>
       assert_true(message.contains("menu.setAppMenu"))
     _ => abort("expected native menu renderer to be skipped")

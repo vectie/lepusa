@@ -184,7 +184,7 @@
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation, window-control, and desktop-shell
-  support, with app show/hide/exit/restart reported as executed and menu/tray
+  support, with app show/hide/setTheme/exit/restart reported as executed and menu/tray
   renderer work reported as skipped until concrete native renderers land; native
   loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
@@ -304,7 +304,7 @@ Stabilize the cross-platform core set first:
 - tray/menu/app shell: initial status icon/menu/app control contracts,
   delegated sync state handlers, typed `desktop-shell` executable operations
   from approved bridge dispatches, native macOS/Linux/Windows packet consumers
-  for app show/hide/exit/restart, and honest skipped execution reports for
+  for app show/hide/setTheme/exit/restart, and honest skipped execution reports for
   menu/tray renderer work exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist

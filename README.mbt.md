@@ -750,7 +750,7 @@ successful plugin responses into a typed `desktop-shell` executable operation.
 This gives platform menu, tray, dock, and app-shell implementations one stable
 native-operation contract while MoonBit keeps permission checks and payload
 validation at the official plugin boundary. The macOS, Linux, and Windows loops
-consume those records from bridge packets; app show/hide/exit/restart are
+consume those records from bridge packets; app show/hide/setTheme/exit/restart are
 applied in the native loop, and menu/tray records are accepted through the same
 operation path for concrete OS shell renderers. Platform operation reports now
 mark app window lifecycle shell operations as executed and leave menu/tray

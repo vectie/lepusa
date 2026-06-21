@@ -651,7 +651,7 @@ The operation records the desktop domain, action, target, source window label,
 and validated payload so platform shell consumers can attach menus, tray state,
 dock/app controls, and menu-click plumbing without bypassing the shared
 capability and registry boundary. Native macOS, Linux, and Windows loops parse
-those records from `lepusa-ops-v3` packets; app show/hide/exit/restart execute
+those records from `lepusa-ops-v3` packets; app show/hide/setTheme/exit/restart execute
 inside the event loop, while menu/tray records are consumed as accepted shell
 records but reported as skipped renderer work until native menu/tray renderers
 land.

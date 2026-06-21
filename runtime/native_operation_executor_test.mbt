@@ -165,12 +165,23 @@ test "native desktop shell platform status is honest about renderer coverage" {
     domain="app",
     action="app.setTheme",
     window_label="main",
+    payload="\"dark\"",
   )
-  assert_false(app_theme.native_app_window_action())
-  match native_desktop_shell_platform_status(app_theme, platform_name="Test") {
+  assert_true(app_theme.native_app_window_action())
+  assert_true(
+    native_desktop_shell_platform_status(app_theme, platform_name="Test")
+    is NativeOperationExecuted,
+  )
+  let app_dock = NativeDesktopShellOperation::new(
+    domain="app",
+    action="setDockVisibility",
+    window_label="main",
+  )
+  assert_false(app_dock.native_app_window_action())
+  match native_desktop_shell_platform_status(app_dock, platform_name="Test") {
     NativeOperationSkipped(message) =>
-      assert_true(message.contains("app.setTheme"))
-    _ => abort("expected unsupported app shell action to be skipped")
+      assert_true(message.contains("app.setDockVisibility"))
+    _ => abort("expected unsupported app dock action to be skipped")
   }
 }
 

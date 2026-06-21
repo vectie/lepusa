@@ -170,10 +170,12 @@ pub fn NativeDesktopShellOperation::native_app_window_action(
     self.action() == "hide" ||
     self.action() == "exit" ||
     self.action() == "restart" ||
+    self.action() == "setTheme" ||
     self.action() == "app.show" ||
     self.action() == "app.hide" ||
     self.action() == "app.exit" ||
-    self.action() == "app.restart"
+    self.action() == "app.restart" ||
+    self.action() == "app.setTheme"
   )
 }
 

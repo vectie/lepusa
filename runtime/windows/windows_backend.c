@@ -13,6 +13,13 @@ typedef moonbit_bytes_t (*LepusaWindowsBytesCallback)(void *, moonbit_bytes_t);
 #include <windows.h>
 #include <objbase.h>
 
+typedef HRESULT (WINAPI *LepusaWindowsDwmSetWindowAttribute)(
+  HWND,
+  DWORD,
+  LPCVOID,
+  DWORD
+);
+
 typedef struct {
   char *name;
   HANDLE process;
@@ -3118,6 +3125,95 @@ static int lepusa_windows_app_shell_action_equals(
      memcmp(action + 4, name, name_len) == 0);
 }
 
+static int lepusa_windows_range_contains_text(
+  const char *value,
+  int32_t value_len,
+  const char *needle
+) {
+  if (value == NULL || value_len <= 0 || needle == NULL) {
+    return 0;
+  }
+  size_t needle_len = strlen(needle);
+  if (needle_len == 0 || value_len < (int32_t)needle_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i <= value_len - (int32_t)needle_len; i++) {
+    if (memcmp(value + i, needle, needle_len) == 0) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static int lepusa_windows_theme_payload_prefers_dark(
+  const char *payload,
+  int32_t payload_len,
+  int *dark_out
+) {
+  if (dark_out == NULL) {
+    return 0;
+  }
+  if (payload_len <= 0 ||
+      lepusa_windows_range_contains_text(payload, payload_len, "system") ||
+      lepusa_windows_range_contains_text(payload, payload_len, "light")) {
+    *dark_out = 0;
+    return 1;
+  }
+  if (lepusa_windows_range_contains_text(payload, payload_len, "dark")) {
+    *dark_out = 1;
+    return 1;
+  }
+  return 0;
+}
+
+static void lepusa_windows_apply_window_dark_mode(HWND hwnd, int prefer_dark) {
+  if (hwnd == NULL) {
+    return;
+  }
+  HMODULE dwmapi = LoadLibraryA("dwmapi.dll");
+  if (dwmapi == NULL) {
+    return;
+  }
+  LepusaWindowsDwmSetWindowAttribute set_window_attribute =
+    (LepusaWindowsDwmSetWindowAttribute)GetProcAddress(
+      dwmapi,
+      "DwmSetWindowAttribute"
+    );
+  if (set_window_attribute != NULL) {
+    BOOL enabled = prefer_dark ? TRUE : FALSE;
+    HRESULT result = set_window_attribute(
+      hwnd,
+      20,
+      &enabled,
+      sizeof(enabled)
+    );
+    if (FAILED(result)) {
+      (void)set_window_attribute(hwnd, 19, &enabled, sizeof(enabled));
+    }
+  }
+  FreeLibrary(dwmapi);
+}
+
+static void lepusa_windows_apply_app_theme(
+  LepusaWindowsWebView2Context *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  int prefer_dark = 0;
+  if (context == NULL ||
+      !lepusa_windows_theme_payload_prefers_dark(payload, payload_len, &prefer_dark)) {
+    return;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (context->windows[i].hwnd != NULL) {
+      lepusa_windows_apply_window_dark_mode(
+        context->windows[i].hwnd,
+        prefer_dark
+      );
+    }
+  }
+}
+
 static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
   LepusaWindowsWebView2Context *context,
   moonbit_bytes_t packet
@@ -3145,6 +3241,10 @@ static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
     if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "exit") ||
         lepusa_windows_app_shell_action_equals(record.action, record.action_len, "restart")) {
       lepusa_windows_close_all_windows(context);
+      continue;
+    }
+    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "setTheme")) {
+      lepusa_windows_apply_app_theme(context, record.url, record.url_len);
       continue;
     }
     LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
