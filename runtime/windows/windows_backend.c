@@ -8,6 +8,7 @@ typedef moonbit_bytes_t (*LepusaWindowsBytesCallback)(void *, moonbit_bytes_t);
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <wchar.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -3112,6 +3113,48 @@ static void lepusa_windows_close_all_windows(
   }
 }
 
+static int lepusa_windows_spawn_current_process(void) {
+  LPWSTR command_line = GetCommandLineW();
+  if (command_line == NULL || command_line[0] == L'\0') {
+    return 0;
+  }
+  size_t length = wcslen(command_line);
+  wchar_t *mutable_command_line =
+    (wchar_t *)calloc(length + 1, sizeof(wchar_t));
+  if (mutable_command_line == NULL) {
+    return 0;
+  }
+  memcpy(
+    mutable_command_line,
+    command_line,
+    (length + 1) * sizeof(wchar_t)
+  );
+  STARTUPINFOW startup;
+  PROCESS_INFORMATION process;
+  memset(&startup, 0, sizeof(startup));
+  memset(&process, 0, sizeof(process));
+  startup.cb = sizeof(startup);
+  BOOL ok = CreateProcessW(
+    NULL,
+    mutable_command_line,
+    NULL,
+    NULL,
+    FALSE,
+    0,
+    NULL,
+    NULL,
+    &startup,
+    &process
+  );
+  free(mutable_command_line);
+  if (!ok) {
+    return 0;
+  }
+  CloseHandle(process.hThread);
+  CloseHandle(process.hProcess);
+  return 1;
+}
+
 static int lepusa_windows_app_shell_action_equals(
   const char *action,
   int32_t action_len,
@@ -3238,8 +3281,13 @@ static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
         )) {
       continue;
     }
-    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "exit") ||
-        lepusa_windows_app_shell_action_equals(record.action, record.action_len, "restart")) {
+    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "restart")) {
+      if (lepusa_windows_spawn_current_process()) {
+        lepusa_windows_close_all_windows(context);
+      }
+      continue;
+    }
+    if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "exit")) {
       lepusa_windows_close_all_windows(context);
       continue;
     }

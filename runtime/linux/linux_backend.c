@@ -1224,6 +1224,112 @@ static void lepusa_linux_close_all_windows(LepusaLinuxBridgeContext *context) {
   }
 }
 
+static void lepusa_linux_free_process_argv(char **argv, int argc) {
+  if (argv == NULL) {
+    return;
+  }
+  for (int i = 0; i < argc; i++) {
+    free(argv[i]);
+  }
+  free(argv);
+}
+
+static int lepusa_linux_current_process_argv(char ***argv_out, int *argc_out) {
+  if (argv_out == NULL || argc_out == NULL) {
+    return 0;
+  }
+  FILE *file = fopen("/proc/self/cmdline", "rb");
+  if (file == NULL) {
+    return 0;
+  }
+  size_t capacity = 4096;
+  size_t length = 0;
+  char *buffer = (char *)malloc(capacity);
+  if (buffer == NULL) {
+    fclose(file);
+    return 0;
+  }
+  for (;;) {
+    if (length == capacity) {
+      if (capacity >= 1024 * 1024) {
+        free(buffer);
+        fclose(file);
+        return 0;
+      }
+      capacity *= 2;
+      char *grown = (char *)realloc(buffer, capacity);
+      if (grown == NULL) {
+        free(buffer);
+        fclose(file);
+        return 0;
+      }
+      buffer = grown;
+    }
+    size_t read = fread(buffer + length, 1, capacity - length, file);
+    length += read;
+    if (read == 0) {
+      break;
+    }
+  }
+  fclose(file);
+  if (length == 0 || buffer[0] == '\0') {
+    free(buffer);
+    return 0;
+  }
+  int argc = 0;
+  for (size_t i = 0; i < length; i++) {
+    if (buffer[i] == '\0') {
+      argc++;
+    }
+  }
+  if (buffer[length - 1] != '\0') {
+    argc++;
+  }
+  if (argc <= 0 || argc > 256) {
+    free(buffer);
+    return 0;
+  }
+  char **argv = (char **)calloc((size_t)argc + 1, sizeof(char *));
+  if (argv == NULL) {
+    free(buffer);
+    return 0;
+  }
+  int index = 0;
+  size_t start = 0;
+  for (size_t i = 0; i <= length && index < argc; i++) {
+    if (i == length || buffer[i] == '\0') {
+      size_t item_len = i - start;
+      argv[index] = (char *)malloc(item_len + 1);
+      if (argv[index] == NULL) {
+        free(buffer);
+        lepusa_linux_free_process_argv(argv, index);
+        return 0;
+      }
+      memcpy(argv[index], buffer + start, item_len);
+      argv[index][item_len] = '\0';
+      index++;
+      start = i + 1;
+    }
+  }
+  free(buffer);
+  argv[index] = NULL;
+  *argv_out = argv;
+  *argc_out = index;
+  return index > 0 && argv[0][0] != '\0';
+}
+
+static int lepusa_linux_spawn_current_process(void) {
+  char **argv = NULL;
+  int argc = 0;
+  if (!lepusa_linux_current_process_argv(&argv, &argc)) {
+    return 0;
+  }
+  pid_t pid = 0;
+  int result = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
+  lepusa_linux_free_process_argv(argv, argc);
+  return result == 0;
+}
+
 static int lepusa_linux_app_shell_action_equals(
   const char *action,
   int32_t action_len,
@@ -1327,8 +1433,13 @@ static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
         )) {
       continue;
     }
-    if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "exit") ||
-        lepusa_linux_app_shell_action_equals(record.action, record.action_len, "restart")) {
+    if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "restart")) {
+      if (lepusa_linux_spawn_current_process()) {
+        lepusa_linux_close_all_windows(context);
+      }
+      continue;
+    }
+    if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "exit")) {
       lepusa_linux_close_all_windows(context);
       continue;
     }

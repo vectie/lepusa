@@ -47,6 +47,7 @@ static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_ACCESSORY = 1;
 typedef void *(*LepusaMsgSendId)(void *, void *);
 typedef void *(*LepusaMsgSendIdId)(void *, void *, void *);
 typedef void *(*LepusaMsgSendIdCStr)(void *, void *, const char *);
+typedef void *(*LepusaMsgSendIdULong)(void *, void *, unsigned long);
 typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
 typedef void *(*LepusaMsgSendIdRectId)(void *, void *, LepusaRect, void *);
 typedef void *(*LepusaMsgSendIdRectStyle)(void *, void *, LepusaRect, unsigned long, unsigned long, int);
@@ -1272,6 +1273,78 @@ static void lepusa_close_all_windows(LepusaBridgeContext *context) {
   }
 }
 
+static void lepusa_free_process_argv(char **argv, int argc) {
+  if (argv == NULL) {
+    return;
+  }
+  for (int i = 0; i < argc; i++) {
+    free(argv[i]);
+  }
+  free(argv);
+}
+
+static int lepusa_current_process_argv(char ***argv_out, int *argc_out) {
+  if (argv_out == NULL || argc_out == NULL) {
+    return 0;
+  }
+  void *process_info = lepusa_msg_id(lepusa_cls("NSProcessInfo"), "processInfo");
+  void *arguments = process_info == NULL ?
+    NULL :
+    lepusa_msg_id(process_info, "arguments");
+  if (arguments == NULL) {
+    return 0;
+  }
+  unsigned long count = ((LepusaMsgSendULong)lepusa_objc_msg_send)(
+    arguments,
+    lepusa_sel("count")
+  );
+  if (count == 0 || count > 256) {
+    return 0;
+  }
+  char **argv = (char **)calloc((size_t)count + 1, sizeof(char *));
+  if (argv == NULL) {
+    return 0;
+  }
+  for (unsigned long i = 0; i < count; i++) {
+    void *item = ((LepusaMsgSendIdULong)lepusa_objc_msg_send)(
+      arguments,
+      lepusa_sel("objectAtIndex:"),
+      i
+    );
+    const char *text = item == NULL ?
+      NULL :
+      ((LepusaMsgSendCString)lepusa_objc_msg_send)(
+        item,
+        lepusa_sel("UTF8String")
+      );
+    if (text == NULL || text[0] == '\0') {
+      lepusa_free_process_argv(argv, (int)i);
+      return 0;
+    }
+    argv[i] = strdup(text);
+    if (argv[i] == NULL) {
+      lepusa_free_process_argv(argv, (int)i);
+      return 0;
+    }
+  }
+  argv[count] = NULL;
+  *argv_out = argv;
+  *argc_out = (int)count;
+  return 1;
+}
+
+static int lepusa_spawn_current_process(void) {
+  char **argv = NULL;
+  int argc = 0;
+  if (!lepusa_current_process_argv(&argv, &argc)) {
+    return 0;
+  }
+  pid_t pid = 0;
+  int result = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
+  lepusa_free_process_argv(argv, argc);
+  return result == 0;
+}
+
 static int lepusa_app_shell_action_equals(
   const char *action,
   int32_t action_len,
@@ -1427,8 +1500,13 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     if (!lepusa_range_equals(record.kind, record.kind_len, "desktop-shell")) {
       continue;
     }
-    if (lepusa_app_shell_action_equals(record.action, record.action_len, "exit") ||
-        lepusa_app_shell_action_equals(record.action, record.action_len, "restart")) {
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "restart")) {
+      if (lepusa_spawn_current_process()) {
+        lepusa_close_all_windows(context);
+      }
+      continue;
+    }
+    if (lepusa_app_shell_action_equals(record.action, record.action_len, "exit")) {
       lepusa_close_all_windows(context);
       continue;
     }
