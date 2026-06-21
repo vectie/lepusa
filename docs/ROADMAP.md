@@ -154,19 +154,21 @@
   source runtime hosts now retain the updated dynamic-window session for later
   asset resolution, and platform runners pass URL-routed asset resolvers into
   native loops instead of first-window-scoped resolvers;
-  bridge handoff packets now use `lepusa-ops-v2` records that carry the
-  dynamic `open-window` URL, title, size, bridge source, native hook, and asset
-  protocol needed by native WebView creation handlers;
+  bridge handoff packets now use `lepusa-ops-v3` records that carry the
+  dynamic `open-window` URL, title, size, resizable flag, bridge source, native
+  hook, and asset protocol needed by native WebView creation handlers; macOS
+  and Linux now consume those `open-window` records by creating labeled
+  WKWebView/WebKitGTK windows with target-window response evaluation and
+  URL-routed asset resolution;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; launch
-  capability now gates maximum live WebView count so current single-window
-  native loops do not silently run partial multi-window apps; native async bridge
-  drain/evaluate scheduling in the C/WebView loops, dynamic `open-window`
-  creation for true multi-window native loops, and the Windows WebView creation
-  loop remain.
+  capability still gates static multi-WebView launch plans so native loops do
+  not silently run partial initial-window apps; native async bridge
+  drain/evaluate scheduling in the C/WebView loops, static multi-initial-window
+  launch, and the Windows WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

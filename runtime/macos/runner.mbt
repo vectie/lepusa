@@ -25,8 +25,9 @@ pub struct MacOSRunResult {
 } derive(Debug, Eq)
 
 ///|
-#borrow(title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
+#borrow(label, title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
 extern "c" fn run_webview_with_bridge(
+  label : Bytes,
   title : Bytes,
   url : Bytes,
   initialization_script : Bytes,
@@ -362,6 +363,7 @@ fn run_plan(
       let dispatch = dispatch_for_window(packet.label_text())
       let resolve_asset = resolve_asset_for_window(packet.label_text())
       let exit_code = run_webview_with_bridge(
+        packet.label(),
         packet.title(),
         packet.load_url(),
         packet.initialization_script(),

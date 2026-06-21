@@ -17,8 +17,9 @@ pub struct WindowsBundledRunResult {
 } derive(Debug)
 
 ///|
-#borrow(title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
+#borrow(label, title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
 extern "c" fn native_run_webview(
+  label : Bytes,
   title : Bytes,
   url : Bytes,
   initialization_script : Bytes,
@@ -241,6 +242,7 @@ fn windows_open_window(
   let adapter = runtime.bridge_loop_adapter()
   let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
+    packet.label(),
     packet.title(),
     packet.load_url(),
     packet.initialization_script(),
@@ -292,6 +294,7 @@ fn windows_open_bundled_window(
   let adapter = manifest.bridge_loop_adapter()
   let callbacks = adapter.callbacks(window_label=packet.label_text())
   let exit_code = native_run_webview(
+    packet.label(),
     packet.title(),
     packet.load_url(),
     packet.initialization_script(),

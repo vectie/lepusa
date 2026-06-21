@@ -505,7 +505,7 @@ pub fn native_executable_operations_packet(
   operations : Array[NativeExecutableOperation],
 ) -> String {
   [
-    "lepusa-ops-v2\n",
+    "lepusa-ops-v3\n",
     "\{operations.length()}\n",
     operations.map(fn(operation) { operation.native_packet_record() }).join(""),
   ].join("")
@@ -525,6 +525,7 @@ fn NativeExecutableOperation::native_packet_record(
     x,
     y,
     fullscreen,
+    resizable,
     bridge_source,
     native_hook,
     asset_protocol,
@@ -540,21 +541,23 @@ fn NativeExecutableOperation::native_packet_record(
         "",
         "",
         "",
+        open_plan.window().resizable().to_string(),
         open_plan.bridge_source(),
         open_plan.native_hook(),
         open_plan.asset_protocol(),
       )
     NativeExecutableCloseWindow(close) =>
-      (close.window_label(), "", "", "", "", "", "", "", "", "", "", "")
+      (close.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableEvaluateScript(script) =>
-      (script.window_label(), "", "", "", "", "", "", "", "", "", "", "")
+      (script.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableDrainBridge(drain) =>
-      (drain.window_label(), "", "", "", "", "", "", "", "", "", "", "")
+      (drain.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableNavigate(navigation) =>
       (
         navigation.window_label(),
         "",
         navigation.url(),
+        "",
         "",
         "",
         "",
@@ -579,11 +582,12 @@ fn NativeExecutableOperation::native_packet_record(
         "",
         "",
         "",
+        "",
       )
     NativeExecutableRunEffect(name) =>
-      ("", name, "", "", "", "", "", "", "", "", "", "")
+      ("", name, "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableStartService(_) =>
-      ("", "", "", "", "", "", "", "", "", "", "", "")
+      ("", "", "", "", "", "", "", "", "", "", "", "", "")
   }
   [
     packet_field(self.kind()),
@@ -596,6 +600,7 @@ fn NativeExecutableOperation::native_packet_record(
     packet_field(x),
     packet_field(y),
     packet_field(fullscreen),
+    packet_field(resizable),
     packet_field(bridge_source),
     packet_field(native_hook),
     packet_field(asset_protocol),

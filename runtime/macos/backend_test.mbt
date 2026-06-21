@@ -132,12 +132,8 @@ test "macos backend exposes wkwebview descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 3)
-  assert_eq(execution.skipped_count(), 1)
-  assert_eq(
-    execution.outcomes()[3].status().message(),
-    "macOS native navigation after launch is not wired yet",
-  )
+  assert_eq(execution.executed_count(), 4)
+  assert_eq(execution.skipped_count(), 0)
 }
 
 ///|
@@ -216,8 +212,8 @@ test "macos backend prepares startup operations for native runner" {
         plan.execution_plan(),
       )
       assert_eq(execution.operation_count(), 3)
-      assert_eq(execution.executed_count(), 1)
-      assert_eq(execution.skipped_count(), 2)
+      assert_eq(execution.executed_count(), 2)
+      assert_eq(execution.skipped_count(), 1)
       assert_eq(execution.failed_count(), 0)
     }
     Err(_) => abort("unexpected invalid macOS runner plan")

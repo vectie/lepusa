@@ -150,8 +150,16 @@ typedef struct {
 } LepusaLinuxWebKit;
 
 typedef struct {
+  char label[128];
   void *window;
   void *webview;
+} LepusaLinuxWindowSlot;
+
+typedef struct {
+  void *window;
+  void *webview;
+  LepusaLinuxWindowSlot windows[32];
+  int window_count;
   LepusaLinuxWebKit *api;
   LepusaLinuxBytesCallback call_dispatch;
   void *dispatch;
@@ -280,6 +288,62 @@ static char *lepusa_linux_cstr_from_bytes(moonbit_bytes_t bytes) {
   }
   memcpy(out, bytes, (size_t)len);
   out[len] = '\0';
+  return out;
+}
+
+static char *lepusa_linux_cstr_from_range(const char *text, int32_t len) {
+  int32_t safe_len = text == NULL || len < 0 ? 0 : len;
+  char *out = (char *)malloc((size_t)safe_len + 1);
+  if (out == NULL) {
+    return NULL;
+  }
+  if (safe_len > 0) {
+    memcpy(out, text, (size_t)safe_len);
+  }
+  out[safe_len] = '\0';
+  return out;
+}
+
+static char *lepusa_linux_js_string_literal_from_range(
+  const char *text,
+  int32_t len
+) {
+  int32_t safe_len = text == NULL || len < 0 ? 0 : len;
+  size_t capacity = (size_t)safe_len * 6 + 3;
+  char *out = (char *)malloc(capacity);
+  if (out == NULL) {
+    return NULL;
+  }
+  size_t pos = 0;
+  out[pos++] = '"';
+  for (int32_t i = 0; i < safe_len; i++) {
+    unsigned char ch = (unsigned char)text[i];
+    if (ch == '"' || ch == '\\') {
+      out[pos++] = '\\';
+      out[pos++] = (char)ch;
+    } else if (ch == '\n') {
+      out[pos++] = '\\';
+      out[pos++] = 'n';
+    } else if (ch == '\r') {
+      out[pos++] = '\\';
+      out[pos++] = 'r';
+    } else if (ch == '\t') {
+      out[pos++] = '\\';
+      out[pos++] = 't';
+    } else if (ch < 0x20) {
+      static const char hex[] = "0123456789abcdef";
+      out[pos++] = '\\';
+      out[pos++] = 'u';
+      out[pos++] = '0';
+      out[pos++] = '0';
+      out[pos++] = hex[(ch >> 4) & 0xf];
+      out[pos++] = hex[ch & 0xf];
+    } else {
+      out[pos++] = (char)ch;
+    }
+  }
+  out[pos++] = '"';
+  out[pos] = '\0';
   return out;
 }
 
@@ -512,6 +576,8 @@ typedef struct {
   int32_t y_len;
   const char *fullscreen;
   int32_t fullscreen_len;
+  const char *resizable;
+  int32_t resizable_len;
   const char *bridge_source;
   int32_t bridge_source_len;
   const char *native_hook;
@@ -519,6 +585,71 @@ typedef struct {
   const char *asset_protocol;
   int32_t asset_protocol_len;
 } LepusaLinuxNativeOperationRecord;
+
+static char *lepusa_linux_initialization_script_from_record(
+  const LepusaLinuxNativeOperationRecord *record
+) {
+  if (record == NULL) {
+    return NULL;
+  }
+  char *native_hook = lepusa_linux_js_string_literal_from_range(
+    record->native_hook,
+    record->native_hook_len
+  );
+  char *bridge_source = lepusa_linux_cstr_from_range(
+    record->bridge_source,
+    record->bridge_source_len
+  );
+  if (native_hook == NULL || bridge_source == NULL) {
+    free(native_hook);
+    free(bridge_source);
+    return NULL;
+  }
+  const char *template_text =
+    "(() => {\n"
+    "  const nativeHook = %s;\n"
+    "  const responseHook = `${nativeHook}Response`;\n"
+    "  const pending = new Map();\n"
+    "  Object.defineProperty(globalThis, responseHook, {\n"
+    "    value: (response) => {\n"
+    "      const id = response && String(response.id || \"\");\n"
+    "      const callbacks = pending.get(id);\n"
+    "      if (!callbacks) { return false; }\n"
+    "      pending.delete(id);\n"
+    "      if (response && response.error) { callbacks.reject(new Error(response.error)); }\n"
+    "      else { callbacks.resolve(response || null); }\n"
+    "      return true;\n"
+    "    },\n"
+    "    configurable: true,\n"
+    "  });\n"
+    "  Object.defineProperty(globalThis, nativeHook, {\n"
+    "    value: (request) => new Promise((resolve, reject) => {\n"
+    "      const handler = globalThis.webkit && globalThis.webkit.messageHandlers && globalThis.webkit.messageHandlers[nativeHook];\n"
+    "      if (!handler || typeof handler.postMessage !== \"function\") {\n"
+    "        reject(new Error(`Missing Lepusa Linux native message handler: ${nativeHook}`));\n"
+    "        return;\n"
+    "      }\n"
+    "      pending.set(String(request.id || \"\"), { resolve, reject });\n"
+    "      handler.postMessage(JSON.stringify(request));\n"
+    "    }),\n"
+    "    configurable: true,\n"
+    "  });\n"
+    "})();\n"
+    "%s";
+  int needed = snprintf(NULL, 0, template_text, native_hook, bridge_source);
+  if (needed < 0) {
+    free(native_hook);
+    free(bridge_source);
+    return NULL;
+  }
+  char *script = (char *)malloc((size_t)needed + 1);
+  if (script != NULL) {
+    snprintf(script, (size_t)needed + 1, template_text, native_hook, bridge_source);
+  }
+  free(native_hook);
+  free(bridge_source);
+  return script;
+}
 
 static int lepusa_linux_range_equals(
   const char *value,
@@ -529,6 +660,124 @@ static int lepusa_linux_range_equals(
   return value != NULL &&
     value_len == (int32_t)literal_len &&
     memcmp(value, literal, literal_len) == 0;
+}
+
+static void lepusa_linux_copy_label_range(
+  char *target,
+  size_t target_len,
+  const char *label,
+  int32_t label_len
+) {
+  if (target == NULL || target_len == 0) {
+    return;
+  }
+  size_t safe_len = label == NULL || label_len <= 0 ? 0 : (size_t)label_len;
+  if (safe_len >= target_len) {
+    safe_len = target_len - 1;
+  }
+  if (safe_len > 0) {
+    memcpy(target, label, safe_len);
+  }
+  target[safe_len] = '\0';
+}
+
+static LepusaLinuxWindowSlot *lepusa_linux_find_window_slot_exact(
+  LepusaLinuxBridgeContext *context,
+  const char *label,
+  int32_t label_len
+) {
+  if (context == NULL) {
+    return NULL;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (label != NULL &&
+        label_len > 0 &&
+        lepusa_linux_range_equals(
+          label,
+          label_len,
+          context->windows[i].label
+        )) {
+      return &context->windows[i];
+    }
+  }
+  return NULL;
+}
+
+static LepusaLinuxWindowSlot *lepusa_linux_find_window_slot(
+  LepusaLinuxBridgeContext *context,
+  const char *label,
+  int32_t label_len
+) {
+  LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot_exact(
+    context,
+    label,
+    label_len
+  );
+  if (slot != NULL) {
+    return slot;
+  }
+  if (context == NULL) {
+    return NULL;
+  }
+  return context->window_count > 0 ? &context->windows[0] : NULL;
+}
+
+static void lepusa_linux_register_window_slot(
+  LepusaLinuxBridgeContext *context,
+  const char *label,
+  int32_t label_len,
+  void *window,
+  void *webview
+) {
+  if (context == NULL || window == NULL || webview == NULL) {
+    return;
+  }
+  LepusaLinuxWindowSlot *existing = lepusa_linux_find_window_slot_exact(
+    context,
+    label,
+    label_len
+  );
+  if (existing != NULL) {
+    existing->window = window;
+    existing->webview = webview;
+    return;
+  }
+  if (context->window_count >= 32) {
+    return;
+  }
+  LepusaLinuxWindowSlot *slot = &context->windows[context->window_count++];
+  lepusa_linux_copy_label_range(
+    slot->label,
+    sizeof(slot->label),
+    label,
+    label_len
+  );
+  slot->window = window;
+  slot->webview = webview;
+}
+
+static LepusaLinuxWindowSlot *lepusa_linux_window_slot_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || packet == NULL) {
+    return NULL;
+  }
+  const char *start = (const char *)packet;
+  const char *end = start + Moonbit_array_length(packet);
+  const char *first = lepusa_linux_find_newline_range(start, end);
+  if (first == NULL) {
+    return lepusa_linux_find_window_slot(context, NULL, 0);
+  }
+  const char *second = lepusa_linux_find_newline_range(first + 1, end);
+  if (second == NULL) {
+    return lepusa_linux_find_window_slot(context, NULL, 0);
+  }
+  return lepusa_linux_find_window_slot(
+    context,
+    first + 1,
+    (int32_t)(second - first - 1)
+  );
 }
 
 static int lepusa_linux_read_packet_field(
@@ -621,6 +870,12 @@ static int lepusa_linux_read_native_operation_record(
     lepusa_linux_read_packet_field(
       cursor,
       end,
+      &record->resizable,
+      &record->resizable_len
+    ) &&
+    lepusa_linux_read_packet_field(
+      cursor,
+      end,
       &record->bridge_source,
       &record->bridge_source_len
     ) &&
@@ -708,7 +963,7 @@ static int lepusa_linux_handoff_operation_records(
       !lepusa_linux_range_equals(
         cursor,
         (int32_t)(version - cursor),
-        "lepusa-ops-v2"
+        "lepusa-ops-v3"
       )) {
     return 0;
   }
@@ -768,13 +1023,22 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
     if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
       return;
     }
+    LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    void *window = slot == NULL ? NULL : slot->window;
+    if (window == NULL) {
+      continue;
+    }
     if (lepusa_linux_range_equals(
           record.kind,
           record.kind_len,
           "close-window"
-        )) {
+      )) {
       if (!closed) {
-        context->api->gtk_widget_destroy(context->window);
+        context->api->gtk_widget_destroy(window);
         closed = 1;
       }
       continue;
@@ -789,7 +1053,7 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
     if (lepusa_linux_range_equals(record.action, record.action_len, "setTitle")) {
       char *title = lepusa_linux_cstr_from_range(record.title, record.title_len);
       if (title != NULL) {
-        context->api->gtk_window_set_title(context->window, title);
+        context->api->gtk_window_set_title(window, title);
         free(title);
       }
     } else if (lepusa_linux_range_equals(
@@ -803,7 +1067,7 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
           lepusa_linux_parse_record_int(record.height, record.height_len, &height) &&
           width > 0 &&
           height > 0) {
-        context->api->gtk_window_resize(context->window, width, height);
+        context->api->gtk_window_resize(window, width, height);
       }
     } else if (lepusa_linux_range_equals(
                  record.action,
@@ -814,7 +1078,7 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
       int y = 0;
       if (lepusa_linux_parse_record_int(record.x, record.x_len, &x) &&
           lepusa_linux_parse_record_int(record.y, record.y_len, &y)) {
-        context->api->gtk_window_move(context->window, x, y);
+        context->api->gtk_window_move(window, x, y);
       }
     } else if (lepusa_linux_range_equals(
                  record.action,
@@ -825,41 +1089,41 @@ static void lepusa_linux_apply_window_controls_from_handoff_packet(
       if (lepusa_linux_parse_record_bool(
             record.fullscreen,
             record.fullscreen_len,
-            &fullscreen
-          )) {
+        &fullscreen
+      )) {
         if (fullscreen) {
-          context->api->gtk_window_fullscreen(context->window);
+          context->api->gtk_window_fullscreen(window);
         } else {
-          context->api->gtk_window_unfullscreen(context->window);
+          context->api->gtk_window_unfullscreen(window);
         }
       }
     } else if (lepusa_linux_range_equals(record.action, record.action_len, "show")) {
-      context->api->gtk_widget_show_all(context->window);
+      context->api->gtk_widget_show_all(window);
     } else if (lepusa_linux_range_equals(record.action, record.action_len, "focus")) {
-      context->api->gtk_window_present(context->window);
+      context->api->gtk_window_present(window);
     } else if (lepusa_linux_range_equals(record.action, record.action_len, "hide")) {
-      context->api->gtk_widget_hide(context->window);
+      context->api->gtk_widget_hide(window);
     } else if (lepusa_linux_range_equals(
                  record.action,
                  record.action_len,
                  "minimize"
                )) {
-      context->api->gtk_window_iconify(context->window);
+      context->api->gtk_window_iconify(window);
     } else if (lepusa_linux_range_equals(
                  record.action,
                  record.action_len,
                  "maximize"
                )) {
-      context->api->gtk_window_maximize(context->window);
+      context->api->gtk_window_maximize(window);
     } else if (lepusa_linux_range_equals(
                  record.action,
                  record.action_len,
                  "unmaximize"
                )) {
-      context->api->gtk_window_unmaximize(context->window);
+      context->api->gtk_window_unmaximize(window);
     } else if (lepusa_linux_range_equals(record.action, record.action_len, "close")) {
       if (!closed) {
-        context->api->gtk_widget_destroy(context->window);
+        context->api->gtk_widget_destroy(window);
         closed = 1;
       }
     }
@@ -892,11 +1156,202 @@ static void lepusa_linux_apply_navigation_from_handoff_packet(
           record.kind_len,
           "navigate-window"
         )) {
+      LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(
+        context,
+        record.window,
+        record.window_len
+      );
       char *url = lepusa_linux_cstr_from_range(record.url, record.url_len);
+      if (url != NULL && slot != NULL && slot->webview != NULL) {
+        context->api->webkit_web_view_load_uri(slot->webview, url);
+      }
       if (url != NULL) {
-        context->api->webkit_web_view_load_uri(context->webview, url);
         free(url);
       }
+    }
+  }
+}
+
+static void lepusa_linux_uri_scheme_request(void *request, void *user_data);
+static void lepusa_linux_script_message_received(
+  void *manager,
+  void *js_result,
+  void *user_data
+);
+
+static void lepusa_linux_open_window_from_record(
+  LepusaLinuxBridgeContext *context,
+  const LepusaLinuxNativeOperationRecord *record
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      record == NULL ||
+      record->window_len <= 0 ||
+      record->url_len <= 0) {
+    return;
+  }
+  if (lepusa_linux_find_window_slot_exact(
+        context,
+        record->window,
+        record->window_len
+      ) != NULL) {
+    return;
+  }
+  int width = 960;
+  int height = 640;
+  int resizable = 1;
+  (void)lepusa_linux_parse_record_int(record->width, record->width_len, &width);
+  (void)lepusa_linux_parse_record_int(
+    record->height,
+    record->height_len,
+    &height
+  );
+  (void)lepusa_linux_parse_record_bool(
+    record->resizable,
+    record->resizable_len,
+    &resizable
+  );
+  if (width <= 0) {
+    width = 960;
+  }
+  if (height <= 0) {
+    height = 640;
+  }
+  char *title = lepusa_linux_cstr_from_range(record->title, record->title_len);
+  char *url = lepusa_linux_cstr_from_range(record->url, record->url_len);
+  char *script_text = lepusa_linux_initialization_script_from_record(record);
+  char *native_hook = lepusa_linux_cstr_from_range(
+    record->native_hook,
+    record->native_hook_len
+  );
+  char *asset_protocol = lepusa_linux_cstr_from_range(
+    record->asset_protocol,
+    record->asset_protocol_len
+  );
+  if (title == NULL ||
+      url == NULL ||
+      script_text == NULL ||
+      native_hook == NULL ||
+      asset_protocol == NULL) {
+    free(title);
+    free(url);
+    free(script_text);
+    free(native_hook);
+    free(asset_protocol);
+    return;
+  }
+  void *window = context->api->gtk_window_new(0);
+  void *manager = context->api->webkit_user_content_manager_new();
+  if (window == NULL || manager == NULL) {
+    free(title);
+    free(url);
+    free(script_text);
+    free(native_hook);
+    free(asset_protocol);
+    return;
+  }
+  if (native_hook[0] != '\0' &&
+      context->call_dispatch != NULL &&
+      context->dispatch != NULL) {
+    context->api->webkit_user_content_manager_register_script_message_handler(
+      manager,
+      native_hook
+    );
+  }
+  void *script = context->api->webkit_user_script_new(
+    script_text,
+    0,
+    0,
+    NULL,
+    NULL
+  );
+  if (script != NULL) {
+    context->api->webkit_user_content_manager_add_script(manager, script);
+  }
+  void *webview = context->api->webkit_web_view_new_with_user_content_manager(
+    manager
+  );
+  if (webview == NULL) {
+    free(title);
+    free(url);
+    free(script_text);
+    free(native_hook);
+    free(asset_protocol);
+    return;
+  }
+  if (asset_protocol[0] != '\0' &&
+      context->call_resolve_asset != NULL &&
+      context->resolve_asset != NULL) {
+    void *web_context = context->api->webkit_web_view_get_context(webview);
+    if (web_context != NULL) {
+      context->api->webkit_web_context_register_uri_scheme(
+        web_context,
+        asset_protocol,
+        (void *)lepusa_linux_uri_scheme_request,
+        context,
+        NULL
+      );
+    }
+  }
+  if (native_hook[0] != '\0' &&
+      context->call_dispatch != NULL &&
+      context->dispatch != NULL) {
+    char signal_name[256];
+    snprintf(
+      signal_name,
+      sizeof(signal_name),
+      "script-message-received::%s",
+      native_hook
+    );
+    context->api->g_signal_connect_data(
+      manager,
+      signal_name,
+      (void *)lepusa_linux_script_message_received,
+      context,
+      NULL,
+      0
+    );
+  }
+  context->api->gtk_window_set_title(window, title);
+  context->api->gtk_window_set_default_size(window, width, height);
+  context->api->gtk_window_set_resizable(window, resizable != 0);
+  context->api->gtk_container_add(window, webview);
+  lepusa_linux_register_window_slot(
+    context,
+    record->window,
+    record->window_len,
+    window,
+    webview
+  );
+  context->api->webkit_web_view_load_uri(webview, url);
+  context->api->gtk_widget_show_all(window);
+  free(title);
+  free(url);
+  free(script_text);
+  free(native_hook);
+  free(asset_protocol);
+}
+
+static void lepusa_linux_apply_open_windows_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || packet == NULL) {
+    return;
+  }
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (lepusa_linux_range_equals(record.kind, record.kind_len, "open-window")) {
+      lepusa_linux_open_window_from_record(context, &record);
     }
   }
 }
@@ -999,9 +1454,14 @@ static void lepusa_linux_script_message_received(
     packet
   );
   char *script_text = lepusa_linux_cstr_from_bytes(script);
-  if (script_text != NULL) {
+  LepusaLinuxWindowSlot *slot = lepusa_linux_window_slot_from_handoff_packet(
+    context,
+    packet
+  );
+  void *target_webview = slot == NULL ? context->webview : slot->webview;
+  if (script_text != NULL && target_webview != NULL) {
     context->api->webkit_web_view_run_javascript(
-      context->webview,
+      target_webview,
       script_text,
       NULL,
       NULL,
@@ -1009,6 +1469,7 @@ static void lepusa_linux_script_message_received(
     );
     free(script_text);
   }
+  lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
   if (message != NULL) {
@@ -1343,6 +1804,7 @@ moonbit_bytes_t lepusa_linux_backend_engine_name(void) {
 
 MOONBIT_FFI_EXPORT
 int32_t lepusa_linux_run_webview(
+  moonbit_bytes_t label,
   moonbit_bytes_t title,
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
@@ -1362,16 +1824,19 @@ int32_t lepusa_linux_run_webview(
     return 2;
   }
   char *title_text = lepusa_linux_cstr_from_bytes(title);
+  char *label_text = lepusa_linux_cstr_from_bytes(label);
   char *url_text = lepusa_linux_cstr_from_bytes(url);
   char *script_text = lepusa_linux_cstr_from_bytes(initialization_script);
   char *native_hook_text = lepusa_linux_cstr_from_bytes(native_hook);
   char *asset_protocol_text = lepusa_linux_cstr_from_bytes(asset_protocol);
   if (title_text == NULL ||
+      label_text == NULL ||
       url_text == NULL ||
       script_text == NULL ||
       native_hook_text == NULL ||
       asset_protocol_text == NULL) {
     free(title_text);
+    free(label_text);
     free(url_text);
     free(script_text);
     free(native_hook_text);
@@ -1382,6 +1847,7 @@ int32_t lepusa_linux_run_webview(
   char **argv = NULL;
   if (!api.gtk_init_check(&argc, &argv)) {
     free(title_text);
+    free(label_text);
     free(url_text);
     free(script_text);
     free(native_hook_text);
@@ -1392,6 +1858,7 @@ int32_t lepusa_linux_run_webview(
   void *manager = api.webkit_user_content_manager_new();
   if (window == NULL || manager == NULL) {
     free(title_text);
+    free(label_text);
     free(url_text);
     free(script_text);
     free(native_hook_text);
@@ -1413,6 +1880,7 @@ int32_t lepusa_linux_run_webview(
   void *webview = api.webkit_web_view_new_with_user_content_manager(manager);
   if (webview == NULL) {
     free(title_text);
+    free(label_text);
     free(url_text);
     free(script_text);
     free(native_hook_text);
@@ -1422,6 +1890,8 @@ int32_t lepusa_linux_run_webview(
   LepusaLinuxBridgeContext bridge_context = {
     window,
     webview,
+    { 0 },
+    0,
     &api,
     call_dispatch,
     dispatch,
@@ -1442,6 +1912,13 @@ int32_t lepusa_linux_run_webview(
       );
     }
   }
+  lepusa_linux_register_window_slot(
+    &bridge_context,
+    label_text,
+    (int32_t)strlen(label_text),
+    window,
+    webview
+  );
   if (native_hook_text[0] != '\0' &&
       call_dispatch != NULL &&
       dispatch != NULL) {
@@ -1481,12 +1958,14 @@ int32_t lepusa_linux_run_webview(
   api.gtk_widget_show_all(window);
   api.gtk_main();
   free(title_text);
+  free(label_text);
   free(url_text);
   free(script_text);
   free(native_hook_text);
   free(asset_protocol_text);
   return 0;
 #else
+  (void)label;
   (void)title;
   (void)url;
   (void)initialization_script;

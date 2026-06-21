@@ -582,15 +582,14 @@ evaluating each callback script in the target WebView. Packaged runtimes expose
 the same shape as `BundledBridgeWorkQueue`.
 `handoff_packet_callback` is the native C/WebView ABI for that handoff: it
 returns `status\n<window>\n<body-byte-length>\n<body>\n<operation-packet>`
-where the final section is the versioned `lepusa-ops-v2` length-prefixed native
+where the final section is the versioned `lepusa-ops-v3` length-prefixed native
 operation packet. Immediate packets carry the callback script plus executable
 operations, deferred packets carry the queued task count, and error packets
-carry a diagnostic body. The v2 operation records include dynamic `open-window`
-boot metadata: load URL, title, size, bridge source, native hook, and asset
-protocol. macOS and Linux parse this packet and evaluate only `immediate`
-scripts today, while the typed operation packet gives native loops a stable
-place to read follow-up operations such as `window-control` without JSON-scanning
-escaped payloads.
+carry a diagnostic body. The v3 operation records include dynamic `open-window`
+boot metadata: load URL, title, size, resizable flag, bridge source, native
+hook, and asset protocol. macOS and Linux parse this packet, evaluate
+`immediate` scripts in the target WebView, and consume follow-up operations
+without JSON-scanning escaped payloads.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
 queue, native message callback, pending-state diagnostics, and drain operation
 into the object platform event loops should keep beside each WebView host.
@@ -721,7 +720,7 @@ so launchers consume the same operation boundary they report.
 handlers and reports executed, skipped, and failed outcomes, giving WebView
 loops one reusable path for startup, lifecycle, and bridge-drain work.
 It now includes dynamic `open-window` and `close-window` handlers so platform
-packages can wire true multi-window lifecycle without parsing runtime JSON.
+packages can wire multi-window lifecycle without parsing runtime JSON.
 Capability-approved `window.*` bridge dispatches also lower their plugin
 response into a `window-control` executable operation, so native loops can apply
 window actions without parsing JavaScript response callbacks. Approved source
@@ -738,9 +737,12 @@ typed `close-window` records by closing the live native frame once, even when
 the same handoff also carries the plugin's `window-control close` response.
 They also consume `navigate-window` operations from the same handoff packet by
 loading the target URL in the live WebView after the approved MoonBit dispatch
-completes. Source, bundled, and Windows runners pass URL-routed asset resolver
-callbacks into native loops, so future dynamic WebViews can resolve assets for
-their own window labels.
+completes. The macOS and Linux loops now consume dynamic `open-window` records
+by creating labeled WKWebView/WebKitGTK windows with the carried bridge source,
+native hook, asset protocol, URL, title, size, and resizable flag. Source,
+bundled, and Windows runners pass URL-routed asset resolver callbacks into
+native loops, so dynamic WebViews can resolve assets for their own window
+labels.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation and window-control support
 instead of the generic skipped-operation fallback.

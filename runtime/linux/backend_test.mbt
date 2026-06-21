@@ -67,12 +67,8 @@ test "linux backend exposes webkitgtk descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 3)
-  assert_eq(execution.skipped_count(), 1)
-  assert_eq(
-    execution.outcomes()[3].status().message(),
-    "Linux native navigation after launch is not wired yet",
-  )
+  assert_eq(execution.executed_count(), 4)
+  assert_eq(execution.skipped_count(), 0)
 }
 
 ///|

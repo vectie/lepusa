@@ -58,13 +58,10 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
 ///|
 pub fn operation_executor() -> @runtime.NativeOperationExecutor {
   @runtime.NativeOperationExecutor::new(
+    open_window=fn(_) { NativeOperationExecuted },
     evaluate_script=fn(_) { NativeOperationExecuted },
     close_window=fn(_) { NativeOperationExecuted },
-    navigate_window=fn(_) {
-      NativeOperationSkipped(
-        "macOS native navigation after launch is not wired yet",
-      )
-    },
+    navigate_window=fn(_) { NativeOperationExecuted },
     run_effect=fn(name) {
       NativeOperationSkipped("macOS native effect is not registered: \{name}")
     },

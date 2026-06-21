@@ -207,15 +207,15 @@ commands still return callback scripts immediately while async commands are
 captured for the backend drain/evaluate step.
 The C-facing callback now uses `handoff_packet_callback`: packets are encoded as
 `status\n<window>\n<body-byte-length>\n<body>\n<operation-packet>`. The final
-section is a versioned `lepusa-ops-v2` length-prefixed native operation packet
+section is a versioned `lepusa-ops-v3` length-prefixed native operation packet
 with normalized fields for follow-up operations. Immediate packets carry the
 JavaScript callback script plus executable operations, deferred packets carry
 the target window and queued task count, and error packets carry a diagnostic
-body. V2 operation records include dynamic `open-window` boot metadata: load
-URL, title, size, bridge source, native hook, and asset protocol. macOS and
-Linux WebView handlers parse that packet and only evaluate
-immediate scripts today, so deferred async work is explicit instead of being
-indistinguishable from an empty callback, while native operations such as
+body. V3 operation records include dynamic `open-window` boot metadata: load
+URL, title, size, resizable flag, bridge source, native hook, and asset
+protocol. macOS and Linux WebView handlers parse that packet, evaluate
+immediate scripts in the target WebView, and keep deferred async work explicit
+instead of indistinguishable from an empty callback, while native operations such as
 `window-control` and `navigate-window` have a stable non-JSON packet slot.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
@@ -641,10 +641,12 @@ show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
 typed `close-window` records by closing the live native frame once, even when
 the same handoff also carries the plugin's `window-control close` response.
 They also consume `navigate-window` operations from that packet by loading the
-target URL in the live WebView after MoonBit dispatch succeeds. Source,
-bundled, and Windows runners pass URL-routed asset resolver callbacks into
-native loops, so future dynamic WebViews can resolve assets for their own
-window labels. The Windows
+target URL in the live WebView after MoonBit dispatch succeeds. The macOS and
+Linux loops consume dynamic `open-window` records by creating labeled
+WKWebView/WebKitGTK windows with the carried bridge source, native hook, asset
+protocol, URL, title, size, and resizable flag. Source, bundled, and Windows
+runners pass URL-routed asset resolver callbacks into native loops, so dynamic
+WebViews can resolve assets for their own window labels. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows currently

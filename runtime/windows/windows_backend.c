@@ -519,6 +519,7 @@ moonbit_bytes_t lepusa_windows_backend_engine_name(void) {
 
 MOONBIT_FFI_EXPORT
 int32_t lepusa_windows_run_webview(
+  moonbit_bytes_t label,
   moonbit_bytes_t title,
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
@@ -532,6 +533,7 @@ int32_t lepusa_windows_run_webview(
   LepusaWindowsBytesCallback call_resolve_asset,
   void *resolve_asset
 ) {
+  (void)label;
   (void)title;
   (void)url;
   (void)initialization_script;
