@@ -513,6 +513,7 @@ pub fn AppManager::to_json(self : AppManager) -> String {
     "\"capabilities\":\{self.capability_count()},",
     "\"commands\":[\{self.command_routes().map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredCommands\":[\{self.registered_routes().map(fn(route) { route.json_string() }).join(",")}],",
+    "\"invokeContractReport\":\{self.invoke_contract_report().to_json()},",
     "\"resources\":[\{self.resources().map(fn(entry) { entry.to_json() }).join(",")}],",
     "\"resourceLeaks\":\{self.resource_leak_report().to_json()},",
     "\"channels\":\{self.channels.to_json()},",

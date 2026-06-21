@@ -38,3 +38,14 @@ test "runtime host audit reports native handler coverage" {
   assert_eq(missing.error_count(), 1)
   assert_true(missing.findings()[0].kind() is RuntimeAuditMissingHandler)
 }
+
+///|
+test "runtime host exposes invoke contract report" {
+  let host = runtime_audit_host()
+  let report = host.invoke_contract_report()
+  assert_true(report.ok())
+  assert_eq(report.dispatchable_routes().length(), 1)
+  assert_eq(report.dispatchable_routes()[0], "core.ping")
+  assert_eq(host.invoke_contracts().length(), 1)
+  assert_true(report.to_json().contains("\"contracts\""))
+}

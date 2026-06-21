@@ -890,6 +890,8 @@ pub fn RuntimeHost::dispatch_bridge_message_sync(Self, String, window_label? : S
 pub fn RuntimeHost::dispatch_json(Self, String) -> String
 pub async fn RuntimeHost::dispatch_json_async(Self, String) -> String
 pub fn RuntimeHost::from_manager(@lepusa.AppManager) -> Self
+pub fn RuntimeHost::invoke_contract_report(Self) -> @lepusa.InvokeContractReport
+pub fn RuntimeHost::invoke_contracts(Self) -> Array[@lepusa.InvokeContract]
 pub fn RuntimeHost::launch_manifest(Self) -> Result[@lepusa.RuntimeLaunchManifest, Array[String]]
 pub fn RuntimeHost::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Result[Array[@lepusa.RuntimeAction], Array[String]]
 pub fn RuntimeHost::lifecycle_hooks(Self) -> Result[Array[@lepusa.RuntimeLifecycleHook], Array[String]]

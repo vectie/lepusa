@@ -64,6 +64,8 @@ pub fn AppManager::drain_channel(Self, String) -> Result[Array[ChannelMessage], 
 pub fn AppManager::emit(Self, Event, target? : EventTarget) -> Result[Array[EventDelivery], Array[String]]
 pub fn AppManager::end_channel(Self, String) -> Result[ChannelMessage, String]
 pub fn AppManager::fail_channel(Self, String, String) -> Result[ChannelMessage, String]
+pub fn AppManager::invoke_contract_report(Self) -> InvokeContractReport
+pub fn AppManager::invoke_contracts(Self) -> Array[InvokeContract]
 pub fn AppManager::listen(Self, String, target? : EventTarget, once? : Bool) -> Result[EventListener, Array[String]]
 pub fn AppManager::listener_count(Self) -> Int
 pub fn AppManager::manage_state(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
@@ -560,6 +562,9 @@ pub fn CommandRegistry::dispatch_with_permission(Self, InvokeRequest, permission
 pub async fn CommandRegistry::dispatch_with_permission_async(Self, InvokeRequest, permission~ : Permission, capabilities? : Array[Capability]) -> InvokeResponse
 pub fn CommandRegistry::dispatch_with_profile(Self, SecurityProfile, InvokeRequest) -> InvokeResponse
 pub async fn CommandRegistry::dispatch_with_profile_async(Self, SecurityProfile, InvokeRequest) -> InvokeResponse
+pub fn CommandRegistry::invoke_contract(Self, SecurityProfile, String) -> InvokeContract?
+pub fn CommandRegistry::invoke_contract_report(Self, SecurityProfile) -> InvokeContractReport
+pub fn CommandRegistry::invoke_contracts(Self, SecurityProfile) -> Array[InvokeContract]
 pub fn CommandRegistry::merge(Self, Self) -> Self
 pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
@@ -678,6 +683,62 @@ pub struct Html {
 pub fn Html::content(Self) -> String
 pub fn Html::empty() -> Self
 pub fn Html::text(String) -> Self
+
+pub struct InvokeContract {
+  route : String
+  plugin : String
+  command : String
+  mode : CommandMode
+  affinity : CommandExecutionAffinity
+  permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
+  allowed_windows : Array[String]
+  allowed_origins : Array[String]
+  requires_registered_handler : Bool
+  registered : Bool
+  registered_mode : CommandMode?
+  registered_permission : Permission?
+  exposed : Bool
+  operation_scope_configured : Bool
+  operation_scope_required : Bool
+  problems : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn InvokeContract::affinity(Self) -> CommandExecutionAffinity
+pub fn InvokeContract::allowed_origins(Self) -> Array[String]
+pub fn InvokeContract::allowed_windows(Self) -> Array[String]
+pub fn InvokeContract::command(Self) -> String
+pub fn InvokeContract::dispatchable(Self) -> Bool
+pub fn InvokeContract::exposed(Self) -> Bool
+pub fn InvokeContract::mode(Self) -> CommandMode
+pub fn InvokeContract::ok(Self) -> Bool
+pub fn InvokeContract::operation_scope_configured(Self) -> Bool
+pub fn InvokeContract::operation_scope_required(Self) -> Bool
+pub fn InvokeContract::permission(Self) -> Permission
+pub fn InvokeContract::plugin(Self) -> String
+pub fn InvokeContract::problems(Self) -> Array[String]
+pub fn InvokeContract::registered(Self) -> Bool
+pub fn InvokeContract::registered_mode(Self) -> CommandMode?
+pub fn InvokeContract::registered_permission(Self) -> Permission?
+pub fn InvokeContract::request_schema(Self) -> IpcSchema
+pub fn InvokeContract::requires_registered_handler(Self) -> Bool
+pub fn InvokeContract::response_schema(Self) -> IpcSchema
+pub fn InvokeContract::route(Self) -> String
+pub fn InvokeContract::to_json(Self) -> String
+
+pub struct InvokeContractReport {
+  contracts : Array[InvokeContract]
+  undeclared_routes : Array[String]
+  duplicate_routes : Array[String]
+  problems : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn InvokeContractReport::contracts(Self) -> Array[InvokeContract]
+pub fn InvokeContractReport::dispatchable_routes(Self) -> Array[String]
+pub fn InvokeContractReport::duplicate_routes(Self) -> Array[String]
+pub fn InvokeContractReport::ok(Self) -> Bool
+pub fn InvokeContractReport::problems(Self) -> Array[String]
+pub fn InvokeContractReport::to_json(Self) -> String
+pub fn InvokeContractReport::undeclared_routes(Self) -> Array[String]
 
 pub(all) enum InvokeErrorKind {
   InvalidRequest

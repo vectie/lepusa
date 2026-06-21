@@ -43,6 +43,20 @@ pub fn RuntimeHost::audit(self : RuntimeHost) -> @lepusa.RuntimeAudit {
 }
 
 ///|
+pub fn RuntimeHost::invoke_contracts(
+  self : RuntimeHost,
+) -> Array[@lepusa.InvokeContract] {
+  self.registry.invoke_contracts(self.security_profile())
+}
+
+///|
+pub fn RuntimeHost::invoke_contract_report(
+  self : RuntimeHost,
+) -> @lepusa.InvokeContractReport {
+  self.registry.invoke_contract_report(self.security_profile())
+}
+
+///|
 pub fn RuntimeHost::security_profile(
   self : RuntimeHost,
 ) -> @lepusa.SecurityProfile {
