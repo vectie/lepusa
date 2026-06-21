@@ -294,6 +294,47 @@ pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
 pub fn Capability::windows(Self) -> Array[String]
 
+pub struct CapabilityCompileIssue {
+  severity : CapabilityIssueSeverity
+  code : String
+  message : String
+  plugin : String
+  route : String
+  permission : String
+  capability : String
+  window_label : String
+} derive(Eq, @debug.Debug)
+pub fn CapabilityCompileIssue::capability(Self) -> String
+pub fn CapabilityCompileIssue::code(Self) -> String
+pub fn CapabilityCompileIssue::message(Self) -> String
+pub fn CapabilityCompileIssue::permission(Self) -> String
+pub fn CapabilityCompileIssue::plugin(Self) -> String
+pub fn CapabilityCompileIssue::route(Self) -> String
+pub fn CapabilityCompileIssue::severity(Self) -> CapabilityIssueSeverity
+pub fn CapabilityCompileIssue::to_json(Self) -> String
+pub fn CapabilityCompileIssue::window_label(Self) -> String
+
+pub struct CapabilityCompileReport {
+  plugin_contracts : Array[PluginContract]
+  command_manifest : CommandManifest
+  permission_manifest : PermissionManifest
+  issues : Array[CapabilityCompileIssue]
+} derive(Eq, @debug.Debug)
+pub fn CapabilityCompileReport::command_manifest(Self) -> CommandManifest
+pub fn CapabilityCompileReport::denied_routes(Self) -> Array[String]
+pub fn CapabilityCompileReport::error_count(Self) -> Int
+pub fn CapabilityCompileReport::errors(Self) -> Array[CapabilityCompileIssue]
+pub fn CapabilityCompileReport::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
+pub fn CapabilityCompileReport::issues(Self) -> Array[CapabilityCompileIssue]
+pub fn CapabilityCompileReport::ok(Self) -> Bool
+pub fn CapabilityCompileReport::permission_manifest(Self) -> PermissionManifest
+pub fn CapabilityCompileReport::plugin_contracts(Self) -> Array[PluginContract]
+pub fn CapabilityCompileReport::to_json(Self) -> String
+pub fn CapabilityCompileReport::unknown_windows(Self) -> Array[String]
+pub fn CapabilityCompileReport::unused_permissions(Self) -> Array[String]
+pub fn CapabilityCompileReport::warning_count(Self) -> Int
+pub fn CapabilityCompileReport::warnings(Self) -> Array[CapabilityCompileIssue]
+
 pub struct CapabilityDecision {
   allowed : Bool
   window_label : String
@@ -310,6 +351,13 @@ pub fn CapabilityDecision::permission(Self) -> Permission
 pub fn CapabilityDecision::reason(Self) -> String
 pub fn CapabilityDecision::to_json(Self) -> String
 pub fn CapabilityDecision::window_label(Self) -> String
+
+pub(all) enum CapabilityIssueSeverity {
+  CapabilityWarning
+  CapabilityError
+} derive(Eq, @debug.Debug)
+pub fn CapabilityIssueSeverity::is_error(Self) -> Bool
+pub fn CapabilityIssueSeverity::name(Self) -> String
 
 pub struct CapabilityPolicy {
   capabilities : Array[Capability]
@@ -1371,6 +1419,7 @@ pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
 pub fn RuntimePlan::capability_count(Self) -> Int
+pub fn RuntimePlan::capability_report(Self) -> CapabilityCompileReport
 pub fn RuntimePlan::command_manifest(Self) -> CommandManifest
 pub fn RuntimePlan::command_permission(Self, String) -> Permission?
 pub fn RuntimePlan::command_routes(Self) -> Array[String]
