@@ -115,6 +115,7 @@ test "app manager dispatches stream commands into managed channels" {
     "core.events",
     handler=fn(payload, sink) {
       ignore(sink.send("{\"payload\":\{payload}}"))
+      ignore(sink.end())
       Ok(())
     },
   )
@@ -163,6 +164,143 @@ test "app manager dispatches stream commands into managed channels" {
       assert_true(messages[1].kind() is ChannelEnd)
     }
     Err(problem) => abort(problem)
+  }
+}
+
+///|
+test "app manager exposes runtime control commands for bridge primitives" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.events"),
+    )
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(payload, sink) {
+      ignore(sink.send("{\"payload\":\{payload}}"))
+      ignore(sink.end())
+      Ok(())
+    },
+  )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  ignore(manager.listen("ready", target=WindowTarget("main")))
+  let event_response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="evt",
+      window_label="main",
+      plugin="__lepusa",
+      command="event.emit",
+      payload="{\"target\":{\"kind\":\"window\",\"label\":\"main\"},\"name\":\"ready\",\"payload\":\"{\\\"ok\\\":true}\"}",
+    ),
+  )
+  assert_true(event_response is InvokeOk("evt", "{\"delivered\":1}"))
+  let stream_response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="stream",
+      window_label="main",
+      plugin="core",
+      command="events",
+      payload="9",
+    ),
+  )
+  assert_true(stream_response is InvokeOk(_, _))
+  let drain_response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="drain",
+      window_label="main",
+      plugin="__lepusa",
+      command="stream.drain",
+      payload="{\"channelId\":\"channel-1\"}",
+    ),
+  )
+  match drain_response {
+    InvokeOk("drain", payload) => {
+      assert_true(payload.contains("\"channelId\":\"channel-1\""))
+      assert_true(payload.contains("\"kind\":\"data\""))
+      assert_true(payload.contains("\"kind\":\"end\""))
+    }
+    _ => abort("unexpected drain response")
+  }
+  let close_response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="close",
+      window_label="main",
+      plugin="__lepusa",
+      command="resource.close",
+      payload="{\"id\":\"channel-1\",\"kind\":\"channel\"}",
+    ),
+  )
+  match close_response {
+    InvokeOk("close", payload) => {
+      assert_true(payload.contains("\"closed\""))
+      assert_true(payload.contains("\"id\":\"channel-1\""))
+    }
+    _ => abort("unexpected close response")
+  }
+  let missing = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="missing",
+      window_label="main",
+      plugin="__lepusa",
+      command="stream.drain",
+      payload="{\"channelId\":\"channel-1\"}",
+    ),
+  )
+  assert_true(missing is InvokeError("missing", _))
+}
+
+///|
+test "app manager runtime control can cancel active streams" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.events"),
+    )
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(_, sink) {
+      ignore(sink.send("open"))
+      Ok(())
+    },
+  )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  ignore(
+    manager.dispatch(
+      @lepusa.InvokeRequest::new(
+        id="stream",
+        window_label="main",
+        plugin="core",
+        command="events",
+      ),
+    ),
+  )
+  match
+    manager.dispatch(
+      @lepusa.InvokeRequest::new(
+        id="cancel",
+        window_label="main",
+        plugin="__lepusa",
+        command="stream.cancel",
+        payload="{\"channelId\":\"channel-1\"}",
+      ),
+    ) {
+    InvokeOk("cancel", payload) =>
+      assert_true(payload.contains("\"kind\":\"cancel\""))
+    _ => abort("unexpected cancel response")
   }
 }
 

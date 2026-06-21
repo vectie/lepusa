@@ -601,15 +601,11 @@ fn execute_stream_command(
         Ok(channel) => {
           let sink = StreamSink::new(route~, channel_id=channel.id(), channels~)
           match handler(request.payload(), sink) {
-            Ok(_) => {
-              if !sink.closed() {
-                ignore(sink.end())
-              }
+            Ok(_) =>
               InvokeResponse::ok(
                 request.id(),
                 stream_response_payload(route, sink),
               )
-            }
             Err(message) => {
               ignore(sink.fail(message))
               InvokeResponse::handler_error(request.id(), message, route~)

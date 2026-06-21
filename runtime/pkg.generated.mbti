@@ -905,8 +905,7 @@ pub fn RuntimeDevPlan::to_json(Self) -> String
 pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
 
 pub struct RuntimeHost {
-  plan : @lepusa.RuntimePlan
-  registry : @lepusa.CommandRegistry
+  manager : @lepusa.AppManager
 }
 pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::audit(Self) -> @lepusa.RuntimeAudit

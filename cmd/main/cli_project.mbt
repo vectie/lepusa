@@ -105,6 +105,7 @@ fn sample_registry() -> @lepusa.CommandRegistry {
   .register_fn("core.invoke", handler=fn(payload) { Ok(payload) })
   .register_stream_fn("core.events", handler=fn(_, sink) {
     ignore(sink.send("{\"event\":\"sample\"}"))
+    ignore(sink.end())
     Ok(())
   })
 }

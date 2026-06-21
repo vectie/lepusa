@@ -59,8 +59,17 @@ test "frontend bridge emits invoke resolver ids" {
             script
             .source()
             .contains(
-              "stream: async (route, payload = null, options = {}) => api.invoke",
+              "stream: async (route, payload = null, options = {}) => attachStream",
             ),
+          )
+          assert_true(
+            script.source().contains("runtimeControl(\"stream.drain\""),
+          )
+          assert_true(
+            script.source().contains("runtimeControl(\"stream.cancel\""),
+          )
+          assert_true(
+            script.source().contains("runtimeControl(\"resource.close\""),
           )
           assert_true(script.source().contains("\"__lepusa\", \"event.emit\""))
           assert_true(

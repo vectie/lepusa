@@ -168,6 +168,7 @@ test "invoke contract accepts registered stream handlers" {
     "core.events",
     handler=fn(_, sink) {
       ignore(sink.send("{\"channel\":\"events\"}"))
+      ignore(sink.end())
       Ok(())
     },
   )

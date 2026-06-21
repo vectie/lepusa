@@ -43,3 +43,57 @@ test "runtime host can be created from app manager boundary" {
     Err(_) => abort("unexpected invalid session")
   }
 }
+
+///|
+test "runtime host dispatch preserves manager stream resources" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.events"),
+    )
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(_, sink) {
+      ignore(sink.send("{\"event\":\"ready\"}"))
+      ignore(sink.end())
+      Ok(())
+    },
+  )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  let host = RuntimeHost::from_manager(manager)
+  let opened = host.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="stream",
+      window_label="main",
+      plugin="core",
+      command="events",
+    ),
+  )
+  match opened {
+    InvokeOk("stream", payload) =>
+      assert_true(payload.contains("\"channelId\":\"channel-1\""))
+    _ => abort("unexpected stream open response")
+  }
+  let drained = host.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="drain",
+      window_label="main",
+      plugin="__lepusa",
+      command="stream.drain",
+      payload="{\"channelId\":\"channel-1\"}",
+    ),
+  )
+  match drained {
+    InvokeOk("drain", payload) => {
+      assert_true(payload.contains("\"kind\":\"data\""))
+      assert_true(payload.contains("\"kind\":\"end\""))
+    }
+    _ => abort("unexpected stream drain response")
+  }
+}
