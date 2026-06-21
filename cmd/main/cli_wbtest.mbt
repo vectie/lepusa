@@ -287,7 +287,7 @@ async test "run prints native runner smoke summary" {
 }
 
 ///|
-async test "run launch rejects unwired native targets" {
+async test "run launch reports host-platform unsupported native targets" {
   let result = render_cli_async(["run", "linux", "--launch"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("Lepusa launch"))
