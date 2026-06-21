@@ -103,7 +103,7 @@ test "runtime session listener validation is surfaced" {
 ///|
 test "frontend bridge event emit becomes native dispatch operations" {
   let host = RuntimeHost::new(event_session_plan())
-  let message = "{\"id\":\"evt-1\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\",\\\"label\\\":\\\"settings\\\"},\\\"name\\\":\\\"ready\\\",\\\"payload\\\":\\\"{\\\\\\\"ok\\\\\\\":true}\\\"}\"}"
+  let message = "{\"id\":\"evt-1\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\",\\\"label\\\":\\\"main\\\"},\\\"name\\\":\\\"ready\\\",\\\"payload\\\":\\\"{\\\\\\\"ok\\\\\\\":true}\\\"}\"}"
   match host.dispatch_bridge_message_sync(message) {
     Ok(dispatch) => {
       assert_true(dispatch.response_json().contains("\"id\":\"evt-1\""))
@@ -113,13 +113,26 @@ test "frontend bridge event emit becomes native dispatch operations" {
       assert_eq(operations[0].kind(), "evaluate-script")
       assert_eq(operations[1].kind(), "evaluate-script")
       assert_true(operations[1].to_json().contains("__lepusaDispatchEvent"))
-      assert_true(
-        operations[1].to_json().contains("\"windowLabel\":\"settings\""),
-      )
+      assert_true(operations[1].to_json().contains("\"windowLabel\":\"main\""))
       assert_true(operations[1].to_json().contains("ready"))
       assert_true(dispatch.to_json().contains("\"extraOperations\":[{"))
     }
     Err(_) => abort("unexpected frontend event bridge failure")
+  }
+}
+
+///|
+test "frontend bridge event emit denies cross-window targets" {
+  let host = RuntimeHost::new(event_session_plan())
+  let message = "{\"id\":\"evt-cross\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\",\\\"label\\\":\\\"settings\\\"},\\\"name\\\":\\\"ready\\\"}\"}"
+  match host.dispatch_bridge_message_sync(message) {
+    Ok(dispatch) => {
+      assert_true(
+        dispatch.response_json().contains("\"errorCode\":\"permission-denied\""),
+      )
+      assert_eq(dispatch.operations().length(), 1)
+    }
+    Err(_) => abort("unexpected frontend event bridge response failure")
   }
 }
 

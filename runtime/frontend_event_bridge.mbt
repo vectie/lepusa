@@ -47,8 +47,7 @@ fn RuntimeHost::dispatch_frontend_event_emit(
     )
   }
   match frontend_event_action_from_request(request) {
-    Err(problem) =>
-      (@lepusa.InvokeResponse::invalid_request(request.id(), problem), [])
+    Err(response) => (response, [])
     Ok(action) =>
       match self.snapshot() {
         Err(problems) =>
@@ -102,28 +101,74 @@ fn native_executable_operations_from_runtime(
 ///|
 fn frontend_event_action_from_request(
   request : @lepusa.InvokeRequest,
-) -> Result[@lepusa.RuntimeAction, String] {
+) -> Result[@lepusa.RuntimeAction, @lepusa.InvokeResponse] {
   let parsed = @json.parse(request.payload()) catch {
-    error => return Err("invalid frontend event json: \{error}")
+    error =>
+      return Err(
+        @lepusa.InvokeResponse::invalid_request(
+          request.id(),
+          "invalid frontend event json: \{error}",
+        ),
+      )
   }
   match parsed {
     Object(object) => {
       let name = frontend_event_name(object)
       if name == "" {
-        return Err("frontend event name is required")
+        return Err(
+          @lepusa.InvokeResponse::invalid_request(
+            request.id(),
+            "frontend event name is required",
+          ),
+        )
       }
       match frontend_event_target(object.get("target")) {
-        Err(problem) => Err(problem)
+        Err(problem) =>
+          Err(@lepusa.InvokeResponse::invalid_request(request.id(), problem))
         Ok(target) =>
-          Ok(
-            RuntimeEmit(
-              target,
-              @lepusa.Event::new(name, payload=frontend_event_payload(object)),
-            ),
-          )
+          match frontend_event_authorize_target(request, target) {
+            Some(response) => Err(response)
+            None =>
+              Ok(
+                RuntimeEmit(
+                  target,
+                  @lepusa.Event::new(
+                    name,
+                    payload=frontend_event_payload(object),
+                  ),
+                ),
+              )
+          }
       }
     }
-    _ => Err("frontend event json must be an object")
+    _ =>
+      Err(
+        @lepusa.InvokeResponse::invalid_request(
+          request.id(),
+          "frontend event json must be an object",
+        ),
+      )
+  }
+}
+
+///|
+fn frontend_event_authorize_target(
+  request : @lepusa.InvokeRequest,
+  target : @lepusa.EventTarget,
+) -> @lepusa.InvokeResponse? {
+  match target {
+    AppTarget => None
+    WindowTarget(label) | WebviewTarget(label) =>
+      if label == request.window_label() {
+        None
+      } else {
+        Some(
+          @lepusa.InvokeResponse::permission_denied(
+            request.id(),
+            request.route(),
+          ),
+        )
+      }
   }
 }
 

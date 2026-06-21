@@ -305,6 +305,89 @@ test "app manager runtime control can cancel active streams" {
 }
 
 ///|
+test "app manager runtime control denies cross-window access" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .window(label="settings", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core")
+      .window("main")
+      .window("settings")
+      .command("core.events"),
+    )
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(_, sink) {
+      ignore(sink.send("open"))
+      Ok(())
+    },
+  )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  ignore(manager.listen("ready", target=WindowTarget("main")))
+  ignore(
+    manager.dispatch(
+      @lepusa.InvokeRequest::new(
+        id="stream",
+        window_label="main",
+        plugin="core",
+        command="events",
+      ),
+    ),
+  )
+  let denied_drain = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="drain",
+      window_label="settings",
+      plugin="__lepusa",
+      command="stream.drain",
+      payload="{\"channelId\":\"channel-1\"}",
+    ),
+  )
+  assert_true(denied_drain.error_kind() is Some(PermissionDenied))
+  let denied_cancel = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="cancel",
+      window_label="settings",
+      plugin="__lepusa",
+      command="stream.cancel",
+      payload="{\"channelId\":\"channel-1\"}",
+    ),
+  )
+  assert_true(denied_cancel.error_kind() is Some(PermissionDenied))
+  let denied_close = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="close",
+      window_label="settings",
+      plugin="__lepusa",
+      command="resource.close",
+      payload="{\"id\":\"channel-1\",\"kind\":\"channel\"}",
+    ),
+  )
+  assert_true(denied_close.error_kind() is Some(PermissionDenied))
+  let denied_event = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="evt",
+      window_label="settings",
+      plugin="__lepusa",
+      command="event.emit",
+      payload="{\"target\":{\"kind\":\"window\",\"label\":\"main\"},\"name\":\"ready\"}",
+    ),
+  )
+  assert_true(denied_event.error_kind() is Some(PermissionDenied))
+  match manager.drain_channel("channel-1") {
+    Ok(messages) => assert_eq(messages.length(), 1)
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "app manager closes generic resources and channel resources by handle" {
   let manager = match
     manager_test_app().manager(config=@lepusa.RuntimeConfig::headless()) {

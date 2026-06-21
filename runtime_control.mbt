@@ -47,22 +47,26 @@ fn AppManager::dispatch_runtime_event_emit(
       match runtime_control_event_target(object.get("target")) {
         Err(problem) => InvokeResponse::invalid_request(request.id(), problem)
         Ok(target) =>
-          match
-            self.emit(
-              Event::new(name, payload=runtime_control_payload(object)),
-              target~,
-            ) {
-            Ok(deliveries) =>
-              InvokeResponse::ok(
-                request.id(),
-                "{\"delivered\":\{deliveries.length()}}",
-              )
-            Err(problems) =>
-              InvokeResponse::handler_error(
-                request.id(),
-                problems.join("; "),
-                route=request.route(),
-              )
+          match runtime_control_authorize_event_target(request, target) {
+            Some(response) => response
+            None =>
+              match
+                self.emit(
+                  Event::new(name, payload=runtime_control_payload(object)),
+                  target~,
+                ) {
+                Ok(deliveries) =>
+                  InvokeResponse::ok(
+                    request.id(),
+                    "{\"delivered\":\{deliveries.length()}}",
+                  )
+                Err(problems) =>
+                  InvokeResponse::handler_error(
+                    request.id(),
+                    problems.join("; "),
+                    route=request.route(),
+                  )
+              }
           }
       }
     }
@@ -77,23 +81,27 @@ fn AppManager::dispatch_runtime_stream_drain(
   match runtime_control_channel_id(request) {
     Err(response) => response
     Ok(channel_id) =>
-      match self.drain_channel(channel_id) {
-        Ok(messages) =>
-          InvokeResponse::ok(
-            request.id(),
-            [
-              "{",
-              "\"channelId\":\{channel_id.json_string()},",
-              "\"messages\":[\{messages.map(fn(message) { message.to_json() }).join(",")}]",
-              "}",
-            ].join(""),
-          )
-        Err(problem) =>
-          InvokeResponse::handler_error(
-            request.id(),
-            problem,
-            route=request.route(),
-          )
+      match self.runtime_control_authorize_resource(request, channel_id) {
+        Some(response) => response
+        None =>
+          match self.drain_channel(channel_id) {
+            Ok(messages) =>
+              InvokeResponse::ok(
+                request.id(),
+                [
+                  "{",
+                  "\"channelId\":\{channel_id.json_string()},",
+                  "\"messages\":[\{messages.map(fn(message) { message.to_json() }).join(",")}]",
+                  "}",
+                ].join(""),
+              )
+            Err(problem) =>
+              InvokeResponse::handler_error(
+                request.id(),
+                problem,
+                route=request.route(),
+              )
+          }
       }
   }
 }
@@ -106,23 +114,27 @@ fn AppManager::dispatch_runtime_stream_cancel(
   match runtime_control_channel_id(request) {
     Err(response) => response
     Ok(channel_id) =>
-      match self.cancel_channel(channel_id) {
-        Ok(message) =>
-          InvokeResponse::ok(
-            request.id(),
-            [
-              "{",
-              "\"channelId\":\{channel_id.json_string()},",
-              "\"message\":\{message.to_json()}",
-              "}",
-            ].join(""),
-          )
-        Err(problem) =>
-          InvokeResponse::handler_error(
-            request.id(),
-            problem,
-            route=request.route(),
-          )
+      match self.runtime_control_authorize_resource(request, channel_id) {
+        Some(response) => response
+        None =>
+          match self.cancel_channel(channel_id) {
+            Ok(message) =>
+              InvokeResponse::ok(
+                request.id(),
+                [
+                  "{",
+                  "\"channelId\":\{channel_id.json_string()},",
+                  "\"message\":\{message.to_json()}",
+                  "}",
+                ].join(""),
+              )
+            Err(problem) =>
+              InvokeResponse::handler_error(
+                request.id(),
+                problem,
+                route=request.route(),
+              )
+          }
       }
   }
 }
@@ -142,25 +154,79 @@ fn AppManager::dispatch_runtime_resource_close(
           "runtime resource id is required",
         )
       }
-      let result = match runtime_control_string(object, "kind") {
-        Some(kind) =>
-          self.close_resource_handle(ResourceHandle::new(id~, kind~))
-        None => self.close_resource(id)
-      }
-      match result {
-        Ok(resource) =>
-          InvokeResponse::ok(
-            request.id(),
-            ["{", "\"closed\":\{resource.to_json()}", "}"].join(""),
-          )
-        Err(problem) =>
-          InvokeResponse::handler_error(
-            request.id(),
-            problem,
-            route=request.route(),
-          )
+      match self.runtime_control_authorize_resource(request, id) {
+        Some(response) => response
+        None => {
+          let result = match runtime_control_string(object, "kind") {
+            Some(kind) =>
+              self.close_resource_handle(ResourceHandle::new(id~, kind~))
+            None => self.close_resource(id)
+          }
+          match result {
+            Ok(resource) =>
+              InvokeResponse::ok(
+                request.id(),
+                ["{", "\"closed\":\{resource.to_json()}", "}"].join(""),
+              )
+            Err(problem) =>
+              InvokeResponse::handler_error(
+                request.id(),
+                problem,
+                route=request.route(),
+              )
+          }
+        }
       }
     }
+  }
+}
+
+///|
+fn AppManager::runtime_control_authorize_resource(
+  self : AppManager,
+  request : InvokeRequest,
+  resource_id : String,
+) -> InvokeResponse? {
+  match self.resource(resource_id) {
+    None => None
+    Some(resource) =>
+      match runtime_control_resource_window(resource) {
+        Some(window_label) =>
+          if window_label == request.window_label() {
+            None
+          } else {
+            Some(
+              InvokeResponse::permission_denied(request.id(), request.route()),
+            )
+          }
+        None =>
+          Some(InvokeResponse::permission_denied(request.id(), request.route()))
+      }
+  }
+}
+
+///|
+fn runtime_control_authorize_event_target(
+  request : InvokeRequest,
+  target : EventTarget,
+) -> InvokeResponse? {
+  match target {
+    AppTarget => None
+    WindowTarget(label) | WebviewTarget(label) =>
+      if label == request.window_label() {
+        None
+      } else {
+        Some(InvokeResponse::permission_denied(request.id(), request.route()))
+      }
+  }
+}
+
+///|
+fn runtime_control_resource_window(resource : ResourceEntry) -> String? {
+  let parsed = @json.parse(resource.metadata()) catch { _ => return None }
+  match parsed {
+    Object(object) => runtime_control_string(object, "window")
+    _ => None
   }
 }
 
