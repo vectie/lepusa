@@ -15,6 +15,7 @@ test "desktop kit installs sync-safe official profile" {
   let names = sync_plugin_names()
   assert_true(names.contains("app"))
   assert_true(names.contains("log"))
+  assert_true(names.contains("menu"))
   assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
   assert_false(names.contains("fs"))
@@ -26,6 +27,7 @@ test "desktop kit installs sync-safe official profile" {
   let registry = kit.registry()
   assert_true(registry.sync_routes().contains("app.info"))
   assert_true(registry.sync_routes().contains("log.write"))
+  assert_true(registry.sync_routes().contains("menu.setAppMenu"))
   assert_true(registry.sync_routes().contains("window.close"))
   assert_true(registry.sync_routes().contains("windowState.set"))
   assert_eq(registry.async_routes().length(), 0)
@@ -89,6 +91,7 @@ test "desktop project builds launchable sync plugin host" {
     Ok(host) => {
       assert_true(host.sync_command_routes().contains("app.info"))
       assert_true(host.sync_command_routes().contains("autoLaunch.status"))
+      assert_true(host.sync_command_routes().contains("menu.setAppMenu"))
       assert_true(host.sync_command_routes().contains("window.close"))
       assert_true(host.sync_command_routes().contains("windowState.set"))
       let response = host.dispatch(

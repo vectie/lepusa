@@ -1,7 +1,7 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 20)
+  assert_eq(names.length(), 21)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
@@ -11,6 +11,7 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("fs"))
   assert_true(names.contains("localhost"))
   assert_true(names.contains("log"))
+  assert_true(names.contains("menu"))
   assert_true(names.contains("notification"))
   assert_true(names.contains("opener"))
   assert_true(names.contains("process"))
@@ -48,6 +49,9 @@ test "catalog exposes official plugin declarations" {
     plugin("localhost").unwrap().command_routes().contains("localhost.status"),
   )
   assert_true(plugin("log").unwrap().command_routes().contains("log.write"))
+  assert_true(
+    plugin("menu").unwrap().command_routes().contains("menu.setAppMenu"),
+  )
   assert_true(
     plugin("notification")
     .unwrap()
@@ -109,6 +113,7 @@ test "catalog exposes sync-safe official plugin profile" {
   assert_true(names.contains("deepLink"))
   assert_true(names.contains("localhost"))
   assert_true(names.contains("log"))
+  assert_true(names.contains("menu"))
   assert_true(names.contains("notification"))
   assert_true(names.contains("opener"))
   assert_true(names.contains("serviceDiscovery"))
@@ -151,6 +156,7 @@ test "catalog registers pure moonbit handlers" {
   let registry = register(registry, "store")
   let registry = register(registry, "fs")
   let registry = register(registry, "localhost")
+  let registry = register(registry, "menu")
   let registry = register(registry, "notification")
   let registry = register(registry, "opener")
   let registry = register(registry, "process")
@@ -171,6 +177,8 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("fileDialog.openFile"))
   assert_true(registry.contains("log.write"))
   assert_true(registry.contains("localhost.status"))
+  assert_true(registry.contains("menu.setAppMenu"))
+  assert_true(registry.contains("menu.activateItem"))
   assert_true(registry.contains("notification.show"))
   assert_true(registry.contains("opener.openUrl"))
   assert_true(registry.contains("store.set"))
@@ -190,7 +198,7 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 20)
+  assert_eq(names.length(), 21)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
@@ -200,6 +208,7 @@ test "catalog registers pure moonbit handlers" {
   assert_true(names.contains("fs"))
   assert_true(names.contains("localhost"))
   assert_true(names.contains("log"))
+  assert_true(names.contains("menu"))
   assert_true(names.contains("notification"))
   assert_true(names.contains("opener"))
   assert_true(names.contains("process"))

@@ -611,6 +611,7 @@ pub(all) enum Permission {
   Localhost
   DeepLink
   SingleInstance
+  Menu
   Tray
   AutoLaunch
   Window

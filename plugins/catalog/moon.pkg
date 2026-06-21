@@ -9,6 +9,7 @@ import {
   "vectie/lepusa/plugins/fs" @fs_plugin,
   "vectie/lepusa/plugins/localhost",
   "vectie/lepusa/plugins/log",
+  "vectie/lepusa/plugins/menu",
   "vectie/lepusa/plugins/notification",
   "vectie/lepusa/plugins/opener",
   "vectie/lepusa/plugins/process",

@@ -1,0 +1,106 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/menu"
+
+import {
+  "moonbitlang/core/debug",
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, state? : MenuState) -> @lepusa.CommandRegistry
+
+pub fn registry(state? : MenuState) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub struct MenuBar {
+  items : Array[MenuItem]
+} derive(Eq, @debug.Debug)
+pub fn MenuBar::item(Self, MenuItem) -> Self
+pub fn MenuBar::items(Self) -> Array[MenuItem]
+pub fn MenuBar::new(items? : Array[MenuItem]) -> Self
+pub fn MenuBar::validate(Self) -> Array[String]
+
+pub(all) enum MenuControlAction {
+  SetAppMenu
+  SetWindowMenu
+  ClearAppMenu
+  ClearWindowMenu
+  SetItemEnabled
+  SetItemChecked
+  ActivateItem
+} derive(Eq, @debug.Debug)
+pub fn MenuControlAction::name(Self) -> String
+
+pub struct MenuItem {
+  id : String
+  label : String
+  kind : MenuItemKind
+  accelerator : String?
+  enabled : Bool
+  checked : Bool
+  items : Array[MenuItem]
+} derive(Eq, @debug.Debug)
+pub fn MenuItem::accelerator(Self) -> String?
+pub fn MenuItem::action(id~ : String, label~ : String, accelerator? : String, enabled? : Bool) -> Self
+pub fn MenuItem::check(id~ : String, label~ : String, checked? : Bool, accelerator? : String, enabled? : Bool) -> Self
+pub fn MenuItem::checked(Self) -> Bool
+pub fn MenuItem::enabled(Self) -> Bool
+pub fn MenuItem::id(Self) -> String
+pub fn MenuItem::items(Self) -> Array[Self]
+pub fn MenuItem::kind(Self) -> MenuItemKind
+pub fn MenuItem::label(Self) -> String
+pub fn MenuItem::separator() -> Self
+pub fn MenuItem::submenu(id~ : String, label~ : String, items? : Array[Self], enabled? : Bool) -> Self
+pub fn MenuItem::validate(Self) -> Array[String]
+
+pub(all) enum MenuItemKind {
+  Action
+  Separator
+  Check
+  Submenu
+} derive(Eq, @debug.Debug)
+pub fn MenuItemKind::name(Self) -> String
+
+pub struct MenuOperation {
+  target : MenuTarget
+  action : MenuControlAction
+  payload : String
+} derive(Eq, @debug.Debug)
+pub fn MenuOperation::action(Self) -> MenuControlAction
+pub fn MenuOperation::new(target~ : MenuTarget, action~ : MenuControlAction, payload? : String) -> Self
+pub fn MenuOperation::payload(Self) -> String
+pub fn MenuOperation::target(Self) -> MenuTarget
+pub fn MenuOperation::to_json(Self) -> String
+
+pub struct MenuState {
+  mut app_menu : MenuBar?
+  window_menus : Map[String, MenuBar]
+  mut last_activated : String?
+  operations : Array[MenuOperation]
+}
+pub fn MenuState::app_menu(Self) -> MenuBar?
+pub fn MenuState::last(Self) -> MenuOperation?
+pub fn MenuState::last_activated(Self) -> String?
+pub fn MenuState::new(app_menu? : MenuBar) -> Self
+pub fn MenuState::operations(Self) -> Array[MenuOperation]
+pub fn MenuState::window_menu(Self, String) -> MenuBar?
+
+pub(all) enum MenuTarget {
+  AppMenu
+  WindowMenu(String)
+} derive(Eq, @debug.Debug)
+pub fn MenuTarget::name(Self) -> String
+pub fn MenuTarget::window_label(Self) -> String?
+
+// Type aliases
+
+// Traits
+
