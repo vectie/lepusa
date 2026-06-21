@@ -12,6 +12,7 @@ typedef moonbit_bytes_t (*LepusaWindowsBytesCallback)(void *, moonbit_bytes_t);
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <shellapi.h>
 #include <objbase.h>
 
 typedef HRESULT (WINAPI *LepusaWindowsDwmSetWindowAttribute)(
@@ -466,6 +467,10 @@ typedef HRESULT (WINAPI *LepusaWindowsCreateStreamOnHGlobal)(
   HGLOBAL,
   BOOL,
   IStream **
+);
+typedef BOOL (WINAPI *LepusaWindowsShellNotifyIconW)(
+  DWORD,
+  PNOTIFYICONDATAW
 );
 
 static const IID lepusa_iid_iunknown = {
@@ -1352,6 +1357,11 @@ typedef struct {
 } LepusaWindowsMenuCommand;
 
 typedef struct {
+  UINT command_id;
+  char id[128];
+} LepusaWindowsTrayCommand;
+
+typedef struct {
   const ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl *lpVtbl;
   LONG ref_count;
   LepusaWindowsWebView2Context *context;
@@ -1409,6 +1419,8 @@ typedef struct {
   char callback[256];
 } LepusaWindowsBridgeDrainRequest;
 
+#define LEPUSA_WINDOWS_TRAY_MESSAGE (WM_APP + 0x521)
+
 struct LepusaWindowsWebView2Context {
   HINSTANCE instance;
   ICoreWebView2Environment *environment;
@@ -1437,6 +1449,17 @@ struct LepusaWindowsWebView2Context {
   LepusaWindowsMenuCommand menu_commands[512];
   int menu_command_count;
   UINT next_menu_command_id;
+  HMODULE shell32;
+  LepusaWindowsShellNotifyIconW shell_notify_icon;
+  NOTIFYICONDATAW tray_data;
+  HICON tray_icon;
+  int tray_icon_owned;
+  HMENU tray_menu;
+  int tray_added;
+  int tray_visible;
+  LepusaWindowsTrayCommand tray_commands[256];
+  int tray_command_count;
+  UINT next_tray_command_id;
   LepusaWindowsEnvironmentCompletedHandler environment_handler;
   moonbit_bytes_t initial_open_packet;
 };
@@ -1534,6 +1557,20 @@ static LepusaWindowsWindowSlot *lepusa_windows_find_window_slot(
     }
   }
   return context->window_count > 0 ? &context->windows[0] : NULL;
+}
+
+static LepusaWindowsWindowSlot *lepusa_windows_primary_live_slot(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return NULL;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (context->windows[i].hwnd != NULL) {
+      return &context->windows[i];
+    }
+  }
+  return NULL;
 }
 
 static void lepusa_windows_register_bridge_drain_request(
@@ -3462,6 +3499,70 @@ static int lepusa_windows_json_member_bool(
   return out;
 }
 
+static char *lepusa_windows_cstr_from_range(const char *value, int32_t len);
+
+static char *lepusa_windows_json_string_value_to_cstr(
+  const char *value,
+  const char *end
+) {
+  value = lepusa_windows_json_skip_space(value, end);
+  if (value >= end || *value != '"') {
+    return NULL;
+  }
+  const char *value_end = lepusa_windows_json_string_end(value, end);
+  if (value_end == NULL || value_end > end) {
+    return NULL;
+  }
+  return lepusa_windows_cstr_from_range(
+    value + 1,
+    (int32_t)(value_end - value - 2)
+  );
+}
+
+static char *lepusa_windows_json_payload_string(
+  const char *payload,
+  int32_t payload_len,
+  const char *field
+) {
+  if (payload == NULL || payload_len <= 0) {
+    return NULL;
+  }
+  const char *end = payload + payload_len;
+  const char *cursor = lepusa_windows_json_skip_space(payload, end);
+  if (cursor < end && *cursor == '"') {
+    return lepusa_windows_json_string_value_to_cstr(cursor, end);
+  }
+  const char *value = NULL;
+  const char *value_end = NULL;
+  if (lepusa_windows_json_find_member_value(cursor, end, field, &value, &value_end)) {
+    return lepusa_windows_json_string_value_to_cstr(value, value_end);
+  }
+  return NULL;
+}
+
+static int lepusa_windows_json_payload_bool(
+  const char *payload,
+  int32_t payload_len,
+  const char *field,
+  int fallback
+) {
+  int value = fallback;
+  if (payload == NULL || payload_len <= 0) {
+    return value;
+  }
+  const char *end = payload + payload_len;
+  const char *cursor = lepusa_windows_json_skip_space(payload, end);
+  if (lepusa_windows_json_bool_value(cursor, end, &value)) {
+    return value;
+  }
+  const char *member = NULL;
+  const char *member_end = NULL;
+  if (lepusa_windows_json_find_member_value(cursor, end, field, &member, &member_end)) {
+    lepusa_windows_json_bool_value(member, member_end, &value);
+  }
+  return value;
+}
+
 static char *lepusa_windows_cstr_from_range(const char *value, int32_t len) {
   int32_t safe_len = value == NULL || len < 0 ? 0 : len;
   char *out = (char *)malloc((size_t)safe_len + 1);
@@ -3527,28 +3628,18 @@ static const char *lepusa_windows_menu_command_id(
   return NULL;
 }
 
-static void lepusa_windows_dispatch_menu_click(
-  LepusaWindowsWindowSlot *slot,
-  const char *id
-) {
-  if (slot == NULL || slot->webview == NULL || id == NULL || id[0] == '\0') {
-    return;
+static char *lepusa_windows_json_string_literal_from_cstr(const char *value) {
+  if (value == NULL) {
+    return NULL;
   }
-  const char *template_text =
-    "(globalThis[\"__lepusaDispatchEvent\"]||(()=>false))({name:\"menu.onItemClick\",payload:JSON.stringify({id:%s})});";
-  char *id_literal = lepusa_windows_cstr_from_range(id, (int32_t)strlen(id));
-  if (id_literal == NULL) {
-    return;
-  }
-  size_t escaped_len = strlen(id_literal) * 6 + 3;
-  char *escaped = (char *)malloc(escaped_len);
+  size_t value_len = strlen(value);
+  char *escaped = (char *)malloc(value_len * 6 + 3);
   if (escaped == NULL) {
-    free(id_literal);
-    return;
+    return NULL;
   }
   size_t pos = 0;
   escaped[pos++] = '"';
-  for (const char *p = id_literal; *p != '\0'; p++) {
+  for (const char *p = value; *p != '\0'; p++) {
     unsigned char ch = (unsigned char)*p;
     if (ch == '"' || ch == '\\') {
       escaped[pos++] = '\\';
@@ -3559,11 +3650,41 @@ static void lepusa_windows_dispatch_menu_click(
   }
   escaped[pos++] = '"';
   escaped[pos] = '\0';
-  int needed = snprintf(NULL, 0, template_text, escaped);
+  return escaped;
+}
+
+static void lepusa_windows_dispatch_id_event(
+  LepusaWindowsWindowSlot *slot,
+  const char *event,
+  const char *id
+) {
+  if (slot == NULL ||
+      slot->webview == NULL ||
+      event == NULL ||
+      id == NULL ||
+      id[0] == '\0') {
+    return;
+  }
+  const char *template_text =
+    "(globalThis[\"__lepusaDispatchEvent\"]||(()=>false))({name:%s,payload:JSON.stringify({id:%s})});";
+  char *event_literal = lepusa_windows_json_string_literal_from_cstr(event);
+  char *id_literal = lepusa_windows_json_string_literal_from_cstr(id);
+  if (event_literal == NULL || id_literal == NULL) {
+    free(event_literal);
+    free(id_literal);
+    return;
+  }
+  int needed = snprintf(NULL, 0, template_text, event_literal, id_literal);
   if (needed >= 0) {
     char *script = (char *)malloc((size_t)needed + 1);
     if (script != NULL) {
-      snprintf(script, (size_t)needed + 1, template_text, escaped);
+      snprintf(
+        script,
+        (size_t)needed + 1,
+        template_text,
+        event_literal,
+        id_literal
+      );
       wchar_t *wide_script = lepusa_windows_wstr_from_range(
         script,
         (int32_t)strlen(script)
@@ -3575,8 +3696,15 @@ static void lepusa_windows_dispatch_menu_click(
       free(script);
     }
   }
-  free(escaped);
+  free(event_literal);
   free(id_literal);
+}
+
+static void lepusa_windows_dispatch_menu_click(
+  LepusaWindowsWindowSlot *slot,
+  const char *id
+) {
+  lepusa_windows_dispatch_id_event(slot, "menu.onItemClick", id);
 }
 
 static HMENU lepusa_windows_menu_from_array(
@@ -3829,6 +3957,429 @@ static void lepusa_windows_clear_window_menu(
   }
 }
 
+static int lepusa_windows_tray_action_equals(
+  const char *action,
+  int32_t action_len,
+  const char *name
+) {
+  size_t name_len = strlen(name);
+  return lepusa_windows_range_equals(action, action_len, name) ||
+    (action != NULL &&
+     action_len == (int32_t)(name_len + 5) &&
+     memcmp(action, "tray.", 5) == 0 &&
+     memcmp(action + 5, name, name_len) == 0);
+}
+
+static int lepusa_windows_ensure_shell_notify_icon(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return 0;
+  }
+  if (context->shell_notify_icon != NULL) {
+    return 1;
+  }
+  if (context->shell32 == NULL) {
+    context->shell32 = LoadLibraryA("Shell32.dll");
+  }
+  if (context->shell32 == NULL) {
+    return 0;
+  }
+  context->shell_notify_icon =
+    (LepusaWindowsShellNotifyIconW)GetProcAddress(
+      context->shell32,
+      "Shell_NotifyIconW"
+    );
+  return context->shell_notify_icon != NULL;
+}
+
+static HICON lepusa_windows_default_tray_icon(void) {
+  return LoadIconW(NULL, IDI_APPLICATION);
+}
+
+static void lepusa_windows_reset_tray_commands(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return;
+  }
+  context->tray_command_count = 0;
+  context->next_tray_command_id = 20000;
+}
+
+static UINT lepusa_windows_register_tray_command(
+  LepusaWindowsWebView2Context *context,
+  const char *id,
+  int32_t id_len
+) {
+  if (context == NULL || id == NULL || id_len <= 0 || context->tray_command_count >= 256) {
+    return 0;
+  }
+  if (context->next_tray_command_id < 20000) {
+    context->next_tray_command_id = 20000;
+  }
+  UINT command_id = context->next_tray_command_id++;
+  LepusaWindowsTrayCommand *command =
+    &context->tray_commands[context->tray_command_count++];
+  command->command_id = command_id;
+  lepusa_windows_copy_label_range(
+    command->id,
+    sizeof(command->id),
+    id,
+    id_len
+  );
+  return command_id;
+}
+
+static const char *lepusa_windows_tray_command_id(
+  LepusaWindowsWebView2Context *context,
+  UINT command_id
+) {
+  if (context == NULL) {
+    return NULL;
+  }
+  for (int i = 0; i < context->tray_command_count; i++) {
+    if (context->tray_commands[i].command_id == command_id) {
+      return context->tray_commands[i].id;
+    }
+  }
+  return NULL;
+}
+
+static void lepusa_windows_dispatch_tray_click(
+  LepusaWindowsWebView2Context *context,
+  const char *id
+) {
+  LepusaWindowsWindowSlot *slot = lepusa_windows_primary_live_slot(context);
+  lepusa_windows_dispatch_id_event(slot, "tray.onMenuItemClick", id);
+}
+
+static void lepusa_windows_remove_tray(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return;
+  }
+  if (context->tray_added && lepusa_windows_ensure_shell_notify_icon(context)) {
+    context->shell_notify_icon(NIM_DELETE, &context->tray_data);
+  }
+  context->tray_added = 0;
+  context->tray_visible = 0;
+}
+
+static int lepusa_windows_ensure_tray(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL || !lepusa_windows_ensure_shell_notify_icon(context)) {
+    return 0;
+  }
+  LepusaWindowsWindowSlot *slot = lepusa_windows_primary_live_slot(context);
+  if (slot == NULL || slot->hwnd == NULL) {
+    return 0;
+  }
+  if (context->tray_icon == NULL) {
+    context->tray_icon = lepusa_windows_default_tray_icon();
+    context->tray_icon_owned = 0;
+  }
+  if (!context->tray_added) {
+    context->tray_data.cbSize = sizeof(context->tray_data);
+    context->tray_data.hWnd = slot->hwnd;
+    context->tray_data.uID = 1;
+    context->tray_data.uCallbackMessage = LEPUSA_WINDOWS_TRAY_MESSAGE;
+    context->tray_data.uFlags = NIF_MESSAGE | NIF_ICON;
+    context->tray_data.hIcon = context->tray_icon;
+    if (context->tray_data.szTip[0] != L'\0') {
+      context->tray_data.uFlags |= NIF_TIP;
+    }
+    if (!context->shell_notify_icon(NIM_ADD, &context->tray_data)) {
+      return 0;
+    }
+    context->tray_added = 1;
+    context->tray_visible = 1;
+  } else if (context->tray_data.hWnd != slot->hwnd) {
+    context->tray_data.hWnd = slot->hwnd;
+    context->tray_data.uFlags = NIF_MESSAGE;
+    context->shell_notify_icon(NIM_MODIFY, &context->tray_data);
+  }
+  return 1;
+}
+
+static void lepusa_windows_set_tray_icon(
+  LepusaWindowsWebView2Context *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  if (context == NULL) {
+    return;
+  }
+  char *icon_path = lepusa_windows_json_payload_string(
+    payload,
+    payload_len,
+    "iconPath"
+  );
+  HICON icon = NULL;
+  int icon_owned = 0;
+  if (icon_path != NULL) {
+    wchar_t *wide_path = lepusa_windows_wstr_from_range(
+      icon_path,
+      (int32_t)strlen(icon_path)
+    );
+    if (wide_path != NULL) {
+      icon = (HICON)LoadImageW(
+        NULL,
+        wide_path,
+        IMAGE_ICON,
+        0,
+        0,
+        LR_LOADFROMFILE | LR_DEFAULTSIZE
+      );
+      if (icon != NULL) {
+        icon_owned = 1;
+      }
+      free(wide_path);
+    }
+  }
+  free(icon_path);
+  if (icon == NULL) {
+    icon = lepusa_windows_default_tray_icon();
+    icon_owned = 0;
+  }
+  if (icon == NULL) {
+    return;
+  }
+  if (context->tray_icon_owned && context->tray_icon != NULL) {
+    DestroyIcon(context->tray_icon);
+  }
+  context->tray_icon = icon;
+  context->tray_icon_owned = icon_owned;
+  if (lepusa_windows_ensure_tray(context) && context->tray_added) {
+    context->tray_data.uFlags = NIF_ICON;
+    context->tray_data.hIcon = context->tray_icon;
+    context->shell_notify_icon(NIM_MODIFY, &context->tray_data);
+  }
+}
+
+static void lepusa_windows_set_tray_tooltip(
+  LepusaWindowsWebView2Context *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  if (context == NULL) {
+    return;
+  }
+  if (!lepusa_windows_ensure_tray(context)) {
+    return;
+  }
+  char *tooltip = lepusa_windows_json_payload_string(
+    payload,
+    payload_len,
+    "tooltip"
+  );
+  if (tooltip == NULL) {
+    return;
+  }
+  wchar_t *wide_tooltip = lepusa_windows_wstr_from_range(
+    tooltip,
+    (int32_t)strlen(tooltip)
+  );
+  free(tooltip);
+  if (wide_tooltip == NULL) {
+    return;
+  }
+  wcsncpy(
+    context->tray_data.szTip,
+    wide_tooltip,
+    sizeof(context->tray_data.szTip) / sizeof(context->tray_data.szTip[0]) - 1
+  );
+  context->tray_data.szTip[
+    sizeof(context->tray_data.szTip) / sizeof(context->tray_data.szTip[0]) - 1
+  ] = L'\0';
+  free(wide_tooltip);
+  if (context->tray_added) {
+    context->tray_data.uFlags = NIF_TIP;
+    context->shell_notify_icon(NIM_MODIFY, &context->tray_data);
+  }
+}
+
+static HMENU lepusa_windows_tray_menu_from_array(
+  LepusaWindowsWebView2Context *context,
+  const char *array,
+  const char *array_end
+) {
+  if (context == NULL || array == NULL) {
+    return NULL;
+  }
+  const char *cursor = lepusa_windows_json_skip_space(array, array_end);
+  if (cursor >= array_end || *cursor != '[') {
+    return NULL;
+  }
+  HMENU menu = CreatePopupMenu();
+  if (menu == NULL) {
+    return NULL;
+  }
+  cursor++;
+  while (cursor < array_end) {
+    cursor = lepusa_windows_json_skip_space(cursor, array_end);
+    if (cursor >= array_end || *cursor == ']') {
+      return menu;
+    }
+    if (*cursor == ',') {
+      cursor++;
+      continue;
+    }
+    const char *item_end = lepusa_windows_json_value_end(cursor, array_end);
+    if (item_end == NULL) {
+      return menu;
+    }
+    if (cursor < item_end && *cursor == '{') {
+      const char *kind = NULL;
+      int32_t kind_len = 0;
+      const char *label = NULL;
+      int32_t label_len = 0;
+      const char *id = NULL;
+      int32_t id_len = 0;
+      (void)lepusa_windows_json_member_string_range(
+        cursor,
+        item_end,
+        "kind",
+        &kind,
+        &kind_len
+      );
+      if (lepusa_windows_range_equals(kind, kind_len, "separator")) {
+        AppendMenuW(menu, MF_SEPARATOR, 0, NULL);
+      } else if (lepusa_windows_json_member_string_range(
+                   cursor,
+                   item_end,
+                   "label",
+                   &label,
+                   &label_len
+                 )) {
+        wchar_t *label_text = lepusa_windows_wstr_from_range(label, label_len);
+        if (label_text != NULL) {
+          UINT flags = MF_STRING;
+          if (!lepusa_windows_json_member_bool(cursor, item_end, "enabled", 1)) {
+            flags |= MF_GRAYED;
+          }
+          if (lepusa_windows_range_equals(kind, kind_len, "check") &&
+              lepusa_windows_json_member_bool(cursor, item_end, "checked", 0)) {
+            flags |= MF_CHECKED;
+          }
+          UINT command_id = lepusa_windows_json_member_string_range(
+            cursor,
+            item_end,
+            "id",
+            &id,
+            &id_len
+          )
+            ? lepusa_windows_register_tray_command(context, id, id_len)
+            : 0;
+          if (command_id != 0) {
+            AppendMenuW(menu, flags, command_id, label_text);
+          }
+          free(label_text);
+        }
+      }
+    }
+    cursor = lepusa_windows_json_skip_space(item_end, array_end);
+    if (cursor < array_end && *cursor == ',') {
+      cursor++;
+    }
+  }
+  return menu;
+}
+
+static void lepusa_windows_set_tray_menu(
+  LepusaWindowsWebView2Context *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  if (context == NULL || payload == NULL || payload_len <= 0) {
+    return;
+  }
+  const char *end = payload + payload_len;
+  const char *items = lepusa_windows_json_skip_space(payload, end);
+  const char *items_end = end;
+  const char *member = NULL;
+  const char *member_end = NULL;
+  if (items < end && *items == '{' &&
+      lepusa_windows_json_find_member_value(items, end, "items", &member, &member_end)) {
+    items = member;
+    items_end = member_end;
+  }
+  lepusa_windows_reset_tray_commands(context);
+  HMENU menu = lepusa_windows_tray_menu_from_array(context, items, items_end);
+  if (menu == NULL) {
+    return;
+  }
+  if (context->tray_menu != NULL) {
+    DestroyMenu(context->tray_menu);
+  }
+  context->tray_menu = menu;
+  (void)lepusa_windows_ensure_tray(context);
+}
+
+static void lepusa_windows_show_tray_menu(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL || context->tray_menu == NULL) {
+    return;
+  }
+  LepusaWindowsWindowSlot *slot = lepusa_windows_primary_live_slot(context);
+  if (slot == NULL || slot->hwnd == NULL) {
+    return;
+  }
+  POINT point;
+  GetCursorPos(&point);
+  SetForegroundWindow(slot->hwnd);
+  TrackPopupMenu(
+    context->tray_menu,
+    TPM_RIGHTBUTTON | TPM_LEFTALIGN | TPM_BOTTOMALIGN,
+    point.x,
+    point.y,
+    0,
+    slot->hwnd,
+    NULL
+  );
+  PostMessageW(slot->hwnd, WM_NULL, 0, 0);
+}
+
+static void lepusa_windows_set_tray_visible(
+  LepusaWindowsWebView2Context *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  int visible = lepusa_windows_json_payload_bool(
+    payload,
+    payload_len,
+    "visible",
+    1
+  );
+  if (visible) {
+    (void)lepusa_windows_ensure_tray(context);
+  } else {
+    lepusa_windows_remove_tray(context);
+  }
+}
+
+static void lepusa_windows_destroy_tray(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL) {
+    return;
+  }
+  lepusa_windows_remove_tray(context);
+  if (context->tray_menu != NULL) {
+    DestroyMenu(context->tray_menu);
+    context->tray_menu = NULL;
+  }
+  if (context->tray_icon_owned && context->tray_icon != NULL) {
+    DestroyIcon(context->tray_icon);
+  }
+  context->tray_icon = NULL;
+  context->tray_icon_owned = 0;
+  lepusa_windows_reset_tray_commands(context);
+}
+
 static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
   LepusaWindowsWebView2Context *context,
   moonbit_bytes_t packet
@@ -3877,6 +4428,30 @@ static void lepusa_windows_apply_desktop_shell_from_handoff_packet(
         record.window,
         record.window_len
       );
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "setIcon")) {
+      lepusa_windows_set_tray_icon(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "setTooltip")) {
+      lepusa_windows_set_tray_tooltip(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "setMenu")) {
+      lepusa_windows_set_tray_menu(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "showMenu")) {
+      lepusa_windows_show_tray_menu(context);
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "setVisible")) {
+      lepusa_windows_set_tray_visible(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_windows_tray_action_equals(record.action, record.action_len, "destroy")) {
+      lepusa_windows_destroy_tray(context);
       continue;
     }
     if (lepusa_windows_app_shell_action_equals(record.action, record.action_len, "restart")) {
@@ -3986,6 +4561,14 @@ static LRESULT CALLBACK lepusa_windows_webview_window_proc(
   case WM_COMMAND:
     if (slot != NULL && slot->context != NULL) {
       UINT command_id = LOWORD(wparam);
+      const char *tray_item_id = lepusa_windows_tray_command_id(
+        slot->context,
+        command_id
+      );
+      if (tray_item_id != NULL) {
+        lepusa_windows_dispatch_tray_click(slot->context, tray_item_id);
+        return 0;
+      }
       const char *item_id = lepusa_windows_menu_command_id(
         slot->context,
         command_id
@@ -3996,6 +4579,16 @@ static LRESULT CALLBACK lepusa_windows_webview_window_proc(
       }
     }
     return DefWindowProcW(hwnd, message, wparam, lparam);
+  case LEPUSA_WINDOWS_TRAY_MESSAGE:
+    if (slot != NULL && slot->context != NULL) {
+      if (lparam == WM_LBUTTONUP ||
+          lparam == WM_RBUTTONUP ||
+          lparam == WM_CONTEXTMENU) {
+        lepusa_windows_show_tray_menu(slot->context);
+        return 0;
+      }
+    }
+    return 0;
   case WM_CLOSE:
     DestroyWindow(hwnd);
     return 0;
@@ -4159,6 +4752,7 @@ static int32_t lepusa_windows_run_webview2_loop(
     TranslateMessage(&message);
     DispatchMessageW(&message);
   }
+  lepusa_windows_destroy_tray(&context);
   for (int i = 0; i < context.window_count; i++) {
     if (context.windows[i].menu != NULL) {
       DestroyMenu(context.windows[i].menu);
@@ -4182,6 +4776,9 @@ static int32_t lepusa_windows_run_webview2_loop(
   }
   if (SUCCEEDED(co_result)) {
     co_uninitialize();
+  }
+  if (context.shell32 != NULL) {
+    FreeLibrary(context.shell32);
   }
   FreeLibrary(ole32);
   FreeLibrary(loader);

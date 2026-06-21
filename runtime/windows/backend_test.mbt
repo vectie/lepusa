@@ -176,8 +176,54 @@ test "windows backend exposes webview2 descriptor" {
         window_label="main",
       ),
     ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="setIcon",
+        window_label="main",
+        payload="{\"iconPath\":\"assets/tray.ico\"}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="setTooltip",
+        window_label="main",
+        payload="{\"tooltip\":\"Lepusa\"}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="setMenu",
+        window_label="main",
+        payload="{\"items\":[{\"id\":\"open\",\"label\":\"Open\"},{\"id\":\"sync\",\"label\":\"Sync\",\"kind\":\"check\",\"checked\":true}]}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="showMenu",
+        window_label="main",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="setVisible",
+        window_label="main",
+        payload="{\"visible\":false}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="tray",
+        action="destroy",
+        window_label="main",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 10)
+  assert_eq(execution.executed_count(), 16)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[1].status() is NativeOperationExecuted)
@@ -189,6 +235,12 @@ test "windows backend exposes webview2 descriptor" {
   assert_true(execution.outcomes()[7].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[8].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[9].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[10].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[11].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[12].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[13].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[14].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[15].status() is NativeOperationExecuted)
 }
 
 ///|
