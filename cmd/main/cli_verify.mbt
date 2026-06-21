@@ -39,8 +39,9 @@ async fn render_verify_project(
   passed = verify_runtime_audit(audit, lines, strict~) && passed
   passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
+  passed = verify_release_readiness(bundle, lines, strict~) && passed
   let output = if json {
-    render_verify_json(target, strict~, passed~, lines~, audit~) + "\n"
+    render_verify_json(target, strict~, passed~, lines~, audit~, bundle~) + "\n"
   } else {
     lines.join("")
   }
@@ -58,6 +59,7 @@ fn render_verify_json(
   passed~ : Bool,
   lines~ : Array[String],
   audit~ : @lepusa.RuntimeAudit,
+  bundle~ : @lepusa.BundlePlan,
 ) -> String {
   [
     "{",
@@ -65,6 +67,7 @@ fn render_verify_json(
     "\"strict\":\{cli_json_bool(strict)},",
     "\"ok\":\{cli_json_bool(passed)},",
     "\"audit\":\{audit.to_json()},",
+    "\"releaseReadiness\":\{render_release_readiness_json(bundle)},",
     "\"lines\":[\{lines.map(fn(line) { cli_json_string(line.trim().to_owned()) }).join(",")}]",
     "}",
   ].join("")
@@ -426,6 +429,40 @@ fn verify_bundle_contract(
       }
     Err(problems) => {
       lines.push(render_problem_lines(problems))
+      false
+    }
+  }
+}
+
+///|
+fn verify_release_readiness(
+  bundle : @lepusa.BundlePlan,
+  lines : Array[String],
+  strict~ : Bool,
+) -> Bool {
+  match bundle.release_readiness() {
+    Ok(report) =>
+      if report.ready() {
+        lines.push(
+          "[ok] release-readiness: ready=true artifacts=\{report.artifacts()} required-runtime-dependencies=\{report.required_runtime_dependencies()}\n",
+        )
+        true
+      } else {
+        let issues = report.issues().join("; ")
+        if strict {
+          lines.push(
+            "[fail] strict: release-readiness ready=false issues=\{issues}\n",
+          )
+          false
+        } else {
+          lines.push("[warn] release-readiness: ready=false issues=\{issues}\n")
+          true
+        }
+      }
+    Err(problems) => {
+      lines.push(
+        "[fail] release-readiness: ready=false issues=\{problems.join("; ")}\n",
+      )
       false
     }
   }

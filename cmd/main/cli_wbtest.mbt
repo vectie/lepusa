@@ -782,6 +782,11 @@ async test "generated project config verifies end to end contracts" {
   assert_true(result.output.contains("[ok] native-session: webviews=1"))
   assert_true(result.output.contains("target-can-launch=true"))
   assert_true(result.output.contains("[ok] bundle:"))
+  assert_true(
+    result.output.contains(
+      "[warn] release-readiness: ready=false issues=signing is not configured",
+    ),
+  )
   let windows = render_cli_async([
     "verify",
     "windows",
@@ -800,9 +805,48 @@ async test "generated project config verifies end to end contracts" {
     "--project",
     root + "/lepusa.json",
   ])
-  assert_eq(strict.exit_code, 0)
+  assert_eq(strict.exit_code, 1)
   assert_true(strict.output.contains("mode: strict"))
   assert_true(strict.output.contains("[ok] strict: native launch gate passed"))
+  assert_true(
+    strict.output.contains(
+      "[fail] strict: release-readiness ready=false issues=signing is not configured",
+    ),
+  )
+  let signed_project = root + "/signed-lepusa.json"
+  @fs.write_file(
+    signed_project,
+    (
+      #|{
+      #|  "identifier": "dev.local.lepusa-signed",
+      #|  "productName": "Lepusa Signed",
+      #|  "version": "0.1.0",
+      #|  "rootHtml": "<main>Signed release</main>",
+      #|  "signing": {
+      #|    "identity": "Linux Package Key",
+      #|    "timestampUrl": "https://timestamp.example"
+      #|  },
+      #|  "window": { "label": "main", "title": "Signed" },
+      #|  "plugins": [{ "name": "log" }],
+      #|  "capabilities": [{
+      #|    "name": "main",
+      #|    "windows": ["main"],
+      #|    "commands": ["log.write"]
+      #|  }]
+      #|}
+      #|
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let signed_strict = render_cli_async([
+    "verify", "linux", "--strict", "--project", signed_project,
+  ])
+  assert_eq(signed_strict.exit_code, 0)
+  assert_true(signed_strict.output.contains("mode: strict"))
+  assert_true(
+    signed_strict.output.contains("[ok] release-readiness: ready=true"),
+  )
   let strict_windows = render_cli_async([
     "verify",
     "windows",
@@ -823,6 +867,8 @@ async test "generated project config verifies end to end contracts" {
   assert_true(json_result.output.contains("\"target\":\"linux\""))
   assert_true(json_result.output.contains("\"strict\":false"))
   assert_true(json_result.output.contains("\"ok\":true"))
+  assert_true(json_result.output.contains("\"releaseReadiness\":{"))
+  assert_true(json_result.output.contains("\"ready\":false"))
   assert_true(json_result.output.contains("\"lines\":["))
   assert_true(json_result.output.contains("\"[ok] plan: windows=1"))
   assert_true(json_result.output.contains("[ok] native-session: webviews=1"))
@@ -934,10 +980,15 @@ async test "checked examples cover rabbita static and gateway modes" {
     static_verify.output.contains("[ok] handlers: registered=3 missing=0"),
   )
   assert_true(static_verify.output.contains("resources=1"))
+  assert_true(
+    static_verify.output.contains(
+      "[warn] release-readiness: ready=false issues=signing is not configured",
+    ),
+  )
   let static_strict = render_cli_async([
     "verify", "linux", "--strict", "--project", "examples/static/lepusa.json",
   ])
-  assert_eq(static_strict.exit_code, 0)
+  assert_eq(static_strict.exit_code, 1)
   assert_true(static_strict.output.contains("mode: strict"))
   assert_true(
     static_strict.output.contains("[ok] handlers: registered=3 missing=0"),
@@ -945,10 +996,11 @@ async test "checked examples cover rabbita static and gateway modes" {
   assert_true(
     static_strict.output.contains("[ok] strict: native launch gate passed"),
   )
+  assert_true(static_strict.output.contains("[fail] strict: release-readiness"))
   let gateway_strict = render_cli_async([
     "verify", "linux", "--strict", "--project", "examples/gateway/lepusa.json",
   ])
-  assert_eq(gateway_strict.exit_code, 0)
+  assert_eq(gateway_strict.exit_code, 1)
   assert_true(gateway_strict.output.contains("mode: strict"))
   assert_true(
     gateway_strict.output.contains(
@@ -960,6 +1012,9 @@ async test "checked examples cover rabbita static and gateway modes" {
   )
   assert_true(
     gateway_strict.output.contains("[ok] strict: native launch gate passed"),
+  )
+  assert_true(
+    gateway_strict.output.contains("[fail] strict: release-readiness"),
   )
 }
 

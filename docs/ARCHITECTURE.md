@@ -900,7 +900,7 @@ lepusa run macos --launch
   -> prepares and opens the first macOS WKWebView window
 
 lepusa verify [macos|windows|linux]
-  -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, and bundle contracts
+  -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, bundle contracts, and release-readiness; strict mode fails release-readiness issues
 
 lepusa bridge-task <window> <plugin.command> [payload]
   -> emits source-project bridge task message plus scheduling metadata for native handlers
