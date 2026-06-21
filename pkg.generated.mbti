@@ -81,6 +81,7 @@ pub fn AppManager::resource_handles_by_kind(Self, String) -> Array[ResourceHandl
 pub fn AppManager::resource_handles_by_owner(Self, String) -> Array[ResourceHandle]
 pub fn AppManager::resource_leak_report(Self) -> ResourceLeakReport
 pub fn AppManager::resources(Self) -> Array[ResourceEntry]
+pub fn AppManager::security_profile(Self) -> SecurityProfile
 pub fn AppManager::send_channel(Self, String, String) -> Result[ChannelMessage, String]
 pub fn AppManager::state(Self, String) -> AppStateEntry?
 pub fn AppManager::state_count(Self) -> Int
@@ -1574,6 +1575,7 @@ pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[Runt
 pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
 pub fn RuntimePlan::permission_manifest(Self) -> PermissionManifest
 pub fn RuntimePlan::plugin_count(Self) -> Int
+pub fn RuntimePlan::security_profile(Self, registered_routes? : Array[String], check_handlers? : Bool) -> SecurityProfile
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::window_command_routes(Self, String) -> Array[String]
 pub fn RuntimePlan::window_count(Self) -> Int
@@ -1645,6 +1647,40 @@ pub fn RuntimeWebViewBoot::title(Self) -> String
 pub fn RuntimeWebViewBoot::title_bar(Self) -> TitleBarStyle
 pub fn RuntimeWebViewBoot::url(Self) -> String
 pub fn RuntimeWebViewBoot::width(Self) -> Int
+
+pub struct SecurityProfile {
+  command_manifest : CommandManifest
+  permission_manifest : PermissionManifest
+  capability_policy : CapabilityPolicy
+  capability_report : CapabilityCompileReport
+  runtime_audit : RuntimeAudit
+  registered_routes : Array[String]
+  check_handlers : Bool
+} derive(Eq, @debug.Debug)
+pub fn SecurityProfile::allowed_origins(Self, window_label~ : String, permission~ : Permission) -> Array[String]
+pub fn SecurityProfile::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
+pub fn SecurityProfile::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
+pub fn SecurityProfile::authorize_invoke(Self, InvokeRequest) -> RuntimeInvokeAuthorization
+pub fn SecurityProfile::authorize_operation(Self, InvokeRequest, OperationScope) -> RuntimeInvokeAuthorization
+pub fn SecurityProfile::capability_policy(Self) -> CapabilityPolicy
+pub fn SecurityProfile::capability_report(Self) -> CapabilityCompileReport
+pub fn SecurityProfile::check_handlers(Self) -> Bool
+pub fn SecurityProfile::command_manifest(Self) -> CommandManifest
+pub fn SecurityProfile::denied_routes(Self) -> Array[String]
+pub fn SecurityProfile::error_count(Self) -> Int
+pub fn SecurityProfile::evaluate(Self, window_label~ : String, permission~ : Permission, origin? : String) -> CapabilityDecision
+pub fn SecurityProfile::evaluate_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> CapabilityDecision
+pub fn SecurityProfile::exposed_routes(Self) -> Array[String]
+pub fn SecurityProfile::from_plan(RuntimePlan, registered_routes? : Array[String], check_handlers? : Bool) -> Self
+pub fn SecurityProfile::info_count(Self) -> Int
+pub fn SecurityProfile::ok(Self) -> Bool
+pub fn SecurityProfile::permission_manifest(Self) -> PermissionManifest
+pub fn SecurityProfile::problems(Self) -> Array[String]
+pub fn SecurityProfile::registered_routes(Self) -> Array[String]
+pub fn SecurityProfile::runtime_audit(Self) -> RuntimeAudit
+pub fn SecurityProfile::to_json(Self) -> String
+pub fn SecurityProfile::unused_permissions(Self) -> Array[String]
+pub fn SecurityProfile::warning_count(Self) -> Int
 
 pub struct SigningConfig {
   identity : String?
