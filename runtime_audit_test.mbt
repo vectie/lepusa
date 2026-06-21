@@ -68,6 +68,27 @@ test "runtime audit compares command manifest with registered handlers" {
 }
 
 ///|
+test "runtime audit does not require handlers for declared event routes" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_event("changed"))
+    .with_capability(
+      @lepusa.Capability::new("core")
+      .window("main")
+      .origin("https://app.example")
+      .command("core.changed"),
+    )
+  let plan = match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => plan
+    Err(problems) => abort(problems.join(", "))
+  }
+  let audit = plan.audit_with_registered_routes([])
+  assert_eq(audit.ok(), true)
+  assert_eq(audit.errors().length(), 0)
+}
+
+///|
 test "app manager audit uses its command registry" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.ping", handler=fn(
     payload,

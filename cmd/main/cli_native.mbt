@@ -229,19 +229,11 @@ fn doctor_native_launch_blocker(
 
 ///|
 fn render_handler_coverage(host : @runtime.RuntimeHost) -> String {
-  let declared = handler_required_routes(host)
-  let registered = host.registry().routes()
-  let missing : Array[String] = []
-  for route in declared {
-    if !registered.contains(route) {
-      missing.push(route)
-    }
-  }
-  if missing.is_empty() {
-    "[ok] handlers: registered=\{registered.length()} missing=0\n"
-  } else {
-    "[warn] handlers: registered=\{registered.length()} missing=\{missing.length()} routes=\{missing.join(",")}\n"
-  }
+  let audit = host.audit()
+  render_handler_coverage_from_audit(
+    audit,
+    audit_findings_by_kind(audit, RuntimeAuditMissingHandler),
+  )
 }
 
 ///|

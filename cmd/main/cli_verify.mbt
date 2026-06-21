@@ -35,11 +35,12 @@ async fn render_verify_project(
   passed = verify_dev_plan(host, lines) && passed
   passed = verify_launch_manifest(host, lines) && passed
   passed = verify_webview_content(host, lines) && passed
-  passed = verify_handler_coverage(host, lines, strict~) && passed
+  let audit = host.audit()
+  passed = verify_runtime_audit(audit, lines, strict~) && passed
   passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
   let output = if json {
-    render_verify_json(target, strict~, passed~, lines~) + "\n"
+    render_verify_json(target, strict~, passed~, lines~, audit~) + "\n"
   } else {
     lines.join("")
   }
@@ -56,12 +57,14 @@ fn render_verify_json(
   strict~ : Bool,
   passed~ : Bool,
   lines~ : Array[String],
+  audit~ : @lepusa.RuntimeAudit,
 ) -> String {
   [
     "{",
     "\"target\":\{cli_json_string(target.name())},",
     "\"strict\":\{cli_json_bool(strict)},",
     "\"ok\":\{cli_json_bool(passed)},",
+    "\"audit\":\{audit.to_json()},",
     "\"lines\":[\{lines.map(fn(line) { cli_json_string(line.trim().to_owned()) }).join(",")}]",
     "}",
   ].join("")
@@ -293,34 +296,66 @@ fn verify_native_session_summary(
 }
 
 ///|
-fn verify_handler_coverage(
-  host : @runtime.RuntimeHost,
+fn verify_runtime_audit(
+  audit : @lepusa.RuntimeAudit,
   lines : Array[String],
   strict~ : Bool,
 ) -> Bool {
-  let missing = missing_handler_routes(host)
-  lines.push(render_handler_coverage(host))
-  if strict && !missing.is_empty() {
+  let missing = audit_findings_by_kind(audit, RuntimeAuditMissingHandler)
+  lines.push(render_handler_coverage_from_audit(audit, missing))
+  if audit.ok() {
     lines.push(
-      "[fail] strict: missing concrete handlers for \{missing.length()} route(s)\n",
+      "[ok] audit: errors=0 warnings=\{audit.warning_count()} info=\{audit.info_count()}\n",
     )
+    true
+  } else if strict {
+    if !missing.is_empty() {
+      lines.push(
+        "[fail] strict: missing concrete handlers for \{missing.length()} route(s)\n",
+      )
+    }
+    let other_errors = audit.error_count() - missing.length()
+    if other_errors > 0 {
+      lines.push("[fail] strict: runtime audit errors=\{other_errors}\n")
+    }
     false
   } else {
+    lines.push(
+      "[warn] audit: errors=\{audit.error_count()} warnings=\{audit.warning_count()} info=\{audit.info_count()}\n",
+    )
     true
   }
 }
 
 ///|
 fn missing_handler_routes(host : @runtime.RuntimeHost) -> Array[String] {
-  let declared = handler_required_routes(host)
-  let registered = host.registry().routes()
-  let missing : Array[String] = []
-  for route in declared {
-    if !registered.contains(route) {
-      missing.push(route)
-    }
+  audit_findings_by_kind(host.audit(), RuntimeAuditMissingHandler).map(fn(
+    finding,
+  ) {
+    finding.route()
+  })
+}
+
+///|
+fn audit_findings_by_kind(
+  audit : @lepusa.RuntimeAudit,
+  kind : @lepusa.RuntimeAuditKind,
+) -> Array[@lepusa.RuntimeAuditFinding] {
+  audit.findings().filter(fn(finding) { finding.kind() == kind })
+}
+
+///|
+fn render_handler_coverage_from_audit(
+  audit : @lepusa.RuntimeAudit,
+  missing : Array[@lepusa.RuntimeAuditFinding],
+) -> String {
+  let registered = audit.registered_routes()
+  if missing.is_empty() {
+    "[ok] handlers: registered=\{registered.length()} missing=0\n"
+  } else {
+    let routes = missing.map(fn(finding) { finding.route() })
+    "[warn] handlers: registered=\{registered.length()} missing=\{missing.length()} routes=\{routes.join(",")}\n"
   }
-  missing
 }
 
 ///|

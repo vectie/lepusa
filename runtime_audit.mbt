@@ -137,7 +137,9 @@ fn RuntimeAudit::build(
         ),
       )
     }
-    if check_handlers && !registered_routes.contains(entry.route()) {
+    if check_handlers &&
+      entry.mode().requires_registered_handler() &&
+      !registered_routes.contains(entry.route()) {
       findings.push(
         RuntimeAuditFinding::new(
           severity=RuntimeAuditError,
@@ -279,4 +281,12 @@ fn sorted_unique_routes(routes : Array[String]) -> Array[String] {
   }
   unique.sort()
   unique
+}
+
+///|
+fn CommandMode::requires_registered_handler(self : CommandMode) -> Bool {
+  match self {
+    Sync | Async | Stream => true
+    Event => false
+  }
 }
