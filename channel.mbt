@@ -127,7 +127,7 @@ pub struct ChannelTable {
 
 ///|
 pub fn ChannelTable::new() -> ChannelTable {
-  { resources: ResourceTable::new(), channels: {}, order: [] }
+  { resources: ResourceTable::with_prefix("channel"), channels: {}, order: [] }
 }
 
 ///|
@@ -181,6 +181,13 @@ pub fn ChannelTable::channels(self : ChannelTable) -> Array[Channel] {
     }
   }
   channels
+}
+
+///|
+pub fn ChannelTable::resource_entries(
+  self : ChannelTable,
+) -> Array[ResourceEntry] {
+  self.resources.entries()
 }
 
 ///|

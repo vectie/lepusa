@@ -13,6 +13,11 @@ pub fn RuntimeHost::new(
 }
 
 ///|
+pub fn RuntimeHost::from_manager(manager : @lepusa.AppManager) -> RuntimeHost {
+  RuntimeHost::new(manager.plan(), registry=manager.registry())
+}
+
+///|
 pub fn RuntimeHost::plan(self : RuntimeHost) -> @lepusa.RuntimePlan {
   self.plan
 }

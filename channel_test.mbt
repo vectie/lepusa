@@ -4,7 +4,7 @@ test "channel table opens channels as resources" {
   match
     table.open(owner="main", name="logs", metadata="{\"route\":\"core.run\"}") {
     Ok(channel) => {
-      assert_eq(channel.id(), "resource-1")
+      assert_eq(channel.id(), "channel-1")
       assert_eq(channel.resource().kind(), "channel")
       assert_eq(channel.resource().owner(), "main")
       assert_eq(channel.resource().name(), "logs")
@@ -15,7 +15,7 @@ test "channel table opens channels as resources" {
     Err(_) => abort("unexpected invalid channel")
   }
   assert_eq(table.count(), 1)
-  assert_eq(table.ids()[0], "resource-1")
+  assert_eq(table.ids()[0], "channel-1")
   assert_true(table.to_json().contains("\"kind\":\"channel\""))
 }
 
@@ -77,7 +77,7 @@ test "channel terminal messages prevent further sends" {
   }
   match table.send(channel.id(), "late") {
     Ok(_) => abort("unexpected send after end")
-    Err(problem) => assert_eq(problem, "channel is closed: resource-1")
+    Err(problem) => assert_eq(problem, "channel is closed: channel-1")
   }
   match table.drain(channel.id()) {
     Ok(messages) => {
@@ -116,7 +116,7 @@ test "channel cancellation and close clean up resources" {
   }
   match table.close(first.id()) {
     Ok(_) => abort("unexpected duplicate channel close")
-    Err(problem) => assert_eq(problem, "channel not found: resource-1")
+    Err(problem) => assert_eq(problem, "channel not found: channel-1")
   }
   assert_eq(table.contains(first.id()), false)
   assert_eq(table.contains(second.id()), true)

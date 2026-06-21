@@ -131,13 +131,25 @@ fn ResourceEntry::as_closed(self : ResourceEntry) -> ResourceEntry {
 ///|
 pub struct ResourceTable {
   mut next_sequence : Int
+  id_prefix : String
   entries : Map[String, ResourceEntry]
   order : Array[String]
 }
 
 ///|
 pub fn ResourceTable::new() -> ResourceTable {
-  { next_sequence: 1, entries: {}, order: [] }
+  ResourceTable::with_prefix("resource")
+}
+
+///|
+pub fn ResourceTable::with_prefix(id_prefix : String) -> ResourceTable {
+  let id_prefix = if id_prefix == "" { "resource" } else { id_prefix }
+  { next_sequence: 1, id_prefix, entries: {}, order: [] }
+}
+
+///|
+pub fn ResourceTable::id_prefix(self : ResourceTable) -> String {
+  self.id_prefix
 }
 
 ///|
@@ -151,7 +163,7 @@ pub fn ResourceTable::open(
   }
   let sequence = self.next_sequence
   self.next_sequence += 1
-  let id = "resource-\{sequence}"
+  let id = "\{self.id_prefix}-\{sequence}"
   let entry = ResourceEntry::new(id~, sequence~, descriptor)
   self.entries[id] = entry
   self.order.push(id)
@@ -254,6 +266,7 @@ pub fn ResourceTable::close_all(self : ResourceTable) -> Array[ResourceEntry] {
 pub fn ResourceTable::to_json(self : ResourceTable) -> String {
   [
     "{",
+    "\"idPrefix\":\{self.id_prefix.json_string()},",
     "\"nextSequence\":\{self.next_sequence},",
     "\"resources\":[\{self.entries().map(fn(entry) { entry.to_json() }).join(",")}]",
     "}",

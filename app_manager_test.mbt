@@ -1,0 +1,155 @@
+///|
+fn manager_test_app() -> @lepusa.App {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  @lepusa.new(root)
+  .window(label="main", source=@lepusa.Source::html("<main></main>"))
+  .with_plugin(@lepusa.Plugin::new("core").command_sync("ping"))
+  .with_capability(
+    @lepusa.Capability::new("core").window("main").command("core.ping"),
+  )
+}
+
+///|
+test "app manager owns dispatch resources channels events and state" {
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.ping", handler=fn(
+    payload,
+  ) {
+    Ok("pong:\{payload}")
+  })
+  let manager = match
+    manager_test_app().manager(
+      config=@lepusa.RuntimeConfig::headless(),
+      registry~,
+    ) {
+    Ok(manager) => manager
+    Err(_) => abort("unexpected invalid manager")
+  }
+  assert_eq(manager.window_count(), 1)
+  assert_eq(manager.plugin_count(), 1)
+  assert_eq(manager.command_routes()[0], "core.ping")
+  assert_eq(manager.registered_routes()[0], "core.ping")
+  let response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="1",
+      window_label="main",
+      plugin="core",
+      command="ping",
+      payload="data",
+    ),
+  )
+  assert_true(response is InvokeOk("1", "pong:data"))
+  let resource = match
+    manager.open_resource(
+      @lepusa.ResourceDescriptor::new(kind="watcher", owner="core"),
+    ) {
+    Ok(resource) => resource
+    Err(_) => abort("unexpected invalid resource")
+  }
+  assert_eq(resource.id(), "resource-1")
+  let channel = match manager.open_channel(owner="core", name="logs") {
+    Ok(channel) => channel
+    Err(_) => abort("unexpected invalid channel")
+  }
+  assert_eq(channel.id(), "channel-1")
+  assert_eq(manager.resource_count(), 2)
+  match manager.resource(channel.id()) {
+    Some(entry) => {
+      assert_eq(entry.kind(), "channel")
+      assert_eq(entry.owner(), "core")
+    }
+    None => abort("missing channel resource")
+  }
+  ignore(manager.send_channel(channel.id(), "line"))
+  ignore(manager.end_channel(channel.id()))
+  match manager.drain_channel(channel.id()) {
+    Ok(messages) => {
+      assert_eq(messages.length(), 2)
+      assert_true(messages[0].kind() is ChannelData)
+      assert_true(messages[1].kind() is ChannelEnd)
+    }
+    Err(problem) => abort(problem)
+  }
+  match manager.listen("ready", target=WindowTarget("main")) {
+    Ok(listener) => assert_eq(listener.id(), "listener-1")
+    Err(_) => abort("unexpected invalid listener")
+  }
+  match manager.emit(@lepusa.Event::new("ready"), target=WindowTarget("main")) {
+    Ok(deliveries) => assert_eq(deliveries.length(), 1)
+    Err(_) => abort("unexpected invalid event")
+  }
+  match manager.manage_state("session", kind="json", value="{\"ok\":true}") {
+    Ok(entry) => {
+      assert_eq(entry.key(), "session")
+      assert_eq(entry.kind(), "json")
+    }
+    Err(_) => abort("unexpected invalid state")
+  }
+  match manager.state("session") {
+    Some(entry) => assert_eq(entry.value(), "{\"ok\":true}")
+    None => abort("missing managed state")
+  }
+  let json = manager.to_json()
+  assert_true(json.contains("\"backend\":\"headless\""))
+  assert_true(json.contains("\"commands\":[\"core.ping\"]"))
+  assert_true(json.contains("\"registeredCommands\":[\"core.ping\"]"))
+  assert_true(json.contains("\"id\":\"resource-1\""))
+  assert_true(json.contains("\"id\":\"channel-1\""))
+  assert_true(json.contains("\"state\""))
+}
+
+///|
+test "app manager closes generic resources and channel resources by id" {
+  let manager = match
+    manager_test_app().manager(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(manager) => manager
+    Err(_) => abort("unexpected invalid manager")
+  }
+  let watcher = match
+    manager.open_resource(@lepusa.ResourceDescriptor::new(kind="watcher")) {
+    Ok(resource) => resource
+    Err(_) => abort("unexpected invalid watcher")
+  }
+  let channel = match manager.open_channel() {
+    Ok(channel) => channel
+    Err(_) => abort("unexpected invalid channel")
+  }
+  match manager.close_resource(watcher.id()) {
+    Ok(closed) => {
+      assert_eq(closed.id(), "resource-1")
+      assert_eq(closed.closed(), true)
+    }
+    Err(problem) => abort(problem)
+  }
+  match manager.close_resource(channel.id()) {
+    Ok(closed) => {
+      assert_eq(closed.id(), "channel-1")
+      assert_eq(closed.closed(), true)
+    }
+    Err(problem) => abort(problem)
+  }
+  assert_eq(manager.resource_count(), 0)
+}
+
+///|
+test "state store validates keys and preserves insertion order on overwrite" {
+  let state = @lepusa.AppStateStore::new()
+  match state.set("", value="bad") {
+    Ok(_) => abort("unexpected valid state")
+    Err(problems) => assert_eq(problems[0], "app state key is required")
+  }
+  ignore(state.set("alpha", value="1"))
+  ignore(state.set("beta", value="2"))
+  ignore(state.set("alpha", value="3"))
+  assert_eq(state.count(), 2)
+  assert_eq(state.keys()[0], "alpha")
+  assert_eq(state.keys()[1], "beta")
+  match state.get("alpha") {
+    Some(entry) => assert_eq(entry.value(), "3")
+    None => abort("missing alpha state")
+  }
+  match state.remove("beta") {
+    Ok(entry) => assert_eq(entry.key(), "beta")
+    Err(problem) => abort(problem)
+  }
+  assert_eq(state.contains("beta"), false)
+}

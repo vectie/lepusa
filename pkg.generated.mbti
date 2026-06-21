@@ -26,6 +26,7 @@ pub struct App {
   lifecycle_hooks : Array[LifecycleHook]
 } derive(Eq, @debug.Debug)
 pub fn App::launch_plan(Self) -> Result[LaunchPlan, Array[String]]
+pub fn App::manager(Self, config? : RuntimeConfig, registry? : CommandRegistry) -> Result[AppManager, Array[String]]
 pub fn App::on_shutdown(Self, Cmd) -> Self
 pub fn App::on_window_close_requested(Self, String, Cmd) -> Self
 pub fn App::on_window_closed(Self, String, Cmd) -> Self
@@ -38,6 +39,48 @@ pub fn App::with_plugin(Self, Plugin) -> Self
 pub fn App::with_startup(Self, Cmd) -> Self
 pub fn App::with_window(Self, WindowConfig) -> Self
 
+pub struct AppManager {
+  plan : RuntimePlan
+  registry : CommandRegistry
+  resources : ResourceTable
+  channels : ChannelTable
+  events : EventBus
+  state : AppStateStore
+}
+pub fn AppManager::cancel_channel(Self, String) -> Result[ChannelMessage, String]
+pub fn AppManager::capability_count(Self) -> Int
+pub fn AppManager::channel(Self, String) -> Channel?
+pub fn AppManager::channel_count(Self) -> Int
+pub fn AppManager::close_resource(Self, String) -> Result[ResourceEntry, String]
+pub fn AppManager::command_routes(Self) -> Array[String]
+pub fn AppManager::dispatch(Self, InvokeRequest) -> InvokeResponse
+pub async fn AppManager::dispatch_async(Self, InvokeRequest) -> InvokeResponse
+pub fn AppManager::drain_channel(Self, String) -> Result[Array[ChannelMessage], String]
+pub fn AppManager::emit(Self, Event, target? : EventTarget) -> Result[Array[EventDelivery], Array[String]]
+pub fn AppManager::end_channel(Self, String) -> Result[ChannelMessage, String]
+pub fn AppManager::fail_channel(Self, String, String) -> Result[ChannelMessage, String]
+pub fn AppManager::listen(Self, String, target? : EventTarget, once? : Bool) -> Result[EventListener, Array[String]]
+pub fn AppManager::listener_count(Self) -> Int
+pub fn AppManager::manage_state(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
+pub fn AppManager::new(RuntimePlan, registry? : CommandRegistry) -> Self
+pub fn AppManager::once(Self, String, target? : EventTarget) -> Result[EventListener, Array[String]]
+pub fn AppManager::open_channel(Self, owner? : String, name? : String, metadata? : String) -> Result[Channel, Array[String]]
+pub fn AppManager::open_resource(Self, ResourceDescriptor) -> Result[ResourceEntry, Array[String]]
+pub fn AppManager::plan(Self) -> RuntimePlan
+pub fn AppManager::plugin_count(Self) -> Int
+pub fn AppManager::registered_routes(Self) -> Array[String]
+pub fn AppManager::registry(Self) -> CommandRegistry
+pub fn AppManager::remove_state(Self, String) -> Result[AppStateEntry, String]
+pub fn AppManager::resource(Self, String) -> ResourceEntry?
+pub fn AppManager::resource_count(Self) -> Int
+pub fn AppManager::resources(Self) -> Array[ResourceEntry]
+pub fn AppManager::send_channel(Self, String, String) -> Result[ChannelMessage, String]
+pub fn AppManager::state(Self, String) -> AppStateEntry?
+pub fn AppManager::state_count(Self) -> Int
+pub fn AppManager::to_json(Self) -> String
+pub fn AppManager::unlisten(Self, String) -> Result[EventListener, String]
+pub fn AppManager::window_count(Self) -> Int
+
 pub struct AppMetadata {
   identifier : String
   product_name : String
@@ -49,6 +92,35 @@ pub fn AppMetadata::new(identifier~ : String, product_name~ : String, version~ :
 pub fn AppMetadata::product_name(Self) -> String
 pub fn AppMetadata::validate(Self) -> Array[String]
 pub fn AppMetadata::version(Self) -> String
+
+pub struct AppStateEntry {
+  key : String
+  kind : String
+  value : String
+} derive(Eq, @debug.Debug)
+pub fn AppStateEntry::key(Self) -> String
+pub fn AppStateEntry::kind(Self) -> String
+pub fn AppStateEntry::new(key~ : String, kind? : String, value? : String) -> Self
+pub fn AppStateEntry::to_json(Self) -> String
+pub fn AppStateEntry::validate(Self) -> Array[String]
+pub fn AppStateEntry::value(Self) -> String
+
+pub struct AppStateStore {
+  entries : Map[String, AppStateEntry]
+  order : Array[String]
+}
+pub fn AppStateStore::clear(Self) -> Array[AppStateEntry]
+pub fn AppStateStore::contains(Self, String) -> Bool
+pub fn AppStateStore::count(Self) -> Int
+pub fn AppStateStore::entries(Self) -> Array[AppStateEntry]
+pub fn AppStateStore::get(Self, String) -> AppStateEntry?
+pub fn AppStateStore::is_empty(Self) -> Bool
+pub fn AppStateStore::keys(Self) -> Array[String]
+pub fn AppStateStore::new() -> Self
+pub fn AppStateStore::put(Self, AppStateEntry) -> Result[AppStateEntry, Array[String]]
+pub fn AppStateStore::remove(Self, String) -> Result[AppStateEntry, String]
+pub fn AppStateStore::set(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
+pub fn AppStateStore::to_json(Self) -> String
 
 pub struct BridgeConfig {
   global_name : String
@@ -309,6 +381,7 @@ pub fn ChannelTable::get(Self, String) -> Channel?
 pub fn ChannelTable::ids(Self) -> Array[String]
 pub fn ChannelTable::new() -> Self
 pub fn ChannelTable::open(Self, owner? : String, name? : String, metadata? : String) -> Result[Channel, Array[String]]
+pub fn ChannelTable::resource_entries(Self) -> Array[ResourceEntry]
 pub fn ChannelTable::send(Self, String, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::to_json(Self) -> String
 
@@ -888,6 +961,7 @@ pub fn ResourceEntry::to_json(Self) -> String
 
 pub struct ResourceTable {
   mut next_sequence : Int
+  id_prefix : String
   entries : Map[String, ResourceEntry]
   order : Array[String]
 }
@@ -901,11 +975,13 @@ pub fn ResourceTable::entries(Self) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_kind(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_owner(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::get(Self, String) -> ResourceEntry?
+pub fn ResourceTable::id_prefix(Self) -> String
 pub fn ResourceTable::ids(Self) -> Array[String]
 pub fn ResourceTable::is_empty(Self) -> Bool
 pub fn ResourceTable::new() -> Self
 pub fn ResourceTable::open(Self, ResourceDescriptor) -> Result[ResourceEntry, Array[String]]
 pub fn ResourceTable::to_json(Self) -> String
+pub fn ResourceTable::with_prefix(String) -> Self
 
 pub struct RunReport {
   target : String
