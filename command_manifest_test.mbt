@@ -14,7 +14,14 @@ test "runtime command manifest projects modes permissions and windows" {
     .window(label="settings", source=@lepusa.Source::html("<main></main>"))
     .with_plugin(
       @lepusa.Plugin::new("core")
-      .command_sync("read", permission=FileSystemRead)
+      .command_sync(
+        "read",
+        permission=FileSystemRead,
+        request=@lepusa.IpcSchema::object(
+          "ReadRequest", "{ readonly path: string }",
+        ),
+        response=@lepusa.IpcSchema::string(),
+      )
       .command_async("write", permission=FileSystemWrite)
       .command_stream("events", permission=Notification),
     )
@@ -53,7 +60,15 @@ test "runtime command manifest projects modes permissions and windows" {
           assert_false(entry.allowed_in_window("settings"))
           assert_true(entry.allowed_for_origin("https://app.example"))
           assert_false(entry.allowed_for_origin("https://evil.example"))
+          assert_eq(entry.request_schema().name(), "ReadRequest")
+          assert_eq(
+            entry.request_schema().typescript(),
+            "{ readonly path: string }",
+          )
+          assert_eq(entry.response_schema().typescript(), "string")
           assert_true(entry.to_json().contains("\"mode\":\"sync\""))
+          assert_true(entry.to_json().contains("\"requestSchema\""))
+          assert_true(entry.to_json().contains("\"responseSchema\""))
           assert_true(entry.to_json().contains("\"allowedOrigins\""))
         }
         None => abort("missing read command")

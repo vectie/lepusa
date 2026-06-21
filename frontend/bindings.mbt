@@ -226,17 +226,21 @@ fn frontend_api_typescript(
     "export type LepusaEvent = { name: string; payload?: string };",
     "export type LepusaUnlisten = () => boolean;",
     "export type LepusaEventHandler = (payload: unknown, event: LepusaEvent) => void;",
+    "export type LepusaCommandPayloads = \{typescript_command_schema_map(manifest, request=true)};",
+    "export type LepusaCommandResponses = \{typescript_command_schema_map(manifest, request=false)};",
+    "export type LepusaPayloadFor<Route extends string> = Route extends keyof LepusaCommandPayloads ? LepusaCommandPayloads[Route] : LepusaPayload;",
+    "export type LepusaResponseFor<Route extends string> = Route extends keyof LepusaCommandResponses ? LepusaCommandResponses[Route] : unknown;",
     "",
     "export declare const commandManifest: \{manifest.to_json()};",
     "export declare const routes: readonly LepusaRoute[];",
     "export declare function can(route: string): boolean;",
-    "export declare function invoke<T = unknown>(route: LepusaRoute, payload?: LepusaPayload, options?: LepusaInvokeOptions): Promise<T>;",
+    "export declare function invoke<Route extends LepusaRoute>(route: Route, payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions): Promise<LepusaResponseFor<Route>>;",
     "export declare function isInvokeError(error: unknown): error is LepusaInvokeError;",
     "export declare function listen(name: string, handler: LepusaEventHandler): LepusaUnlisten;",
     "export declare function unlisten(name: string, handler: LepusaEventHandler): boolean;",
     "export declare function emit(name: string, payload?: LepusaPayload): Promise<number>;",
     "export declare function emitTo(target: LepusaEventTarget, name: string, payload?: LepusaPayload): Promise<number>;",
-    "export declare function command<T = unknown>(route: LepusaRoute): (payload?: LepusaPayload, options?: LepusaInvokeOptions) => Promise<T>;",
+    "export declare function command<Route extends LepusaRoute>(route: Route): (payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions) => Promise<LepusaResponseFor<Route>>;",
     "export declare const commands: \{command_tree};",
     export_aliases.join("\n"),
     "",
@@ -272,7 +276,7 @@ fn typescript_command_tree(manifest : @lepusa.CommandManifest) -> String {
     for entry in manifest.entries() {
       if entry.plugin() == plugin {
         command_lines.push(
-          "    \{entry.command().typescript_property_name()}: (payload?: LepusaPayload, options?: LepusaInvokeOptions) => Promise<unknown>;",
+          "    \{entry.command().typescript_property_name()}: (payload?: \{entry.request_schema().typescript()}, options?: LepusaInvokeOptions) => Promise<\{entry.response_schema().typescript()}>;",
         )
       }
     }
@@ -281,6 +285,26 @@ fn typescript_command_tree(manifest : @lepusa.CommandManifest) -> String {
     )
   }
   "{\n\{plugin_blocks.join("\n")}\n}"
+}
+
+///|
+fn typescript_command_schema_map(
+  manifest : @lepusa.CommandManifest,
+  request~ : Bool,
+) -> String {
+  if manifest.entries().is_empty() {
+    return "{}"
+  }
+  let lines : Array[String] = []
+  for entry in manifest.entries() {
+    let schema = if request {
+      entry.request_schema()
+    } else {
+      entry.response_schema()
+    }
+    lines.push("  \{entry.route().json_literal()}: \{schema.typescript()};")
+  }
+  "{\n\{lines.join("\n")}\n}"
 }
 
 ///|

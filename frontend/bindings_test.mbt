@@ -5,7 +5,14 @@ fn frontend_test_plan() -> @lepusa.RuntimePlan {
     .window(label="main", source=@lepusa.Source::html("<main></main>"))
     .with_plugin(
       @lepusa.Plugin::new("core")
-      .command_sync("read", permission=FileSystemRead)
+      .command_sync(
+        "read",
+        permission=FileSystemRead,
+        request=@lepusa.IpcSchema::object(
+          "ReadTextRequest", "{ readonly path: string }",
+        ),
+        response=@lepusa.IpcSchema::string(),
+      )
       .command_async("write", permission=FileSystemWrite),
     )
     .with_plugin(
@@ -67,8 +74,13 @@ test "frontend api bundle generates typescript declarations" {
       )
       assert_true(dts.contains("export declare function invoke"))
       assert_true(dts.contains("export type LepusaInvokeOptions"))
+      assert_true(dts.contains("export type LepusaCommandPayloads = {"))
+      assert_true(dts.contains("\"core.read\": { readonly path: string };"))
+      assert_true(dts.contains("\"core.read\": string;"))
       assert_true(
-        dts.contains("payload?: LepusaPayload, options?: LepusaInvokeOptions"),
+        dts.contains(
+          "payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions",
+        ),
       )
       assert_true(dts.contains("export type LepusaInvokeErrorCode"))
       assert_true(
@@ -90,13 +102,13 @@ test "frontend api bundle generates typescript declarations" {
       assert_true(dts.contains("core: {"))
       assert_true(
         dts.contains(
-          "read: (payload?: LepusaPayload, options?: LepusaInvokeOptions)",
+          "read: (payload?: { readonly path: string }, options?: LepusaInvokeOptions) => Promise<string>;",
         ),
       )
       assert_true(dts.contains("\"window-state\": {"))
       assert_true(
         dts.contains(
-          "\"get-value\": (payload?: LepusaPayload, options?: LepusaInvokeOptions)",
+          "\"get-value\": (payload?: unknown, options?: LepusaInvokeOptions) => Promise<unknown>;",
         ),
       )
       assert_true(

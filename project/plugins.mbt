@@ -72,14 +72,21 @@ fn plugin_command_from_json(
         route="\{plugin.name()}.\{name}",
         problems,
       )
+      let request = command_schema_from_object(
+        object, "requestSchema", problems,
+      )
+      let response = command_schema_from_object(
+        object, "responseSchema", problems,
+      )
       match mode {
-        "sync" => plugin.command_sync(name, permission?)
-        "async" => plugin.command_async(name, permission?)
-        "stream" => plugin.command_stream(name, permission?)
-        "event" => plugin.command_event(name, permission?)
+        "sync" => plugin.command_sync(name, permission?, request?, response?)
+        "async" => plugin.command_async(name, permission?, request?, response?)
+        "stream" =>
+          plugin.command_stream(name, permission?, request?, response?)
+        "event" => plugin.command_event(name, permission?, request?, response?)
         value => {
           problems.push("unknown plugin command mode: \{value}")
-          plugin.command_sync(name, permission?)
+          plugin.command_sync(name, permission?, request?, response?)
         }
       }
     }
@@ -87,6 +94,29 @@ fn plugin_command_from_json(
       problems.push("project plugin commands must be strings or objects")
       plugin
     }
+  }
+}
+
+///|
+fn command_schema_from_object(
+  object : Map[String, Json],
+  key : String,
+  problems : Array[String],
+) -> @lepusa.IpcSchema? {
+  match object.get(key) {
+    Some(Object(schema)) => {
+      let name = required_config_string(schema, "name", problems)
+      let typescript = required_config_string(schema, "typescript", problems)
+      let description = optional_config_string(schema, "description").unwrap_or(
+        "",
+      )
+      Some(@lepusa.IpcSchema::new(name~, typescript~, description~))
+    }
+    Some(_) => {
+      problems.push("project \{key} must be an object")
+      None
+    }
+    None => None
   }
 }
 

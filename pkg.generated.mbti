@@ -417,6 +417,8 @@ pub struct CommandManifestEntry {
   route : String
   mode : CommandMode
   permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
   allowed_windows : Array[String]
   allowed_origins : Array[String]
 } derive(Eq, @debug.Debug)
@@ -428,6 +430,8 @@ pub fn CommandManifestEntry::command(Self) -> String
 pub fn CommandManifestEntry::mode(Self) -> CommandMode
 pub fn CommandManifestEntry::permission(Self) -> Permission
 pub fn CommandManifestEntry::plugin(Self) -> String
+pub fn CommandManifestEntry::request_schema(Self) -> IpcSchema
+pub fn CommandManifestEntry::response_schema(Self) -> IpcSchema
 pub fn CommandManifestEntry::route(Self) -> String
 pub fn CommandManifestEntry::to_json(Self) -> String
 
@@ -462,11 +466,16 @@ pub struct CommandSpec {
   name : String
   mode : CommandMode
   permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
 } derive(Eq, @debug.Debug)
 pub fn CommandSpec::mode(Self) -> CommandMode
 pub fn CommandSpec::name(Self) -> String
-pub fn CommandSpec::new(String, mode? : CommandMode, permission? : Permission) -> Self
+pub fn CommandSpec::new(String, mode? : CommandMode, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn CommandSpec::permission(Self) -> Permission
+pub fn CommandSpec::request_schema(Self) -> IpcSchema
+pub fn CommandSpec::response_schema(Self) -> IpcSchema
+pub fn CommandSpec::with_schema(Self, request? : IpcSchema, response? : IpcSchema) -> Self
 
 pub struct Event {
   name : String
@@ -631,6 +640,26 @@ pub fn InvokeResponse::ok(String, String) -> Self
 pub fn InvokeResponse::payload(Self) -> String?
 pub fn InvokeResponse::permission_denied(String, String) -> Self
 pub fn InvokeResponse::unknown_command(String, String) -> Self
+
+pub struct IpcSchema {
+  name : String
+  typescript : String
+  description : String
+} derive(Eq, @debug.Debug)
+pub fn IpcSchema::any() -> Self
+pub fn IpcSchema::array(Self) -> Self
+pub fn IpcSchema::boolean() -> Self
+pub fn IpcSchema::description(Self) -> String
+pub fn IpcSchema::json() -> Self
+pub fn IpcSchema::name(Self) -> String
+pub fn IpcSchema::new(name~ : String, typescript? : String, description? : String) -> Self
+pub fn IpcSchema::number() -> Self
+pub fn IpcSchema::object(String, String, description? : String) -> Self
+pub fn IpcSchema::string() -> Self
+pub fn IpcSchema::to_json(Self) -> String
+pub fn IpcSchema::typescript(Self) -> String
+pub fn IpcSchema::unit() -> Self
+pub fn IpcSchema::validate(Self) -> Array[String]
 
 pub struct LaunchPlan {
   root : Cell
@@ -815,13 +844,13 @@ pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
 } derive(Eq, @debug.Debug)
-pub fn Plugin::command(Self, String, mode? : CommandMode, permission? : Permission) -> Self
-pub fn Plugin::command_async(Self, String, permission? : Permission) -> Self
-pub fn Plugin::command_event(Self, String, permission? : Permission) -> Self
+pub fn Plugin::command(Self, String, mode? : CommandMode, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command_async(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command_event(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::command_names(Self) -> Array[String]
 pub fn Plugin::command_routes(Self) -> Array[String]
-pub fn Plugin::command_stream(Self, String, permission? : Permission) -> Self
-pub fn Plugin::command_sync(Self, String, permission? : Permission) -> Self
+pub fn Plugin::command_stream(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
+pub fn Plugin::command_sync(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
 pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self

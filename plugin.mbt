@@ -21,6 +21,8 @@ pub struct CommandSpec {
   name : String
   mode : CommandMode
   permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
 } derive(Debug, Eq)
 
 ///|
@@ -28,8 +30,10 @@ pub fn CommandSpec::new(
   name : String,
   mode? : CommandMode = Sync,
   permission? : Permission = Permission::command(name),
+  request? : IpcSchema = IpcSchema::any(),
+  response? : IpcSchema = IpcSchema::any(),
 ) -> CommandSpec {
-  { name, mode, permission }
+  { name, mode, permission, request_schema: request, response_schema: response }
 }
 
 ///|
@@ -45,6 +49,25 @@ pub fn CommandSpec::mode(self : CommandSpec) -> CommandMode {
 ///|
 pub fn CommandSpec::permission(self : CommandSpec) -> Permission {
   self.permission
+}
+
+///|
+pub fn CommandSpec::request_schema(self : CommandSpec) -> IpcSchema {
+  self.request_schema
+}
+
+///|
+pub fn CommandSpec::response_schema(self : CommandSpec) -> IpcSchema {
+  self.response_schema
+}
+
+///|
+pub fn CommandSpec::with_schema(
+  self : CommandSpec,
+  request? : IpcSchema = self.request_schema,
+  response? : IpcSchema = self.response_schema,
+) -> CommandSpec {
+  { ..self, request_schema: request, response_schema: response }
 }
 
 ///|
@@ -64,11 +87,15 @@ pub fn Plugin::command(
   name : String,
   mode? : CommandMode = Sync,
   permission? : Permission,
+  request? : IpcSchema,
+  response? : IpcSchema,
 ) -> Plugin {
   let commands = self.commands.copy()
   let route = "\{self.name}.\{name}"
   let permission = permission.unwrap_or(Permission::command(route))
-  commands.push(CommandSpec::new(name, mode~, permission~))
+  let request = request.unwrap_or(IpcSchema::any())
+  let response = response.unwrap_or(IpcSchema::any())
+  commands.push(CommandSpec::new(name, mode~, permission~, request~, response~))
   { ..self, commands, }
 }
 
@@ -77,8 +104,10 @@ pub fn Plugin::command_sync(
   self : Plugin,
   name : String,
   permission? : Permission,
+  request? : IpcSchema,
+  response? : IpcSchema,
 ) -> Plugin {
-  self.command(name, mode=Sync, permission?)
+  self.command(name, mode=Sync, permission?, request?, response?)
 }
 
 ///|
@@ -86,8 +115,10 @@ pub fn Plugin::command_async(
   self : Plugin,
   name : String,
   permission? : Permission,
+  request? : IpcSchema,
+  response? : IpcSchema,
 ) -> Plugin {
-  self.command(name, mode=Async, permission?)
+  self.command(name, mode=Async, permission?, request?, response?)
 }
 
 ///|
@@ -95,8 +126,10 @@ pub fn Plugin::command_stream(
   self : Plugin,
   name : String,
   permission? : Permission,
+  request? : IpcSchema,
+  response? : IpcSchema,
 ) -> Plugin {
-  self.command(name, mode=Stream, permission?)
+  self.command(name, mode=Stream, permission?, request?, response?)
 }
 
 ///|
@@ -104,8 +137,10 @@ pub fn Plugin::command_event(
   self : Plugin,
   name : String,
   permission? : Permission,
+  request? : IpcSchema,
+  response? : IpcSchema,
 ) -> Plugin {
-  self.command(name, mode=Event, permission?)
+  self.command(name, mode=Event, permission?, request?, response?)
 }
 
 ///|
@@ -143,6 +178,12 @@ pub fn Plugin::validate(self : Plugin) -> Array[String] {
       problems.push("plugin command must be unique: \{name}")
     } else {
       seen.push(name)
+    }
+    for problem in command.request_schema().validate() {
+      problems.push(problem)
+    }
+    for problem in command.response_schema().validate() {
+      problems.push(problem)
     }
   }
   problems

@@ -29,6 +29,57 @@ test "project config parses app manifest boundary" {
 }
 
 ///|
+test "project config parses command request and response schemas" {
+  let config =
+    #|{
+    #|  "identifier": "dev.vectie.typed",
+    #|  "productName": "Typed",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Typed" },
+    #|  "plugins": [{
+    #|    "name": "window",
+    #|    "commands": [{
+    #|      "name": "setTitle",
+    #|      "permission": "window",
+    #|      "requestSchema": {
+    #|        "name": "SetTitleRequest",
+    #|        "typescript": "{ readonly title: string }"
+    #|      },
+    #|      "responseSchema": {
+    #|        "name": "Unit",
+    #|        "typescript": "void"
+    #|      }
+    #|    }]
+    #|  }],
+    #|  "capabilities": [{
+    #|    "name": "main",
+    #|    "windows": ["main"],
+    #|    "permissions": ["window"]
+    #|  }]
+    #|}
+    #|
+  match ProjectConfig::parse(config) {
+    Ok(project) =>
+      match project.manifest().runtime_plan(project.root()) {
+        Ok(plan) =>
+          match plan.command_manifest().entry("window.setTitle") {
+            Some(entry) => {
+              assert_eq(entry.request_schema().name(), "SetTitleRequest")
+              assert_eq(
+                entry.request_schema().typescript(),
+                "{ readonly title: string }",
+              )
+              assert_eq(entry.response_schema().typescript(), "void")
+            }
+            None => abort("missing typed command")
+          }
+        Err(problems) => abort(problems.join(", "))
+      }
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
 async test "project config loads file relative resources" {
   let root = "/tmp/lepusa-project-load-\{@async.now().to_int()}"
   @fs.mkdir(root + "/dist", recursive=true, permission=0o755)

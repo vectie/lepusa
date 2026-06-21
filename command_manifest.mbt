@@ -5,6 +5,8 @@ pub struct CommandManifestEntry {
   route : String
   mode : CommandMode
   permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
   allowed_windows : Array[String]
   allowed_origins : Array[String]
 } derive(Debug, Eq)
@@ -15,6 +17,8 @@ fn CommandManifestEntry::new(
   command~ : String,
   mode~ : CommandMode,
   permission~ : Permission,
+  request_schema~ : IpcSchema,
+  response_schema~ : IpcSchema,
   allowed_windows~ : Array[String],
   allowed_origins~ : Array[String],
 ) -> CommandManifestEntry {
@@ -24,6 +28,8 @@ fn CommandManifestEntry::new(
     route: "\{plugin}.\{command}",
     mode,
     permission,
+    request_schema,
+    response_schema,
     allowed_windows: allowed_windows.copy(),
     allowed_origins: allowed_origins.copy(),
   }
@@ -54,6 +60,20 @@ pub fn CommandManifestEntry::permission(
   self : CommandManifestEntry,
 ) -> Permission {
   self.permission
+}
+
+///|
+pub fn CommandManifestEntry::request_schema(
+  self : CommandManifestEntry,
+) -> IpcSchema {
+  self.request_schema
+}
+
+///|
+pub fn CommandManifestEntry::response_schema(
+  self : CommandManifestEntry,
+) -> IpcSchema {
+  self.response_schema
 }
 
 ///|
@@ -95,6 +115,8 @@ pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
     "\"route\":\{self.route.json_string()},",
     "\"mode\":\{self.mode.name().json_string()},",
     "\"permission\":\{self.permission.name().json_string()},",
+    "\"requestSchema\":\{self.request_schema.to_json()},",
+    "\"responseSchema\":\{self.response_schema.to_json()},",
     "\"allowedWindows\":[\{self.allowed_windows.map(fn(window) { window.json_string() }).join(",")}],",
     "\"allowedOrigins\":[\{self.allowed_origins.map(fn(origin) { origin.json_string() }).join(",")}]",
     "}",
@@ -138,6 +160,8 @@ pub fn CommandManifest::from_plugins(
           command=command.name(),
           mode=command.mode(),
           permission=command.permission(),
+          request_schema=command.request_schema(),
+          response_schema=command.response_schema(),
           allowed_windows~,
           allowed_origins=command_allowed_origins(
             policy,
