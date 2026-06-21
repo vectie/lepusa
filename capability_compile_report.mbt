@@ -307,6 +307,7 @@ fn capability_compile_issues(
     )
   }
   append_unknown_window_issues(issues, capabilities, windows)
+  append_unscoped_operation_issues(issues, capabilities)
   append_denied_route_issues(issues, command_manifest)
   append_unused_permission_issues(issues, permission_manifest)
   issues
@@ -354,6 +355,44 @@ fn append_denied_route_issues(
         ),
       )
     }
+  }
+}
+
+///|
+fn append_unscoped_operation_issues(
+  issues : Array[CapabilityCompileIssue],
+  capabilities : Array[Capability],
+) -> Unit {
+  for capability in capabilities {
+    for permission in capability.permissions() {
+      match required_operation_scope_kind(permission) {
+        Some(kind) =>
+          if capability.operation_scopes_by_kind(kind).is_empty() {
+            issues.push(
+              CapabilityCompileIssue::new(
+                severity=CapabilityWarning,
+                code="operation-scope-missing",
+                message="permission grant has no \{kind.name()} operation scope: \{permission.name()}",
+                permission=permission.name(),
+                capability=capability.name(),
+              ),
+            )
+          }
+        None => ()
+      }
+    }
+  }
+}
+
+///|
+fn required_operation_scope_kind(
+  permission : Permission,
+) -> OperationScopeKind? {
+  match permission {
+    FileSystemRead | FileSystemWrite => Some(PathOperation)
+    Shell => Some(ShellOperation)
+    Network => Some(UrlOperation)
+    _ => None
   }
 }
 

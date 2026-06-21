@@ -58,6 +58,7 @@ pub struct RuntimeCapabilityGrant {
   windows : Array[String]
   origins : Array[String]
   permissions : Array[String]
+  operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
 
 ///|
@@ -518,6 +519,13 @@ pub fn RuntimeCapabilityGrant::permissions(
 }
 
 ///|
+pub fn RuntimeCapabilityGrant::operation_scopes(
+  self : RuntimeCapabilityGrant,
+) -> Array[OperationScope] {
+  self.operation_scopes.copy()
+}
+
+///|
 fn RuntimeCapabilityGrant::from_capability(
   capability : Capability,
 ) -> RuntimeCapabilityGrant {
@@ -528,6 +536,7 @@ fn RuntimeCapabilityGrant::from_capability(
     permissions: capability
     .permissions()
     .map(fn(permission) { permission.name() }),
+    operation_scopes: capability.operation_scopes(),
   }
 }
 
@@ -806,7 +815,8 @@ fn runtime_capability_grant_json(grant : RuntimeCapabilityGrant) -> String {
     "\"name\":\{grant.name().json_string()},",
     "\"windows\":[\{grant.windows().map(fn(window) { window.json_string() }).join(",")}],",
     "\"origins\":[\{grant.origins().map(fn(origin) { origin.json_string() }).join(",")}],",
-    "\"permissions\":[\{grant.permissions().map(fn(permission) { permission.json_string() }).join(",")}]",
+    "\"permissions\":[\{grant.permissions().map(fn(permission) { permission.json_string() }).join(",")}],",
+    "\"operationScopes\":[\{grant.operation_scopes().map(fn(scope) { scope.to_json() }).join(",")}]",
     "}",
   ].join("")
 }

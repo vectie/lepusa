@@ -55,6 +55,48 @@ test "capability policy can scope grants to origins" {
 }
 
 ///|
+test "capability policy scopes sensitive operations deny by default" {
+  let policy = @lepusa.CapabilityPolicy::new(capabilities=[
+    @lepusa.Capability::new("main-files")
+    .window("main")
+    .permission(FileSystemRead)
+    .path_scope(root="/app/data"),
+    @lepusa.Capability::new("shell")
+    .window("main")
+    .permission(Shell)
+    .shell_scope("moon"),
+  ])
+  let allowed = policy.evaluate_operation(
+    window_label="main",
+    permission=FileSystemRead,
+    scope=@lepusa.OperationScope::path(root="/app/data/config.json"),
+  )
+  assert_true(allowed.allowed())
+  assert_eq(allowed.capability(), "main-files")
+  let denied_path = policy.evaluate_operation(
+    window_label="main",
+    permission=FileSystemRead,
+    scope=@lepusa.OperationScope::path(root="/etc/passwd"),
+  )
+  assert_true(denied_path.denied())
+  assert_true(denied_path.reason().contains("operation scope denied"))
+  let denied_shell = policy.evaluate_operation(
+    window_label="main",
+    permission=Shell,
+    scope=@lepusa.OperationScope::shell("rm"),
+  )
+  assert_true(denied_shell.denied())
+  assert_true(policy.allows(window_label="main", permission=Shell))
+  assert_false(
+    policy.allows_operation(
+      window_label="main",
+      permission=Shell,
+      scope=@lepusa.OperationScope::shell("rm"),
+    ),
+  )
+}
+
+///|
 test "capability policy validates capability set" {
   let policy = @lepusa.CapabilityPolicy::new(capabilities=[
     @lepusa.Capability::new("dup").permission(FileSystemRead),
@@ -68,6 +110,13 @@ test "capability policy validates capability set" {
     problems.contains("capability must include at least one permission"),
   )
   assert_true(problems.contains("capability origin must not be empty"))
+  assert_true(
+    @lepusa.Capability::new("bad-scope")
+    .permission(Shell)
+    .shell_scope("moon test")
+    .validate()
+    .contains("shell operation scope command must be a single executable"),
+  )
 }
 
 ///|
@@ -84,4 +133,5 @@ test "capability policy serializes grants for diagnostics" {
   assert_true(json.contains("\"permissions\":[\"shell\"]"))
   assert_true(json.contains("\"windows\":[\"main\"]"))
   assert_true(json.contains("\"origins\":[]"))
+  assert_true(json.contains("\"operationScopes\""))
 }

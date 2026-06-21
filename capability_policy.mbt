@@ -148,6 +148,52 @@ pub fn CapabilityPolicy::evaluate(
 }
 
 ///|
+pub fn CapabilityPolicy::allows_operation(
+  self : CapabilityPolicy,
+  window_label~ : String,
+  permission~ : Permission,
+  scope~ : OperationScope,
+  origin? : String = "",
+) -> Bool {
+  self.evaluate_operation(window_label~, permission~, scope~, origin~).allowed()
+}
+
+///|
+pub fn CapabilityPolicy::evaluate_operation(
+  self : CapabilityPolicy,
+  window_label~ : String,
+  permission~ : Permission,
+  scope~ : OperationScope,
+  origin? : String = "",
+) -> CapabilityDecision {
+  let mut grant_allowed = false
+  for capability in self.capabilities {
+    if capability.allows(window_label~, permission~, origin~) {
+      grant_allowed = true
+      if capability.allows_operation(
+          window_label~,
+          permission~,
+          scope~,
+          origin~,
+        ) {
+        return CapabilityDecision::allow(
+          window_label~,
+          origin~,
+          permission~,
+          capability=capability.name(),
+        )
+      }
+    }
+  }
+  let reason = if grant_allowed {
+    operation_scope_deny_reason(window_label, origin, permission, scope)
+  } else {
+    capability_deny_reason(window_label, origin, permission)
+  }
+  CapabilityDecision::deny(window_label~, origin~, permission~, reason~)
+}
+
+///|
 pub fn CapabilityPolicy::allowed_origins(
   self : CapabilityPolicy,
   window_label~ : String,
@@ -220,9 +266,25 @@ fn capability_policy_capability_json(capability : Capability) -> String {
     "\"name\":\{capability.name().json_string()},",
     "\"windows\":[\{capability.windows().map(fn(window) { window.json_string() }).join(",")}],",
     "\"origins\":[\{capability.origins().map(fn(origin) { origin.json_string() }).join(",")}],",
-    "\"permissions\":[\{capability.permissions().map(fn(permission) { permission.name().json_string() }).join(",")}]",
+    "\"permissions\":[\{capability.permissions().map(fn(permission) { permission.name().json_string() }).join(",")}],",
+    "\"operationScopes\":[\{capability.operation_scopes().map(fn(scope) { scope.to_json() }).join(",")}]",
     "}",
   ].join("")
+}
+
+///|
+fn operation_scope_deny_reason(
+  window_label : String,
+  origin : String,
+  permission : Permission,
+  scope : OperationScope,
+) -> String {
+  let target = "\{scope.kind().name()}:\{scope.value()}"
+  if origin == "" {
+    "operation scope denied for window \{window_label}: \{permission.name()} \{target}"
+  } else {
+    "operation scope denied for window \{window_label} origin \{origin}: \{permission.name()} \{target}"
+  }
 }
 
 ///|

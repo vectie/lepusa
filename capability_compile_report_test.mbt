@@ -13,12 +13,14 @@ test "capability compile report accepts coherent grants" {
     .with_capability(
       @lepusa.Capability::new("main-read")
       .window("main")
-      .permission(FileSystemRead),
+      .permission(FileSystemRead)
+      .path_scope(root="/app/data"),
     )
     .with_capability(
       @lepusa.Capability::new("settings-write")
       .window("settings")
-      .permission(FileSystemWrite),
+      .permission(FileSystemWrite)
+      .path_scope(root="/app/data", writable=true),
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => {
@@ -72,7 +74,7 @@ test "capability compile report catches missing and stale grants" {
       )
       assert_false(report.ok())
       assert_true(report.error_count() >= 4)
-      assert_eq(report.warning_count(), 1)
+      assert_eq(report.warning_count(), 4)
       assert_true(report.denied_routes().contains("core.write"))
       assert_true(report.denied_routes().contains("core.admin"))
       assert_true(report.unknown_windows().contains("ghost"))
@@ -82,6 +84,7 @@ test "capability compile report catches missing and stale grants" {
       assert_true(codes.contains("permission-ungranted"))
       assert_true(codes.contains("permission-unused"))
       assert_true(codes.contains("capability-invalid"))
+      assert_true(codes.contains("operation-scope-missing"))
       let json = report.to_json()
       assert_true(json.contains("\"ok\":false"))
       assert_true(json.contains("\"code\":\"unknown-window\""))

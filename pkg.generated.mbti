@@ -285,15 +285,23 @@ pub struct Capability {
   windows : Array[String]
   origins : Array[String]
   permissions : Array[Permission]
+  operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
 pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
+pub fn Capability::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
 pub fn Capability::command(Self, String) -> Self
 pub fn Capability::name(Self) -> String
 pub fn Capability::new(String) -> Self
+pub fn Capability::operation_scope(Self, OperationScope) -> Self
+pub fn Capability::operation_scopes(Self) -> Array[OperationScope]
+pub fn Capability::operation_scopes_by_kind(Self, OperationScopeKind) -> Array[OperationScope]
 pub fn Capability::origin(Self, String) -> Self
 pub fn Capability::origins(Self) -> Array[String]
+pub fn Capability::path_scope(Self, root~ : String, writable? : Bool) -> Self
 pub fn Capability::permission(Self, Permission) -> Self
 pub fn Capability::permissions(Self) -> Array[Permission]
+pub fn Capability::shell_scope(Self, String) -> Self
+pub fn Capability::url_scope(Self, String) -> Self
 pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
 pub fn Capability::windows(Self) -> Array[String]
@@ -368,9 +376,11 @@ pub struct CapabilityPolicy {
 } derive(Eq, @debug.Debug)
 pub fn CapabilityPolicy::allowed_origins(Self, window_label~ : String, permission~ : Permission) -> Array[String]
 pub fn CapabilityPolicy::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
+pub fn CapabilityPolicy::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
 pub fn CapabilityPolicy::allows_window(Self, window_label~ : String, permission~ : Permission) -> Bool
 pub fn CapabilityPolicy::capabilities(Self) -> Array[Capability]
 pub fn CapabilityPolicy::evaluate(Self, window_label~ : String, permission~ : Permission, origin? : String) -> CapabilityDecision
+pub fn CapabilityPolicy::evaluate_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> CapabilityDecision
 pub fn CapabilityPolicy::new(capabilities? : Array[Capability]) -> Self
 pub fn CapabilityPolicy::to_json(Self) -> String
 pub fn CapabilityPolicy::validate(Self) -> Array[String]
@@ -827,6 +837,31 @@ pub fn LocalhostSource::readiness_url(Self) -> String
 pub fn LocalhostSource::url(Self) -> String
 pub fn LocalhostSource::validate(Self) -> Array[String]
 
+pub struct OperationScope {
+  kind : OperationScopeKind
+  value : String
+  writable : Bool
+} derive(Eq, @debug.Debug)
+pub fn OperationScope::allows(Self, Self) -> Bool
+pub fn OperationScope::command(Self) -> String
+pub fn OperationScope::kind(Self) -> OperationScopeKind
+pub fn OperationScope::origin(Self) -> String
+pub fn OperationScope::path(root~ : String, writable? : Bool) -> Self
+pub fn OperationScope::root(Self) -> String
+pub fn OperationScope::shell(String) -> Self
+pub fn OperationScope::to_json(Self) -> String
+pub fn OperationScope::url(String) -> Self
+pub fn OperationScope::validate(Self) -> Array[String]
+pub fn OperationScope::value(Self) -> String
+pub fn OperationScope::writable(Self) -> Bool
+
+pub(all) enum OperationScopeKind {
+  PathOperation
+  ShellOperation
+  UrlOperation
+} derive(Eq, @debug.Debug)
+pub fn OperationScopeKind::name(Self) -> String
+
 type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
 
 pub(all) enum Permission {
@@ -893,8 +928,10 @@ pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
+  operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
 pub fn PermissionManifestGrant::capability(Self) -> String
+pub fn PermissionManifestGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn PermissionManifestGrant::origins(Self) -> Array[String]
 pub fn PermissionManifestGrant::to_json(Self) -> String
 pub fn PermissionManifestGrant::windows(Self) -> Array[String]
@@ -1338,8 +1375,10 @@ pub struct RuntimeCapabilityGrant {
   windows : Array[String]
   origins : Array[String]
   permissions : Array[String]
+  operation_scopes : Array[OperationScope]
 } derive(Eq, @debug.Debug)
 pub fn RuntimeCapabilityGrant::name(Self) -> String
+pub fn RuntimeCapabilityGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn RuntimeCapabilityGrant::origins(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::permissions(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::windows(Self) -> Array[String]

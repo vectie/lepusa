@@ -29,6 +29,55 @@ test "project config parses app manifest boundary" {
 }
 
 ///|
+test "project config parses capability operation scopes" {
+  let config =
+    #|{
+    #|  "identifier": "dev.vectie.scoped",
+    #|  "productName": "Scoped",
+    #|  "version": "0.1.0",
+    #|  "window": { "label": "main", "title": "Scoped" },
+    #|  "plugins": [{ "name": "fs" }, { "name": "shell" }],
+    #|  "capabilities": [{
+    #|    "name": "main-safe-ops",
+    #|    "windows": ["main"],
+    #|    "permissions": ["filesystem.read", "shell"],
+    #|    "scopes": [
+    #|      { "path": "data" },
+    #|      { "shell": "moon" },
+    #|      { "kind": "url", "origin": "https://api.example" }
+    #|    ]
+    #|  }]
+    #|}
+    #|
+  match ProjectConfig::parse(config, base_dir="/app") {
+    Ok(project) =>
+      match project.manifest().runtime_plan(project.root()) {
+        Ok(plan) => {
+          let capability = plan.capabilities()[0]
+          assert_eq(capability.operation_scopes().length(), 3)
+          assert_eq(
+            capability.operation_scopes_by_kind(PathOperation)[0].root(),
+            "/app/data",
+          )
+          assert_eq(
+            capability.operation_scopes_by_kind(ShellOperation)[0].command(),
+            "moon",
+          )
+          assert_true(
+            plan
+            .launch_manifest()
+            .unwrap()
+            .to_json()
+            .contains("\"operationScopes\""),
+          )
+        }
+        Err(problems) => abort(problems.join(", "))
+      }
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
 test "project config parses command request and response schemas" {
   let config =
     #|{

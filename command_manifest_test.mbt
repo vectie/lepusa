@@ -150,12 +150,14 @@ test "permission manifest groups routes grants windows and denials" {
       @lepusa.Capability::new("read-main")
       .window("main")
       .origin("https://app.example")
-      .permission(FileSystemRead),
+      .permission(FileSystemRead)
+      .path_scope(root="/app/data"),
     )
     .with_capability(
       @lepusa.Capability::new("write-settings")
       .window("settings")
-      .permission(FileSystemWrite),
+      .permission(FileSystemWrite)
+      .path_scope(root="/app/data", writable=true),
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => {
@@ -173,6 +175,11 @@ test "permission manifest groups routes grants windows and denials" {
           assert_eq(permission.commands()[0].allowed_origins().length(), 1)
           assert_true(permission.commands()[0].affinity() is AnyThread)
           assert_eq(permission.grants()[0].origins().length(), 1)
+          assert_eq(permission.grants()[0].operation_scopes().length(), 1)
+          assert_eq(
+            permission.grants()[0].operation_scopes()[0].root(),
+            "/app/data",
+          )
           assert_eq(permission.denied_routes().length(), 0)
           assert_true(
             permission.to_json().contains("\"name\":\"filesystem.read\""),
@@ -210,7 +217,8 @@ test "launch manifest exposes typed command manifest" {
     .with_capability(
       @lepusa.Capability::new("main-read")
       .window("main")
-      .permission(FileSystemRead),
+      .permission(FileSystemRead)
+      .path_scope(root="/app/data"),
     )
     .with_capability(@lepusa.Capability::new("events").permission(Notification))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
@@ -239,6 +247,8 @@ test "launch manifest exposes typed command manifest" {
           assert_true(
             json.contains("\"allowedWindows\":[\"main\",\"settings\"]"),
           )
+          assert_true(json.contains("\"operationScopes\""))
+          assert_eq(manifest.capabilities()[0].operation_scopes().length(), 1)
           assert_eq(manifest.command_routes().length(), 2)
           assert_eq(manifest.registered_routes()[0], "core.read")
         }

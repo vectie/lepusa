@@ -107,11 +107,12 @@ pub struct Capability {
   windows : Array[String]
   origins : Array[String]
   permissions : Array[Permission]
+  operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
 
 ///|
 pub fn Capability::new(name : String) -> Capability {
-  { name, windows: [], origins: [], permissions: [] }
+  { name, windows: [], origins: [], permissions: [], operation_scopes: [] }
 }
 
 ///|
@@ -144,6 +145,38 @@ pub fn Capability::command(self : Capability, route : String) -> Capability {
 }
 
 ///|
+pub fn Capability::operation_scope(
+  self : Capability,
+  scope : OperationScope,
+) -> Capability {
+  let operation_scopes = self.operation_scopes.copy()
+  operation_scopes.push(scope)
+  { ..self, operation_scopes, }
+}
+
+///|
+pub fn Capability::path_scope(
+  self : Capability,
+  root~ : String,
+  writable? : Bool = false,
+) -> Capability {
+  self.operation_scope(OperationScope::path(root~, writable~))
+}
+
+///|
+pub fn Capability::shell_scope(
+  self : Capability,
+  command : String,
+) -> Capability {
+  self.operation_scope(OperationScope::shell(command))
+}
+
+///|
+pub fn Capability::url_scope(self : Capability, origin : String) -> Capability {
+  self.operation_scope(OperationScope::url(origin))
+}
+
+///|
 pub fn Capability::allows(
   self : Capability,
   window_label~ : String,
@@ -154,6 +187,18 @@ pub fn Capability::allows(
     self.windows.contains(window_label)
   let origin_allowed = self.origins.is_empty() || self.origins.contains(origin)
   window_allowed && origin_allowed && self.permissions.contains(permission)
+}
+
+///|
+pub fn Capability::allows_operation(
+  self : Capability,
+  window_label~ : String,
+  permission~ : Permission,
+  scope~ : OperationScope,
+  origin? : String = "",
+) -> Bool {
+  self.allows(window_label~, permission~, origin~) &&
+  self.operation_scopes.any(fn(allowed) { allowed.allows(scope) })
 }
 
 ///|
@@ -177,6 +222,19 @@ pub fn Capability::origins(self : Capability) -> Array[String] {
 }
 
 ///|
+pub fn Capability::operation_scopes(self : Capability) -> Array[OperationScope] {
+  self.operation_scopes.copy()
+}
+
+///|
+pub fn Capability::operation_scopes_by_kind(
+  self : Capability,
+  kind : OperationScopeKind,
+) -> Array[OperationScope] {
+  self.operation_scopes.filter(fn(scope) { scope.kind() == kind })
+}
+
+///|
 pub fn Capability::validate(self : Capability) -> Array[String] {
   let problems : Array[String] = []
   if self.name == "" {
@@ -188,6 +246,18 @@ pub fn Capability::validate(self : Capability) -> Array[String] {
   for origin in self.origins {
     if origin == "" {
       problems.push("capability origin must not be empty")
+    }
+  }
+  let seen_scopes : Array[String] = []
+  for scope in self.operation_scopes {
+    for problem in scope.validate() {
+      problems.push(problem)
+    }
+    let fingerprint = scope.fingerprint()
+    if seen_scopes.contains(fingerprint) {
+      problems.push("capability operation scope must be unique: \{fingerprint}")
+    } else {
+      seen_scopes.push(fingerprint)
     }
   }
   problems

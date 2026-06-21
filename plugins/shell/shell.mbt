@@ -60,7 +60,7 @@ pub fn ShellPolicy::validate(self : ShellPolicy) -> Array[String] {
 
 ///|
 fn ShellPolicy::allows(self : ShellPolicy, command : String) -> Bool {
-  self.allowed_commands.is_empty() || self.allowed_commands.contains(command)
+  self.allowed_commands.contains(command)
 }
 
 ///|

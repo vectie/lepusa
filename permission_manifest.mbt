@@ -14,6 +14,7 @@ pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
+  operation_scopes : Array[OperationScope]
 } derive(Debug, Eq)
 
 ///|
@@ -54,6 +55,7 @@ fn PermissionManifestGrant::from_capability(
     capability: capability.name(),
     windows: capability.windows(),
     origins: capability.origins(),
+    operation_scopes: capability.operation_scopes(),
   }
 }
 
@@ -145,6 +147,13 @@ pub fn PermissionManifestGrant::origins(
 }
 
 ///|
+pub fn PermissionManifestGrant::operation_scopes(
+  self : PermissionManifestGrant,
+) -> Array[OperationScope] {
+  self.operation_scopes.copy()
+}
+
+///|
 pub fn PermissionManifestGrant::to_json(
   self : PermissionManifestGrant,
 ) -> String {
@@ -152,7 +161,8 @@ pub fn PermissionManifestGrant::to_json(
     "{",
     "\"capability\":\{self.capability.json_string()},",
     "\"windows\":[\{self.windows.map(fn(window) { window.json_string() }).join(",")}],",
-    "\"origins\":[\{self.origins.map(fn(origin) { origin.json_string() }).join(",")}]",
+    "\"origins\":[\{self.origins.map(fn(origin) { origin.json_string() }).join(",")}],",
+    "\"operationScopes\":[\{self.operation_scopes.map(fn(scope) { scope.to_json() }).join(",")}]",
     "}",
   ].join("")
 }
