@@ -141,13 +141,13 @@ fn frontend_api_javascript(
     "export const commandManifest = \{manifest.to_json()};",
     "export const routes = Object.freeze(routeList.slice());",
     "export const can = (route) => getApi().can(route);",
-    "export const invoke = (route, payload = null) => getApi().invoke(route, payload);",
+    "export const invoke = (route, payload = null, options = {}) => getApi().invoke(route, payload, options);",
     "export const isInvokeError = (error) => getApi().isInvokeError(error);",
     "export const listen = (name, handler) => getApi().listen(name, handler);",
     "export const unlisten = (name, handler) => getApi().unlisten(name, handler);",
     "export const command = (route) => getApi().command(route);",
     "",
-    "const makeInvoker = (route) => (payload = null) => invoke(route, payload);",
+    "const makeInvoker = (route) => (payload = null, options = {}) => invoke(route, payload, options);",
     "const commandTree = {};",
     "for (const route of routeList) {",
     "  const parts = route.split('.').filter(Boolean);",
@@ -213,6 +213,8 @@ fn frontend_api_typescript(
     "// Generated Lepusa frontend API declarations for \{config.module_name()}",
     "export type LepusaRoute = \{route_union};",
     "export type LepusaPayload = unknown;",
+    "export type LepusaAbortSignal = { readonly aborted: boolean; addEventListener?: (type: \"abort\", listener: () => void, options?: { once?: boolean }) => void; removeEventListener?: (type: \"abort\", listener: () => void) => void };",
+    "export type LepusaInvokeOptions = { signal?: LepusaAbortSignal | null; timeoutMs?: number };",
     "export type LepusaInvokeErrorCode = \"invalid-request\" | \"unknown-command\" | \"permission-denied\" | \"async-required\" | \"handler-error\" | \"transport-error\" | \"timeout\" | \"cancelled\" | string;",
     "export type LepusaInvokeFailure = { code: LepusaInvokeErrorCode; message: string; route?: string | null };",
     "export interface LepusaInvokeError extends Error { name: \"LepusaInvokeError\"; code: LepusaInvokeErrorCode; route: string; id: string; failure: LepusaInvokeFailure | null; response: unknown; }",
@@ -223,11 +225,11 @@ fn frontend_api_typescript(
     "export declare const commandManifest: \{manifest.to_json()};",
     "export declare const routes: readonly LepusaRoute[];",
     "export declare function can(route: string): boolean;",
-    "export declare function invoke<T = unknown>(route: LepusaRoute, payload?: LepusaPayload): Promise<T>;",
+    "export declare function invoke<T = unknown>(route: LepusaRoute, payload?: LepusaPayload, options?: LepusaInvokeOptions): Promise<T>;",
     "export declare function isInvokeError(error: unknown): error is LepusaInvokeError;",
     "export declare function listen(name: string, handler: LepusaEventHandler): LepusaUnlisten;",
     "export declare function unlisten(name: string, handler: LepusaEventHandler): boolean;",
-    "export declare function command<T = unknown>(route: LepusaRoute): (payload?: LepusaPayload) => Promise<T>;",
+    "export declare function command<T = unknown>(route: LepusaRoute): (payload?: LepusaPayload, options?: LepusaInvokeOptions) => Promise<T>;",
     "export declare const commands: \{command_tree};",
     export_aliases.join("\n"),
     "",
@@ -261,7 +263,7 @@ fn typescript_command_tree(manifest : @lepusa.CommandManifest) -> String {
     for entry in manifest.entries() {
       if entry.plugin() == plugin {
         command_lines.push(
-          "    \{entry.command().typescript_property_name()}: (payload?: LepusaPayload) => Promise<unknown>;",
+          "    \{entry.command().typescript_property_name()}: (payload?: LepusaPayload, options?: LepusaInvokeOptions) => Promise<unknown>;",
         )
       }
     }

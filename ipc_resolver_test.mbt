@@ -50,6 +50,16 @@ test "frontend bridge emits invoke resolver ids" {
           assert_true(script.source().contains("class LepusaInvokeError"))
           assert_true(script.source().contains("const createInvokeError"))
           assert_true(script.source().contains("response.errorCode"))
+          assert_true(script.source().contains("const withInvokeControls"))
+          assert_true(
+            script.source().contains("invokeControlError(\"timeout\""),
+          )
+          assert_true(
+            script.source().contains("invokeControlError(\"cancelled\""),
+          )
+          assert_true(
+            script.source().contains("signal.addEventListener(\"abort\""),
+          )
           assert_true(
             script
             .source()
