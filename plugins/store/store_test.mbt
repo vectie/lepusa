@@ -21,7 +21,10 @@ test "store plugin declares commands and capability" {
     ),
     capabilities=[grant],
   )
-  assert_true(denied is InvokeError("1", "permission denied: store.get"))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: store.get",
+  )
 }
 
 ///|
@@ -79,7 +82,7 @@ test "store registry reports missing values and invalid payloads" {
     request(command="set", payload="{\"key\":\"\"}"),
     capabilities=[grant],
   )
-  assert_true(invalid is InvokeError("1", "store key is required"))
+  assert_eq(invalid.error_message().unwrap_or(""), "store key is required")
 }
 
 ///|

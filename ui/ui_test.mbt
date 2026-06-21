@@ -210,7 +210,9 @@ test "ui program declares plugin capability and registry handler" {
   let next = registry.dispatch(request, capabilities=[grant])
   assert_true(next.payload().unwrap_or("").contains("Count: 3"))
   let denied = registry.dispatch(request)
-  assert_true(
-    denied is InvokeError("ui", "permission denied: counter.dispatch"),
+  assert_eq(denied.id(), "ui")
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: counter.dispatch",
   )
 }

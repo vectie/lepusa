@@ -108,7 +108,8 @@ test "localhost plugin registers service metadata handlers" {
     ),
     capabilities~,
   )
-  assert_true(
-    missing is InvokeError("3", "localhost stop service not found: missing"),
+  assert_eq(
+    missing.error_message().unwrap_or(""),
+    "localhost stop service not found: missing",
   )
 }

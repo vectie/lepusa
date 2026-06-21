@@ -123,8 +123,9 @@ test "tray registry rejects invalid delegated state" {
     payload="{\"iconPath\":\"assets\\\\tray.png\"}",
   )
   let bad_icon = registry.dispatch(bad_icon_request, capabilities=[grant])
-  assert_true(
-    bad_icon is InvokeError("1", "tray icon path must use forward slashes"),
+  assert_eq(
+    bad_icon.error_message().unwrap_or(""),
+    "tray icon path must use forward slashes",
   )
   let duplicate_menu_request = @lepusa.InvokeRequest::new(
     id="2",
@@ -136,7 +137,8 @@ test "tray registry rejects invalid delegated state" {
   let duplicate_menu = registry.dispatch(duplicate_menu_request, capabilities=[
     grant,
   ])
-  assert_true(
-    duplicate_menu is InvokeError("2", "tray menu item must be unique: open"),
+  assert_eq(
+    duplicate_menu.error_message().unwrap_or(""),
+    "tray menu item must be unique: open",
   )
 }

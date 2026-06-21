@@ -38,7 +38,10 @@ test "opener plugin registers native handlers and validates payloads" {
     ),
     capabilities~,
   )
-  assert_true(empty is InvokeError("1", "opener openUrl payload is required"))
+  assert_eq(
+    empty.error_message().unwrap_or(""),
+    "opener openUrl payload is required",
+  )
   let invalid = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="2",
@@ -49,7 +52,8 @@ test "opener plugin registers native handlers and validates payloads" {
     ),
     capabilities~,
   )
-  assert_true(invalid is InvokeError("2", _))
+  assert_eq(invalid.id(), "2")
+  assert_true(invalid.error_message() is Some(_))
   let missing = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="3",
@@ -60,7 +64,8 @@ test "opener plugin registers native handlers and validates payloads" {
     ),
     capabilities~,
   )
-  assert_true(
-    missing is InvokeError("3", "opener revealPath target is required"),
+  assert_eq(
+    missing.error_message().unwrap_or(""),
+    "opener revealPath target is required",
   )
 }

@@ -16,7 +16,10 @@ test "log plugin declares command and capability" {
     ),
     capabilities=[grant],
   )
-  assert_true(denied is InvokeError("1", "permission denied: log.write"))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: log.write",
+  )
 }
 
 ///|
@@ -75,5 +78,5 @@ test "log registry validates payloads" {
     ),
     capabilities=[capability()],
   )
-  assert_true(response is InvokeError("1", "log message is required"))
+  assert_eq(response.error_message().unwrap_or(""), "log message is required")
 }

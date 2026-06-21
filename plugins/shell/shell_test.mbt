@@ -53,7 +53,10 @@ async test "shell registry records delegated process lifecycle" {
     payload="{\"command\":\"rm\"}",
   )
   let denied = registry.dispatch_async(denied_request, capabilities=[grant])
-  assert_true(denied is InvokeError("2", "shell command is not allowed: rm"))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "shell command is not allowed: rm",
+  )
   let spawn_request = @lepusa.InvokeRequest::new(
     id="3",
     window_label="main",

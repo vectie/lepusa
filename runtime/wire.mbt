@@ -58,11 +58,17 @@ pub fn encode_invoke_request_json(request : @lepusa.InvokeRequest) -> String {
 
 ///|
 pub fn encode_invoke_response_json(response : @lepusa.InvokeResponse) -> String {
-  match response.error_message() {
-    Some(message) =>
+  match response.failure_info() {
+    Some(failure) =>
       Json::object({
         "id": Json::string(response.id()),
-        "error": Json::string(message),
+        "error": Json::string(failure.message()),
+        "errorCode": Json::string(failure.kind().name()),
+        "failure": Json::object({
+          "code": Json::string(failure.kind().name()),
+          "message": Json::string(failure.message()),
+          "route": Json::string(failure.route().unwrap_or("")),
+        }),
       }).stringify()
     None =>
       Json::object({
@@ -77,7 +83,9 @@ pub fn RuntimeHost::dispatch_json(self : RuntimeHost, input : String) -> String 
   match decode_invoke_request_json(input) {
     Ok(request) => encode_invoke_response_json(self.dispatch(request))
     Err(problem) =>
-      encode_invoke_response_json(@lepusa.InvokeResponse::error("", problem))
+      encode_invoke_response_json(
+        @lepusa.InvokeResponse::invalid_request("", problem),
+      )
   }
 }
 
@@ -89,7 +97,9 @@ pub async fn RuntimeHost::dispatch_json_async(
   match decode_invoke_request_json(input) {
     Ok(request) => encode_invoke_response_json(self.dispatch_async(request))
     Err(problem) =>
-      encode_invoke_response_json(@lepusa.InvokeResponse::error("", problem))
+      encode_invoke_response_json(
+        @lepusa.InvokeResponse::invalid_request("", problem),
+      )
   }
 }
 

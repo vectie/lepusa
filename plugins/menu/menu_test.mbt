@@ -61,7 +61,7 @@ test "menu registry sets app menu and updates nested items" {
   )
   match set {
     InvokeOk("set", _) => ()
-    InvokeError(_, message) => abort(message)
+    InvokeError(_, failure) => abort(failure.message())
     _ => abort("unexpected set response")
   }
   assert_true(state.app_menu() is Some(_))
@@ -120,7 +120,7 @@ test "menu registry sets and clears window menus" {
   )
   match set {
     InvokeOk("set-window", _) => ()
-    InvokeError(_, message) => abort(message)
+    InvokeError(_, failure) => abort(failure.message())
     _ => abort("unexpected set window response")
   }
   assert_true(state.window_menu("main") is Some(_))
@@ -152,7 +152,7 @@ test "menu registry validates payloads and missing items" {
     ),
     capabilities=[grant],
   )
-  assert_true(invalid is InvokeError("invalid", _))
+  assert_eq(invalid.id(), "invalid")
   assert_true(
     invalid.error_message().unwrap_or("").contains("menu item id is invalid"),
   )
@@ -166,7 +166,7 @@ test "menu registry validates payloads and missing items" {
     ),
     capabilities=[grant],
   )
-  assert_true(missing is InvokeError("missing", _))
+  assert_eq(missing.id(), "missing")
   assert_true(
     missing.error_message().unwrap_or("").contains("menu item not found"),
   )

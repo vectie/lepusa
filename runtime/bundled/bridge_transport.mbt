@@ -274,7 +274,7 @@ pub fn BundledBridgeMessage::dispatch_sync(
       )
     Err(problem) =>
       @runtime.encode_invoke_response_json(
-        @lepusa.InvokeResponse::error("", problem),
+        @lepusa.InvokeResponse::invalid_request("", problem),
       )
   }
   self.to_dispatch(response_json)
@@ -295,7 +295,7 @@ pub async fn BundledBridgeMessage::dispatch(
       )
     Err(problem) =>
       @runtime.encode_invoke_response_json(
-        @lepusa.InvokeResponse::error("", problem),
+        @lepusa.InvokeResponse::invalid_request("", problem),
       )
   }
   self.to_dispatch(response_json)

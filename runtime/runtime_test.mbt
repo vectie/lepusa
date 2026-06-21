@@ -1380,7 +1380,12 @@ test "runtime host dispatches through plan capabilities" {
       command="invoke",
     ),
   )
-  assert_true(denied is InvokeError("2", "permission denied: core.invoke"))
+  assert_eq(denied.id(), "2")
+  assert_true(denied.error_kind() is Some(PermissionDenied))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: core.invoke",
+  )
   let undeclared = host.dispatch(
     @lepusa.InvokeRequest::new(
       id="3",
@@ -1389,7 +1394,12 @@ test "runtime host dispatches through plan capabilities" {
       command="missing",
     ),
   )
-  assert_true(undeclared is InvokeError("3", "unknown command: core.missing"))
+  assert_eq(undeclared.id(), "3")
+  assert_true(undeclared.error_kind() is Some(UnknownCommand))
+  assert_eq(
+    undeclared.error_message().unwrap_or(""),
+    "unknown command: core.missing",
+  )
 }
 
 ///|
@@ -1954,6 +1964,15 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
   let json = encode_invoke_response_json(@lepusa.InvokeResponse::ok("7", "{}"))
   assert_true(json.contains("\"id\":\"7\""))
   assert_true(json.contains("\"payload\":\"{}\""))
+  let denied_json = encode_invoke_response_json(
+    @lepusa.InvokeResponse::permission_denied("8", "core.invoke"),
+  )
+  assert_true(
+    denied_json.contains("\"error\":\"permission denied: core.invoke\""),
+  )
+  assert_true(denied_json.contains("\"errorCode\":\"permission-denied\""))
+  assert_true(denied_json.contains("\"failure\":{"))
+  assert_true(denied_json.contains("\"route\":\"core.invoke\""))
   match
     decode_invoke_request_json(
       "{\"id\":\"cb-7\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"callback_id\":\"cb-7\",\"error_id\":\"err-7\"}",

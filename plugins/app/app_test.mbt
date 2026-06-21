@@ -132,7 +132,7 @@ test "app registry validates control payloads" {
     ),
     capabilities=[grant],
   )
-  assert_true(theme is InvokeError("bad-theme", _))
+  assert_eq(theme.id(), "bad-theme")
   assert_true(
     theme.error_message().unwrap_or("").contains("app theme is invalid"),
   )
@@ -146,7 +146,7 @@ test "app registry validates control payloads" {
     ),
     capabilities=[grant],
   )
-  assert_true(visibility is InvokeError("bad-visibility", _))
+  assert_eq(visibility.id(), "bad-visibility")
   assert_true(
     visibility
     .error_message()

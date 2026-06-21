@@ -123,12 +123,14 @@ pub fn RuntimeHost::dispatch(
 ) -> @lepusa.InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {
-    return @lepusa.InvokeResponse::error(request.id(), request_problems[0])
+    return @lepusa.InvokeResponse::invalid_request(
+      request.id(),
+      request_problems[0],
+    )
   }
   let route = request.route()
   match self.plan.command_permission(route) {
-    None =>
-      @lepusa.InvokeResponse::error(request.id(), "unknown command: \{route}")
+    None => @lepusa.InvokeResponse::unknown_command(request.id(), route)
     Some(permission) =>
       self.registry.dispatch_with_permission(
         request,
@@ -145,12 +147,14 @@ pub async fn RuntimeHost::dispatch_async(
 ) -> @lepusa.InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {
-    return @lepusa.InvokeResponse::error(request.id(), request_problems[0])
+    return @lepusa.InvokeResponse::invalid_request(
+      request.id(),
+      request_problems[0],
+    )
   }
   let route = request.route()
   match self.plan.command_permission(route) {
-    None =>
-      @lepusa.InvokeResponse::error(request.id(), "unknown command: \{route}")
+    None => @lepusa.InvokeResponse::unknown_command(request.id(), route)
     Some(permission) =>
       self.registry.dispatch_with_permission_async(
         request,

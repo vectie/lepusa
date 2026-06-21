@@ -119,8 +119,9 @@ test "auto launch registry validates policy and payloads" {
     command="status",
   )
   let status = bad_registry.dispatch(status_request, capabilities=[grant])
-  assert_true(
-    status is InvokeError("1", "auto launch name is invalid: bad/name"),
+  assert_eq(
+    status.error_message().unwrap_or(""),
+    "auto launch name is invalid: bad/name",
   )
   let valid = registry(policy=AutoLaunchPolicy::new(name="dev.local.lepusa"))
   let set_request = @lepusa.InvokeRequest::new(
@@ -131,8 +132,9 @@ test "auto launch registry validates policy and payloads" {
     payload="{\"enabled\":\"yes\"}",
   )
   let set = valid.dispatch(set_request, capabilities=[grant])
-  assert_true(
-    set is InvokeError("2", "auto launch setEnabled enabled is required"),
+  assert_eq(
+    set.error_message().unwrap_or(""),
+    "auto launch setEnabled enabled is required",
   )
 }
 
@@ -172,8 +174,9 @@ test "auto launch native enable requires executable" {
     ),
     capabilities=[capability_for_window("main")],
   )
-  assert_true(
-    enabled
-    is InvokeError("native-enable", "native auto launch executable is required"),
+  assert_eq(enabled.id(), "native-enable")
+  assert_eq(
+    enabled.error_message().unwrap_or(""),
+    "native auto launch executable is required",
   )
 }

@@ -343,6 +343,16 @@ test "ipc requests expose stable command routes" {
   assert_eq(request.route(), "workspace.read")
   assert_eq(request.validate().is_empty(), true)
   assert_true(@lepusa.InvokeResponse::ok("1", "{}") is InvokeOk("1", "{}"))
+  let failure = @lepusa.InvokeFailure::permission_denied("workspace.read")
+  assert_true(failure.kind() is PermissionDenied)
+  assert_eq(failure.route().unwrap_or(""), "workspace.read")
+  assert_true(failure.to_json().contains("\"code\":\"permission-denied\""))
+  let denied = @lepusa.InvokeResponse::failure("2", failure)
+  assert_true(denied.error_kind() is Some(PermissionDenied))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: workspace.read",
+  )
 }
 
 ///|
@@ -389,9 +399,11 @@ async test "command registry dispatches async handlers" {
   let sync_response = registry.dispatch(request, capabilities=[
     @lepusa.Capability::new("core").command("core.invoke"),
   ])
-  assert_true(
-    sync_response
-    is InvokeError("async", "command requires async dispatch: core.invoke"),
+  assert_eq(sync_response.id(), "async")
+  assert_true(sync_response.error_kind() is Some(AsyncRequired))
+  assert_eq(
+    sync_response.error_message().unwrap_or(""),
+    "command requires async dispatch: core.invoke",
   )
   let async_routes = registry.async_routes()
   assert_eq(async_routes.length(), 1)
@@ -415,7 +427,12 @@ test "command registry denies missing capability" {
       payload="x",
     ),
   )
-  assert_true(response is InvokeError("7", "permission denied: shell.open"))
+  assert_eq(response.id(), "7")
+  assert_true(response.error_kind() is Some(PermissionDenied))
+  assert_eq(
+    response.error_message().unwrap_or(""),
+    "permission denied: shell.open",
+  )
 }
 
 ///|
@@ -456,8 +473,11 @@ test "command registry reports unknown routes and handler errors" {
     ),
     capabilities=[@lepusa.Capability::new("core").command("core.missing")],
   )
-  assert_true(
-    missing is InvokeError("missing", "unknown command: core.missing"),
+  assert_eq(missing.id(), "missing")
+  assert_true(missing.error_kind() is Some(UnknownCommand))
+  assert_eq(
+    missing.error_message().unwrap_or(""),
+    "unknown command: core.missing",
   )
   let failed = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -468,7 +488,9 @@ test "command registry reports unknown routes and handler errors" {
     ),
     capabilities=[@lepusa.Capability::new("core").command("core.fail")],
   )
-  assert_true(failed is InvokeError("fail", "failed"))
+  assert_eq(failed.id(), "fail")
+  assert_true(failed.error_kind() is Some(HandlerError))
+  assert_eq(failed.error_message().unwrap_or(""), "failed")
 }
 
 ///|

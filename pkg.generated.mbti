@@ -476,6 +476,37 @@ pub fn Html::content(Self) -> String
 pub fn Html::empty() -> Self
 pub fn Html::text(String) -> Self
 
+pub(all) enum InvokeErrorKind {
+  InvalidRequest
+  UnknownCommand
+  PermissionDenied
+  AsyncRequired
+  HandlerError
+  TransportError
+  Timeout
+  Cancelled
+} derive(Eq, @debug.Debug)
+pub fn InvokeErrorKind::name(Self) -> String
+
+pub struct InvokeFailure {
+  kind : InvokeErrorKind
+  message : String
+  route : String
+} derive(Eq, @debug.Debug)
+pub fn InvokeFailure::async_required(String) -> Self
+pub fn InvokeFailure::cancelled(message? : String, route? : String) -> Self
+pub fn InvokeFailure::handler_error(String, route? : String) -> Self
+pub fn InvokeFailure::invalid_request(String) -> Self
+pub fn InvokeFailure::kind(Self) -> InvokeErrorKind
+pub fn InvokeFailure::message(Self) -> String
+pub fn InvokeFailure::new(kind~ : InvokeErrorKind, message~ : String, route? : String) -> Self
+pub fn InvokeFailure::permission_denied(String) -> Self
+pub fn InvokeFailure::route(Self) -> String?
+pub fn InvokeFailure::timeout(message? : String, route? : String) -> Self
+pub fn InvokeFailure::to_json(Self) -> String
+pub fn InvokeFailure::transport_error(String) -> Self
+pub fn InvokeFailure::unknown_command(String) -> Self
+
 pub struct InvokeRequest {
   id : String
   window_label : String
@@ -499,13 +530,21 @@ pub fn InvokeRequest::window_label(Self) -> String
 
 pub(all) enum InvokeResponse {
   InvokeOk(String, String)
-  InvokeError(String, String)
+  InvokeError(String, InvokeFailure)
 } derive(Eq, @debug.Debug)
+pub fn InvokeResponse::async_required(String, String) -> Self
 pub fn InvokeResponse::error(String, String) -> Self
+pub fn InvokeResponse::error_kind(Self) -> InvokeErrorKind?
 pub fn InvokeResponse::error_message(Self) -> String?
+pub fn InvokeResponse::failure(String, InvokeFailure) -> Self
+pub fn InvokeResponse::failure_info(Self) -> InvokeFailure?
+pub fn InvokeResponse::handler_error(String, String, route? : String) -> Self
 pub fn InvokeResponse::id(Self) -> String
+pub fn InvokeResponse::invalid_request(String, String) -> Self
 pub fn InvokeResponse::ok(String, String) -> Self
 pub fn InvokeResponse::payload(Self) -> String?
+pub fn InvokeResponse::permission_denied(String, String) -> Self
+pub fn InvokeResponse::unknown_command(String, String) -> Self
 
 pub struct LaunchPlan {
   root : Cell

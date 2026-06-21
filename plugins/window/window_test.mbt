@@ -94,9 +94,9 @@ test "window registry records control operations" {
     ),
     capabilities=[grant],
   )
-  assert_true(
-    denied
-    is InvokeError("2", "window control is not allowed for window: settings"),
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "window control is not allowed for window: settings",
   )
 }
 
@@ -114,9 +114,9 @@ test "window registry validates payload shape" {
     ),
     capabilities=[grant],
   )
-  assert_true(
-    invalid
-    is InvokeError("1", "window control payload must be a string or object"),
+  assert_eq(
+    invalid.error_message().unwrap_or(""),
+    "window control payload must be a string or object",
   )
   let unsafe_label = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -128,8 +128,8 @@ test "window registry validates payload shape" {
     ),
     capabilities=[grant],
   )
-  assert_true(
-    unsafe_label
-    is InvokeError("2", "window control windowLabel is invalid: ../main"),
+  assert_eq(
+    unsafe_label.error_message().unwrap_or(""),
+    "window control windowLabel is invalid: ../main",
   )
 }

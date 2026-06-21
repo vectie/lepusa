@@ -127,11 +127,9 @@ async test "file dialog registry validates scoped picker contracts" {
   let unsafe_result = registry.dispatch_async(unsafe_request, capabilities=[
     grant,
   ])
-  assert_true(
-    unsafe_result
-    is InvokeError(
-      "3",
-      "file dialog openFile path: unsafe file dialog default directory path: ../escape"
-    ),
+  assert_eq(unsafe_result.id(), "3")
+  assert_eq(
+    unsafe_result.error_message().unwrap_or(""),
+    "file dialog openFile path: unsafe file dialog default directory path: ../escape",
   )
 }

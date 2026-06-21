@@ -131,8 +131,8 @@ test "service discovery plugin registers metadata handlers" {
     ),
     capabilities~,
   )
-  assert_true(
-    missing
-    is InvokeError("4", "service discovery status service not found: missing"),
+  assert_eq(
+    missing.error_message().unwrap_or(""),
+    "service discovery status service not found: missing",
   )
 }

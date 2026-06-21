@@ -99,8 +99,8 @@ test "deep link registry records URL handoff state" {
     payload="{\"url\":\"lepusa://blocked/item\"}",
   )
   let denied = registry.dispatch(denied_request, capabilities=[grant])
-  assert_true(
-    denied
-    is InvokeError("4", "deep link url is not allowed: lepusa://blocked/item"),
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "deep link url is not allowed: lepusa://blocked/item",
   )
 }

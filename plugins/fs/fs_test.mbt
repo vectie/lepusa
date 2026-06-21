@@ -134,8 +134,9 @@ async test "fs registry handles scoped text operations" {
   let denied = registry.dispatch_async(
     fs_request("readText", "{\"scope\":\"data\",\"path\":\"nested/file.txt\"}"),
   )
-  assert_true(
-    denied is InvokeError("readText", "permission denied: fs.readText"),
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: fs.readText",
   )
 }
 
@@ -202,8 +203,9 @@ async test "fs registry enforces scope policy" {
     fs_request("readText", "{\"scope\":\"assets\",\"path\":\"../secret\"}"),
     capabilities=[grant],
   )
-  assert_true(
-    unsafe_read is InvokeError("readText", "unsafe filesystem path: ../secret"),
+  assert_eq(
+    unsafe_read.error_message().unwrap_or(""),
+    "unsafe filesystem path: ../secret",
   )
   let write = registry.dispatch_async(
     fs_request(
@@ -211,8 +213,9 @@ async test "fs registry enforces scope policy" {
     ),
     capabilities=[grant],
   )
-  assert_true(
-    write is InvokeError("writeText", "filesystem scope is read-only: assets"),
+  assert_eq(
+    write.error_message().unwrap_or(""),
+    "filesystem scope is read-only: assets",
   )
   let invalid_bytes = registry.dispatch_async(
     fs_request(
@@ -220,8 +223,8 @@ async test "fs registry enforces scope policy" {
     ),
     capabilities=[grant],
   )
-  assert_true(
-    invalid_bytes
-    is InvokeError("writeBytes", "invalid filesystem base64 content"),
+  assert_eq(
+    invalid_bytes.error_message().unwrap_or(""),
+    "invalid filesystem base64 content",
   )
 }

@@ -157,7 +157,10 @@ async test "updater registry validates policy and payloads" {
     command="check",
   )
   let checked = bad_registry.dispatch_async(check_request, capabilities=[grant])
-  assert_true(checked is InvokeError("1", "updater feed url must use https"))
+  assert_eq(
+    checked.error_message().unwrap_or(""),
+    "updater feed url must use https",
+  )
   let valid = registry(
     policy=UpdaterPolicy::new(feed_url="https://updates.example.com/app.json"),
   )
@@ -169,8 +172,8 @@ async test "updater registry validates policy and payloads" {
     payload="\"bad/version\"",
   )
   let downloaded = valid.dispatch_async(download_request, capabilities=[grant])
-  assert_true(
-    downloaded
-    is InvokeError("2", "updater download version is invalid: bad/version"),
+  assert_eq(
+    downloaded.error_message().unwrap_or(""),
+    "updater download version is invalid: bad/version",
   )
 }
