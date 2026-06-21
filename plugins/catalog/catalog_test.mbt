@@ -105,6 +105,38 @@ test "catalog plugin names resolve to plugins" {
 }
 
 ///|
+test "catalog exposes official plugin contracts" {
+  let contracts = plugin_contracts()
+  assert_eq(contracts.length(), plugin_names().length())
+  for contract in contracts {
+    assert_true(contract.ok())
+    assert_true(plugin_names().contains(contract.name()))
+    assert_eq(contract.command_count(), contract.command_routes().length())
+    assert_true(contract.permissions().length() > 0)
+  }
+  match plugin_contract("fs") {
+    Some(contract) => {
+      assert_eq(contract.name(), "fs")
+      assert_true(contract.command_routes().contains("fs.readText"))
+      assert_true(contract.async_count() > 0)
+      assert_true(contract.permissions().contains("filesystem.read"))
+    }
+    None => abort("fs plugin contract did not resolve")
+  }
+  match plugin_contract("tray") {
+    Some(contract) => {
+      assert_true(contract.event_count() > 0)
+      assert_true(contract.command_routes().contains("tray.onMenuItemClick"))
+    }
+    None => abort("tray plugin contract did not resolve")
+  }
+  assert_true(plugin_contract("missing") is None)
+  let json = plugin_contracts_json()
+  assert_true(json.contains("\"name\":\"fs\""))
+  assert_true(json.contains("\"commands\":["))
+}
+
+///|
 test "catalog exposes sync-safe official plugin profile" {
   let names = sync_plugin_names()
   assert_true(names.contains("app"))

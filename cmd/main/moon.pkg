@@ -12,6 +12,7 @@ import {
   "vectie/lepusa/runtime/macos" @macos_backend,
   "vectie/lepusa/runtime/windows" @windows_backend,
   "vectie/lepusa/scaffold",
+  "vectie/lepusa/plugins/catalog",
 }
 
 supported_targets = "+native"

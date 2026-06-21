@@ -28,6 +28,24 @@ pub fn plugin(name : String) -> @lepusa.Plugin? {
 }
 
 ///|
+pub fn plugin_contract(name : String) -> @lepusa.PluginContract? {
+  match plugin(name) {
+    Some(plugin) => Some(plugin.contract())
+    None => None
+  }
+}
+
+///|
+pub fn plugin_contracts() -> Array[@lepusa.PluginContract] {
+  catalog_plugins().map(fn(entry) { (entry.load)().contract() })
+}
+
+///|
+pub fn plugin_contracts_json() -> String {
+  "[\{plugin_contracts().map(fn(contract) { contract.to_json() }).join(",")}]"
+}
+
+///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
   plugin_name : String,

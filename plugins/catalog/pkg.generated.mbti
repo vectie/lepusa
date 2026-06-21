@@ -9,6 +9,12 @@ import {
 // Values
 pub fn plugin(String) -> @lepusa.Plugin?
 
+pub fn plugin_contract(String) -> @lepusa.PluginContract?
+
+pub fn plugin_contracts() -> Array[@lepusa.PluginContract]
+
+pub fn plugin_contracts_json() -> String
+
 pub fn plugin_names() -> Array[String]
 
 pub fn register(@lepusa.CommandRegistry, String) -> @lepusa.CommandRegistry

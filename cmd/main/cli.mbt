@@ -83,6 +83,8 @@ fn help_text() -> String {
     #|  lepusa asset <url>
     #|  lepusa lifecycle <event> [window]
     #|  lepusa init [out-dir] [--workspace <lepusa-root>]
+    #|  lepusa plugin catalog [--json]
+    #|  lepusa plugin contract <name> [--json]
     #|  lepusa plugin new <name> [out-dir] [--workspace <lepusa-root>]
     #|  lepusa bundle-plan [macos|windows|linux] [--json]
     #|  lepusa bundle-inspect <lepusa/distribution.json> [--json]

@@ -861,6 +861,7 @@ pub fn Plugin::command_routes(Self) -> Array[String]
 pub fn Plugin::command_stream(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::command_sync(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::commands(Self) -> Array[CommandSpec]
+pub fn Plugin::contract(Self) -> PluginContract
 pub fn Plugin::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn Plugin::name(Self) -> String
 pub fn Plugin::new(String) -> Self
@@ -869,6 +870,57 @@ pub fn Plugin::on_setup(Self, Cmd) -> Self
 pub fn Plugin::on_will_exit(Self, Cmd) -> Self
 pub fn Plugin::validate(Self) -> Array[String]
 pub fn Plugin::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
+
+pub struct PluginCommandContract {
+  plugin : String
+  name : String
+  route : String
+  mode : CommandMode
+  permission : Permission
+  request_schema : IpcSchema
+  response_schema : IpcSchema
+} derive(Eq, @debug.Debug)
+pub fn PluginCommandContract::from_command(plugin_name~ : String, CommandSpec) -> Self
+pub fn PluginCommandContract::mode(Self) -> CommandMode
+pub fn PluginCommandContract::name(Self) -> String
+pub fn PluginCommandContract::permission(Self) -> Permission
+pub fn PluginCommandContract::plugin(Self) -> String
+pub fn PluginCommandContract::request_schema(Self) -> IpcSchema
+pub fn PluginCommandContract::response_schema(Self) -> IpcSchema
+pub fn PluginCommandContract::route(Self) -> String
+pub fn PluginCommandContract::to_json(Self) -> String
+
+pub struct PluginContract {
+  name : String
+  commands : Array[PluginCommandContract]
+  lifecycle_hooks : Array[PluginLifecycleContract]
+  permissions : Array[String]
+  problems : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn PluginContract::async_count(Self) -> Int
+pub fn PluginContract::command_count(Self) -> Int
+pub fn PluginContract::command_count_by_mode(Self, CommandMode) -> Int
+pub fn PluginContract::command_routes(Self) -> Array[String]
+pub fn PluginContract::commands(Self) -> Array[PluginCommandContract]
+pub fn PluginContract::event_count(Self) -> Int
+pub fn PluginContract::lifecycle_count(Self) -> Int
+pub fn PluginContract::lifecycle_hooks(Self) -> Array[PluginLifecycleContract]
+pub fn PluginContract::name(Self) -> String
+pub fn PluginContract::ok(Self) -> Bool
+pub fn PluginContract::permissions(Self) -> Array[String]
+pub fn PluginContract::problems(Self) -> Array[String]
+pub fn PluginContract::stream_count(Self) -> Int
+pub fn PluginContract::sync_count(Self) -> Int
+pub fn PluginContract::to_json(Self) -> String
+
+pub struct PluginLifecycleContract {
+  event : LifecycleEvent
+  command_empty : Bool
+} derive(Eq, @debug.Debug)
+pub fn PluginLifecycleContract::command_empty(Self) -> Bool
+pub fn PluginLifecycleContract::event(Self) -> LifecycleEvent
+pub fn PluginLifecycleContract::from_hook(LifecycleHook) -> Self
+pub fn PluginLifecycleContract::to_json(Self) -> String
 
 pub struct ProjectManifest {
   metadata : AppMetadata
