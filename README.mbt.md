@@ -745,6 +745,11 @@ dynamic window boundary visible before platform loops perform the concrete frame
 work. Source `RuntimeHost` instances retain the updated runtime session after
 those bridge operations, so later asset-protocol requests can resolve dynamic
 window virtual files instead of falling back to the original static plan.
+Capability-approved `app.*`, `menu.*`, and `tray.*` bridge dispatches lower
+successful plugin responses into a typed `desktop-shell` executable operation.
+This gives platform menu, tray, dock, and app-shell implementations one stable
+native-operation contract while MoonBit keeps permission checks and payload
+validation at the official plugin boundary.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

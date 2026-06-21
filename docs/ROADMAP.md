@@ -298,8 +298,9 @@ Stabilize the cross-platform core set first:
   exist
 - singleInstance: initial app lock/launch handoff contract and portable
   sync primary-state handlers exist
-- tray: initial status icon/menu contract and delegated sync tray state handlers
-  exist
+- tray/menu/app shell: initial status icon/menu/app control contracts,
+  delegated sync state handlers, and typed `desktop-shell` executable
+  operations from approved bridge dispatches exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and

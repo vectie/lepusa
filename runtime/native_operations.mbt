@@ -24,6 +24,15 @@ pub struct NativeWindowControl {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeDesktopShellOperation {
+  domain : String
+  target : String
+  window_label : String
+  action : String
+  payload : String
+} derive(Debug, Eq)
+
+///|
 pub struct NativeWindowClose {
   window_label : String
 } derive(Debug, Eq)
@@ -44,6 +53,7 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableRunEffect(String)
   NativeExecutableNavigate(NativeNavigation)
   NativeExecutableWindowControl(NativeWindowControl)
+  NativeExecutableDesktopShell(NativeDesktopShellOperation)
 } derive(Debug, Eq)
 
 ///|
@@ -77,6 +87,17 @@ pub fn NativeWindowControl::new(
   payload? : String = "",
 ) -> NativeWindowControl {
   { window_label, action, payload }
+}
+
+///|
+pub fn NativeDesktopShellOperation::new(
+  domain~ : String,
+  action~ : String,
+  target? : String = "",
+  window_label? : String = "",
+  payload? : String = "",
+) -> NativeDesktopShellOperation {
+  { domain, target, window_label, action, payload }
 }
 
 ///|
@@ -188,6 +209,56 @@ pub fn NativeWindowControl::payload(self : NativeWindowControl) -> String {
 pub fn NativeWindowControl::to_json(self : NativeWindowControl) -> String {
   [
     "{",
+    "\"windowLabel\":\{self.window_label.json_string()},",
+    "\"action\":\{self.action.json_string()},",
+    "\"payload\":\{self.payload.json_string()}",
+    "}",
+  ].join("")
+}
+
+///|
+pub fn NativeDesktopShellOperation::domain(
+  self : NativeDesktopShellOperation,
+) -> String {
+  self.domain
+}
+
+///|
+pub fn NativeDesktopShellOperation::target(
+  self : NativeDesktopShellOperation,
+) -> String {
+  self.target
+}
+
+///|
+pub fn NativeDesktopShellOperation::window_label(
+  self : NativeDesktopShellOperation,
+) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeDesktopShellOperation::action(
+  self : NativeDesktopShellOperation,
+) -> String {
+  self.action
+}
+
+///|
+pub fn NativeDesktopShellOperation::payload(
+  self : NativeDesktopShellOperation,
+) -> String {
+  self.payload
+}
+
+///|
+pub fn NativeDesktopShellOperation::to_json(
+  self : NativeDesktopShellOperation,
+) -> String {
+  [
+    "{",
+    "\"domain\":\{self.domain.json_string()},",
+    "\"target\":\{self.target.json_string()},",
     "\"windowLabel\":\{self.window_label.json_string()},",
     "\"action\":\{self.action.json_string()},",
     "\"payload\":\{self.payload.json_string()}",
@@ -309,6 +380,13 @@ pub fn NativeExecutableOperation::window_control(
 }
 
 ///|
+pub fn NativeExecutableOperation::desktop_shell(
+  operation : NativeDesktopShellOperation,
+) -> NativeExecutableOperation {
+  NativeExecutableDesktopShell(operation)
+}
+
+///|
 pub fn NativeExecutableOperation::kind(
   self : NativeExecutableOperation,
 ) -> String {
@@ -321,6 +399,7 @@ pub fn NativeExecutableOperation::kind(
     NativeExecutableRunEffect(_) => "run-effect"
     NativeExecutableNavigate(_) => "navigate-window"
     NativeExecutableWindowControl(_) => "window-control"
+    NativeExecutableDesktopShell(_) => "desktop-shell"
   }
 }
 
@@ -405,6 +484,16 @@ pub fn NativeExecutableOperation::window_control_operation(
 }
 
 ///|
+pub fn NativeExecutableOperation::desktop_shell_operation(
+  self : NativeExecutableOperation,
+) -> NativeDesktopShellOperation? {
+  match self {
+    NativeExecutableDesktopShell(operation) => Some(operation)
+    _ => None
+  }
+}
+
+///|
 pub fn NativeExecutableOperation::window_label(
   self : NativeExecutableOperation,
 ) -> String? {
@@ -425,7 +514,16 @@ pub fn NativeExecutableOperation::window_label(
                     None =>
                       match self.window_control_operation() {
                         Some(control) => Some(control.window_label())
-                        None => None
+                        None =>
+                          match self.desktop_shell_operation() {
+                            Some(operation) =>
+                              if operation.window_label() == "" {
+                                None
+                              } else {
+                                Some(operation.window_label())
+                              }
+                            None => None
+                          }
                       }
                   }
               }
@@ -495,6 +593,13 @@ pub fn NativeExecutableOperation::to_json(
         "\"windowLabel\":\{control.window_label().json_string()},",
         "\"action\":\{control.action().json_string()},",
         "\"payload\":\{control.payload().json_string()}",
+        "}",
+      ].join("")
+    NativeExecutableDesktopShell(operation) =>
+      [
+        "{",
+        "\"kind\":\"desktop-shell\",",
+        "\"operation\":\{operation.to_json()}",
         "}",
       ].join("")
   }
@@ -658,6 +763,22 @@ fn NativeExecutableOperation::native_packet_record(
         control.payload_int("x"),
         control.payload_int("y"),
         control.payload_bool("fullscreen"),
+        "",
+        "",
+        "",
+        "",
+      )
+    NativeExecutableDesktopShell(operation) =>
+      (
+        operation.window_label(),
+        "\{operation.domain()}.\{operation.action()}",
+        operation.payload(),
+        operation.target(),
+        "",
+        "",
+        "",
+        "",
+        "",
         "",
         "",
         "",

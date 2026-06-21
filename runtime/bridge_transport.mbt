@@ -1463,6 +1463,16 @@ pub fn NativeBridgeDispatch::native_window_control(
 }
 
 ///|
+pub fn NativeBridgeDispatch::native_desktop_shell_operation(
+  self : NativeBridgeDispatch,
+) -> NativeDesktopShellOperation? {
+  native_desktop_shell_operation_from_bridge_response(
+    self.message,
+    self.response_json,
+  )
+}
+
+///|
 pub fn NativeBridgeDispatch::operations(
   self : NativeBridgeDispatch,
 ) -> Array[NativeExecutableOperation] {
@@ -1482,6 +1492,11 @@ pub fn NativeBridgeDispatch::operations(
       operations.push(NativeExecutableOperation::window_control(control))
     None => ()
   }
+  match self.native_desktop_shell_operation() {
+    Some(operation) =>
+      operations.push(NativeExecutableOperation::desktop_shell(operation))
+    None => ()
+  }
   operations
 }
 
@@ -1489,6 +1504,10 @@ pub fn NativeBridgeDispatch::operations(
 pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
   let control_json = match self.native_window_control() {
     Some(control) => control.to_json()
+    None => "null"
+  }
+  let shell_json = match self.native_desktop_shell_operation() {
+    Some(operation) => operation.to_json()
     None => "null"
   }
   [
@@ -1500,6 +1519,7 @@ pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
     "\"evaluationScript\":\{self.evaluation_script.json_string()},",
     "\"extraOperations\":[\{self.extra_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"nativeWindowControl\":\{control_json},",
+    "\"nativeDesktopShellOperation\":\{shell_json},",
     "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")
@@ -1551,6 +1571,137 @@ pub fn native_window_control_from_bridge_response(
         payload=native_window_control_string(operation, "payload"),
       ),
     )
+  }
+}
+
+///|
+pub fn native_desktop_shell_operation_from_bridge_response(
+  message : String,
+  response_json : String,
+) -> NativeDesktopShellOperation? {
+  let request = match decode_invoke_request_json(message) {
+    Ok(request) => request
+    Err(_) => return None
+  }
+  match request.plugin() {
+    "app" => native_app_shell_operation(request, response_json)
+    "menu" => native_menu_shell_operation(request, response_json)
+    "tray" => native_tray_shell_operation(request, response_json)
+    _ => None
+  }
+}
+
+///|
+fn native_app_shell_operation(
+  request : @lepusa.InvokeRequest,
+  response_json : String,
+) -> NativeDesktopShellOperation? {
+  let payload = bridge_response_payload(response_json)
+  let operation = match payload_operation_object(payload) {
+    Some(operation) => operation
+    None => return None
+  }
+  let action = native_window_control_string(operation, "action")
+  if action == "" {
+    None
+  } else {
+    Some(
+      NativeDesktopShellOperation::new(
+        domain="app",
+        action~,
+        window_label=request.window_label(),
+        payload=native_window_control_string(operation, "payload"),
+      ),
+    )
+  }
+}
+
+///|
+fn native_menu_shell_operation(
+  request : @lepusa.InvokeRequest,
+  response_json : String,
+) -> NativeDesktopShellOperation? {
+  let payload = bridge_response_payload(response_json)
+  let operation = match payload_operation_object(payload) {
+    Some(operation) => operation
+    None => return None
+  }
+  let action = native_window_control_string(operation, "action")
+  if action == "" {
+    return None
+  }
+  let (target, window_label) = match operation.get("target") {
+    Some(Object(target)) =>
+      (
+        native_window_control_string(target, "kind"),
+        native_window_control_string(target, "windowLabel"),
+      )
+    _ => ("", "")
+  }
+  Some(
+    NativeDesktopShellOperation::new(
+      domain="menu",
+      target~,
+      window_label=if window_label == "" {
+        request.window_label()
+      } else {
+        window_label
+      },
+      action~,
+      payload=native_window_control_string(operation, "payload"),
+    ),
+  )
+}
+
+///|
+fn native_tray_shell_operation(
+  request : @lepusa.InvokeRequest,
+  response_json : String,
+) -> NativeDesktopShellOperation? {
+  match bridge_response_payload(response_json) {
+    "" => None
+    _ =>
+      Some(
+        NativeDesktopShellOperation::new(
+          domain="tray",
+          action=request.command(),
+          window_label=request.window_label(),
+          payload=request.payload(),
+        ),
+      )
+  }
+}
+
+///|
+fn bridge_response_payload(response_json : String) -> String {
+  let response = @json.parse(response_json) catch { _ => return "" }
+  match response {
+    Object(object) =>
+      match object.get("error") {
+        Some(_) => ""
+        None =>
+          match object.get("payload") {
+            Some(String(payload)) => payload
+            _ => ""
+          }
+      }
+    _ => ""
+  }
+}
+
+///|
+fn payload_operation_object(payload : String) -> Map[String, Json]? {
+  if payload == "" {
+    return None
+  }
+  let parsed_payload = @json.parse(payload) catch { _ => return None }
+  match parsed_payload {
+    Object(object) =>
+      match object.get("operation") {
+        Some(Object(operation)) => Some(operation)
+        _ => None
+      }
+    _ => None
   }
 }
 

@@ -786,6 +786,59 @@ test "bundled bridge dispatch lowers window close to native cleanup operation" {
 }
 
 ///|
+test "bundled bridge dispatch lowers desktop shell responses" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      {
+    #|        "label": "main",
+    #|        "url": "lepusa://rabbita/main/index.html",
+    #|        "allowedRoutes": ["menu.setAppMenu", "tray.setVisible"]
+    #|      }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["menu.setAppMenu", "tray.setVisible"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let runtime = BundledRuntime::new(manifest)
+      let menu_message = "{\"id\":\"menu\",\"window_label\":\"main\",\"plugin\":\"menu\",\"command\":\"setAppMenu\",\"payload\":\"{\\\"items\\\":[{\\\"id\\\":\\\"quit\\\",\\\"label\\\":\\\"Quit\\\"}]}\"}"
+      match runtime.dispatch_bridge_message_sync(menu_message) {
+        Ok(dispatch) => {
+          match dispatch.native_desktop_shell_operation() {
+            Some(operation) => {
+              assert_eq(operation.domain(), "menu")
+              assert_eq(operation.target(), "app")
+              assert_eq(operation.action(), "setAppMenu")
+            }
+            None => abort("expected bundled menu shell operation")
+          }
+          assert_eq(dispatch.operations().length(), 2)
+          assert_eq(dispatch.operations()[1].kind(), "desktop-shell")
+        }
+        Err(_) => abort("unexpected bundled menu shell dispatch failure")
+      }
+      let tray_message = "{\"id\":\"tray\",\"window_label\":\"main\",\"plugin\":\"tray\",\"command\":\"setVisible\",\"payload\":\"{\\\"visible\\\":true}\"}"
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(tray_message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled tray shell packet")
+      }
+      assert_true(packet.has_prefix("immediate\nmain\n"))
+      assert_true(packet.contains("lepusa-ops-v3\n2\n"))
+      assert_true(packet.contains("desktop-shell"))
+      assert_true(packet.contains("tray.setVisible"))
+      assert_true(packet.contains("{\"visible\":true}"))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime enforces command manifest origins" {
   let manifest =
     #|{

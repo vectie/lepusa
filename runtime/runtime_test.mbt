@@ -2566,6 +2566,37 @@ fn window_control_plan() -> @lepusa.RuntimePlan {
 }
 
 ///|
+fn desktop_shell_plan() -> @lepusa.RuntimePlan {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="main",
+      title="Runtime",
+      source=@lepusa.Source::html("<main>runtime</main>"),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("app").command_sync("exit", permission=App),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("menu").command_sync("setAppMenu", permission=Menu),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("tray").command_sync("setVisible", permission=Tray),
+    )
+    .with_capability(
+      @lepusa.Capability::new("desktop-shell")
+      .window("main")
+      .permission(App)
+      .permission(Menu)
+      .permission(Tray),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid desktop shell plan")
+  }
+}
+
+///|
 test "bridge dispatch lowers approved window responses to native operations" {
   let registry = @lepusa.CommandRegistry::new()
     .register_fn("window.setTitle", permission=Window, handler=fn(payload) {
@@ -2751,6 +2782,96 @@ test "bridge dispatch lowers approved window responses to native operations" {
       assert_true(packet.contains("true"))
     }
     Err(_) => abort("unexpected fullscreen bridge prepare failure")
+  }
+}
+
+///|
+test "bridge dispatch lowers desktop shell plugin responses to native operations" {
+  let registry = @lepusa.CommandRegistry::new()
+    .register_fn("app.exit", permission=App, handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "action": Json::string("exit"),
+          "operation": Json::object({
+            "action": Json::string("exit"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    })
+    .register_fn("menu.setAppMenu", permission=Menu, handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "action": Json::string("setAppMenu"),
+          "target": Json::object({
+            "kind": Json::string("app"),
+            "windowLabel": Json::null(),
+          }),
+          "operation": Json::object({
+            "target": Json::object({
+              "kind": Json::string("app"),
+              "windowLabel": Json::null(),
+            }),
+            "action": Json::string("setAppMenu"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    })
+    .register_fn("tray.setVisible", permission=Tray, handler=fn(_) {
+      Ok(Json::object({ "status": Json::string("delegated") }).stringify())
+    })
+  let host = RuntimeHost::new(desktop_shell_plan(), registry~)
+  let runtime = NativeRuntime::new(
+    NativeBackend::new(name="test", webview_engine="SystemWebView"),
+    host,
+  ).unwrap()
+  let app_message = "{\"id\":\"app\",\"window_label\":\"main\",\"plugin\":\"app\",\"command\":\"exit\",\"payload\":\"\"}"
+  match runtime.dispatch_bridge_message_sync(app_message) {
+    Ok(dispatch) => {
+      match dispatch.native_desktop_shell_operation() {
+        Some(operation) => {
+          assert_eq(operation.domain(), "app")
+          assert_eq(operation.action(), "exit")
+          assert_eq(operation.window_label(), "main")
+        }
+        None => abort("expected app desktop shell operation")
+      }
+      assert_eq(dispatch.operations()[1].kind(), "desktop-shell")
+    }
+    Err(_) => abort("unexpected app shell dispatch failure")
+  }
+  let menu_message = "{\"id\":\"menu\",\"window_label\":\"main\",\"plugin\":\"menu\",\"command\":\"setAppMenu\",\"payload\":\"{\\\"items\\\":[{\\\"id\\\":\\\"quit\\\",\\\"label\\\":\\\"Quit\\\"}]}\"}"
+  let menu_packet = @utf8.decode(
+    runtime
+    .bridge_loop_adapter()
+    .handoff_packet_bytes(@utf8.encode(menu_message)),
+  ) catch {
+    _ => abort("unexpected invalid menu shell packet bytes")
+  }
+  assert_true(menu_packet.contains("lepusa-ops-v3\n2\n"))
+  assert_true(menu_packet.contains("desktop-shell"))
+  assert_true(menu_packet.contains("menu.setAppMenu"))
+  assert_true(menu_packet.contains("Quit"))
+  let tray_message = "{\"id\":\"tray\",\"window_label\":\"main\",\"plugin\":\"tray\",\"command\":\"setVisible\",\"payload\":\"{\\\"visible\\\":false}\"}"
+  match runtime.dispatch_bridge_message_sync(tray_message) {
+    Ok(dispatch) => {
+      match dispatch.native_desktop_shell_operation() {
+        Some(operation) => {
+          assert_eq(operation.domain(), "tray")
+          assert_eq(operation.action(), "setVisible")
+          assert_eq(operation.payload(), "{\"visible\":false}")
+        }
+        None => abort("expected tray desktop shell operation")
+      }
+      assert_true(
+        dispatch.to_json().contains("\"nativeDesktopShellOperation\":{"),
+      )
+      assert_true(dispatch.to_json().contains("\"kind\":\"desktop-shell\""))
+    }
+    Err(_) => abort("unexpected tray shell dispatch failure")
   }
 }
 

@@ -49,6 +49,7 @@ pub struct BundledBridgeDispatch {
 } derive(Eq, @debug.Debug)
 pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
 pub fn BundledBridgeDispatch::message(Self) -> String
+pub fn BundledBridgeDispatch::native_desktop_shell_operation(Self) -> @runtime.NativeDesktopShellOperation?
 pub fn BundledBridgeDispatch::native_window_control(Self) -> @runtime.NativeWindowControl?
 pub fn BundledBridgeDispatch::operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeDispatch::response_hook(Self) -> String

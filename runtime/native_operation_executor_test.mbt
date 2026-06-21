@@ -5,6 +5,7 @@ test "native operation executor runs executable operation batches" {
   let drains : Array[String] = []
   let navigations : Array[String] = []
   let window_controls : Array[String] = []
+  let shell_operations : Array[String] = []
   let executor = NativeOperationExecutor::new(
     start_service=fn(service) {
       started.push(service.name())
@@ -25,6 +26,10 @@ test "native operation executor runs executable operation batches" {
     },
     control_window=fn(control) {
       window_controls.push(control.action())
+      NativeOperationExecuted
+    },
+    desktop_shell=fn(operation) {
+      shell_operations.push("\{operation.domain()}.\{operation.action()}")
       NativeOperationExecuted
     },
   )
@@ -55,11 +60,20 @@ test "native operation executor runs executable operation batches" {
         payload="{\"title\":\"Ready\"}",
       ),
     ),
+    NativeExecutableOperation::desktop_shell(
+      NativeDesktopShellOperation::new(
+        domain="menu",
+        target="app",
+        window_label="main",
+        action="setAppMenu",
+        payload="{\"items\":[]}",
+      ),
+    ),
   ]
   let report = executor.execute_all(operations)
   assert_true(report.ok())
-  assert_eq(report.operation_count(), 6)
-  assert_eq(report.executed_count(), 5)
+  assert_eq(report.operation_count(), 7)
+  assert_eq(report.executed_count(), 6)
   assert_eq(report.skipped_count(), 1)
   assert_eq(report.failed_count(), 0)
   assert_true(report.first_failure_message() is None)
@@ -71,15 +85,17 @@ test "native operation executor runs executable operation batches" {
   )
   assert_eq(navigations[0], "lepusa://inline/main")
   assert_eq(window_controls[0], "setTitle")
+  assert_eq(shell_operations[0], "menu.setAppMenu")
   assert_eq(report.outcomes()[3].status().name(), "skipped")
   assert_eq(report.outcomes()[3].status().message(), "effect delegated: boot")
   let json = report.to_json()
-  assert_true(json.contains("\"operationCount\":6"))
-  assert_true(json.contains("\"executedCount\":5"))
+  assert_true(json.contains("\"operationCount\":7"))
+  assert_true(json.contains("\"executedCount\":6"))
   assert_true(json.contains("\"skippedCount\":1"))
   assert_true(json.contains("\"kind\":\"drain-bridge-window\""))
   assert_true(json.contains("\"kind\":\"navigate-window\""))
   assert_true(json.contains("\"kind\":\"window-control\""))
+  assert_true(json.contains("\"kind\":\"desktop-shell\""))
   let packet = native_executable_operations_packet([
     NativeExecutableOperation::evaluate_script(
       NativeEvaluationScript::new(
@@ -104,6 +120,19 @@ test "native operation executor runs executable operation batches" {
       "bridge_loop_adapter().callbacks(main).drain_window_packet",
     ),
   )
+  let shell_packet = native_executable_operations_packet([
+    NativeExecutableOperation::desktop_shell(
+      NativeDesktopShellOperation::new(
+        domain="tray",
+        action="setVisible",
+        window_label="main",
+        payload="{\"visible\":true}",
+      ),
+    ),
+  ])
+  assert_true(shell_packet.contains("desktop-shell"))
+  assert_true(shell_packet.contains("tray.setVisible"))
+  assert_true(shell_packet.contains("{\"visible\":true}"))
 }
 
 ///|

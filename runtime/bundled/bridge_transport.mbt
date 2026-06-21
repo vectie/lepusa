@@ -1360,6 +1360,16 @@ pub fn BundledBridgeDispatch::native_window_control(
 }
 
 ///|
+pub fn BundledBridgeDispatch::native_desktop_shell_operation(
+  self : BundledBridgeDispatch,
+) -> @runtime.NativeDesktopShellOperation? {
+  @runtime.native_desktop_shell_operation_from_bridge_response(
+    self.message,
+    self.response_json,
+  )
+}
+
+///|
 pub fn BundledBridgeDispatch::operations(
   self : BundledBridgeDispatch,
 ) -> Array[@runtime.NativeExecutableOperation] {
@@ -1381,6 +1391,13 @@ pub fn BundledBridgeDispatch::operations(
       )
     None => ()
   }
+  match self.native_desktop_shell_operation() {
+    Some(operation) =>
+      operations.push(
+        @runtime.NativeExecutableOperation::desktop_shell(operation),
+      )
+    None => ()
+  }
   operations
 }
 
@@ -1388,6 +1405,10 @@ pub fn BundledBridgeDispatch::operations(
 pub fn BundledBridgeDispatch::to_json(self : BundledBridgeDispatch) -> String {
   let control_json = match self.native_window_control() {
     Some(control) => control.to_json()
+    None => "null"
+  }
+  let shell_json = match self.native_desktop_shell_operation() {
+    Some(operation) => operation.to_json()
     None => "null"
   }
   [
@@ -1399,6 +1420,7 @@ pub fn BundledBridgeDispatch::to_json(self : BundledBridgeDispatch) -> String {
     "\"evaluationScript\":\{self.evaluation_script.json_string()},",
     "\"extraOperations\":[\{self.extra_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"nativeWindowControl\":\{control_json},",
+    "\"nativeDesktopShellOperation\":\{shell_json},",
     "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
   ].join("")

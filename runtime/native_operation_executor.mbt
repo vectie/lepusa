@@ -26,6 +26,7 @@ pub struct NativeOperationExecutor {
   run_effect : (String) -> NativeOperationExecutionStatus
   navigate_window : (NativeNavigation) -> NativeOperationExecutionStatus
   control_window : (NativeWindowControl) -> NativeOperationExecutionStatus
+  desktop_shell : (NativeDesktopShellOperation) -> NativeOperationExecutionStatus
 }
 
 ///|
@@ -70,6 +71,11 @@ pub fn NativeOperationExecutor::new(
   ) {
     NativeOperationSkipped("native window control handler is unavailable")
   },
+  desktop_shell? : (NativeDesktopShellOperation) -> NativeOperationExecutionStatus = fn(
+    _,
+  ) {
+    NativeOperationSkipped("native desktop shell handler is unavailable")
+  },
 ) -> NativeOperationExecutor {
   {
     start_service,
@@ -80,6 +86,7 @@ pub fn NativeOperationExecutor::new(
     run_effect,
     navigate_window,
     control_window,
+    desktop_shell,
   }
 }
 
@@ -97,6 +104,7 @@ pub fn NativeOperationExecutor::execute(
     NativeExecutableRunEffect(name) => (self.run_effect)(name)
     NativeExecutableNavigate(navigation) => (self.navigate_window)(navigation)
     NativeExecutableWindowControl(control) => (self.control_window)(control)
+    NativeExecutableDesktopShell(operation) => (self.desktop_shell)(operation)
   }
   { operation, status }
 }
