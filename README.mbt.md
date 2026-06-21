@@ -650,8 +650,11 @@ window frame data, load URL, asset protocol, native hook name, and document
 start scripts.
 
 `lepusa bridge` emits the JavaScript bridge that frontends load as
-`window.lepusa`, including `invoke(route, payload)` and route namespaces such as
-`lepusa.core.invoke(payload)`.
+`window.lepusa`, including `invoke(route, payload)`, `can(route)`,
+`command(route)`, and a frozen `commands` route tree such as
+`lepusa.commands.core.invoke(payload)`. Direct route namespaces such as
+`lepusa.core.invoke(payload)` are also installed when they do not collide with
+core bridge methods.
 
 `lepusa dev` lowers the current project into a runtime development plan:
 resolved WebViews, asset protocol, capability grants, capability-filtered

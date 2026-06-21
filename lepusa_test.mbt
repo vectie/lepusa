@@ -905,8 +905,14 @@ test "runtime plans generate frontend bridge script" {
   let app = @lepusa.new(root)
     .window(source=@lepusa.Source::html("<main></main>"))
     .with_plugin(@lepusa.Plugin::new("dialog").command_sync("show"))
+    .with_plugin(@lepusa.Plugin::new("routes").command_sync("open"))
     .with_capability(
       @lepusa.Capability::new("dialog").window("main").command("dialog.show"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("route-plugin")
+      .window("main")
+      .command("routes.open"),
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
@@ -920,11 +926,21 @@ test "runtime plans generate frontend bridge script" {
         ) {
         Ok(script) => {
           let routes = script.routes()
-          assert_eq(routes.length(), 1)
+          assert_eq(routes.length(), 2)
           assert_eq(routes[0], "dialog.show")
+          assert_eq(routes[1], "routes.open")
           assert_true(script.source().contains("globalThis"))
           assert_true(script.source().contains("\"dialog.show\""))
+          assert_true(script.source().contains("\"routes.open\""))
           assert_true(script.source().contains("__lepusaInvoke"))
+          assert_true(
+            script.source().contains("const routeSet = new Set(routes)"),
+          )
+          assert_true(script.source().contains("command: (route) =>"))
+          assert_true(
+            script.source().contains("commands: freezeTree(commands)"),
+          )
+          assert_true(script.source().contains("reservedApiKeys.has(parts[0])"))
         }
         Err(_) => abort("unexpected invalid bridge script")
       }
