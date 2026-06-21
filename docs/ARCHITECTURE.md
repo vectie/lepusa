@@ -631,14 +631,20 @@ after the MoonBit dispatch succeeds, preserving capability enforcement.
 Approved source or packaged `window.open` and `window.close` dispatches also
 emit the corresponding runtime-owned `open-window` and `close-window`
 executable operations, so plugin command success, session lifecycle cleanup,
-and native frame work stay visible as separate steps.
+and native frame work stay visible as separate steps. Source `RuntimeHost`
+instances retain the updated runtime session after those bridge operations, so
+later asset-protocol requests can resolve dynamic window virtual files instead
+of falling back to the original static plan.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
 typed `close-window` records by closing the live native frame once, even when
 the same handoff also carries the plugin's `window-control close` response.
 They also consume `navigate-window` operations from that packet by loading the
-target URL in the live WebView after MoonBit dispatch succeeds. The Windows
+target URL in the live WebView after MoonBit dispatch succeeds. Source,
+bundled, and Windows runners pass URL-routed asset resolver callbacks into
+native loops, so future dynamic WebViews can resolve assets for their own
+window labels. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows currently

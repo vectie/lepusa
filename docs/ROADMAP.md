@@ -151,6 +151,9 @@
   `window.close` dispatches now emit the matching `close-window` lifecycle
   cleanup operation beside the current native frame close control, and the
   macOS/Linux loops consume that typed close operation from bridge packets;
+  source runtime hosts now retain the updated dynamic-window session for later
+  asset resolution, and platform runners pass URL-routed asset resolvers into
+  native loops instead of first-window-scoped resolvers;
   bridge handoff packets now use `lepusa-ops-v2` records that carry the
   dynamic `open-window` URL, title, size, bridge source, native hook, and asset
   protocol needed by native WebView creation handlers;

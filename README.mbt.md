@@ -728,7 +728,9 @@ window actions without parsing JavaScript response callbacks. Approved source
 or packaged `window.open` and `window.close` dispatches additionally emit the
 runtime-owned `open-window` and `close-window` lifecycle operations, keeping the
 dynamic window boundary visible before platform loops perform the concrete frame
-work.
+work. Source `RuntimeHost` instances retain the updated runtime session after
+those bridge operations, so later asset-protocol requests can resolve dynamic
+window virtual files instead of falling back to the original static plan.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
@@ -736,7 +738,9 @@ typed `close-window` records by closing the live native frame once, even when
 the same handoff also carries the plugin's `window-control close` response.
 They also consume `navigate-window` operations from the same handoff packet by
 loading the target URL in the live WebView after the approved MoonBit dispatch
-completes.
+completes. Source, bundled, and Windows runners pass URL-routed asset resolver
+callbacks into native loops, so future dynamic WebViews can resolve assets for
+their own window labels.
 Platform packages now expose `operation_executor()` so source and packaged run
 reports use the backend's actual script-evaluation and window-control support
 instead of the generic skipped-operation fallback.

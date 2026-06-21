@@ -988,6 +988,7 @@ pub fn RuntimeDevWebView::uses_runtime_asset_protocol(Self) -> Bool
 
 pub struct RuntimeHost {
   manager : @lepusa.AppManager
+  mut session : RuntimeSession?
 }
 pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::audit(Self) -> @lepusa.RuntimeAudit

@@ -169,8 +169,8 @@ pub fn run(
         dispatch_for_window=fn(window_label) {
           adapter.callbacks(window_label~).handoff_packet_callback()
         },
-        resolve_asset_for_window=fn(window_label) {
-          runtime.asset_protocol_resolver_callback_for_window(window_label~)
+        resolve_asset_for_window=fn(_) {
+          runtime.asset_protocol_resolver_callback()
         },
       )
     }
@@ -192,8 +192,8 @@ pub fn run_bundled(
         dispatch_for_window=fn(window_label) {
           adapter.callbacks(window_label~).handoff_packet_callback()
         },
-        resolve_asset_for_window=fn(window_label) {
-          manifest.asset_protocol_resolver_callback_for_window(window_label~)
+        resolve_asset_for_window=fn(_) {
+          manifest.asset_protocol_resolver_callback()
         },
       )
     }

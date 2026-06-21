@@ -75,6 +75,7 @@ fn RuntimeHost::dispatch_frontend_event_emit(
                 [],
               )
             Ok(step) => {
+              self.replace_session(step.session())
               let operations = native_executable_operations_from_runtime(
                 step.operations(),
               )
@@ -138,8 +139,10 @@ fn RuntimeHost::window_open_followup_operations(
             Ok(session) =>
               match session.open_window(window) {
                 Err(_) => []
-                Ok(step) =>
+                Ok(step) => {
+                  self.replace_session(step.session())
                   native_executable_operations_from_runtime(step.operations())
+                }
               }
           }
       }
@@ -167,7 +170,10 @@ fn RuntimeHost::window_close_followup_operations(
     Ok(session) =>
       match session.close_window(window_label) {
         Err(_) => []
-        Ok(step) => native_executable_operations_from_runtime(step.operations())
+        Ok(step) => {
+          self.replace_session(step.session())
+          native_executable_operations_from_runtime(step.operations())
+        }
       }
   }
 }

@@ -1,6 +1,7 @@
 ///|
 pub struct RuntimeHost {
   manager : @lepusa.AppManager
+  mut session : RuntimeSession?
 }
 
 ///|
@@ -8,12 +9,12 @@ pub fn RuntimeHost::new(
   plan : @lepusa.RuntimePlan,
   registry? : @lepusa.CommandRegistry = @lepusa.CommandRegistry::new(),
 ) -> RuntimeHost {
-  { manager: @lepusa.AppManager::new(plan, registry~) }
+  { manager: @lepusa.AppManager::new(plan, registry~), session: None }
 }
 
 ///|
 pub fn RuntimeHost::from_manager(manager : @lepusa.AppManager) -> RuntimeHost {
-  { manager, }
+  { manager, session: None }
 }
 
 ///|
@@ -64,6 +65,23 @@ pub fn RuntimeHost::security_profile(
 
 ///|
 pub fn RuntimeHost::snapshot(
+  self : RuntimeHost,
+) -> Result[RuntimeSession, Array[String]] {
+  match self.session {
+    Some(session) => return Ok(session)
+    None => ()
+  }
+  match self.fresh_snapshot() {
+    Ok(session) => {
+      self.session = Some(session)
+      Ok(session)
+    }
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
+fn RuntimeHost::fresh_snapshot(
   self : RuntimeHost,
 ) -> Result[RuntimeSession, Array[String]] {
   let problems : Array[String] = []
@@ -121,6 +139,14 @@ pub fn RuntimeHost::snapshot(
   } else {
     Err(problems)
   }
+}
+
+///|
+fn RuntimeHost::replace_session(
+  self : RuntimeHost,
+  session : RuntimeSession,
+) -> Unit {
+  self.session = Some(session)
 }
 
 ///|

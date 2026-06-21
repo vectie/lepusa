@@ -2785,8 +2785,22 @@ test "bridge dispatch lowers approved window open to native operation" {
         None => abort("expected open-window operation")
       }
       assert_true(dispatch.to_json().contains("\"kind\":\"open-window\""))
+      let tools_asset_packet = @utf8.decode(
+        runtime.resolve_asset_protocol_packet_bytes(
+          @utf8.encode("lepusa://inline/tools/index.html"),
+        ),
+      ) catch {
+        _ => abort("unexpected invalid dynamic window asset packet")
+      }
+      assert_eq(
+        tools_asset_packet, "ok\nvirtual\ntext/html\n<aside>tools</aside>",
+      )
+      let packet_runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        RuntimeHost::new(plan, registry~),
+      ).unwrap()
       let packet = @utf8.decode(
-        runtime
+        packet_runtime
         .bridge_loop_adapter()
         .handoff_packet_bytes(@utf8.encode(message)),
       ) catch {
@@ -2864,8 +2878,20 @@ test "bridge dispatch lowers approved window close to runtime cleanup" {
         None => abort("expected native close window control operation")
       }
       assert_true(dispatch.to_json().contains("\"kind\":\"close-window\""))
+      let closed_asset_packet = @utf8.decode(
+        runtime.resolve_asset_protocol_packet_bytes(
+          @utf8.encode("lepusa://inline/main/index.html"),
+        ),
+      ) catch {
+        _ => abort("unexpected invalid closed window asset packet")
+      }
+      assert_true(closed_asset_packet.contains("error"))
+      let packet_runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        RuntimeHost::new(plan, registry~),
+      ).unwrap()
       let packet = @utf8.decode(
-        runtime
+        packet_runtime
         .bridge_loop_adapter()
         .handoff_packet_bytes(@utf8.encode(message)),
       ) catch {
