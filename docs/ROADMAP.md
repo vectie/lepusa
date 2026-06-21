@@ -102,11 +102,12 @@
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
   a Win32/WebView2 COM creation loop for source and packaged manifests when
   `WebView2Loader.dll` is available, including sync bridge response evaluation,
-  dynamic open/close window consumption, and WebView2 custom asset protocol
-  serving through `https://<protocol>.localhost/...` WebView2 requests mapped
-  back to the stable MoonBit `lepusa://...` resolver contract; source and bundled
-  launch-session JSON can now advertise async-capable bridge scheduling for
-  native loops that wire deferred completion, including the reusable async
+  dynamic open/close window consumption, packetized navigation, and WebView2
+  custom asset protocol serving through `https://<protocol>.localhost/...`
+  WebView2 requests mapped back to the stable MoonBit `lepusa://...` resolver
+  contract; source and bundled launch-session JSON can now advertise
+  async-capable bridge scheduling for native loops that wire deferred
+  completion, including the reusable async
   bridge executor descriptor over
   `NativeRuntime::bridge_async_dispatch_callback`; source and bundled bridge
   handoffs now expose typed deferred completion envelopes plus FIFO work queues;
@@ -167,11 +168,11 @@
   handlers; macOS, Linux, and Windows now consume those `open-window` records by
   creating labeled WKWebView/WebKitGTK/WebView2 windows with target-window
   response evaluation and URL-routed asset resolution, and they consume
-  packetized `evaluate-script` records by evaluating the carried JavaScript in
-  the target WebView; source and bundled macOS/Linux/Windows launches now feed
-  additional initial WebViews through the same native open-window consumer before
-  entering the platform event loop, so static multi-window plans and later
-  dynamic windows share one creation boundary;
+  packetized `evaluate-script` and `navigate-window` records in the target
+  WebView; source and bundled macOS/Linux/Windows launches now feed additional
+  initial WebViews through the same native open-window consumer before entering
+  the platform event loop, so static multi-window plans and later dynamic
+  windows share one creation boundary;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and

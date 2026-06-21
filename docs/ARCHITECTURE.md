@@ -650,11 +650,11 @@ set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
 typed `close-window` records by closing the live native frame once, even when
 the same handoff also carries the plugin's `window-control close` response.
-They also consume `navigate-window` operations from that packet by loading the
-target URL in the live WebView after MoonBit dispatch succeeds. The macOS and
-Linux loops consume dynamic `open-window` records by creating labeled
-WKWebView/WebKitGTK windows with the carried bridge source, native hook, asset
-protocol, URL, title, size, and resizable flag. Windows consumes the same
+macOS, Linux, and Windows consume `navigate-window` operations from that packet
+by loading the target URL in the live WebView after MoonBit dispatch succeeds.
+The macOS and Linux loops consume dynamic `open-window` records by creating
+labeled WKWebView/WebKitGTK windows with the carried bridge source, native hook,
+asset protocol, URL, title, size, and resizable flag. Windows consumes the same
 `open-window` and `close-window` records by creating or destroying labeled
 Win32/WebView2 windows from the shared `lepusa-ops-v3` packet format. All three
 native loops consume packetized `evaluate-script` records by evaluating the

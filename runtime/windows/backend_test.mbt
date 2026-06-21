@@ -110,10 +110,17 @@ test "windows backend exposes webview2 descriptor" {
         script="resolve()",
       ),
     ),
+    @runtime.NativeExecutableOperation::navigate(
+      @runtime.NativeNavigation::new(
+        window_label="main",
+        url="https://example.test/",
+      ),
+    ),
   ])
-  assert_eq(execution.executed_count(), 1)
+  assert_eq(execution.executed_count(), 2)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[1].status() is NativeOperationExecuted)
 }
 
 ///|

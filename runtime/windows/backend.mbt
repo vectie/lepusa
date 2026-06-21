@@ -64,11 +64,7 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     open_window=fn(_) { NativeOperationExecuted },
     close_window=fn(_) { NativeOperationExecuted },
     evaluate_script=fn(_) { NativeOperationExecuted },
-    navigate_window=fn(_) {
-      NativeOperationSkipped(
-        "Windows native navigation is unavailable until the WebView2 operation loop lands",
-      )
-    },
+    navigate_window=fn(_) { NativeOperationExecuted },
     run_effect=fn(name) {
       NativeOperationSkipped("Windows native effect is not registered: \{name}")
     },
