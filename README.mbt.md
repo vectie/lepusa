@@ -838,9 +838,11 @@ today. The Linux
 package owns WebKitGTK source and packaged-window loops when GTK3 and
 WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
 callback for MoonBit-resolved runtime, virtual, local, and packaged assets.
-Windows source and packaged runs prepare typed WebView2 boot plans and declare
-the missing WebView2 creation loop through the same target launch-capability
-gate used by `doctor`, `verify --strict`, and platform launch attempts.
+Windows source and packaged runs use the package-owned WebView2 COM loop when
+`WebView2Loader.dll` and the WebView2 Runtime are available, including sync
+bridge response evaluation, typed dynamic window operations, and a WebView2
+resource-request callback that maps `https://<protocol>.localhost/...` back to
+MoonBit-resolved runtime, virtual, local, and packaged `lepusa://...` assets.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap

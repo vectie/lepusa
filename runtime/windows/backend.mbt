@@ -36,7 +36,7 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
     async_bridge_drain=preflight.async_bridge_drain(),
     max_webviews=0,
     webview_creation_message=preflight.problem(),
-    sync_bridge_evaluate_message="Windows WebView2 sync bridge response evaluation is unavailable",
+    sync_bridge_evaluate_message="Windows WebView2 sync bridge response evaluation requires the WebView2 launch loop",
     async_bridge_drain_message="Windows WebView2 async bridge drain/evaluate support needs the WebView2 event-loop callback ABI",
   )
 }
@@ -52,8 +52,8 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     sync_bridge_evaluate=true,
     async_bridge_drain=false,
     dependency_message="Windows WebView2 loader is not available",
-    webview_creation_message="Windows WebView2 creation loop is unavailable",
-    sync_bridge_evaluate_message="Windows WebView2 sync bridge response evaluation is unavailable",
+    webview_creation_message="Windows WebView2 creation loop requires WebView2Loader.dll and the WebView2 Runtime",
+    sync_bridge_evaluate_message="Windows WebView2 sync bridge response evaluation requires the WebView2 launch loop",
     async_bridge_drain_message="Windows WebView2 async bridge drain/evaluate support needs the WebView2 event-loop callback ABI",
   )
 }

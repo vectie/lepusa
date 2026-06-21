@@ -73,6 +73,14 @@ typedef struct ICoreWebView2WebMessageReceivedEventHandler
   ICoreWebView2WebMessageReceivedEventHandler;
 typedef struct ICoreWebView2WebMessageReceivedEventArgs
   ICoreWebView2WebMessageReceivedEventArgs;
+typedef struct ICoreWebView2WebResourceRequestedEventHandler
+  ICoreWebView2WebResourceRequestedEventHandler;
+typedef struct ICoreWebView2WebResourceRequestedEventArgs
+  ICoreWebView2WebResourceRequestedEventArgs;
+typedef struct ICoreWebView2WebResourceRequest
+  ICoreWebView2WebResourceRequest;
+typedef struct ICoreWebView2WebResourceResponse
+  ICoreWebView2WebResourceResponse;
 typedef struct ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
   ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler;
 typedef struct ICoreWebView2CreateCoreWebView2ControllerCompletedHandler
@@ -135,6 +143,36 @@ typedef struct ICoreWebView2Vtbl {
     LepusaWindowsEventRegistrationToken *
   );
   void *remove_WebMessageReceived;
+  void *CallDevToolsProtocolMethod;
+  void *get_BrowserProcessId;
+  void *get_CanGoBack;
+  void *get_CanGoForward;
+  void *GoBack;
+  void *GoForward;
+  void *GetDevToolsProtocolEventReceiver;
+  void *Stop;
+  void *add_NewWindowRequested;
+  void *remove_NewWindowRequested;
+  void *add_DocumentTitleChanged;
+  void *remove_DocumentTitleChanged;
+  void *get_DocumentTitle;
+  void *AddHostObjectToScript;
+  void *RemoveHostObjectFromScript;
+  void *OpenDevToolsWindow;
+  void *add_ContainsFullScreenElementChanged;
+  void *remove_ContainsFullScreenElementChanged;
+  void *get_ContainsFullScreenElement;
+  HRESULT (STDMETHODCALLTYPE *add_WebResourceRequested)(
+    ICoreWebView2 *,
+    ICoreWebView2WebResourceRequestedEventHandler *,
+    LepusaWindowsEventRegistrationToken *
+  );
+  void *remove_WebResourceRequested;
+  HRESULT (STDMETHODCALLTYPE *AddWebResourceRequestedFilter)(
+    ICoreWebView2 *,
+    LPCWSTR,
+    int
+  );
 } ICoreWebView2Vtbl;
 
 struct ICoreWebView2 {
@@ -194,7 +232,14 @@ typedef struct ICoreWebView2EnvironmentVtbl {
     HWND,
     ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *
   );
-  void *CreateWebResourceResponse;
+  HRESULT (STDMETHODCALLTYPE *CreateWebResourceResponse)(
+    ICoreWebView2Environment *,
+    IStream *,
+    int,
+    LPCWSTR,
+    LPCWSTR,
+    ICoreWebView2WebResourceResponse **
+  );
   void *get_BrowserVersionString;
   void *add_NewBrowserVersionAvailable;
   void *remove_NewBrowserVersionAvailable;
@@ -299,6 +344,103 @@ struct ICoreWebView2WebMessageReceivedEventHandler {
   const ICoreWebView2WebMessageReceivedEventHandlerVtbl *lpVtbl;
 };
 
+typedef struct ICoreWebView2WebResourceResponseVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2WebResourceResponse *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(ICoreWebView2WebResourceResponse *);
+  ULONG (STDMETHODCALLTYPE *Release)(ICoreWebView2WebResourceResponse *);
+  void *get_Content;
+  void *put_Content;
+  void *get_Headers;
+  void *get_StatusCode;
+  void *put_StatusCode;
+  void *get_ReasonPhrase;
+  void *put_ReasonPhrase;
+} ICoreWebView2WebResourceResponseVtbl;
+
+struct ICoreWebView2WebResourceResponse {
+  const ICoreWebView2WebResourceResponseVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2WebResourceRequestVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2WebResourceRequest *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(ICoreWebView2WebResourceRequest *);
+  ULONG (STDMETHODCALLTYPE *Release)(ICoreWebView2WebResourceRequest *);
+  HRESULT (STDMETHODCALLTYPE *get_Uri)(
+    ICoreWebView2WebResourceRequest *,
+    LPWSTR *
+  );
+  void *put_Uri;
+  void *get_Method;
+  void *put_Method;
+  void *get_Content;
+  void *put_Content;
+  void *get_Headers;
+} ICoreWebView2WebResourceRequestVtbl;
+
+struct ICoreWebView2WebResourceRequest {
+  const ICoreWebView2WebResourceRequestVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2WebResourceRequestedEventArgsVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2WebResourceRequestedEventArgs *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(
+    ICoreWebView2WebResourceRequestedEventArgs *
+  );
+  ULONG (STDMETHODCALLTYPE *Release)(
+    ICoreWebView2WebResourceRequestedEventArgs *
+  );
+  HRESULT (STDMETHODCALLTYPE *get_Request)(
+    ICoreWebView2WebResourceRequestedEventArgs *,
+    ICoreWebView2WebResourceRequest **
+  );
+  void *get_Response;
+  HRESULT (STDMETHODCALLTYPE *put_Response)(
+    ICoreWebView2WebResourceRequestedEventArgs *,
+    ICoreWebView2WebResourceResponse *
+  );
+  void *GetDeferral;
+  void *get_ResourceContext;
+} ICoreWebView2WebResourceRequestedEventArgsVtbl;
+
+struct ICoreWebView2WebResourceRequestedEventArgs {
+  const ICoreWebView2WebResourceRequestedEventArgsVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2WebResourceRequestedEventHandlerVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2WebResourceRequestedEventHandler *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(
+    ICoreWebView2WebResourceRequestedEventHandler *
+  );
+  ULONG (STDMETHODCALLTYPE *Release)(
+    ICoreWebView2WebResourceRequestedEventHandler *
+  );
+  HRESULT (STDMETHODCALLTYPE *Invoke)(
+    ICoreWebView2WebResourceRequestedEventHandler *,
+    ICoreWebView2 *,
+    ICoreWebView2WebResourceRequestedEventArgs *
+  );
+} ICoreWebView2WebResourceRequestedEventHandlerVtbl;
+
+struct ICoreWebView2WebResourceRequestedEventHandler {
+  const ICoreWebView2WebResourceRequestedEventHandlerVtbl *lpVtbl;
+};
+
 typedef HRESULT (WINAPI *LepusaCreateCoreWebView2EnvironmentWithOptions)(
   PCWSTR,
   PCWSTR,
@@ -308,6 +450,11 @@ typedef HRESULT (WINAPI *LepusaCreateCoreWebView2EnvironmentWithOptions)(
 typedef HRESULT (WINAPI *LepusaWindowsCoInitializeEx)(LPVOID, DWORD);
 typedef void (WINAPI *LepusaWindowsCoUninitialize)(void);
 typedef void (WINAPI *LepusaWindowsCoTaskMemFree)(LPVOID);
+typedef HRESULT (WINAPI *LepusaWindowsCreateStreamOnHGlobal)(
+  HGLOBAL,
+  BOOL,
+  IStream **
+);
 
 static const IID lepusa_iid_iunknown = {
   0x00000000,
@@ -332,6 +479,12 @@ static const IID lepusa_iid_web_message_received = {
   0x00e6,
   0x49fa,
   { 0x8e, 0x07, 0x89, 0x8e, 0xa0, 0x1e, 0xcb, 0xd2 }
+};
+static const IID lepusa_iid_web_resource_requested = {
+  0xab00b74c,
+  0x15f1,
+  0x4646,
+  { 0x80, 0xe8, 0xe7, 0x63, 0x41, 0xd2, 0x5d, 0x71 }
 };
 
 static int lepusa_windows_load_winsock(void) {
@@ -1201,6 +1354,13 @@ typedef struct {
   LepusaWindowsWindowSlot *slot;
 } LepusaWindowsWebMessageReceivedHandler;
 
+typedef struct {
+  const ICoreWebView2WebResourceRequestedEventHandlerVtbl *lpVtbl;
+  LONG ref_count;
+  LepusaWindowsWebView2Context *context;
+  LepusaWindowsWindowSlot *slot;
+} LepusaWindowsWebResourceRequestedHandler;
+
 struct LepusaWindowsWindowSlot {
   char label[128];
   HWND hwnd;
@@ -1209,12 +1369,16 @@ struct LepusaWindowsWindowSlot {
   wchar_t *title;
   wchar_t *url;
   wchar_t *initialization_script;
+  wchar_t *asset_filter;
+  char asset_protocol[64];
   int width;
   int height;
   int resizable;
   LepusaWindowsEventRegistrationToken web_message_token;
+  LepusaWindowsEventRegistrationToken web_resource_token;
   LepusaWindowsControllerCompletedHandler controller_handler;
   LepusaWindowsWebMessageReceivedHandler web_message_handler;
+  LepusaWindowsWebResourceRequestedHandler web_resource_handler;
   LepusaWindowsWebView2Context *context;
 };
 
@@ -1225,12 +1389,16 @@ struct LepusaWindowsWebView2Context {
   moonbit_bytes_t title;
   moonbit_bytes_t url;
   moonbit_bytes_t initialization_script;
+  moonbit_bytes_t asset_protocol;
   int width;
   int height;
   int resizable;
   LepusaWindowsBytesCallback call_dispatch;
   void *dispatch;
+  LepusaWindowsBytesCallback call_resolve_asset;
+  void *resolve_asset;
   LepusaWindowsCoTaskMemFree co_task_mem_free;
+  LepusaWindowsCreateStreamOnHGlobal create_stream_on_hglobal;
   HRESULT result;
   int live_windows;
   LepusaWindowsWindowSlot windows[32];
@@ -1435,6 +1603,40 @@ static ULONG STDMETHODCALLTYPE lepusa_windows_web_message_release(
   return (ULONG)InterlockedDecrement(&handler->ref_count);
 }
 
+static HRESULT STDMETHODCALLTYPE lepusa_windows_web_resource_query_interface(
+  ICoreWebView2WebResourceRequestedEventHandler *self,
+  REFIID riid,
+  void **object
+) {
+  if (object == NULL) {
+    return E_POINTER;
+  }
+  if (lepusa_windows_iid_equals(riid, &lepusa_iid_iunknown) ||
+      lepusa_windows_iid_equals(riid, &lepusa_iid_web_resource_requested)) {
+    *object = self;
+    self->lpVtbl->AddRef(self);
+    return S_OK;
+  }
+  *object = NULL;
+  return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_web_resource_add_ref(
+  ICoreWebView2WebResourceRequestedEventHandler *self
+) {
+  LepusaWindowsWebResourceRequestedHandler *handler =
+    (LepusaWindowsWebResourceRequestedHandler *)self;
+  return (ULONG)InterlockedIncrement(&handler->ref_count);
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_web_resource_release(
+  ICoreWebView2WebResourceRequestedEventHandler *self
+) {
+  LepusaWindowsWebResourceRequestedHandler *handler =
+    (LepusaWindowsWebResourceRequestedHandler *)self;
+  return (ULONG)InterlockedDecrement(&handler->ref_count);
+}
+
 static void lepusa_windows_apply_open_windows_from_handoff_packet(
   LepusaWindowsWebView2Context *context,
   moonbit_bytes_t packet
@@ -1509,6 +1711,500 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
   return S_OK;
 }
 
+static wchar_t *lepusa_windows_wstr_from_range(const char *value, int32_t len) {
+  int32_t safe_len = value == NULL || len < 0 ? 0 : len;
+  if (safe_len == 0) {
+    return (wchar_t *)calloc(1, sizeof(wchar_t));
+  }
+  int wide_len = MultiByteToWideChar(
+    CP_UTF8,
+    0,
+    value,
+    safe_len,
+    NULL,
+    0
+  );
+  if (wide_len <= 0) {
+    return NULL;
+  }
+  wchar_t *out = (wchar_t *)calloc((size_t)wide_len + 1, sizeof(wchar_t));
+  if (out == NULL) {
+    return NULL;
+  }
+  if (MultiByteToWideChar(CP_UTF8, 0, value, safe_len, out, wide_len) != wide_len) {
+    free(out);
+    return NULL;
+  }
+  out[wide_len] = L'\0';
+  return out;
+}
+
+static wchar_t *lepusa_windows_asset_filter_from_protocol(
+  moonbit_bytes_t asset_protocol
+) {
+  if (asset_protocol == NULL || Moonbit_array_length(asset_protocol) <= 0) {
+    return NULL;
+  }
+  char *protocol = lepusa_windows_cstr_from_bytes(asset_protocol);
+  if (protocol == NULL || protocol[0] == '\0') {
+    free(protocol);
+    return NULL;
+  }
+  const char *template_text = "https://%s.localhost/*";
+  int needed = snprintf(NULL, 0, template_text, protocol);
+  if (needed < 0) {
+    free(protocol);
+    return NULL;
+  }
+  char *filter = (char *)malloc((size_t)needed + 1);
+  if (filter == NULL) {
+    free(protocol);
+    return NULL;
+  }
+  snprintf(filter, (size_t)needed + 1, template_text, protocol);
+  wchar_t *out = lepusa_windows_wstr_from_range(filter, needed);
+  free(filter);
+  free(protocol);
+  return out;
+}
+
+static wchar_t *lepusa_windows_webview_url_from_asset_url(
+  moonbit_bytes_t url,
+  moonbit_bytes_t asset_protocol
+) {
+  if (url == NULL) {
+    return NULL;
+  }
+  char *url_text = lepusa_windows_cstr_from_bytes(url);
+  char *protocol = lepusa_windows_cstr_from_bytes(asset_protocol);
+  if (url_text == NULL || protocol == NULL || protocol[0] == '\0') {
+    wchar_t *out = lepusa_windows_wstr_from_bytes(url);
+    free(url_text);
+    free(protocol);
+    return out;
+  }
+  int32_t protocol_len = Moonbit_array_length(asset_protocol);
+  const char *scheme_suffix = "://";
+  size_t scheme_len = (size_t)protocol_len + strlen(scheme_suffix);
+  size_t url_len = strlen(url_text);
+  if (url_len < scheme_len ||
+      strncmp(url_text, protocol, (size_t)protocol_len) != 0 ||
+      strncmp(url_text + protocol_len, scheme_suffix, strlen(scheme_suffix)) != 0) {
+    wchar_t *out = lepusa_windows_wstr_from_bytes(url);
+    free(url_text);
+    free(protocol);
+    return out;
+  }
+  const char *rest = url_text + scheme_len;
+  const char *template_text = rest[0] == '/'
+    ? "https://%s.localhost%s"
+    : "https://%s.localhost/%s";
+  int needed = snprintf(NULL, 0, template_text, protocol, rest);
+  if (needed < 0) {
+    free(url_text);
+    free(protocol);
+    return lepusa_windows_wstr_from_bytes(url);
+  }
+  char *webview_url = (char *)malloc((size_t)needed + 1);
+  if (webview_url == NULL) {
+    free(url_text);
+    free(protocol);
+    return NULL;
+  }
+  snprintf(webview_url, (size_t)needed + 1, template_text, protocol, rest);
+  wchar_t *out = lepusa_windows_wstr_from_range(webview_url, needed);
+  free(webview_url);
+  free(url_text);
+  free(protocol);
+  return out;
+}
+
+static moonbit_bytes_t lepusa_windows_resolver_url_from_webview_url(
+  moonbit_bytes_t url,
+  const char *protocol
+) {
+  if (url == NULL || protocol == NULL || protocol[0] == '\0') {
+    return url;
+  }
+  char *url_text = lepusa_windows_cstr_from_bytes(url);
+  if (url_text == NULL) {
+    return url;
+  }
+  const char *prefixes[2] = { "https://", "http://" };
+  const char *rest = NULL;
+  size_t url_len = strlen(url_text);
+  for (int i = 0; i < 2 && rest == NULL; i++) {
+    size_t prefix_len = strlen(prefixes[i]);
+    size_t protocol_len = strlen(protocol);
+    size_t domain_end = prefix_len + protocol_len + 10;
+    if (url_len >= domain_end &&
+        strncmp(url_text, prefixes[i], prefix_len) == 0 &&
+        strncmp(url_text + prefix_len, protocol, protocol_len) == 0 &&
+        strncmp(
+          url_text + prefix_len + protocol_len,
+          ".localhost",
+          10
+        ) == 0 &&
+        (url_text[domain_end] == '\0' || url_text[domain_end] == '/')) {
+      const char *path = url_text + domain_end;
+      rest = path[0] == '/' ? path + 1 : path;
+    }
+  }
+  if (rest == NULL) {
+    free(url_text);
+    return url;
+  }
+  size_t protocol_len = strlen(protocol);
+  size_t rest_len = strlen(rest);
+  size_t out_len = protocol_len + 3 + rest_len;
+  moonbit_bytes_t out = moonbit_make_bytes((int32_t)out_len, 0);
+  memcpy(out, protocol, protocol_len);
+  memcpy(out + protocol_len, "://", 3);
+  if (rest_len > 0) {
+    memcpy(out + protocol_len + 3, rest, rest_len);
+  }
+  free(url_text);
+  return out;
+}
+
+static char *lepusa_windows_next_packet_line(
+  char **cursor
+) {
+  if (cursor == NULL || *cursor == NULL) {
+    return NULL;
+  }
+  char *start = *cursor;
+  char *newline = strchr(start, '\n');
+  if (newline == NULL) {
+    *cursor = NULL;
+    return start;
+  }
+  *newline = '\0';
+  *cursor = newline + 1;
+  return start;
+}
+
+static char *lepusa_windows_response_headers(const char *mime_type) {
+  const char *safe_mime =
+    mime_type == NULL || mime_type[0] == '\0'
+      ? "application/octet-stream"
+      : mime_type;
+  const char *template_text =
+    "Content-Type: %s\r\nAccess-Control-Allow-Origin: *";
+  int needed = snprintf(NULL, 0, template_text, safe_mime);
+  if (needed < 0) {
+    return NULL;
+  }
+  char *headers = (char *)malloc((size_t)needed + 1);
+  if (headers == NULL) {
+    return NULL;
+  }
+  snprintf(headers, (size_t)needed + 1, template_text, safe_mime);
+  return headers;
+}
+
+static int lepusa_windows_read_file_body(
+  const char *path,
+  char **data_out,
+  int64_t *len_out
+) {
+  if (path == NULL || data_out == NULL || len_out == NULL) {
+    return 0;
+  }
+  wchar_t *wide_path = lepusa_windows_wstr_from_range(
+    path,
+    (int32_t)strlen(path)
+  );
+  if (wide_path == NULL) {
+    return 0;
+  }
+  HANDLE file = CreateFileW(
+    wide_path,
+    GENERIC_READ,
+    FILE_SHARE_READ,
+    NULL,
+    OPEN_EXISTING,
+    FILE_ATTRIBUTE_NORMAL,
+    NULL
+  );
+  free(wide_path);
+  if (file == INVALID_HANDLE_VALUE) {
+    return 0;
+  }
+  LARGE_INTEGER size;
+  if (!GetFileSizeEx(file, &size) || size.QuadPart < 0 || size.QuadPart > INT32_MAX) {
+    CloseHandle(file);
+    return 0;
+  }
+  char *data = (char *)malloc((size_t)size.QuadPart + 1);
+  if (data == NULL) {
+    CloseHandle(file);
+    return 0;
+  }
+  DWORD read_total = 0;
+  BOOL ok = ReadFile(file, data, (DWORD)size.QuadPart, &read_total, NULL);
+  CloseHandle(file);
+  if (!ok || read_total != (DWORD)size.QuadPart) {
+    free(data);
+    return 0;
+  }
+  data[size.QuadPart] = '\0';
+  *data_out = data;
+  *len_out = (int64_t)size.QuadPart;
+  return 1;
+}
+
+static HRESULT lepusa_windows_create_resource_response(
+  LepusaWindowsWebView2Context *context,
+  const char *mime_type,
+  const char *body,
+  int64_t body_len,
+  int status,
+  const wchar_t *reason,
+  ICoreWebView2WebResourceResponse **response_out
+) {
+  if (context == NULL ||
+      context->environment == NULL ||
+      context->create_stream_on_hglobal == NULL ||
+      response_out == NULL ||
+      body_len < 0 ||
+      body_len > INT32_MAX) {
+    return E_INVALIDARG;
+  }
+  HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, (SIZE_T)(body_len > 0 ? body_len : 1));
+  if (memory == NULL) {
+    return E_OUTOFMEMORY;
+  }
+  if (body_len > 0) {
+    void *locked = GlobalLock(memory);
+    if (locked == NULL) {
+      GlobalFree(memory);
+      return E_OUTOFMEMORY;
+    }
+    memcpy(locked, body, (size_t)body_len);
+    GlobalUnlock(memory);
+  }
+  IStream *stream = NULL;
+  HRESULT stream_result = context->create_stream_on_hglobal(
+    memory,
+    TRUE,
+    &stream
+  );
+  if (FAILED(stream_result) || stream == NULL) {
+    GlobalFree(memory);
+    return stream_result;
+  }
+  char *headers = lepusa_windows_response_headers(mime_type);
+  wchar_t *wide_headers = headers == NULL
+    ? NULL
+    : lepusa_windows_wstr_from_range(headers, (int32_t)strlen(headers));
+  free(headers);
+  if (wide_headers == NULL) {
+    stream->lpVtbl->Release(stream);
+    return E_OUTOFMEMORY;
+  }
+  HRESULT response_result = context->environment->lpVtbl->CreateWebResourceResponse(
+    context->environment,
+    stream,
+    status,
+    reason,
+    wide_headers,
+    response_out
+  );
+  free(wide_headers);
+  stream->lpVtbl->Release(stream);
+  return response_result;
+}
+
+static void lepusa_windows_set_resource_text_response(
+  LepusaWindowsWebView2Context *context,
+  ICoreWebView2WebResourceRequestedEventArgs *args,
+  int status,
+  const wchar_t *reason,
+  const char *message
+) {
+  if (context == NULL || args == NULL || message == NULL) {
+    return;
+  }
+  ICoreWebView2WebResourceResponse *response = NULL;
+  HRESULT result = lepusa_windows_create_resource_response(
+    context,
+    "text/plain",
+    message,
+    (int64_t)strlen(message),
+    status,
+    reason,
+    &response
+  );
+  if (SUCCEEDED(result) && response != NULL) {
+    args->lpVtbl->put_Response(args, response);
+    response->lpVtbl->Release(response);
+  }
+}
+
+static void lepusa_windows_set_resource_packet_response(
+  LepusaWindowsWebView2Context *context,
+  ICoreWebView2WebResourceRequestedEventArgs *args,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || args == NULL || packet == NULL) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      404,
+      L"Not Found",
+      "asset resolution failed"
+    );
+    return;
+  }
+  char *packet_text = lepusa_windows_cstr_from_bytes(packet);
+  char *cursor = packet_text;
+  char *status = lepusa_windows_next_packet_line(&cursor);
+  if (packet_text == NULL || status == NULL || strcmp(status, "ok") != 0) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      404,
+      L"Not Found",
+      cursor == NULL ? "asset resolution failed" : cursor
+    );
+    free(packet_text);
+    return;
+  }
+  char *kind = lepusa_windows_next_packet_line(&cursor);
+  char *mime_type = lepusa_windows_next_packet_line(&cursor);
+  char *body = cursor == NULL ? "" : cursor;
+  if (kind == NULL || mime_type == NULL) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      500,
+      L"Malformed Asset Packet",
+      "malformed asset packet"
+    );
+    free(packet_text);
+    return;
+  }
+  ICoreWebView2WebResourceResponse *response = NULL;
+  if (strcmp(kind, "virtual") == 0) {
+    HRESULT result = lepusa_windows_create_resource_response(
+      context,
+      mime_type,
+      body,
+      (int64_t)strlen(body),
+      200,
+      L"OK",
+      &response
+    );
+    if (SUCCEEDED(result) && response != NULL) {
+      args->lpVtbl->put_Response(args, response);
+      response->lpVtbl->Release(response);
+    }
+  } else if (strcmp(kind, "file") == 0) {
+    char *data = NULL;
+    int64_t data_len = 0;
+    if (lepusa_windows_read_file_body(body, &data, &data_len)) {
+      HRESULT result = lepusa_windows_create_resource_response(
+        context,
+        mime_type,
+        data,
+        data_len,
+        200,
+        L"OK",
+        &response
+      );
+      if (SUCCEEDED(result) && response != NULL) {
+        args->lpVtbl->put_Response(args, response);
+        response->lpVtbl->Release(response);
+      }
+      free(data);
+    } else {
+      lepusa_windows_set_resource_text_response(
+        context,
+        args,
+        404,
+        L"Not Found",
+        "asset file could not be read"
+      );
+    }
+  } else {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      500,
+      L"Unsupported Asset Packet",
+      "unsupported asset packet kind"
+    );
+  }
+  free(packet_text);
+}
+
+static HRESULT STDMETHODCALLTYPE lepusa_windows_web_resource_invoke(
+  ICoreWebView2WebResourceRequestedEventHandler *self,
+  ICoreWebView2 *sender,
+  ICoreWebView2WebResourceRequestedEventArgs *args
+) {
+  (void)sender;
+  LepusaWindowsWebResourceRequestedHandler *handler =
+    (LepusaWindowsWebResourceRequestedHandler *)self;
+  LepusaWindowsWebView2Context *context = handler->context;
+  if (context == NULL ||
+      args == NULL ||
+      context->call_resolve_asset == NULL ||
+      context->resolve_asset == NULL) {
+    return S_OK;
+  }
+  ICoreWebView2WebResourceRequest *request = NULL;
+  HRESULT request_result = args->lpVtbl->get_Request(args, &request);
+  if (FAILED(request_result) || request == NULL) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      404,
+      L"Not Found",
+      "asset request is unavailable"
+    );
+    return S_OK;
+  }
+  LPWSTR uri = NULL;
+  HRESULT uri_result = request->lpVtbl->get_Uri(request, &uri);
+  request->lpVtbl->Release(request);
+  if (FAILED(uri_result) || uri == NULL) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      404,
+      L"Not Found",
+      "asset request url is unavailable"
+    );
+    return S_OK;
+  }
+  moonbit_bytes_t webview_url = lepusa_windows_bytes_from_wstr(uri);
+  if (context->co_task_mem_free != NULL) {
+    context->co_task_mem_free(uri);
+  }
+  if (webview_url == NULL) {
+    lepusa_windows_set_resource_text_response(
+      context,
+      args,
+      404,
+      L"Not Found",
+      "asset request url could not be decoded"
+    );
+    return S_OK;
+  }
+  moonbit_bytes_t url = lepusa_windows_resolver_url_from_webview_url(
+    webview_url,
+    handler->slot == NULL ? NULL : handler->slot->asset_protocol
+  );
+  moonbit_bytes_t packet = context->call_resolve_asset(
+    context->resolve_asset,
+    url
+  );
+  lepusa_windows_set_resource_packet_response(context, args, packet);
+  return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE lepusa_windows_controller_invoke(
   ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *self,
   HRESULT error_code,
@@ -1554,6 +2250,22 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_controller_invoke(
       &slot->web_message_token
     );
   }
+  if (context->call_resolve_asset != NULL &&
+      context->resolve_asset != NULL &&
+      slot->asset_filter != NULL &&
+      slot->asset_filter[0] != L'\0') {
+    slot->webview->lpVtbl->AddWebResourceRequestedFilter(
+      slot->webview,
+      slot->asset_filter,
+      0
+    );
+    slot->webview->lpVtbl->add_WebResourceRequested(
+      slot->webview,
+      (ICoreWebView2WebResourceRequestedEventHandler *)
+        &slot->web_resource_handler,
+      &slot->web_resource_token
+    );
+  }
   if (slot->url != NULL && slot->url[0] != L'\0') {
     HRESULT navigate_result = slot->webview->lpVtbl->Navigate(
       slot->webview,
@@ -1583,6 +2295,14 @@ static const ICoreWebView2WebMessageReceivedEventHandlerVtbl
     lepusa_windows_web_message_invoke
   };
 
+static const ICoreWebView2WebResourceRequestedEventHandlerVtbl
+  lepusa_windows_web_resource_handler_vtbl = {
+    lepusa_windows_web_resource_query_interface,
+    lepusa_windows_web_resource_add_ref,
+    lepusa_windows_web_resource_release,
+    lepusa_windows_web_resource_invoke
+  };
+
 static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
   LepusaWindowsWebView2Context *context,
   const char *label,
@@ -1590,6 +2310,7 @@ static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
   moonbit_bytes_t title,
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
+  moonbit_bytes_t asset_protocol,
   int width,
   int height,
   int resizable
@@ -1613,10 +2334,17 @@ static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
     label_len
   );
   slot->title = lepusa_windows_wstr_from_bytes(title);
-  slot->url = lepusa_windows_wstr_from_bytes(url);
+  lepusa_windows_copy_label_range(
+    slot->asset_protocol,
+    sizeof(slot->asset_protocol),
+    asset_protocol == NULL ? NULL : (const char *)asset_protocol,
+    asset_protocol == NULL ? 0 : Moonbit_array_length(asset_protocol)
+  );
+  slot->url = lepusa_windows_webview_url_from_asset_url(url, asset_protocol);
   slot->initialization_script = lepusa_windows_wstr_from_bytes(
     initialization_script
   );
+  slot->asset_filter = lepusa_windows_asset_filter_from_protocol(asset_protocol);
   slot->width = width > 0 ? width : 960;
   slot->height = height > 0 ? height : 640;
   slot->resizable = resizable != 0;
@@ -1629,12 +2357,17 @@ static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
   slot->web_message_handler.ref_count = 1;
   slot->web_message_handler.context = context;
   slot->web_message_handler.slot = slot;
+  slot->web_resource_handler.lpVtbl = &lepusa_windows_web_resource_handler_vtbl;
+  slot->web_resource_handler.ref_count = 1;
+  slot->web_resource_handler.context = context;
+  slot->web_resource_handler.slot = slot;
   if (slot->title == NULL ||
       slot->url == NULL ||
       slot->initialization_script == NULL) {
     free(slot->title);
     free(slot->url);
     free(slot->initialization_script);
+    free(slot->asset_filter);
     memset(slot, 0, sizeof(*slot));
     return NULL;
   }
@@ -1662,6 +2395,7 @@ static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
     free(slot->title);
     free(slot->url);
     free(slot->initialization_script);
+    free(slot->asset_filter);
     memset(slot, 0, sizeof(*slot));
     return NULL;
   }
@@ -1839,6 +2573,10 @@ static void lepusa_windows_open_window_from_record(
   );
   moonbit_bytes_t initialization_script =
     lepusa_windows_initialization_from_record(record);
+  moonbit_bytes_t asset_protocol = lepusa_windows_bytes_from_range(
+    record->asset_protocol,
+    record->asset_protocol_len
+  );
   (void)lepusa_windows_create_window_slot(
     context,
     record->window,
@@ -1846,6 +2584,7 @@ static void lepusa_windows_open_window_from_record(
     title,
     url,
     initialization_script,
+    asset_protocol,
     width,
     height,
     resizable
@@ -1930,6 +2669,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_environment_invoke(
     context->title,
     context->url,
     context->initialization_script,
+    context->asset_protocol,
     context->width,
     context->height,
     context->resizable
@@ -2007,12 +2747,15 @@ static int32_t lepusa_windows_run_webview2_loop(
   moonbit_bytes_t title,
   moonbit_bytes_t url,
   moonbit_bytes_t initialization_script,
+  moonbit_bytes_t asset_protocol,
   moonbit_bytes_t initial_open_packet,
   int32_t width,
   int32_t height,
   int32_t resizable,
   LepusaWindowsBytesCallback call_dispatch,
-  void *dispatch
+  void *dispatch,
+  LepusaWindowsBytesCallback call_resolve_asset,
+  void *resolve_asset
 ) {
   HMODULE loader = LoadLibraryA("WebView2Loader.dll");
   if (loader == NULL) {
@@ -2038,9 +2781,15 @@ static int32_t lepusa_windows_run_webview2_loop(
     (LepusaWindowsCoUninitialize)GetProcAddress(ole32, "CoUninitialize");
   LepusaWindowsCoTaskMemFree co_task_mem_free =
     (LepusaWindowsCoTaskMemFree)GetProcAddress(ole32, "CoTaskMemFree");
+  LepusaWindowsCreateStreamOnHGlobal create_stream_on_hglobal =
+    (LepusaWindowsCreateStreamOnHGlobal)GetProcAddress(
+      ole32,
+      "CreateStreamOnHGlobal"
+    );
   if (co_initialize == NULL ||
       co_uninitialize == NULL ||
-      co_task_mem_free == NULL) {
+      co_task_mem_free == NULL ||
+      create_stream_on_hglobal == NULL) {
     FreeLibrary(ole32);
     FreeLibrary(loader);
     return 2;
@@ -2067,10 +2816,14 @@ static int32_t lepusa_windows_run_webview2_loop(
   context.title = title;
   context.url = url;
   context.initialization_script = initialization_script;
+  context.asset_protocol = asset_protocol;
   context.initial_open_packet = initial_open_packet;
   context.call_dispatch = call_dispatch;
   context.dispatch = dispatch;
+  context.call_resolve_asset = call_resolve_asset;
+  context.resolve_asset = resolve_asset;
   context.co_task_mem_free = co_task_mem_free;
+  context.create_stream_on_hglobal = create_stream_on_hglobal;
   context.width = width > 0 ? width : 960;
   context.height = height > 0 ? height : 640;
   context.resizable = resizable != 0;
@@ -2106,6 +2859,7 @@ static int32_t lepusa_windows_run_webview2_loop(
     free(context.windows[i].title);
     free(context.windows[i].url);
     free(context.windows[i].initialization_script);
+    free(context.windows[i].asset_filter);
   }
   if (context.environment != NULL) {
     context.environment->lpVtbl->Release(context.environment);
@@ -2160,22 +2914,21 @@ int32_t lepusa_windows_run_webview(
   void *resolve_asset
 ) {
 #if defined(_WIN32)
-  (void)label;
   (void)native_hook;
-  (void)asset_protocol;
-  (void)call_resolve_asset;
-  (void)resolve_asset;
   return lepusa_windows_run_webview2_loop(
     label,
     title,
     url,
     initialization_script,
+    asset_protocol,
     initial_open_packet,
     width,
     height,
     resizable,
     call_dispatch,
-    dispatch
+    dispatch,
+    call_resolve_asset,
+    resolve_asset
   );
 #else
   (void)label;

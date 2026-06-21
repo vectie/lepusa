@@ -101,8 +101,10 @@
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
   a Win32/WebView2 COM creation loop for source and packaged manifests when
-  `WebView2Loader.dll` is available, while bridge evaluation and custom asset
-  serving remain separately gated; source and bundled
+  `WebView2Loader.dll` is available, including sync bridge response evaluation,
+  dynamic open/close window consumption, and WebView2 custom asset protocol
+  serving through `https://<protocol>.localhost/...` WebView2 requests mapped
+  back to the stable MoonBit `lepusa://...` resolver contract; source and bundled
   launch-session JSON can now advertise async-capable bridge scheduling for
   native loops that wire deferred completion, including the reusable async
   bridge executor descriptor over
@@ -158,9 +160,9 @@
   bridge handoff packets now use `lepusa-ops-v3` records that carry the
   dynamic `open-window` URL, title, size, resizable flag, bridge source, native
   hook, and asset protocol needed by native WebView creation handlers; macOS
-  and Linux now consume those `open-window` records by creating labeled
-  WKWebView/WebKitGTK windows with target-window response evaluation and
-  URL-routed asset resolution; source and bundled macOS/Linux launches now
+  Linux, and Windows now consume those `open-window` records by creating labeled
+  WKWebView/WebKitGTK/WebView2 windows with target-window response evaluation and
+  URL-routed asset resolution; source and bundled macOS/Linux/Windows launches now
   feed additional initial WebViews through the same native open-window
   consumer before entering the platform event loop, so static multi-window
   plans and later dynamic windows share one creation boundary;
@@ -169,8 +171,7 @@
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
-  async bridge drain/evaluate scheduling in the C/WebView loops and Windows
-  custom asset serving remain.
+  async bridge drain/evaluate scheduling in the C/WebView loops remains.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
@@ -222,7 +223,7 @@
     and external tooling.
   - `lepusa-runtime --manifest`: summarizes bundled runtime data for diagnostics.
   - `lepusa-runtime run`: prepares target-aware bundled runtime launch plans and reports launch readiness without opening windows.
-  - `lepusa-runtime launch`: opens the first bundled macOS WKWebView from `lepusa/runtime.json`, opens bundled Linux WebKitGTK windows when GTK3/WebKit2GTK are available, and sends Windows bundled manifests through the package-owned WebView2 launch ABI until its COM loop lands.
+  - `lepusa-runtime launch`: opens bundled macOS WKWebViews, Linux WebKitGTK windows when GTK3/WebKit2GTK are available, and Windows WebView2 windows when `WebView2Loader.dll` and the WebView2 Runtime are available.
   - `lepusa-runtime bootstrap`: emits target-aware bundled bootstrap JSON for native loops.
   - `lepusa-runtime asset`: resolves bundled runtime assets for protocol handlers.
   - `lepusa-runtime lifecycle`: selects bundled lifecycle services and actions.
