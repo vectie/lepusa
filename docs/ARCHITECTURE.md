@@ -645,11 +645,12 @@ and native frame work stay visible as separate steps. Source `RuntimeHost`
 instances retain the updated runtime session after those bridge operations, so
 later asset-protocol requests can resolve dynamic window virtual files instead
 of falling back to the original static plan.
-The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
-set directly from the bridge handoff packet: title, size, position, fullscreen,
-show, hide, focus, minimize, maximize, unmaximize, and close. They also consume
-typed `close-window` records by closing the live native frame once, even when
-the same handoff also carries the plugin's `window-control close` response.
+The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
+sync window action set directly from the bridge handoff packet: title, size,
+position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and
+close. They also consume typed `close-window` records by closing the live native
+frame once, even when the same handoff also carries the plugin's
+`window-control close` response.
 macOS, Linux, and Windows consume `navigate-window` operations from that packet
 by loading the target URL in the live WebView after MoonBit dispatch succeeds.
 The macOS and Linux loops consume dynamic `open-window` records by creating
@@ -671,8 +672,9 @@ minimal Win32/WebView2 COM creation loop for native windows once
 discoverable WebView2 Runtime are available, and wires WebView2 messages
 through the MoonBit handoff callback into `ExecuteScript` for sync bridge
 responses and packetized follow-up evaluation.
-Windows custom asset serving and async bridge drain/wakeup support remain
-separately reported capabilities.
+Windows custom asset serving, sync response evaluation, dynamic windows, window
+controls, and async bridge drain/wakeup support are reported through the same
+native capability and operation boundaries as the other platform packages.
 Each platform package exposes a shared `runtime.NativeBackendPreflight`, so
 diagnostics separate host dependency
 availability, WebView creation-loop support, sync bridge response evaluation,

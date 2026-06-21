@@ -145,11 +145,11 @@
   the target window, issue `lepusa-drain-v1` requests through the existing
   handoff callback, and evaluate returned `lepusa-ops-v3` drain packets;
   approved `window.*` dispatches now lower official plugin response payloads
-  into `window-control` executable operations, and macOS/Linux WebView loops now
-  consume the sync window control
-  set for title, size, position, fullscreen, show/hide/focus,
-  minimize/maximize/unmaximize, and close, plus `navigate-window` operations
-  from approved bridge handoff packets;
+  into `window-control` executable operations, and macOS, Linux, and Windows
+  WebView loops now consume the sync window control set for title, size,
+  position, fullscreen, show/hide/focus, minimize/maximize/unmaximize, and
+  close, plus `navigate-window` operations from approved bridge handoff
+  packets;
   runtime sessions now own a dynamic window lifecycle contract:
   `open_window` resolves a new `WindowConfig` into session assets, services,
   bridge/webview boot data, and an `open-window` operation, while

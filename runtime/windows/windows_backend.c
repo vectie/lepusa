@@ -1378,6 +1378,9 @@ struct LepusaWindowsWindowSlot {
   int width;
   int height;
   int resizable;
+  int fullscreen;
+  DWORD restore_style;
+  RECT restore_rect;
   LepusaWindowsEventRegistrationToken web_message_token;
   LepusaWindowsEventRegistrationToken web_resource_token;
   LepusaWindowsControllerCompletedHandler controller_handler;
@@ -1702,6 +1705,11 @@ static void lepusa_windows_apply_navigation_from_handoff_packet(
   moonbit_bytes_t packet
 );
 
+static void lepusa_windows_apply_window_controls_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+);
+
 static void lepusa_windows_process_bridge_drain_requests(
   LepusaWindowsWebView2Context *context
 );
@@ -1769,6 +1777,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
   lepusa_windows_apply_bridge_drains_from_handoff_packet(context, packet);
   lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
+  lepusa_windows_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
   lepusa_windows_process_bridge_drain_requests(context);
   return S_OK;
@@ -2874,6 +2883,210 @@ static void lepusa_windows_apply_close_windows_from_handoff_packet(
       if (slot != NULL && slot->hwnd != NULL) {
         DestroyWindow(slot->hwnd);
       }
+    }
+  }
+}
+
+static void lepusa_windows_set_window_content_size(
+  LepusaWindowsWindowSlot *slot,
+  int width,
+  int height
+) {
+  if (slot == NULL || slot->hwnd == NULL || width <= 0 || height <= 0) {
+    return;
+  }
+  DWORD style = (DWORD)GetWindowLongPtrW(slot->hwnd, GWL_STYLE);
+  RECT rect = { 0, 0, width, height };
+  AdjustWindowRect(&rect, style, FALSE);
+  SetWindowPos(
+    slot->hwnd,
+    NULL,
+    0,
+    0,
+    rect.right - rect.left,
+    rect.bottom - rect.top,
+    SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE
+  );
+}
+
+static void lepusa_windows_set_window_fullscreen(
+  LepusaWindowsWindowSlot *slot,
+  int fullscreen
+) {
+  if (slot == NULL || slot->hwnd == NULL) {
+    return;
+  }
+  if (fullscreen && !slot->fullscreen) {
+    slot->restore_style = (DWORD)GetWindowLongPtrW(slot->hwnd, GWL_STYLE);
+    GetWindowRect(slot->hwnd, &slot->restore_rect);
+    HMONITOR monitor = MonitorFromWindow(slot->hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO info;
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    if (!GetMonitorInfoW(monitor, &info)) {
+      return;
+    }
+    DWORD fullscreen_style = slot->restore_style &
+      ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+    SetWindowLongPtrW(slot->hwnd, GWL_STYLE, (LONG_PTR)fullscreen_style);
+    SetWindowPos(
+      slot->hwnd,
+      HWND_TOP,
+      info.rcMonitor.left,
+      info.rcMonitor.top,
+      info.rcMonitor.right - info.rcMonitor.left,
+      info.rcMonitor.bottom - info.rcMonitor.top,
+      SWP_FRAMECHANGED | SWP_SHOWWINDOW
+    );
+    slot->fullscreen = 1;
+  } else if (!fullscreen && slot->fullscreen) {
+    SetWindowLongPtrW(slot->hwnd, GWL_STYLE, (LONG_PTR)slot->restore_style);
+    SetWindowPos(
+      slot->hwnd,
+      NULL,
+      slot->restore_rect.left,
+      slot->restore_rect.top,
+      slot->restore_rect.right - slot->restore_rect.left,
+      slot->restore_rect.bottom - slot->restore_rect.top,
+      SWP_FRAMECHANGED | SWP_NOZORDER | SWP_SHOWWINDOW
+    );
+    slot->fullscreen = 0;
+  }
+}
+
+static void lepusa_windows_apply_window_control(
+  LepusaWindowsWindowSlot *slot,
+  LepusaWindowsNativeOperationRecord *record
+) {
+  if (slot == NULL || record == NULL || slot->hwnd == NULL) {
+    return;
+  }
+  if (lepusa_windows_range_equals(record->action, record->action_len, "setTitle")) {
+    wchar_t *title = lepusa_windows_wstr_from_range(
+      record->title,
+      record->title_len
+    );
+    if (title != NULL) {
+      SetWindowTextW(slot->hwnd, title);
+      free(title);
+    }
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "setSize"
+             )) {
+    int width = 0;
+    int height = 0;
+    if (lepusa_windows_parse_record_int(record->width, record->width_len, &width) &&
+        lepusa_windows_parse_record_int(
+          record->height,
+          record->height_len,
+          &height
+        )) {
+      lepusa_windows_set_window_content_size(slot, width, height);
+    }
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "setPosition"
+             )) {
+    int x = 0;
+    int y = 0;
+    if (lepusa_windows_parse_record_int(record->x, record->x_len, &x) &&
+        lepusa_windows_parse_record_int(record->y, record->y_len, &y)) {
+      SetWindowPos(
+        slot->hwnd,
+        NULL,
+        x,
+        y,
+        0,
+        0,
+        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
+      );
+    }
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "setFullscreen"
+             )) {
+    int fullscreen = 0;
+    if (lepusa_windows_parse_record_bool(
+          record->fullscreen,
+          record->fullscreen_len,
+          &fullscreen
+        )) {
+      lepusa_windows_set_window_fullscreen(slot, fullscreen);
+    }
+  } else if (lepusa_windows_range_equals(record->action, record->action_len, "show")) {
+    ShowWindow(slot->hwnd, SW_SHOW);
+  } else if (lepusa_windows_range_equals(record->action, record->action_len, "focus")) {
+    ShowWindow(slot->hwnd, SW_SHOW);
+    SetForegroundWindow(slot->hwnd);
+    SetFocus(slot->hwnd);
+  } else if (lepusa_windows_range_equals(record->action, record->action_len, "hide")) {
+    ShowWindow(slot->hwnd, SW_HIDE);
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "minimize"
+             )) {
+    ShowWindow(slot->hwnd, SW_MINIMIZE);
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "maximize"
+             )) {
+    ShowWindow(slot->hwnd, SW_MAXIMIZE);
+  } else if (lepusa_windows_range_equals(
+               record->action,
+               record->action_len,
+               "unmaximize"
+             )) {
+    ShowWindow(slot->hwnd, SW_RESTORE);
+  } else if (lepusa_windows_range_equals(record->action, record->action_len, "close")) {
+    DestroyWindow(slot->hwnd);
+  }
+}
+
+static void lepusa_windows_apply_window_controls_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+) {
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (context == NULL ||
+      packet == NULL ||
+      !lepusa_windows_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  int closed = 0;
+  for (int32_t i = 0; i < count; i++) {
+    LepusaWindowsNativeOperationRecord record;
+    if (!lepusa_windows_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    if (slot == NULL || slot->hwnd == NULL) {
+      continue;
+    }
+    if (lepusa_windows_range_equals(record.kind, record.kind_len, "close-window")) {
+      if (!closed) {
+        DestroyWindow(slot->hwnd);
+        closed = 1;
+      }
+      continue;
+    }
+    if (lepusa_windows_range_equals(
+          record.kind,
+          record.kind_len,
+          "window-control"
+        )) {
+      lepusa_windows_apply_window_control(slot, &record);
     }
   }
 }
