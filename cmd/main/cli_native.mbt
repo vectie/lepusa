@@ -104,6 +104,7 @@ fn render_doctor_host(
               "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
               render_handler_coverage(host) +
               "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+              render_release_readiness(bundle) +
               "[ok] runtime-dependencies: count=\{bundle.runtime_dependencies().length()}\n" +
               render_doctor_native_launch_gate(bundle.target(), host) +
               "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
@@ -134,11 +135,44 @@ fn render_doctor_json(
     "\"ipc\":{\"routes\":\{plan.command_routes().length()}},",
     "\"handlers\":\{render_handler_coverage_json(host)},",
     "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()},\"runtimeDependencies\":[\{bundle.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}]},",
+    "\"releaseReadiness\":\{render_release_readiness_json(bundle)},",
     "\"nativeLaunch\":\{render_doctor_native_launch_json(bundle.target(), host)},",
     "\"signing\":{\"prerequisites\":[\{bundle.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}]},",
     "\"platforms\":[\{render_native_backend_diagnostics_json()}]",
     "}",
   ].join("")
+}
+
+///|
+fn render_release_readiness(bundle : @lepusa.BundlePlan) -> String {
+  match bundle.release_readiness() {
+    Ok(report) => {
+      let status = if report.ready() { "ok" } else { "warn" }
+      let issues = if report.issues().is_empty() {
+        ""
+      } else {
+        " issues=\{report.issues().join("; ")}"
+      }
+      "[\{status}] release-readiness: ready=\{report.ready()} artifacts=\{report.artifacts()} required-runtime-dependencies=\{report.required_runtime_dependencies()}\{issues}\n"
+    }
+    Err(problems) =>
+      "[warn] release-readiness: ready=false issues=\{problems.join("; ")}\n"
+  }
+}
+
+///|
+fn render_release_readiness_json(bundle : @lepusa.BundlePlan) -> String {
+  match bundle.release_readiness() {
+    Ok(report) => report.to_json()
+    Err(problems) =>
+      [
+        "{",
+        "\"target\":\{cli_json_string(bundle.target().name())},",
+        "\"ready\":false,",
+        "\"issues\":[\{problems.map(fn(problem) { cli_json_string(problem) }).join(",")}]",
+        "}",
+      ].join("")
+  }
 }
 
 ///|

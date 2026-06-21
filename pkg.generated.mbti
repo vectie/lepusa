@@ -208,6 +208,7 @@ pub fn BundlePlan::files(Self) -> Result[Array[BundleFile], Array[String]]
 pub fn BundlePlan::icon_path(Self) -> String?
 pub fn BundlePlan::identifier(Self) -> String
 pub fn BundlePlan::registered_routes(Self) -> Array[String]
+pub fn BundlePlan::release_readiness(Self) -> Result[ReleaseReadinessReport, Array[String]]
 pub fn BundlePlan::resources(Self) -> Array[BundleResource]
 pub fn BundlePlan::runtime_dependencies(Self) -> Array[BundleRuntimeDependency]
 pub fn BundlePlan::runtime_dependency_sources(Self) -> Array[BundleRuntimeDependencySource]
@@ -929,6 +930,37 @@ pub fn RegisteredCommand::permission(Self) -> Permission
 pub fn RegisteredCommand::route(Self) -> String
 
 type RegisteredCommandHandler
+
+pub struct ReleaseReadinessReport {
+  target : BundleTarget
+  files : Int
+  resources : Int
+  artifacts : Int
+  runtime_dependencies : Int
+  required_runtime_dependencies : Int
+  signing_configured : Bool
+  signing_prerequisites : Int
+  signing_steps : Int
+  runtime_webviews : Int
+  command_routes : Int
+  registered_routes : Int
+  issues : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn ReleaseReadinessReport::artifacts(Self) -> Int
+pub fn ReleaseReadinessReport::command_routes(Self) -> Int
+pub fn ReleaseReadinessReport::files(Self) -> Int
+pub fn ReleaseReadinessReport::issues(Self) -> Array[String]
+pub fn ReleaseReadinessReport::ready(Self) -> Bool
+pub fn ReleaseReadinessReport::registered_routes(Self) -> Int
+pub fn ReleaseReadinessReport::required_runtime_dependencies(Self) -> Int
+pub fn ReleaseReadinessReport::resources(Self) -> Int
+pub fn ReleaseReadinessReport::runtime_dependencies(Self) -> Int
+pub fn ReleaseReadinessReport::runtime_webviews(Self) -> Int
+pub fn ReleaseReadinessReport::signing_configured(Self) -> Bool
+pub fn ReleaseReadinessReport::signing_prerequisites(Self) -> Int
+pub fn ReleaseReadinessReport::signing_steps(Self) -> Int
+pub fn ReleaseReadinessReport::target(Self) -> BundleTarget
+pub fn ReleaseReadinessReport::to_json(Self) -> String
 
 pub struct ResolvedSource {
   kind : ResolvedSourceKind
