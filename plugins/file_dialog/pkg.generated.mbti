@@ -7,13 +7,21 @@ import {
 }
 
 // Values
+pub fn auto_registry(policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+
 pub fn capability(name? : String) -> @lepusa.Capability
 
 pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
 
+pub fn native_available() -> Bool
+
+pub fn native_registry(policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+
 pub fn plugin() -> @lepusa.Plugin
 
 pub fn register(@lepusa.CommandRegistry, policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
+
+pub fn register_native(@lepusa.CommandRegistry, policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
 
 pub fn registry(policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemScope]) -> @lepusa.CommandRegistry
 

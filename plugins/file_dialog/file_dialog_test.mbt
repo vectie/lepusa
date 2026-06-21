@@ -133,3 +133,14 @@ async test "file dialog registry validates scoped picker contracts" {
     "file dialog openFile path: unsafe file dialog default directory path: ../escape",
   )
 }
+
+///|
+test "file dialog native registry exposes picker handlers" {
+  let registry = native_registry()
+  assert_true(registry.contains("fileDialog.openFile"))
+  assert_true(registry.contains("fileDialog.openFiles"))
+  assert_true(registry.contains("fileDialog.openDirectory"))
+  assert_true(registry.contains("fileDialog.saveFile"))
+  assert_eq(registry.async_routes().length(), 4)
+  ignore(native_available())
+}

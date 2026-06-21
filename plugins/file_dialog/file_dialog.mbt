@@ -11,6 +11,40 @@ pub struct FileDialogPolicy {
 } derive(Debug, Eq)
 
 ///|
+#cfg(target="native")
+extern "c" fn native_available_code() -> Int = "lepusa_file_dialog_available"
+
+///|
+#cfg(target="native")
+#borrow(action, initial_path, suggested_name)
+extern "c" fn native_pick_packet(
+  action : Bytes,
+  initial_path : Bytes,
+  suggested_name : Bytes,
+) -> Bytes = "lepusa_file_dialog_pick"
+
+///|
+#cfg(not(target="native"))
+fn native_available_code() -> Int {
+  0
+}
+
+///|
+#cfg(not(target="native"))
+fn native_pick_packet(
+  _action : Bytes,
+  _initial_path : Bytes,
+  _suggested_name : Bytes,
+) -> Bytes {
+  b"err\nnative file dialog is unavailable"
+}
+
+///|
+pub fn native_available() -> Bool {
+  native_available_code() == 1
+}
+
+///|
 pub fn FileDialogDefaultDirectory::new(
   name~ : String,
   scope_name~ : String,
@@ -165,6 +199,26 @@ pub fn registry(
 }
 
 ///|
+pub fn native_registry(
+  policy? : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes? : Array[@lepusa.FileSystemScope] = [],
+) -> @lepusa.CommandRegistry {
+  register_native(@lepusa.CommandRegistry::new(), policy~, scopes~)
+}
+
+///|
+pub fn auto_registry(
+  policy? : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes? : Array[@lepusa.FileSystemScope] = [],
+) -> @lepusa.CommandRegistry {
+  if native_available() {
+    native_registry(policy~, scopes~)
+  } else {
+    registry(policy~, scopes~)
+  }
+}
+
+///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
   policy? : FileDialogPolicy = FileDialogPolicy::new(),
@@ -218,6 +272,27 @@ pub fn register(
 }
 
 ///|
+pub fn register_native(
+  registry : @lepusa.CommandRegistry,
+  policy? : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes? : Array[@lepusa.FileSystemScope] = [],
+) -> @lepusa.CommandRegistry {
+  registry
+  .register_async_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
+    handle_native_picker(policy, scopes, payload, action="openFile")
+  })
+  .register_async_fn("fileDialog.openFiles", permission=FileDialog, handler=payload => {
+    handle_native_picker(policy, scopes, payload, action="openFiles")
+  })
+  .register_async_fn("fileDialog.openDirectory", permission=FileDialog, handler=payload => {
+    handle_native_picker(policy, scopes, payload, action="openDirectory")
+  })
+  .register_async_fn("fileDialog.saveFile", permission=FileDialog, handler=payload => {
+    handle_native_picker(policy, scopes, payload, action="saveFile")
+  })
+}
+
+///|
 async fn handle_picker(
   policy : FileDialogPolicy,
   scopes : Array[@lepusa.FileSystemScope],
@@ -248,6 +323,73 @@ async fn handle_picker(
         }).stringify(),
       )
     Err(problem) => Err(problem)
+  }
+}
+
+///|
+async fn handle_native_picker(
+  policy : FileDialogPolicy,
+  scopes : Array[@lepusa.FileSystemScope],
+  payload : String,
+  action~ : String,
+) -> Result[String, String] {
+  @async.sleep(0)
+  let request = match
+    decode_request_payload(payload, context="file dialog \{action}") {
+    Ok(request) => request
+    Err(problem) => return Err(problem)
+  }
+  let default_directory = match
+    resolve_default_directory(policy, scopes, request.default_directory) {
+    Ok(default_directory) => default_directory
+    Err(problem) => return Err(problem)
+  }
+  decode_native_pick_packet(
+    native_pick_packet(
+      @utf8.encode(action),
+      @utf8.encode(initial_picker_path(default_directory, request.path)),
+      @utf8.encode(request.suggested_name),
+    ),
+    action~,
+  )
+}
+
+///|
+fn initial_picker_path(default_directory : Json, path : String) -> String {
+  let base = match default_directory {
+    Object(object) => string_field(object, "resolvedPath").unwrap_or("")
+    _ => ""
+  }
+  if base == "" {
+    path
+  } else if path == "" {
+    base
+  } else {
+    join_scope_path(base, path)
+  }
+}
+
+///|
+fn decode_native_pick_packet(
+  packet : Bytes,
+  action~ : String,
+) -> Result[String, String] {
+  let text = @utf8.decode(packet) catch {
+    _ => return Err("native file dialog \{action} returned invalid utf8")
+  }
+  match text.find("\n") {
+    Some(index) => {
+      let status = text[:index]
+      let body = text[index + 1:]
+      if status == "ok" {
+        Ok(body.to_owned())
+      } else if status == "err" {
+        Err(body.to_owned())
+      } else {
+        Err("native file dialog \{action} returned malformed packet")
+      }
+    }
+    None => Err("native file dialog \{action} returned malformed packet")
   }
 }
 

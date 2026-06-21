@@ -387,7 +387,9 @@ Core `FileSystemScope` values carry named roots through `ProjectManifest`,
 `fileDialog.openFile` and `fileDialog.saveFile`, plus scoped default-directory
 policy that points dialogs at declared filesystem scopes without widening core
 filesystem access. Its portable registry validates picker payloads and returns
-delegated open/save contracts for native OS pickers.
+delegated open/save contracts, while `native_registry` opens host pickers
+through macOS `osascript`, Linux `zenity`, or Windows PowerShell/WinForms with
+the same MoonBit-side validation and scope resolution.
 
 `@lepusa/plugins/localhost` defines local service lifecycle routes such as
 `localhost.status`, `localhost.start`, `localhost.stop`, and

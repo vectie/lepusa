@@ -1,5 +1,10 @@
 import {
   "vectie/lepusa",
   "moonbitlang/async",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/json",
 }
+
+options(
+  "native-stub": [ "file_dialog_backend.c" ],
+)

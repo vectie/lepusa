@@ -832,7 +832,8 @@ official filesystem command routes, read/write capability helpers, scoped
 relative path policy, and async handlers for scoped text, bytes, list,
 metadata, delete, exists, and directory creation operations.
 `@lepusa/plugins/file_dialog` declares file picker routes, scoped
-default-directory policy, and delegated picker validation handlers.
+default-directory policy, delegated picker validation handlers, and native
+host picker handlers for macOS, Linux, and Windows.
 `@lepusa/plugins/localhost` declares local service lifecycle and readiness
 routes, plus portable metadata handlers for configured local services.
 `@lepusa/plugins/deep_link` declares app URL scheme registration and dispatch

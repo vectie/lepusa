@@ -194,7 +194,14 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     {
       name: "fileDialog",
       register: fn(registry, context) {
-        @file_dialog.register(registry, scopes=context.filesystem_scopes())
+        if @file_dialog.native_available() {
+          @file_dialog.register_native(
+            registry,
+            scopes=context.filesystem_scopes(),
+          )
+        } else {
+          @file_dialog.register(registry, scopes=context.filesystem_scopes())
+        }
       },
     },
     { name: "log", register: fn(registry, _) { @log.register(registry) } },

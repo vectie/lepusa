@@ -281,8 +281,8 @@ Stabilize the cross-platform core set first:
   exist for macOS, Linux, and Windows
 - fs: scoped permission contract, runtime scope manifest, and async scoped
   text/bytes/list/metadata/delete/exists/create-directory handlers exist
-- fileDialog: initial scoped default-directory contract and delegated picker
-  handlers exist
+- fileDialog: initial scoped default-directory contract, delegated picker
+  handlers, and native macOS/Linux/Windows picker handlers exist
 - shell: initial platform-neutral command contract and delegated process-table
   handlers exist
 - process: initial explicit process permission contract exists

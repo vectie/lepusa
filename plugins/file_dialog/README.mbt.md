@@ -3,8 +3,9 @@
 `@lepusa/plugins/file_dialog` defines Lepusa's official file dialog command
 contract. It declares platform-neutral open/save routes and scoped default
 directories. Its portable registry validates picker payloads against named
-filesystem scopes and returns delegated picker contracts; native runtimes own
-the actual OS picker implementation.
+filesystem scopes and returns delegated picker contracts. Native registries
+open host file pickers through macOS `osascript`, Linux `zenity`, or Windows
+PowerShell/WinForms while MoonBit keeps validation and scope resolution.
 
 ```moonbit nocheck
 ///|
