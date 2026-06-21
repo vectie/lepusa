@@ -93,8 +93,8 @@ plan with the same registered route set.
 `DesktopKit::with_sync_plugins` and `DesktopProject::with_sync_plugins` install
 the official plugin profile whose command declarations and registered handlers
 fit the current sync native WebView loops; async-heavy APIs such as filesystem,
-dialogs, shell, and updaters remain explicit opt-ins until native async bridge
-drain/evaluate support is wired.
+dialogs, shell, and updaters remain explicit opt-ins until native loops can wake
+and drain deferred async bridge completions.
 
 ## Process Model
 
@@ -213,10 +213,12 @@ JavaScript callback script plus executable operations, deferred packets carry
 the target window and queued task count, and error packets carry a diagnostic
 body. V3 operation records include dynamic `open-window` boot metadata: load
 URL, title, size, resizable flag, bridge source, native hook, and asset
-protocol. macOS and Linux WebView handlers parse that packet, evaluate
-immediate scripts in the target WebView, and keep deferred async work explicit
-instead of indistinguishable from an empty callback, while native operations such as
-`window-control` and `navigate-window` have a stable non-JSON packet slot.
+protocol, plus packetized `evaluate-script` payloads. macOS, Linux, and Windows
+WebView handlers parse that packet, evaluate immediate scripts and
+`evaluate-script` records in the target WebView, and keep deferred async work
+explicit instead of indistinguishable from an empty callback, while native
+operations such as `window-control` and `navigate-window` have a stable non-JSON
+packet slot.
 The in-process completion API is `NativeBridgeHandoff::complete_deferred`:
 platform loops capture a deferred handoff from the WebView callback, schedule
 it away from the native message handler, and later receive a
@@ -599,15 +601,17 @@ so platform code does not duplicate callback semantics.
 `@lepusa/runtime/bundled` exposes the matching `BundledRuntime` bridge
 transport for packaged `lepusa/runtime.json` launches, preserving official
 plugin state across repeated bridge calls and the same dispatch task contract
-for packaged manifests. Wiring that dispatch task from the native message
-handler onto each backend event loop is the remaining native integration step
-for async commands. `MacOSOpenWindow` reports the shared
+for packaged manifests. Native handoff packets can now carry `evaluate-script`
+operations and macOS, Linux, and Windows loops evaluate those records in the
+target WebView; wiring the deferred dispatch task wakeup from MoonBit async work
+onto each backend event loop is the remaining native integration step for async
+commands. `MacOSOpenWindow` reports the shared
 `RunUnsupported` status when the plan contains async command routes, so the
 current sync Objective-C callback cannot accidentally launch a partially working
 async bridge.
 The platform packages expose `NativeLaunchCapability` so WebView creation, sync
 bridge response evaluation, maximum live WebView count, and async bridge
-drain/evaluate support are declared in one place and consumed by `doctor`,
+drain/wakeup support are declared in one place and consumed by `doctor`,
 `verify --strict`, launch-session readiness rendering, and open-window launch
 paths. Current macOS, Linux, and Windows native loops advertise one live
 WebView, so multi-window plans still prepare and render in dry-run/readiness
@@ -647,8 +651,11 @@ Linux loops consume dynamic `open-window` records by creating labeled
 WKWebView/WebKitGTK windows with the carried bridge source, native hook, asset
 protocol, URL, title, size, and resizable flag. Windows consumes the same
 `open-window` and `close-window` records by creating or destroying labeled
-Win32/WebView2 windows from the shared `lepusa-ops-v3` packet format. Source,
-bundled, and Windows runners pass URL-routed asset resolver callbacks into
+Win32/WebView2 windows from the shared `lepusa-ops-v3` packet format. All three
+native loops consume packetized `evaluate-script` records by evaluating the
+carried script in the addressed WebView, giving deferred drain packets the same
+execution surface as immediate sync responses. Source, bundled, and Windows
+runners pass URL-routed asset resolver callbacks into
 native loops, so dynamic WebViews can resolve assets for their own window
 labels once the target backend has protocol serving wired. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
@@ -656,8 +663,9 @@ merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows now owns a
 minimal Win32/WebView2 COM creation loop for dependency-backed native windows
 and wires WebView2 messages through the MoonBit handoff callback into
-`ExecuteScript` for sync bridge responses. Windows custom asset serving and
-async bridge drain/evaluate support remain separately reported capabilities.
+`ExecuteScript` for sync bridge responses and packetized follow-up evaluation.
+Windows custom asset serving and async bridge drain/wakeup support remain
+separately reported capabilities.
 Each platform package exposes a shared `runtime.NativeBackendPreflight`, so
 diagnostics separate host dependency
 availability, WebView creation-loop support, sync bridge response evaluation,

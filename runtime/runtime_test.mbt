@@ -3101,6 +3101,24 @@ async test "native runtime owns bridge message transport" {
           assert_true(callback_json.contains("\"windowLabel\":\"main\""))
           assert_true(callback_json.contains("\"route\":\"core.invoke\""))
           assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          let packet_script_adapter = runtime.bridge_loop_adapter()
+          let packet_script_callbacks = packet_script_adapter.callbacks(
+            window_label="main",
+          )
+          ignore(
+            packet_script_callbacks.handoff_callback()(@utf8.encode(message)),
+          )
+          let drain_packet = @utf8.decode(
+            packet_script_callbacks.drain_window_packet(),
+          ) catch {
+            _ => abort("unexpected invalid bridge callback drain packet bytes")
+          }
+          assert_true(drain_packet.contains("evaluate-script"))
+          assert_true(
+            drain_packet.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(drain_packet.contains("\"id\":\"9\""))
+          assert_true(packet_script_adapter.is_empty())
           let script_adapter = runtime.bridge_loop_adapter()
           let script_callbacks = script_adapter.callbacks(window_label="main")
           ignore(script_callbacks.handoff_callback()(@utf8.encode(message)))

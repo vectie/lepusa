@@ -248,6 +248,7 @@ pub struct NativeBridgeLoopCallbacks {
 pub async fn NativeBridgeLoopCallbacks::drain_window(Self) -> NativeBridgeLoopDelivery
 pub async fn NativeBridgeLoopCallbacks::drain_window_json(Self) -> Bytes
 pub fn NativeBridgeLoopCallbacks::drain_window_operation(Self) -> NativeExecutableOperation
+pub async fn NativeBridgeLoopCallbacks::drain_window_packet(Self) -> Bytes
 pub async fn NativeBridgeLoopCallbacks::drain_window_scripts(Self) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> Bytes

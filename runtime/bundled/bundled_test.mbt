@@ -1159,6 +1159,26 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(callback_json.contains("\"windowLabel\":\"main\""))
           assert_true(callback_json.contains("\"route\":\"fs.writeText\""))
           assert_true(callback_json.contains("\"kind\":\"evaluate-script\""))
+          let packet_script_adapter = runtime.bridge_loop_adapter()
+          let packet_script_callbacks = packet_script_adapter.callbacks(
+            window_label="main",
+          )
+          ignore(
+            packet_script_callbacks.handoff_callback()(
+              @utf8.encode(async_message),
+            ),
+          )
+          let drain_packet = @utf8.decode(
+            packet_script_callbacks.drain_window_packet(),
+          ) catch {
+            _ => abort("unexpected invalid bundled callback drain packet bytes")
+          }
+          assert_true(drain_packet.contains("evaluate-script"))
+          assert_true(
+            drain_packet.contains("globalThis[\"__lepusaInvokeResponse\"]"),
+          )
+          assert_true(drain_packet.contains("\"id\":\"write\""))
+          assert_true(packet_script_adapter.is_empty())
           let script_adapter = runtime.bridge_loop_adapter()
           let script_callbacks = script_adapter.callbacks(window_label="main")
           ignore(

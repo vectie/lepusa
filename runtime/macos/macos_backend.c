@@ -1221,6 +1221,50 @@ static void lepusa_apply_navigation_from_handoff_packet(
   }
 }
 
+static void lepusa_apply_evaluate_scripts_from_handoff_packet(
+  LepusaBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL || packet == NULL) {
+    return;
+  }
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaNativeOperationRecord record;
+    if (!lepusa_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_range_equals(record.kind, record.kind_len, "evaluate-script") ||
+        record.url_len <= 0) {
+      continue;
+    }
+    LepusaWindowSlot *slot = lepusa_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    void *target_webview = NULL;
+    if (slot != NULL) {
+      target_webview = slot->webview;
+    } else if (record.window_len <= 0) {
+      target_webview = context->webview;
+    }
+    if (target_webview != NULL) {
+      lepusa_msg_void_id_id(
+        target_webview,
+        "evaluateJavaScript:completionHandler:",
+        lepusa_ns_string_from_range(record.url, record.url_len),
+        NULL
+      );
+    }
+  }
+}
+
 static void lepusa_open_window_from_record(
   LepusaBridgeContext *context,
   const LepusaNativeOperationRecord *record
@@ -1525,26 +1569,25 @@ static void lepusa_script_message_handler(
   moonbit_bytes_t request = lepusa_bytes_from_cstr(body_text);
   moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
   moonbit_bytes_t script = lepusa_immediate_script_from_handoff_packet(packet);
-  if (script == NULL) {
-    return;
-  }
   LepusaWindowSlot *slot = lepusa_window_slot_from_handoff_packet(
     context,
     packet
   );
   void *target_webview = slot == NULL ? context->webview : slot->webview;
-  if (target_webview == NULL) {
-    return;
+  if (script != NULL &&
+      target_webview != NULL &&
+      Moonbit_array_length(script) > 0) {
+    lepusa_msg_void_id_id(
+      target_webview,
+      "evaluateJavaScript:completionHandler:",
+      lepusa_ns_string_from_range(
+        (const char *)script,
+        Moonbit_array_length(script)
+      ),
+      NULL
+    );
   }
-  lepusa_msg_void_id_id(
-    target_webview,
-    "evaluateJavaScript:completionHandler:",
-    lepusa_ns_string_from_range(
-      (const char *)script,
-      Moonbit_array_length(script)
-    ),
-    NULL
-  );
+  lepusa_apply_evaluate_scripts_from_handoff_packet(context, packet);
   lepusa_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_apply_navigation_from_handoff_packet(context, packet);

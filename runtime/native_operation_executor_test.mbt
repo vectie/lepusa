@@ -80,6 +80,16 @@ test "native operation executor runs executable operation batches" {
   assert_true(json.contains("\"kind\":\"drain-bridge-window\""))
   assert_true(json.contains("\"kind\":\"navigate-window\""))
   assert_true(json.contains("\"kind\":\"window-control\""))
+  let packet = native_executable_operations_packet([
+    NativeExecutableOperation::evaluate_script(
+      NativeEvaluationScript::new(
+        window_label="main",
+        script="globalThis.done = true",
+      ),
+    ),
+  ])
+  assert_true(packet.contains("evaluate-script"))
+  assert_true(packet.contains("globalThis.done = true"))
 }
 
 ///|

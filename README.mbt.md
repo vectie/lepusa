@@ -587,9 +587,10 @@ operation packet. Immediate packets carry the callback script plus executable
 operations, deferred packets carry the queued task count, and error packets
 carry a diagnostic body. The v3 operation records include dynamic `open-window`
 boot metadata: load URL, title, size, resizable flag, bridge source, native
-hook, and asset protocol. macOS and Linux parse this packet, evaluate
-`immediate` scripts in the target WebView, and consume follow-up operations
-without JSON-scanning escaped payloads.
+hook, asset protocol, and packetized `evaluate-script` payloads. macOS, Linux,
+and Windows parse this packet, evaluate `immediate` scripts in the target
+WebView, and consume follow-up operations without JSON-scanning escaped
+payloads.
 `NativeBridgeLoopAdapter` and `BundledBridgeLoopAdapter` bundle the runtime,
 queue, native message callback, pending-state diagnostics, and drain operation
 into the object platform event loops should keep beside each WebView host.
@@ -609,7 +610,8 @@ plan for the target window.
 captured by the message-handler handoff callback, which is the native loop path
 for post-callback WebView evaluation. The callback bundles also expose
 `drain_window_scripts`, a compact UTF-8 JavaScript payload for native loops that
-only need to evaluate the completed callback scripts, plus
+only need to evaluate the completed callback scripts, `drain_window_packet`, a
+UTF-8 handoff packet carrying the same typed `evaluate-script` operations, plus
 `drain_window_operation`, a `drain-bridge-window` executable operation naming
 the window and drain callback a platform loop must schedule.
 `NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
@@ -915,14 +917,15 @@ gated.
 The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
-responses. Native launch paths refuse async bridge routes with an explicit
-scheduler requirement until a backend launch capability declares that its event
-loop can drain queued completions and evaluate the resulting scripts without
+responses. Native loops now understand the typed packet format needed to
+evaluate queued callback scripts, but launch paths still refuse async bridge
+routes with an explicit scheduler requirement until a backend launch capability
+declares that its event loop can wake and drain queued completions without
 blocking the WebView callback. That launch capability now carries an
-`asyncBridgeDrainMessage` field, which distinguishes the final async callback
-ABI work from WebView dependency or creation-loop failures. Launch-session JSON
-also carries `asyncBridgeExecutor`, which names
-`NativeRuntime::bridge_async_dispatch_callback`
+`asyncBridgeDrainMessage` field, which distinguishes the final async
+MoonBit-to-native callback ABI work from WebView dependency, script evaluation,
+or creation-loop failures. Launch-session JSON also carries
+`asyncBridgeExecutor`, which names `NativeRuntime::bridge_async_dispatch_callback`
 and its UTF-8 bridge-message to JavaScript-callback-script byte contract. The
 same `bridgeScheduler` field appears in source and bundled bootstrap JSON so
 platform loops and CLI diagnostics read one launch policy.

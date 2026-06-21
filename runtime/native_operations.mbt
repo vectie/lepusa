@@ -600,7 +600,21 @@ fn NativeExecutableOperation::native_packet_record(
     NativeExecutableCloseWindow(close) =>
       (close.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableEvaluateScript(script) =>
-      (script.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
+      (
+        script.window_label(),
+        "",
+        script.script(),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      )
     NativeExecutableDrainBridge(drain) =>
       (drain.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
     NativeExecutableNavigate(navigation) =>

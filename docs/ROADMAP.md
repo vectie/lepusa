@@ -159,19 +159,22 @@
   native loops instead of first-window-scoped resolvers;
   bridge handoff packets now use `lepusa-ops-v3` records that carry the
   dynamic `open-window` URL, title, size, resizable flag, bridge source, native
-  hook, and asset protocol needed by native WebView creation handlers; macOS
-  Linux, and Windows now consume those `open-window` records by creating labeled
-  WKWebView/WebKitGTK/WebView2 windows with target-window response evaluation and
-  URL-routed asset resolution; source and bundled macOS/Linux/Windows launches now
-  feed additional initial WebViews through the same native open-window
-  consumer before entering the platform event loop, so static multi-window
-  plans and later dynamic windows share one creation boundary;
+  hook, asset protocol, and `evaluate-script` payloads needed by native WebView
+  handlers; macOS, Linux, and Windows now consume those `open-window` records by
+  creating labeled WKWebView/WebKitGTK/WebView2 windows with target-window
+  response evaluation and URL-routed asset resolution, and they consume
+  packetized `evaluate-script` records by evaluating the carried JavaScript in
+  the target WebView; source and bundled macOS/Linux/Windows launches now feed
+  additional initial WebViews through the same native open-window consumer before
+  entering the platform event loop, so static multi-window plans and later
+  dynamic windows share one creation boundary;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
-  async bridge drain/evaluate scheduling in the C/WebView loops remains.
+  loops can evaluate typed drain packets, while async bridge launch remains
+  gated on the MoonBit-to-native async callback/wakeup ABI.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

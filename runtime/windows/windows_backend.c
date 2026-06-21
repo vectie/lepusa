@@ -1647,6 +1647,11 @@ static void lepusa_windows_apply_close_windows_from_handoff_packet(
   moonbit_bytes_t packet
 );
 
+static void lepusa_windows_apply_evaluate_scripts_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+);
+
 static void lepusa_windows_execute_script_bytes(
   LepusaWindowsWindowSlot *slot,
   moonbit_bytes_t script
@@ -1706,6 +1711,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
     target_slot == NULL ? source_slot : target_slot,
     script
   );
+  lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
   lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
   return S_OK;
@@ -2039,6 +2045,46 @@ static void lepusa_windows_set_resource_text_response(
   if (SUCCEEDED(result) && response != NULL) {
     args->lpVtbl->put_Response(args, response);
     response->lpVtbl->Release(response);
+  }
+}
+
+static void lepusa_windows_apply_evaluate_scripts_from_handoff_packet(
+  LepusaWindowsWebView2Context *context,
+  moonbit_bytes_t packet
+) {
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (context == NULL ||
+      packet == NULL ||
+      !lepusa_windows_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaWindowsNativeOperationRecord record;
+    if (!lepusa_windows_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_windows_range_equals(
+          record.kind,
+          record.kind_len,
+          "evaluate-script"
+        ) ||
+        record.url_len <= 0) {
+      continue;
+    }
+    LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    if (slot != NULL && slot->webview != NULL) {
+      moonbit_bytes_t script = lepusa_windows_bytes_from_range(
+        record.url,
+        record.url_len
+      );
+      lepusa_windows_execute_script_bytes(slot, script);
+    }
   }
 }
 

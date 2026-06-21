@@ -1172,6 +1172,54 @@ static void lepusa_linux_apply_navigation_from_handoff_packet(
   }
 }
 
+static void lepusa_linux_apply_evaluate_scripts_from_handoff_packet(
+  LepusaLinuxBridgeContext *context,
+  moonbit_bytes_t packet
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->webview == NULL ||
+      packet == NULL) {
+    return;
+  }
+  const char *cursor = NULL;
+  const char *end = NULL;
+  int32_t count = 0;
+  if (!lepusa_linux_handoff_operation_records(packet, &cursor, &end, &count)) {
+    return;
+  }
+  for (int32_t i = 0; i < count; i++) {
+    LepusaLinuxNativeOperationRecord record;
+    if (!lepusa_linux_read_native_operation_record(&cursor, end, &record)) {
+      return;
+    }
+    if (!lepusa_linux_range_equals(
+          record.kind,
+          record.kind_len,
+          "evaluate-script"
+        ) ||
+        record.url_len <= 0) {
+      continue;
+    }
+    LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(
+      context,
+      record.window,
+      record.window_len
+    );
+    char *script = lepusa_linux_cstr_from_range(record.url, record.url_len);
+    if (script != NULL && slot != NULL && slot->webview != NULL) {
+      context->api->webkit_web_view_run_javascript(
+        slot->webview,
+        script,
+        NULL,
+        NULL,
+        NULL
+      );
+    }
+    free(script);
+  }
+}
+
 static void lepusa_linux_uri_scheme_request(void *request, void *user_data);
 static void lepusa_linux_script_message_received(
   void *manager,
@@ -1469,6 +1517,7 @@ static void lepusa_linux_script_message_received(
     );
     free(script_text);
   }
+  lepusa_linux_apply_evaluate_scripts_from_handoff_packet(context, packet);
   lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_linux_apply_navigation_from_handoff_packet(context, packet);

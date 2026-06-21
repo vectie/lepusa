@@ -1030,6 +1030,21 @@ pub async fn BundledBridgeLoopCallbacks::drain_window_scripts(
 }
 
 ///|
+pub async fn BundledBridgeLoopCallbacks::drain_window_packet(
+  self : BundledBridgeLoopCallbacks,
+) -> Bytes {
+  let delivery = self.drain_window()
+  @utf8.encode(
+    bundled_bridge_handoff_packet(
+      "immediate",
+      delivery.window_label(),
+      "",
+      operations=delivery.operations(),
+    ),
+  )
+}
+
+///|
 pub fn BundledBridgeLoopCallbacks::drain_window_operation(
   self : BundledBridgeLoopCallbacks,
 ) -> @runtime.NativeExecutableOperation {
@@ -1052,6 +1067,7 @@ pub fn BundledBridgeLoopCallbacks::to_json(
     "\"handoffPacketCallback\":\"(Bytes)->utf8-handoff-packet\",",
     "\"drainWindow\":\"async()->BundledBridgeLoopDelivery\",",
     "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
+    "\"drainWindowPacket\":\"async()->utf8-handoff-packet\",",
     "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
