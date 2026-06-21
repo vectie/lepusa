@@ -54,6 +54,85 @@ test "runtime host snapshots windows protocols and bridge" {
 }
 
 ///|
+test "runtime session plans dynamic window lifecycle operations" {
+  match RuntimeHost::new(test_plan()).snapshot() {
+    Ok(session) => {
+      let window = @lepusa.WindowConfig::new(
+        label="tools",
+        title="Tools",
+        width=480,
+        height=360,
+        source=@lepusa.Source::html("<aside>tools</aside>"),
+      )
+      match session.open_window(window) {
+        Ok(open_step) => {
+          let operations = open_step.operations()
+          assert_eq(operations.length(), 1)
+          match operations[0] {
+            RuntimeOpenWindow(open_plan) => {
+              assert_eq(open_plan.label(), "tools")
+              assert_eq(open_plan.url(), "lepusa://inline/tools/index.html")
+              assert_eq(open_plan.asset_protocol(), "lepusa")
+              assert_eq(open_plan.bridge_global_name(), "lepusa")
+              assert_eq(open_plan.native_hook(), "__lepusaInvoke")
+              assert_false(open_plan.devtools())
+              assert_true(open_plan.bridge_source().contains("__lepusaInvoke"))
+              assert_eq(open_plan.allowed_routes()[0], "core.invoke")
+              assert_eq(open_plan.initialization_scripts().length(), 1)
+              let webview = open_plan.webview_spec()
+              assert_eq(webview.label(), "tools")
+              assert_eq(webview.title(), "Tools")
+              assert_eq(webview.url(), "lepusa://inline/tools/index.html")
+              assert_eq(webview.allowed_routes()[0], "core.invoke")
+              assert_true(webview.to_json().contains("\"label\":\"tools\""))
+            }
+            _ => fail("expected open-window runtime operation")
+          }
+          let opened = open_step.session()
+          assert_eq(opened.windows().length(), 2)
+          assert_eq(opened.protocol_mappings().length(), 2)
+          assert_eq(opened.virtual_files().length(), 2)
+          assert_eq(opened.virtual_files()[1].content(), "<aside>tools</aside>")
+          match opened.resolve_asset("lepusa://inline/tools/index.html") {
+            Ok(asset) =>
+              assert_true(
+                asset.body() is VirtualContent("<aside>tools</aside>"),
+              )
+            Err(problem) => abort(problem)
+          }
+          match opened.open_window(window) {
+            Err(problems) =>
+              assert_eq(problems[0], "window already open: tools")
+            Ok(_) => fail("expected duplicate dynamic window rejection")
+          }
+          match opened.close_window("tools") {
+            Ok(close_step) => {
+              let close_operations = close_step.operations()
+              assert_eq(close_operations.length(), 1)
+              assert_true(close_operations[0] is RuntimeCloseWindow("tools"))
+              assert_eq(close_step.session().windows().length(), 1)
+              assert_eq(close_step.session().protocol_mappings().length(), 1)
+              assert_eq(close_step.session().virtual_files().length(), 1)
+              match
+                close_step
+                .session()
+                .resolve_asset("lepusa://inline/tools/index.html") {
+                Err(problem) =>
+                  assert_true(problem.contains("virtual asset not found"))
+                Ok(_) => fail("expected closed window assets to be removed")
+              }
+            }
+            Err(_) => abort("unexpected dynamic window close failure")
+          }
+        }
+        Err(_) => abort("unexpected dynamic window open failure")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime session")
+  }
+}
+
+///|
 test "runtime host carries localhost service metadata" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root).window(

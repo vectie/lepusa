@@ -1,6 +1,8 @@
 ///|
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
+  RuntimeOpenWindow(RuntimeWindowOpenPlan)
+  RuntimeCloseWindow(String)
   RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
@@ -30,6 +32,20 @@ pub fn RuntimeOperation::to_json(self : RuntimeOperation) -> String {
         "{",
         "\"kind\":\"start-service\",",
         "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
+    RuntimeOpenWindow(open_plan) =>
+      [
+        "{",
+        "\"kind\":\"open-window\",",
+        "\"window\":\{open_plan.to_json()}",
+        "}",
+      ].join("")
+    RuntimeCloseWindow(label) =>
+      [
+        "{",
+        "\"kind\":\"close-window\",",
+        "\"label\":\{label.json_string()}",
         "}",
       ].join("")
     RuntimeDispatchEvent(dispatch) =>

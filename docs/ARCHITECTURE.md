@@ -248,6 +248,13 @@ drained through its callback before evaluating the returned scripts. Platform
 packages supply handlers for bridge drains, WebView script evaluation,
 navigation, effects, and service work, then get back a typed report of executed,
 skipped, and failed operations.
+The same executor boundary covers dynamic windows: `RuntimeSession::open_window`
+resolves a fresh `WindowConfig` into protocol mappings, virtual files, local
+services, bridge initialization scripts, and an `open-window` executable plan;
+`RuntimeSession::close_window` removes the session-owned window assets/listeners
+and emits a `close-window` executable operation. Native platform packages still
+decide how to create or destroy the concrete WKWebView, WebKitGTK, or WebView2
+window, but they no longer need to infer that work from ad hoc plugin payloads.
 `receive_window_message` is the per-WebView adapter entry point: it returns a
 `NativeBridgeLoopDelivery` or `BundledBridgeLoopDelivery` containing the raw
 loop result and executable evaluation plan for the target window.

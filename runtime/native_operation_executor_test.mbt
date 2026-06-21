@@ -83,6 +83,67 @@ test "native operation executor runs executable operation batches" {
 }
 
 ///|
+test "native operation executor runs dynamic window operations" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root).window(
+    label="main",
+    source=@lepusa.Source::html("<main></main>"),
+  )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).snapshot() {
+        Ok(session) => {
+          let window = @lepusa.WindowConfig::new(
+            label="tools",
+            title="Tools",
+            source=@lepusa.Source::html("<aside>tools</aside>"),
+          )
+          match session.open_window(window) {
+            Ok(step) =>
+              match step.operations()[0] {
+                RuntimeOpenWindow(open_plan) => {
+                  let opened : Array[String] = []
+                  let closed : Array[String] = []
+                  let executor = NativeOperationExecutor::new(
+                    open_window=fn(plan) {
+                      opened.push(plan.label())
+                      NativeOperationExecuted
+                    },
+                    close_window=fn(close) {
+                      closed.push(close.window_label())
+                      NativeOperationExecuted
+                    },
+                  )
+                  let report = executor.execute_all([
+                    NativeExecutableOperation::open_window(open_plan),
+                    NativeExecutableOperation::close_window(
+                      NativeWindowClose::new(window_label="tools"),
+                    ),
+                  ])
+                  assert_true(report.ok())
+                  assert_eq(report.operation_count(), 2)
+                  assert_eq(report.executed_count(), 2)
+                  assert_eq(opened[0], "tools")
+                  assert_eq(closed[0], "tools")
+                  assert_true(
+                    report.to_json().contains("\"kind\":\"open-window\""),
+                  )
+                  assert_true(
+                    report.to_json().contains("\"kind\":\"close-window\""),
+                  )
+                }
+                _ => fail("expected open-window runtime operation")
+              }
+            Err(_) => abort("unexpected dynamic window open failure")
+          }
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "native operation executor runs bridge drain deliveries" {
   let scripts : Array[String] = []
   let executor = NativeOperationExecutor::new(evaluate_script=fn(script) {

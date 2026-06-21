@@ -390,6 +390,8 @@ pub fn NativeEvaluationScript::window_label(Self) -> String
 
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
+  NativeExecutableOpenWindow(RuntimeWindowOpenPlan)
+  NativeExecutableCloseWindow(NativeWindowClose)
   NativeExecutableEvaluateScript(NativeEvaluationScript)
   NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
@@ -397,6 +399,8 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableWindowControl(NativeWindowControl)
 } derive(Eq, @debug.Debug)
 pub fn NativeExecutableOperation::bridge_drain(Self) -> NativeBridgeDrain?
+pub fn NativeExecutableOperation::close_window(NativeWindowClose) -> Self
+pub fn NativeExecutableOperation::close_window_operation(Self) -> NativeWindowClose?
 pub fn NativeExecutableOperation::drain_bridge(NativeBridgeDrain) -> Self
 pub fn NativeExecutableOperation::effect_name(Self) -> String?
 pub fn NativeExecutableOperation::evaluate_script(NativeEvaluationScript) -> Self
@@ -404,6 +408,8 @@ pub fn NativeExecutableOperation::evaluation_script(Self) -> NativeEvaluationScr
 pub fn NativeExecutableOperation::kind(Self) -> String
 pub fn NativeExecutableOperation::navigate(NativeNavigation) -> Self
 pub fn NativeExecutableOperation::navigation(Self) -> NativeNavigation?
+pub fn NativeExecutableOperation::open_window(RuntimeWindowOpenPlan) -> Self
+pub fn NativeExecutableOperation::open_window_plan(Self) -> RuntimeWindowOpenPlan?
 pub fn NativeExecutableOperation::run_effect(String) -> Self
 pub fn NativeExecutableOperation::service(Self) -> @lepusa.LocalService?
 pub fn NativeExecutableOperation::start_service(@lepusa.LocalService) -> Self
@@ -523,16 +529,20 @@ pub fn NativeNavigation::window_label(Self) -> String
 
 pub(all) enum NativeOperation {
   NativeStartService(@lepusa.LocalService)
+  NativeOpenWindow(RuntimeWindowOpenPlan)
+  NativeCloseWindow(String)
   NativeDispatchEvent(@lepusa.FrontendEventDispatch)
   NativeRunEffect(String)
   NativeNavigateWindow(String, String)
 } derive(Eq, @debug.Debug)
+pub fn NativeOperation::close_window_operation(Self) -> NativeWindowClose?
 pub fn NativeOperation::effect_name(Self) -> String?
 pub fn NativeOperation::evaluation_script(Self) -> NativeEvaluationScript?
 pub fn NativeOperation::executable(Self) -> NativeExecutableOperation
 pub fn NativeOperation::from_runtime(RuntimeOperation) -> Self
 pub fn NativeOperation::kind(Self) -> String
 pub fn NativeOperation::navigation(Self) -> NativeNavigation?
+pub fn NativeOperation::open_window_plan(Self) -> RuntimeWindowOpenPlan?
 pub fn NativeOperation::service(Self) -> @lepusa.LocalService?
 pub fn NativeOperation::to_json(Self) -> String
 pub fn NativeOperation::window_label(Self) -> String?
@@ -570,6 +580,8 @@ pub fn NativeOperationExecutionStatus::to_json(Self) -> String
 
 pub struct NativeOperationExecutor {
   start_service : (@lepusa.LocalService) -> NativeOperationExecutionStatus
+  open_window : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus
+  close_window : (NativeWindowClose) -> NativeOperationExecutionStatus
   evaluate_script : (NativeEvaluationScript) -> NativeOperationExecutionStatus
   drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
@@ -583,7 +595,7 @@ pub fn NativeOperationExecutor::execute_delivery(Self, NativeBridgeLoopDelivery)
 pub fn NativeOperationExecutor::execute_lifecycle_step(Self, NativeExecutionStep) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
-pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus, control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus) -> Self
+pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, open_window? : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus, close_window? : (NativeWindowClose) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus, control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus) -> Self
 
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
@@ -841,6 +853,13 @@ pub fn NativeWebViewPlan::url(Self) -> String
 pub fn NativeWebViewPlan::width(Self) -> Int
 pub fn NativeWebViewPlan::with_initialization_script_suffix(Self, String) -> Self
 
+pub struct NativeWindowClose {
+  window_label : String
+} derive(Eq, @debug.Debug)
+pub fn NativeWindowClose::new(window_label~ : String) -> Self
+pub fn NativeWindowClose::to_json(Self) -> String
+pub fn NativeWindowClose::window_label(Self) -> String
+
 pub struct NativeWindowControl {
   window_label : String
   action : String
@@ -1003,6 +1022,8 @@ pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[St
 
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
+  RuntimeOpenWindow(RuntimeWindowOpenPlan)
+  RuntimeCloseWindow(String)
   RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
@@ -1062,6 +1083,8 @@ pub struct RuntimeSession {
   platform : String
   devtools : Bool
   asset_protocol : String
+  bridge_global_name : String
+  native_hook : String
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
@@ -1077,8 +1100,10 @@ pub struct RuntimeSession {
 pub fn RuntimeSession::apply_actions(Self, Array[@lepusa.RuntimeAction]) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::asset_protocol(Self) -> String
 pub fn RuntimeSession::backend(Self) -> @lepusa.RuntimeBackend
+pub fn RuntimeSession::bridge_global_name(Self) -> String
 pub fn RuntimeSession::bridge_source(Self) -> String
 pub fn RuntimeSession::bridge_url(Self) -> String
+pub fn RuntimeSession::close_window(Self, String) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
 pub fn RuntimeSession::event_deliveries(Self, @lepusa.Event, target? : @lepusa.EventTarget) -> Result[Array[@lepusa.EventDelivery], Array[String]]
@@ -1090,11 +1115,14 @@ pub fn RuntimeSession::lifecycle_hooks(Self) -> Array[@lepusa.RuntimeLifecycleHo
 pub fn RuntimeSession::lifecycle_step(Self, @lepusa.LifecycleEvent) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::listen_event(Self, String, target? : @lepusa.EventTarget, once? : Bool) -> Result[@lepusa.EventListener, Array[String]]
 pub fn RuntimeSession::local_services(Self) -> Array[@lepusa.LocalService]
+pub fn RuntimeSession::native_hook(Self) -> String
 pub fn RuntimeSession::once_event(Self, String, target? : @lepusa.EventTarget) -> Result[@lepusa.EventListener, Array[String]]
+pub fn RuntimeSession::open_window(Self, @lepusa.WindowConfig) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::platform(Self) -> String
 pub fn RuntimeSession::protocol_mappings(Self) -> Array[RuntimeProtocolMapping]
 pub fn RuntimeSession::registered_routes(Self) -> Array[String]
 pub fn RuntimeSession::remove_event_target(Self, @lepusa.EventTarget) -> Array[@lepusa.EventListener]
+pub fn RuntimeSession::request_window_close(Self, String) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]
 pub fn RuntimeSession::resolve_asset_json(Self, String) -> String
 pub fn RuntimeSession::resolve_window_asset(Self, window_label~ : String, String) -> Result[RuntimeAssetResponse, String]
@@ -1171,6 +1199,29 @@ pub fn RuntimeWindow::title(Self) -> String
 pub fn RuntimeWindow::title_bar(Self) -> @lepusa.TitleBarStyle
 pub fn RuntimeWindow::url(Self) -> String
 pub fn RuntimeWindow::width(Self) -> Int
+
+pub struct RuntimeWindowOpenPlan {
+  window : RuntimeWindow
+  asset_protocol : String
+  bridge_global_name : String
+  native_hook : String
+  devtools : Bool
+  bridge_source : String
+  allowed_routes : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeWindowOpenPlan::allowed_routes(Self) -> Array[String]
+pub fn RuntimeWindowOpenPlan::asset_protocol(Self) -> String
+pub fn RuntimeWindowOpenPlan::bridge_global_name(Self) -> String
+pub fn RuntimeWindowOpenPlan::bridge_source(Self) -> String
+pub fn RuntimeWindowOpenPlan::devtools(Self) -> Bool
+pub fn RuntimeWindowOpenPlan::initialization_scripts(Self) -> Array[String]
+pub fn RuntimeWindowOpenPlan::label(Self) -> String
+pub fn RuntimeWindowOpenPlan::native_hook(Self) -> String
+pub fn RuntimeWindowOpenPlan::new(window~ : RuntimeWindow, asset_protocol~ : String, bridge_global_name~ : String, native_hook~ : String, devtools~ : Bool, bridge_source~ : String, allowed_routes~ : Array[String]) -> Self
+pub fn RuntimeWindowOpenPlan::to_json(Self) -> String
+pub fn RuntimeWindowOpenPlan::url(Self) -> String
+pub fn RuntimeWindowOpenPlan::webview_spec(Self) -> RuntimeWebViewSpec
+pub fn RuntimeWindowOpenPlan::window(Self) -> RuntimeWindow
 
 // Type aliases
 pub type NativeServiceActionHandler = (@lepusa.LocalService) -> NativeServiceActionStatus

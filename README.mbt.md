@@ -683,6 +683,13 @@ operations in one object. Platform packages map this plan to WKWebView,
 WebView2, or WebKitGTK without rebuilding app state.
 `RuntimeRunnerPlan::lifecycle_step(event)` returns the same operation/session
 shape that `lepusa lifecycle` prints.
+`RuntimeSession::open_window(window)` resolves a new `WindowConfig` into
+session-owned protocol mappings, virtual files, sidecar services, and a typed
+`open-window` operation containing the WebView spec and initialization scripts.
+`request_window_close(label)` and `close_window(label)` keep close-request
+lifecycle actions separate from final destruction, and final close removes the
+window's runtime assets/listeners before emitting a typed `close-window`
+operation.
 
 `@lepusa/runtime` also exposes `NativeBackend` and `NativeRuntime`, the shared
 lowering boundary for platform packages. `NativeRuntime` binds a backend and
@@ -708,6 +715,8 @@ so launchers consume the same operation boundary they report.
 `NativeOperationExecutor` executes those operation arrays through platform
 handlers and reports executed, skipped, and failed outcomes, giving WebView
 loops one reusable path for startup, lifecycle, and bridge-drain work.
+It now includes dynamic `open-window` and `close-window` handlers so platform
+packages can wire true multi-window lifecycle without parsing runtime JSON.
 Capability-approved `window.*` bridge dispatches also lower their plugin
 response into a `window-control` executable operation, so native loops can apply
 window actions without parsing JavaScript response callbacks.

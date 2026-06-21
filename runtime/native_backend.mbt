@@ -14,6 +14,8 @@ pub struct NativeLaunchPlan {
 ///|
 pub(all) enum NativeOperation {
   NativeStartService(@lepusa.LocalService)
+  NativeOpenWindow(RuntimeWindowOpenPlan)
+  NativeCloseWindow(String)
   NativeDispatchEvent(@lepusa.FrontendEventDispatch)
   NativeRunEffect(String)
   NativeNavigateWindow(String, String)
@@ -160,6 +162,8 @@ pub fn NativeOperation::from_runtime(
 ) -> NativeOperation {
   match operation {
     RuntimeStartService(service) => NativeStartService(service)
+    RuntimeOpenWindow(open_plan) => NativeOpenWindow(open_plan)
+    RuntimeCloseWindow(label) => NativeCloseWindow(label)
     RuntimeDispatchEvent(dispatch) => NativeDispatchEvent(dispatch)
     RuntimeRunEffect(name) => NativeRunEffect(name)
     RuntimeNavigateWindow(label, url) => NativeNavigateWindow(label, url)
@@ -200,6 +204,20 @@ pub fn NativeOperation::to_json(self : NativeOperation) -> String {
         "{",
         "\"kind\":\"start-service\",",
         "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
+    NativeOpenWindow(open_plan) =>
+      [
+        "{",
+        "\"kind\":\"open-window\",",
+        "\"window\":\{open_plan.to_json()}",
+        "}",
+      ].join("")
+    NativeCloseWindow(label) =>
+      [
+        "{",
+        "\"kind\":\"close-window\",",
+        "\"label\":\{label.json_string()}",
         "}",
       ].join("")
     NativeDispatchEvent(dispatch) =>

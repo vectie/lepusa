@@ -19,6 +19,8 @@ pub struct NativeOperationExecutionReport {
 ///|
 pub struct NativeOperationExecutor {
   start_service : (@lepusa.LocalService) -> NativeOperationExecutionStatus
+  open_window : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus
+  close_window : (NativeWindowClose) -> NativeOperationExecutionStatus
   evaluate_script : (NativeEvaluationScript) -> NativeOperationExecutionStatus
   drain_bridge : (NativeBridgeDrain) -> NativeOperationExecutionStatus
   run_effect : (String) -> NativeOperationExecutionStatus
@@ -34,6 +36,16 @@ pub fn NativeOperationExecutor::new(
     NativeOperationSkipped(
       "native service startup is handled by NativeServiceExecutor",
     )
+  },
+  open_window? : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus = fn(
+    _,
+  ) {
+    NativeOperationSkipped("native dynamic window open handler is unavailable")
+  },
+  close_window? : (NativeWindowClose) -> NativeOperationExecutionStatus = fn(
+    _,
+  ) {
+    NativeOperationSkipped("native dynamic window close handler is unavailable")
   },
   evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus = fn(
     _,
@@ -61,6 +73,8 @@ pub fn NativeOperationExecutor::new(
 ) -> NativeOperationExecutor {
   {
     start_service,
+    open_window,
+    close_window,
     evaluate_script,
     drain_bridge,
     run_effect,
@@ -76,6 +90,8 @@ pub fn NativeOperationExecutor::execute(
 ) -> NativeOperationExecutionOutcome {
   let status = match operation {
     NativeExecutableStartService(service) => (self.start_service)(service)
+    NativeExecutableOpenWindow(open_plan) => (self.open_window)(open_plan)
+    NativeExecutableCloseWindow(close) => (self.close_window)(close)
     NativeExecutableEvaluateScript(script) => (self.evaluate_script)(script)
     NativeExecutableDrainBridge(drain) => (self.drain_bridge)(drain)
     NativeExecutableRunEffect(name) => (self.run_effect)(name)

@@ -24,6 +24,11 @@ pub struct NativeWindowControl {
 } derive(Debug, Eq)
 
 ///|
+pub struct NativeWindowClose {
+  window_label : String
+} derive(Debug, Eq)
+
+///|
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String
   operations : Array[NativeExecutableOperation]
@@ -32,6 +37,8 @@ pub struct NativeBridgeLoopEvaluationPlan {
 ///|
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
+  NativeExecutableOpenWindow(RuntimeWindowOpenPlan)
+  NativeExecutableCloseWindow(NativeWindowClose)
   NativeExecutableEvaluateScript(NativeEvaluationScript)
   NativeExecutableDrainBridge(NativeBridgeDrain)
   NativeExecutableRunEffect(String)
@@ -70,6 +77,11 @@ pub fn NativeWindowControl::new(
   payload? : String = "",
 ) -> NativeWindowControl {
   { window_label, action, payload }
+}
+
+///|
+pub fn NativeWindowClose::new(window_label~ : String) -> NativeWindowClose {
+  { window_label, }
 }
 
 ///|
@@ -184,6 +196,16 @@ pub fn NativeWindowControl::to_json(self : NativeWindowControl) -> String {
 }
 
 ///|
+pub fn NativeWindowClose::window_label(self : NativeWindowClose) -> String {
+  self.window_label
+}
+
+///|
+pub fn NativeWindowClose::to_json(self : NativeWindowClose) -> String {
+  ["{", "\"windowLabel\":\{self.window_label.json_string()}", "}"].join("")
+}
+
+///|
 pub fn NativeBridgeLoopEvaluationPlan::window_label(
   self : NativeBridgeLoopEvaluationPlan,
 ) -> String {
@@ -245,6 +267,20 @@ pub fn NativeExecutableOperation::evaluate_script(
 }
 
 ///|
+pub fn NativeExecutableOperation::open_window(
+  open_plan : RuntimeWindowOpenPlan,
+) -> NativeExecutableOperation {
+  NativeExecutableOpenWindow(open_plan)
+}
+
+///|
+pub fn NativeExecutableOperation::close_window(
+  close : NativeWindowClose,
+) -> NativeExecutableOperation {
+  NativeExecutableCloseWindow(close)
+}
+
+///|
 pub fn NativeExecutableOperation::drain_bridge(
   drain : NativeBridgeDrain,
 ) -> NativeExecutableOperation {
@@ -278,6 +314,8 @@ pub fn NativeExecutableOperation::kind(
 ) -> String {
   match self {
     NativeExecutableStartService(_) => "start-service"
+    NativeExecutableOpenWindow(_) => "open-window"
+    NativeExecutableCloseWindow(_) => "close-window"
     NativeExecutableEvaluateScript(_) => "evaluate-script"
     NativeExecutableDrainBridge(_) => "drain-bridge-window"
     NativeExecutableRunEffect(_) => "run-effect"
@@ -292,6 +330,26 @@ pub fn NativeExecutableOperation::service(
 ) -> @lepusa.LocalService? {
   match self {
     NativeExecutableStartService(service) => Some(service)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::open_window_plan(
+  self : NativeExecutableOperation,
+) -> RuntimeWindowOpenPlan? {
+  match self {
+    NativeExecutableOpenWindow(open_plan) => Some(open_plan)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeExecutableOperation::close_window_operation(
+  self : NativeExecutableOperation,
+) -> NativeWindowClose? {
+  match self {
+    NativeExecutableCloseWindow(close) => Some(close)
     _ => None
   }
 }
@@ -353,15 +411,23 @@ pub fn NativeExecutableOperation::window_label(
   match self.evaluation_script() {
     Some(script) => Some(script.window_label())
     None =>
-      match self.bridge_drain() {
-        Some(drain) => Some(drain.window_label())
+      match self.open_window_plan() {
+        Some(open_plan) => Some(open_plan.label())
         None =>
-          match self.navigation() {
-            Some(navigation) => Some(navigation.window_label())
+          match self.close_window_operation() {
+            Some(close) => Some(close.window_label())
             None =>
-              match self.window_control_operation() {
-                Some(control) => Some(control.window_label())
-                None => None
+              match self.bridge_drain() {
+                Some(drain) => Some(drain.window_label())
+                None =>
+                  match self.navigation() {
+                    Some(navigation) => Some(navigation.window_label())
+                    None =>
+                      match self.window_control_operation() {
+                        Some(control) => Some(control.window_label())
+                        None => None
+                      }
+                  }
               }
           }
       }
@@ -378,6 +444,20 @@ pub fn NativeExecutableOperation::to_json(
         "{",
         "\"kind\":\"start-service\",",
         "\"service\":\{service.to_json()}",
+        "}",
+      ].join("")
+    NativeExecutableOpenWindow(open_plan) =>
+      [
+        "{",
+        "\"kind\":\"open-window\",",
+        "\"window\":\{open_plan.to_json()}",
+        "}",
+      ].join("")
+    NativeExecutableCloseWindow(close) =>
+      [
+        "{",
+        "\"kind\":\"close-window\",",
+        "\"windowLabel\":\{close.window_label().json_string()}",
         "}",
       ].join("")
     NativeExecutableEvaluateScript(script) =>
@@ -437,6 +517,20 @@ fn NativeExecutableOperation::native_packet_record(
 ) -> String {
   let (window_label, action, url, title, width, height, x, y, fullscreen) = match
     self {
+    NativeExecutableOpenWindow(open_plan) =>
+      (
+        open_plan.label(),
+        "",
+        open_plan.url(),
+        open_plan.window().title(),
+        open_plan.window().width().to_string(),
+        open_plan.window().height().to_string(),
+        "",
+        "",
+        "",
+      )
+    NativeExecutableCloseWindow(close) =>
+      (close.window_label(), "", "", "", "", "", "", "", "")
     NativeExecutableEvaluateScript(script) =>
       (script.window_label(), "", "", "", "", "", "", "", "")
     NativeExecutableDrainBridge(drain) =>
@@ -543,6 +637,8 @@ fn NativeWindowControl::payload_bool(
 pub fn NativeOperation::kind(self : NativeOperation) -> String {
   match self {
     NativeStartService(_) => "start-service"
+    NativeOpenWindow(_) => "open-window"
+    NativeCloseWindow(_) => "close-window"
     NativeDispatchEvent(_) => "evaluate-script"
     NativeRunEffect(_) => "run-effect"
     NativeNavigateWindow(_, _) => "navigate-window"
@@ -556,6 +652,12 @@ pub fn NativeOperation::executable(
   match self {
     NativeStartService(service) =>
       NativeExecutableOperation::start_service(service)
+    NativeOpenWindow(open_plan) =>
+      NativeExecutableOperation::open_window(open_plan)
+    NativeCloseWindow(label) =>
+      NativeExecutableOperation::close_window(
+        NativeWindowClose::new(window_label=label),
+      )
     NativeDispatchEvent(dispatch) =>
       NativeExecutableOperation::evaluate_script(
         NativeEvaluationScript::new(
@@ -598,6 +700,26 @@ pub fn NativeOperation::evaluation_script(
 }
 
 ///|
+pub fn NativeOperation::open_window_plan(
+  self : NativeOperation,
+) -> RuntimeWindowOpenPlan? {
+  match self {
+    NativeOpenWindow(open_plan) => Some(open_plan)
+    _ => None
+  }
+}
+
+///|
+pub fn NativeOperation::close_window_operation(
+  self : NativeOperation,
+) -> NativeWindowClose? {
+  match self {
+    NativeCloseWindow(label) => Some(NativeWindowClose::new(window_label=label))
+    _ => None
+  }
+}
+
+///|
 pub fn NativeOperation::effect_name(self : NativeOperation) -> String? {
   match self {
     NativeRunEffect(name) => Some(name)
@@ -619,9 +741,17 @@ pub fn NativeOperation::window_label(self : NativeOperation) -> String? {
   match self.evaluation_script() {
     Some(script) => Some(script.window_label())
     None =>
-      match self.navigation() {
-        Some(navigation) => Some(navigation.window_label())
-        None => None
+      match self.open_window_plan() {
+        Some(open_plan) => Some(open_plan.label())
+        None =>
+          match self.close_window_operation() {
+            Some(close) => Some(close.window_label())
+            None =>
+              match self.navigation() {
+                Some(navigation) => Some(navigation.window_label())
+                None => None
+              }
+          }
       }
   }
 }

@@ -4,6 +4,8 @@ pub struct RuntimeSession {
   platform : String
   devtools : Bool
   asset_protocol : String
+  bridge_global_name : String
+  native_hook : String
   windows : Array[RuntimeWindow]
   protocol_mappings : Array[RuntimeProtocolMapping]
   virtual_files : Array[RuntimeVirtualFile]
@@ -83,6 +85,8 @@ fn RuntimeSession::from_plan(
     platform: plan.platform(),
     devtools: plan.devtools(),
     asset_protocol: plan.asset_protocol(),
+    bridge_global_name: bridge_global_name_for_session(webviews),
+    native_hook: native_hook_for_session(webviews),
     windows,
     protocol_mappings,
     virtual_files,
@@ -94,6 +98,24 @@ fn RuntimeSession::from_plan(
     registered_routes,
     event_bus: @lepusa.EventBus::new(),
     bridge_source,
+  }
+}
+
+///|
+fn bridge_global_name_for_session(
+  webviews : Array[RuntimeWebViewSpec],
+) -> String {
+  match webviews.get(0) {
+    Some(webview) => webview.bridge_global_name()
+    None => "lepusa"
+  }
+}
+
+///|
+fn native_hook_for_session(webviews : Array[RuntimeWebViewSpec]) -> String {
+  match webviews.get(0) {
+    Some(webview) => webview.native_hook()
+    None => "__lepusaInvoke"
   }
 }
 
@@ -161,6 +183,16 @@ pub fn RuntimeSession::devtools(self : RuntimeSession) -> Bool {
 ///|
 pub fn RuntimeSession::asset_protocol(self : RuntimeSession) -> String {
   self.asset_protocol
+}
+
+///|
+pub fn RuntimeSession::bridge_global_name(self : RuntimeSession) -> String {
+  self.bridge_global_name
+}
+
+///|
+pub fn RuntimeSession::native_hook(self : RuntimeSession) -> String {
+  self.native_hook
 }
 
 ///|
@@ -291,6 +323,8 @@ pub fn RuntimeSession::to_json(self : RuntimeSession) -> String {
     "\"platform\":\{self.platform.json_string()},",
     "\"devtools\":\{self.devtools.json_bool()},",
     "\"assetProtocol\":\{self.asset_protocol.json_string()},",
+    "\"bridgeGlobalName\":\{self.bridge_global_name.json_string()},",
+    "\"nativeHook\":\{self.native_hook.json_string()},",
     "\"bridgeUrl\":\{self.bridge_url().json_string()},",
     "\"bridgeSource\":\{self.bridge_source.json_string()},",
     "\"windows\":[\{self.windows.map(runtime_window_json).join(",")}],",
