@@ -47,6 +47,7 @@ pub struct AppManager {
   events : EventBus
   state : AppStateStore
 }
+pub fn AppManager::audit(Self) -> RuntimeAudit
 pub fn AppManager::cancel_channel(Self, String) -> Result[ChannelMessage, String]
 pub fn AppManager::capability_count(Self) -> Int
 pub fn AppManager::channel(Self, String) -> Channel?
@@ -1092,6 +1093,57 @@ pub(all) enum RuntimeAction {
 } derive(Eq, @debug.Debug)
 pub fn RuntimeAction::to_json(Self) -> String
 
+pub struct RuntimeAudit {
+  command_manifest : CommandManifest
+  permission_manifest : PermissionManifest
+  registered_routes : Array[String]
+  findings : Array[RuntimeAuditFinding]
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAudit::command_manifest(Self) -> CommandManifest
+pub fn RuntimeAudit::error_count(Self) -> Int
+pub fn RuntimeAudit::errors(Self) -> Array[RuntimeAuditFinding]
+pub fn RuntimeAudit::findings(Self) -> Array[RuntimeAuditFinding]
+pub fn RuntimeAudit::findings_by_severity(Self, RuntimeAuditSeverity) -> Array[RuntimeAuditFinding]
+pub fn RuntimeAudit::from_plan(RuntimePlan) -> Self
+pub fn RuntimeAudit::from_registered_routes(RuntimePlan, Array[String]) -> Self
+pub fn RuntimeAudit::info_count(Self) -> Int
+pub fn RuntimeAudit::infos(Self) -> Array[RuntimeAuditFinding]
+pub fn RuntimeAudit::ok(Self) -> Bool
+pub fn RuntimeAudit::permission_manifest(Self) -> PermissionManifest
+pub fn RuntimeAudit::problems(Self) -> Array[String]
+pub fn RuntimeAudit::registered_routes(Self) -> Array[String]
+pub fn RuntimeAudit::to_json(Self) -> String
+pub fn RuntimeAudit::warning_count(Self) -> Int
+pub fn RuntimeAudit::warnings(Self) -> Array[RuntimeAuditFinding]
+
+pub struct RuntimeAuditFinding {
+  severity : RuntimeAuditSeverity
+  kind : RuntimeAuditKind
+  route : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAuditFinding::kind(Self) -> RuntimeAuditKind
+pub fn RuntimeAuditFinding::message(Self) -> String
+pub fn RuntimeAuditFinding::new(severity~ : RuntimeAuditSeverity, kind~ : RuntimeAuditKind, route~ : String, message~ : String) -> Self
+pub fn RuntimeAuditFinding::route(Self) -> String
+pub fn RuntimeAuditFinding::severity(Self) -> RuntimeAuditSeverity
+pub fn RuntimeAuditFinding::to_json(Self) -> String
+
+pub(all) enum RuntimeAuditKind {
+  RuntimeAuditDeniedCommand
+  RuntimeAuditMissingHandler
+  RuntimeAuditUndeclaredHandler
+  RuntimeAuditOpenOrigin
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAuditKind::name(Self) -> String
+
+pub(all) enum RuntimeAuditSeverity {
+  RuntimeAuditInfo
+  RuntimeAuditWarning
+  RuntimeAuditError
+} derive(Eq, @debug.Debug)
+pub fn RuntimeAuditSeverity::name(Self) -> String
+
 pub(all) enum RuntimeBackend {
   SystemWebView
   Headless
@@ -1192,6 +1244,8 @@ pub struct RuntimePlan {
 pub fn RuntimePlan::actions(Self, Cmd) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::app_metadata(Self) -> AppMetadata?
 pub fn RuntimePlan::asset_protocol(Self) -> String
+pub fn RuntimePlan::audit(Self) -> RuntimeAudit
+pub fn RuntimePlan::audit_with_registered_routes(Self, Array[String]) -> RuntimeAudit
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]

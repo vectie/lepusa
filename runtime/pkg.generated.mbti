@@ -854,6 +854,7 @@ pub struct RuntimeHost {
   registry : @lepusa.CommandRegistry
 }
 pub fn RuntimeHost::async_command_routes(Self) -> Array[String]
+pub fn RuntimeHost::audit(Self) -> @lepusa.RuntimeAudit
 pub fn RuntimeHost::bridge_dispatch_task(Self, String, window_label? : String) -> Result[NativeBridgeDispatchTask, Array[String]]
 pub fn RuntimeHost::bridge_handoff(Self, String, window_label? : String) -> Result[NativeBridgeHandoff, Array[String]]
 pub fn RuntimeHost::bridge_response_hook(Self, window_label? : String) -> Result[(String, String), String]

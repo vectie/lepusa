@@ -38,6 +38,11 @@ pub fn RuntimeHost::async_command_routes(self : RuntimeHost) -> Array[String] {
 }
 
 ///|
+pub fn RuntimeHost::audit(self : RuntimeHost) -> @lepusa.RuntimeAudit {
+  self.plan.audit_with_registered_routes(self.registry.routes())
+}
+
+///|
 pub fn RuntimeHost::snapshot(
   self : RuntimeHost,
 ) -> Result[RuntimeSession, Array[String]] {

@@ -225,6 +225,11 @@ pub fn AppManager::registered_routes(self : AppManager) -> Array[String] {
 }
 
 ///|
+pub fn AppManager::audit(self : AppManager) -> RuntimeAudit {
+  self.plan.audit_with_registered_routes(self.registered_routes())
+}
+
+///|
 pub fn AppManager::window_count(self : AppManager) -> Int {
   self.plan.window_count()
 }
