@@ -212,6 +212,32 @@ pub async fn write_plan(
 }
 
 ///|
+pub fn verify_plan_contract(
+  plan : @lepusa.BundlePlan,
+) -> Result[Array[BundleWriteCheck], Array[String]] {
+  match plan.files() {
+    Ok(files) => {
+      let checks : Array[BundleWriteCheck] = []
+      for file in files {
+        if file.path().has_suffix("lepusa/runtime.json") {
+          checks.push(verify_runtime_manifest_text(file.path(), file.content()))
+          checks.push(verify_bridge_dispatch_text(file.path(), file.content()))
+          checks.push(
+            verify_native_launch_session_text(file.path(), file.content()),
+          )
+        } else if file.path().has_suffix("lepusa/distribution.json") {
+          checks.push(
+            verify_distribution_manifest_text(file.path(), file.content()),
+          )
+        }
+      }
+      Ok(checks)
+    }
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
 async fn verify_written_plan(
   root : String,
   files : Array[@lepusa.BundleFile],
@@ -284,7 +310,15 @@ async fn verify_distribution_manifest(path : String) -> BundleWriteCheck {
         message="could not read distribution manifest: \{error}",
       )
   }
-  let json = @json.parse(content.text()) catch {
+  verify_distribution_manifest_text(path, content.text())
+}
+
+///|
+fn verify_distribution_manifest_text(
+  path : String,
+  text : String,
+) -> BundleWriteCheck {
+  let json = @json.parse(text) catch {
     error =>
       return BundleWriteCheck::new(
         kind=DistributionManifestCheck,
@@ -403,7 +437,14 @@ async fn verify_runtime_manifest(path : String) -> BundleWriteCheck {
         message="could not read runtime manifest: \{error}",
       )
   }
-  let text = content.text()
+  verify_runtime_manifest_text(path, content.text())
+}
+
+///|
+fn verify_runtime_manifest_text(
+  path : String,
+  text : String,
+) -> BundleWriteCheck {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Ok(manifest) =>
       match manifest.webviews() {
@@ -449,7 +490,14 @@ async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
         message="could not read runtime manifest: \{error}",
       )
   }
-  let text = content.text()
+  verify_native_launch_session_text(path, content.text())
+}
+
+///|
+fn verify_native_launch_session_text(
+  path : String,
+  text : String,
+) -> BundleWriteCheck {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Ok(manifest) =>
       match

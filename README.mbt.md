@@ -217,6 +217,9 @@ runtime and bundler work concrete outputs to consume.
 plans, reports the selected target's native launch gate and signing
 prerequisites, and reports host WebView availability for the platform backend
 descriptors: WKWebView on macOS, WebView2 on Windows, and WebKitGTK on Linux.
+It also runs the materialization-independent bundle contract checks over the
+generated runtime and distribution manifests, including packaged bridge dispatch
+smoke for safe built-in sync routes.
 It also prints typed backend preflight lines that separate host dependency
 availability, WebView creation loops, sync bridge response evaluation, and
 async bridge drain support.
@@ -225,8 +228,8 @@ The underlying `NativeBackendPreflight` JSON classifies the active blocker as
 WebView creation, sync bridge evaluation, and async bridge drain problem fields
 for tooling.
 Passing `--json` emits one machine-readable health report with runtime,
-manifest, handler coverage, bundle, native launch, signing, and platform
-preflight sections.
+manifest, handler coverage, bundle, bundle contract, native launch, signing,
+and platform preflight sections.
 Passing `--strict` turns the aggregate health report into a CI gate: missing
 handlers, release-readiness issues, or selected-target native launch blockers
 make `doctor` exit with failure.

@@ -91,7 +91,9 @@ fn render_doctor_host(
   json~ : Bool,
 ) -> CliResult {
   let plan = host.plan()
-  let passed = doctor_readiness_pass(host, bundle)
+  let bundle_contract = @bundle.verify_plan_contract(bundle)
+  let passed = doctor_readiness_pass(host, bundle) &&
+    doctor_bundle_contract_pass(bundle_contract)
   match host.launch_manifest() {
     Ok(manifest) =>
       match bundle.files() {
@@ -102,6 +104,7 @@ fn render_doctor_host(
                 bundle,
                 manifest,
                 files,
+                bundle_contract,
                 strict~,
                 passed~,
               ) +
@@ -120,6 +123,7 @@ fn render_doctor_host(
               "[ok] ipc: routes=\{plan.command_routes().length()}\n" +
               render_handler_coverage(host) +
               "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
+              render_doctor_bundle_contract(bundle_contract) +
               render_release_readiness(bundle) +
               "[ok] runtime-dependencies: count=\{bundle.runtime_dependencies().length()}\n" +
               render_doctor_native_launch_gate(bundle.target(), host) +
@@ -145,6 +149,7 @@ fn render_doctor_json(
   bundle : @lepusa.BundlePlan,
   manifest : @lepusa.RuntimeLaunchManifest,
   files : Array[@lepusa.BundleFile],
+  bundle_contract : Result[Array[@bundle.BundleWriteCheck], Array[String]],
   strict~ : Bool,
   passed~ : Bool,
 ) -> String {
@@ -160,6 +165,7 @@ fn render_doctor_json(
     "\"ipc\":{\"routes\":\{plan.command_routes().length()}},",
     "\"handlers\":\{render_handler_coverage_json(host)},",
     "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()},\"runtimeDependencies\":[\{bundle.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}]},",
+    "\"bundleContract\":\{render_doctor_bundle_contract_json(bundle_contract)},",
     "\"releaseReadiness\":\{render_release_readiness_json(bundle)},",
     "\"nativeLaunch\":\{render_doctor_native_launch_json(bundle.target(), host)},",
     "\"signing\":{\"prerequisites\":[\{bundle.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}]},",
@@ -176,6 +182,23 @@ fn doctor_readiness_pass(
   missing_handler_routes(host).is_empty() &&
   doctor_release_readiness_pass(bundle) &&
   doctor_native_launch_pass(bundle.target(), host)
+}
+
+///|
+fn doctor_bundle_contract_pass(
+  result : Result[Array[@bundle.BundleWriteCheck], Array[String]],
+) -> Bool {
+  match result {
+    Ok(checks) => {
+      for check in checks {
+        if !check.ok() {
+          return false
+        }
+      }
+      true
+    }
+    Err(_) => false
+  }
 }
 
 ///|
@@ -244,6 +267,65 @@ fn render_release_readiness_json(bundle : @lepusa.BundlePlan) -> String {
         "}",
       ].join("")
   }
+}
+
+///|
+fn render_doctor_bundle_contract(
+  result : Result[Array[@bundle.BundleWriteCheck], Array[String]],
+) -> String {
+  match result {
+    Ok(checks) => {
+      let failed = bundle_contract_failed_count(checks)
+      let status = if failed == 0 { "ok" } else { "warn" }
+      let lines : Array[String] = [
+        "[\{status}] bundle-contract: checks=\{checks.length()} failed=\{failed}\n",
+      ]
+      for check in checks {
+        lines.push(
+          "[\{if check.ok() { "ok" } else { "warn" }}] bundle-check: \{check.kind().name()} - \{check.message()}\n",
+        )
+      }
+      lines.join("")
+    }
+    Err(problems) =>
+      "[warn] bundle-contract: checks=0 failed=1 issues=\{problems.join("; ")}\n"
+  }
+}
+
+///|
+fn render_doctor_bundle_contract_json(
+  result : Result[Array[@bundle.BundleWriteCheck], Array[String]],
+) -> String {
+  match result {
+    Ok(checks) =>
+      [
+        "{",
+        "\"ok\":\{cli_json_bool(bundle_contract_failed_count(checks) == 0)},",
+        "\"checks\":[\{checks.map(fn(check) { check.to_json() }).join(",")}]",
+        "}",
+      ].join("")
+    Err(problems) =>
+      [
+        "{",
+        "\"ok\":false,",
+        "\"checks\":[],",
+        "\"issues\":[\{problems.map(fn(problem) { cli_json_string(problem) }).join(",")}]",
+        "}",
+      ].join("")
+  }
+}
+
+///|
+fn bundle_contract_failed_count(
+  checks : Array[@bundle.BundleWriteCheck],
+) -> Int {
+  let mut failed = 0
+  for check in checks {
+    if !check.ok() {
+      failed += 1
+    }
+  }
+  failed
 }
 
 ///|

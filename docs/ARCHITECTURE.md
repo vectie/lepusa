@@ -904,7 +904,7 @@ exercise planning without reaching into private structs:
 
 ```text
 lepusa doctor [macos|windows|linux] [--strict]
-  -> validates app/runtime/bundle planning and reports signing prerequisites; strict mode fails missing handlers, release-readiness issues, and selected-target native launch blockers
+  -> validates app/runtime/bundle planning, bundle contract checks, and signing prerequisites; strict mode fails missing handlers, bundle contract failures, release-readiness issues, and selected-target native launch blockers
 
 lepusa plan
   -> prints runtime backend, windows, plugins, capabilities, command routes

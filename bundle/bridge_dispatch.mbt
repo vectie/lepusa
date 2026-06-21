@@ -9,7 +9,14 @@ async fn verify_bridge_dispatch(path : String) -> BundleWriteCheck {
         message="could not read runtime manifest: \{error}",
       )
   }
-  let text = content.text()
+  verify_bridge_dispatch_text(path, content.text())
+}
+
+///|
+fn verify_bridge_dispatch_text(
+  path : String,
+  text : String,
+) -> BundleWriteCheck {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Ok(manifest) =>
       match select_bridge_smoke_route(manifest) {
