@@ -14,14 +14,17 @@ import {
 pub struct FrontendApiBundle {
   config : FrontendApiConfig
   command_manifest : @lepusa.CommandManifest
+  invoke_contract_report : @lepusa.InvokeContractReport?
   javascript : String
   typescript : String
 } derive(Eq, @debug.Debug)
 pub fn FrontendApiBundle::command_manifest(Self) -> @lepusa.CommandManifest
 pub fn FrontendApiBundle::config(Self) -> FrontendApiConfig
 pub fn FrontendApiBundle::from_command_manifest(@lepusa.CommandManifest, config? : FrontendApiConfig) -> Result[Self, Array[String]]
+pub fn FrontendApiBundle::from_invoke_contract_report(@lepusa.CommandManifest, @lepusa.InvokeContractReport, config? : FrontendApiConfig) -> Result[Self, Array[String]]
 pub fn FrontendApiBundle::from_launch_manifest(@lepusa.RuntimeLaunchManifest, config? : FrontendApiConfig) -> Result[Self, Array[String]]
 pub fn FrontendApiBundle::from_runtime_plan(@lepusa.RuntimePlan, config? : FrontendApiConfig) -> Result[Self, Array[String]]
+pub fn FrontendApiBundle::invoke_contract_report(Self) -> @lepusa.InvokeContractReport?
 pub fn FrontendApiBundle::javascript(Self) -> String
 pub fn FrontendApiBundle::to_json(Self) -> String
 pub fn FrontendApiBundle::typescript(Self) -> String

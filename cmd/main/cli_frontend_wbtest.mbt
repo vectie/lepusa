@@ -3,6 +3,7 @@ async test "frontend command renders javascript by default" {
   let result = render_cli_async(["frontend"])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("export const commandManifest"))
+  assert_true(result.output.contains("export const invokeContractReport"))
   assert_true(result.output.contains("\"route\":\"core.invoke\""))
   assert_true(result.output.contains("export const core = commands[\"core\"];"))
 }
@@ -21,6 +22,7 @@ async test "frontend command renders declarations and json" {
   assert_true(json.output.contains("\"globalName\":\"lepusaNative\""))
   assert_true(json.output.contains("\"moduleName\":\"app-api\""))
   assert_true(json.output.contains("\"javascript\""))
+  assert_true(json.output.contains("\"invokeContractReport\""))
 }
 
 ///|
@@ -69,8 +71,8 @@ async test "frontend command emits only registered project invoke routes" {
     root + "/lepusa.json",
   ])
   assert_eq(js.exit_code, 0)
-  assert_false(js.output.contains("custom.run"))
   assert_true(js.output.contains("const routeList = [];"))
+  assert_true(js.output.contains("custom.run"))
   let dts = render_cli_async([
     "frontend",
     "dts",
@@ -79,4 +81,5 @@ async test "frontend command emits only registered project invoke routes" {
   ])
   assert_eq(dts.exit_code, 0)
   assert_true(dts.output.contains("Record<string, never>"))
+  assert_false(dts.output.contains("\"custom.run\":"))
 }

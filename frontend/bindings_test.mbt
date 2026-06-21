@@ -44,6 +44,7 @@ test "frontend api bundle generates javascript from runtime command manifest" {
       assert_eq(bundle.command_manifest().entries().length(), 3)
       let js = bundle.javascript()
       assert_true(js.contains("export const commandManifest"))
+      assert_true(js.contains("export const invokeContractReport = null;"))
       assert_true(js.contains("\"route\":\"core.read\""))
       assert_true(js.contains("export const routes"))
       assert_true(js.contains("export const isInvokeError"))
@@ -75,6 +76,11 @@ test "frontend api bundle generates typescript declarations" {
       assert_true(dts.contains("export declare function invoke"))
       assert_true(dts.contains("export type LepusaInvokeOptions"))
       assert_true(dts.contains("export type LepusaCommandPayloads = {"))
+      assert_true(
+        dts.contains(
+          "export declare const invokeContractReport: LepusaInvokeContractReport | null;",
+        ),
+      )
       assert_true(dts.contains("\"core.read\": { readonly path: string };"))
       assert_true(dts.contains("\"core.read\": string;"))
       assert_true(
@@ -151,6 +157,53 @@ test "frontend api bundle can use launch manifests and validates config" {
       assert_eq(problems[0], "frontend api global name is required")
       assert_eq(problems[1], "frontend api module name is required")
     }
+  }
+}
+
+///|
+test "frontend api bundle filters through live invoke contracts" {
+  let plan = frontend_test_plan()
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "core.read",
+    permission=FileSystemRead,
+    handler=fn(payload) { Ok(payload) },
+  )
+  let report = registry.invoke_contract_report(
+    plan.security_profile(
+      registered_routes=registry.routes(),
+      check_handlers=true,
+    ),
+  )
+  match
+    FrontendApiBundle::from_invoke_contract_report(
+      plan.command_manifest(),
+      report,
+      config=FrontendApiConfig::new(module_name="contract-api"),
+    ) {
+    Ok(bundle) => {
+      assert_true(bundle.invoke_contract_report() is Some(_))
+      assert_eq(bundle.command_manifest().entries().length(), 1)
+      assert_true(bundle.command_manifest().entry("core.read") is Some(_))
+      assert_true(bundle.command_manifest().entry("core.write") is None)
+      assert_true(
+        bundle.javascript().contains("export const invokeContractReport = {"),
+      )
+      assert_true(
+        bundle.javascript().contains("const routeList = [\"core.read\"];"),
+      )
+      assert_true(bundle.javascript().contains("core.write"))
+      let dts = bundle.typescript()
+      assert_true(dts.contains("export type LepusaRoute = \"core.read\";"))
+      assert_false(dts.contains("\"core.write\":"))
+      assert_true(
+        dts.contains(
+          "export declare const invokeContractReport: LepusaInvokeContractReport;",
+        ),
+      )
+      assert_true(bundle.to_json().contains("\"invokeContractReport\""))
+      assert_true(bundle.to_json().contains("core.write"))
+    }
+    Err(_) => abort("unexpected contract frontend bundle error")
   }
 }
 

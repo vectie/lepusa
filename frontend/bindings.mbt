@@ -8,6 +8,7 @@ pub struct FrontendApiConfig {
 pub struct FrontendApiBundle {
   config : FrontendApiConfig
   command_manifest : @lepusa.CommandManifest
+  invoke_contract_report : @lepusa.InvokeContractReport?
   javascript : String
   typescript : String
 } derive(Debug, Eq)
@@ -73,6 +74,28 @@ pub fn FrontendApiBundle::from_command_manifest(
   manifest : @lepusa.CommandManifest,
   config? : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
+  FrontendApiBundle::build(manifest, report=None, config~)
+}
+
+///|
+pub fn FrontendApiBundle::from_invoke_contract_report(
+  manifest : @lepusa.CommandManifest,
+  report : @lepusa.InvokeContractReport,
+  config? : FrontendApiConfig = FrontendApiConfig::new(),
+) -> Result[FrontendApiBundle, Array[String]] {
+  FrontendApiBundle::build(
+    frontend_manifest_for_contract_report(manifest, report),
+    report=Some(report),
+    config~,
+  )
+}
+
+///|
+fn FrontendApiBundle::build(
+  manifest : @lepusa.CommandManifest,
+  report~ : @lepusa.InvokeContractReport?,
+  config~ : FrontendApiConfig,
+) -> Result[FrontendApiBundle, Array[String]] {
   let problems = config.validate()
   if !problems.is_empty() {
     return Err(problems)
@@ -80,8 +103,9 @@ pub fn FrontendApiBundle::from_command_manifest(
   Ok({
     config,
     command_manifest: manifest,
-    javascript: frontend_api_javascript(manifest, config),
-    typescript: frontend_api_typescript(manifest, config),
+    invoke_contract_report: report,
+    javascript: frontend_api_javascript(manifest, report, config),
+    typescript: frontend_api_typescript(manifest, report, config),
   })
 }
 
@@ -95,6 +119,13 @@ pub fn FrontendApiBundle::command_manifest(
   self : FrontendApiBundle,
 ) -> @lepusa.CommandManifest {
   self.command_manifest
+}
+
+///|
+pub fn FrontendApiBundle::invoke_contract_report(
+  self : FrontendApiBundle,
+) -> @lepusa.InvokeContractReport? {
+  self.invoke_contract_report
 }
 
 ///|
@@ -114,6 +145,7 @@ pub fn FrontendApiBundle::to_json(self : FrontendApiBundle) -> String {
     "\"moduleName\":\{self.config.module_name().json_literal()},",
     "\"globalName\":\{self.config.global_name().json_literal()},",
     "\"commandManifest\":\{self.command_manifest.to_json()},",
+    "\"invokeContractReport\":\{frontend_contract_report_json(self.invoke_contract_report)},",
     "\"javascript\":\{self.javascript.json_literal()},",
     "\"typescript\":\{self.typescript.json_literal()}",
     "}",
@@ -123,6 +155,7 @@ pub fn FrontendApiBundle::to_json(self : FrontendApiBundle) -> String {
 ///|
 fn frontend_api_javascript(
   manifest : @lepusa.CommandManifest,
+  report : @lepusa.InvokeContractReport?,
   config : FrontendApiConfig,
 ) -> String {
   let route_literals = manifest
@@ -149,6 +182,7 @@ fn frontend_api_javascript(
     "};",
     "",
     "export const commandManifest = \{manifest.to_json()};",
+    "export const invokeContractReport = \{frontend_contract_report_json(report)};",
     "export const routes = Object.freeze(routeList.slice());",
     "export const can = (route) => getApi().can(route);",
     "export const invoke = (route, payload = null, options = {}) => getApi().invoke(route, payload, options);",
@@ -186,6 +220,7 @@ fn frontend_api_javascript(
     "",
     "export default Object.freeze({",
     "  commandManifest,",
+    "  invokeContractReport,",
     "  routes,",
     "  can,",
     "  invoke,",
@@ -227,8 +262,24 @@ fn frontend_invokable_manifest(
 }
 
 ///|
+fn frontend_manifest_for_contract_report(
+  manifest : @lepusa.CommandManifest,
+  report : @lepusa.InvokeContractReport,
+) -> @lepusa.CommandManifest {
+  let dispatchable_routes = report.dispatchable_routes()
+  let entries : Array[@lepusa.CommandManifestEntry] = []
+  for entry in manifest.entries() {
+    if dispatchable_routes.contains(entry.route()) {
+      entries.push(entry)
+    }
+  }
+  @lepusa.CommandManifest::new(entries~)
+}
+
+///|
 fn frontend_api_typescript(
   manifest : @lepusa.CommandManifest,
+  report : @lepusa.InvokeContractReport?,
   config : FrontendApiConfig,
 ) -> String {
   let route_union = if manifest.routes().is_empty() {
@@ -258,12 +309,14 @@ fn frontend_api_typescript(
     "export type LepusaEvent = { name: string; payload?: string };",
     "export type LepusaUnlisten = () => boolean;",
     "export type LepusaEventHandler = (payload: unknown, event: LepusaEvent) => void;",
+    "export type LepusaInvokeContractReport = { ok: boolean; dispatchableRoutes: readonly string[]; undeclaredRoutes: readonly string[]; duplicateRoutes: readonly string[]; problems: readonly string[]; contracts: readonly unknown[] };",
     "export type LepusaCommandPayloads = \{typescript_command_schema_map(manifest, request=true)};",
     "export type LepusaCommandResponses = \{typescript_command_schema_map(manifest, request=false)};",
     "export type LepusaPayloadFor<Route extends string> = Route extends keyof LepusaCommandPayloads ? LepusaCommandPayloads[Route] : LepusaPayload;",
     "export type LepusaResponseFor<Route extends string> = Route extends keyof LepusaCommandResponses ? LepusaCommandResponses[Route] : unknown;",
     "",
     "export declare const commandManifest: \{manifest.to_json()};",
+    "export declare const invokeContractReport: \{frontend_contract_report_type(report)};",
     "export declare const routes: readonly LepusaRoute[];",
     "export declare function can(route: string): boolean;",
     "export declare function invoke<Route extends LepusaRoute>(route: Route, payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions): Promise<LepusaResponseFor<Route>>;",
@@ -278,6 +331,7 @@ fn frontend_api_typescript(
     "",
     "declare const api: {",
     "  commandManifest: typeof commandManifest;",
+    "  invokeContractReport: typeof invokeContractReport;",
     "  routes: typeof routes;",
     "  can: typeof can;",
     "  invoke: typeof invoke;",
@@ -337,6 +391,26 @@ fn typescript_command_schema_map(
     lines.push("  \{entry.route().json_literal()}: \{schema.typescript()};")
   }
   "{\n\{lines.join("\n")}\n}"
+}
+
+///|
+fn frontend_contract_report_json(
+  report : @lepusa.InvokeContractReport?,
+) -> String {
+  match report {
+    Some(report) => report.to_json()
+    None => "null"
+  }
+}
+
+///|
+fn frontend_contract_report_type(
+  report : @lepusa.InvokeContractReport?,
+) -> String {
+  match report {
+    Some(_) => "LepusaInvokeContractReport"
+    None => "LepusaInvokeContractReport | null"
+  }
 }
 
 ///|

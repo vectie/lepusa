@@ -4,17 +4,13 @@ async fn render_frontend_async(args : Array[String]) -> CliResult {
     Ok(config) =>
       match project_runtime_host(args) {
         Ok(host) =>
-          match host.launch_manifest() {
-            Ok(manifest) =>
-              match
-                @frontend.FrontendApiBundle::from_launch_manifest(
-                  manifest,
-                  config~,
-                ) {
-                Ok(bundle) => render_frontend_bundle(args, bundle)
-                Err(problems) =>
-                  fail(render_problems("Lepusa frontend", problems))
-              }
+          match
+            @frontend.FrontendApiBundle::from_invoke_contract_report(
+              host.plan().command_manifest(),
+              host.invoke_contract_report(),
+              config~,
+            ) {
+            Ok(bundle) => render_frontend_bundle(args, bundle)
             Err(problems) => fail(render_problems("Lepusa frontend", problems))
           }
         Err(problems) => fail(render_problems("Lepusa frontend", problems))
