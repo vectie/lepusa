@@ -40,6 +40,7 @@ async fn render_verify_project(
   passed = verify_native_session(target, host, lines, strict~) && passed
   passed = verify_bundle_contract(bundle, lines) && passed
   passed = verify_release_readiness(bundle, lines, strict~) && passed
+  passed = verify_package_readiness(bundle, lines, strict~) && passed
   let output = if json {
     render_verify_json(target, strict~, passed~, lines~, audit~, bundle~) + "\n"
   } else {
@@ -68,6 +69,7 @@ fn render_verify_json(
     "\"ok\":\{cli_json_bool(passed)},",
     "\"audit\":\{audit.to_json()},",
     "\"releaseReadiness\":\{render_release_readiness_json(bundle)},",
+    "\"packageReadiness\":\{render_package_readiness_json(bundle)},",
     "\"lines\":[\{lines.map(fn(line) { cli_json_string(line.trim().to_owned()) }).join(",")}]",
     "}",
   ].join("")
@@ -463,6 +465,49 @@ fn verify_release_readiness(
       lines.push(
         "[fail] release-readiness: ready=false issues=\{problems.join("; ")}\n",
       )
+      false
+    }
+  }
+}
+
+///|
+fn verify_package_readiness(
+  bundle : @lepusa.BundlePlan,
+  lines : Array[String],
+  strict~ : Bool,
+) -> Bool {
+  match @bundle.package_plan_for_bundle(bundle) {
+    Ok(plan) =>
+      if plan.ready() {
+        lines.push(
+          "[ok] package-readiness: ready=true package-kind=\{plan.package_kind()} commands=\{plan.commands().length()} outputs=\{plan.outputs().length()}\n",
+        )
+        true
+      } else {
+        let blockers = plan.blockers().join("; ")
+        if strict {
+          lines.push(
+            "[fail] strict: package-readiness ready=false blockers=\{blockers}\n",
+          )
+          false
+        } else {
+          lines.push(
+            "[warn] package-readiness: ready=false blockers=\{blockers}\n",
+          )
+          true
+        }
+      }
+    Err(problems) => {
+      let blockers = problems.join("; ")
+      if strict {
+        lines.push(
+          "[fail] strict: package-readiness ready=false blockers=\{blockers}\n",
+        )
+      } else {
+        lines.push(
+          "[fail] package-readiness: ready=false blockers=\{blockers}\n",
+        )
+      }
       false
     }
   }

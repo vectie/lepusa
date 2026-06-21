@@ -915,7 +915,7 @@ exercise planning without reaching into private structs:
 
 ```text
 lepusa doctor [macos|windows|linux] [--strict]
-  -> validates app/runtime/bundle planning, bundle contract checks, and signing prerequisites; strict mode fails missing handlers, bundle contract failures, release-readiness issues, and selected-target native launch blockers
+  -> validates app/runtime/bundle planning, bundle contract checks, package readiness, and signing prerequisites; strict mode fails missing handlers, bundle contract failures, release-readiness issues, package-readiness blockers, and selected-target native launch blockers
 
 lepusa plan
   -> prints runtime backend, windows, plugins, capabilities, command routes
@@ -933,7 +933,7 @@ lepusa run macos --launch
   -> prepares and opens the first macOS WKWebView window
 
 lepusa verify [macos|windows|linux]
-  -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, bundle contracts, and release-readiness; strict mode fails release-readiness issues
+  -> runs a no-write project proof across runtime, dev, manifest, resolvable initial content, native session, bundle contracts, release-readiness, and package-readiness; strict mode fails release/package readiness issues
 
 lepusa bridge-task <window> <plugin.command> [payload]
   -> emits source-project bridge task message plus scheduling metadata for native handlers

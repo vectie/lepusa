@@ -63,6 +63,8 @@ async test "doctor renders framework boundary checks" {
   assert_true(result.output.contains("[ok] bundle: target=macos"))
   assert_true(result.output.contains("[ok] bundle-contract: checks=4 failed=0"))
   assert_true(result.output.contains("[ok] bundle-check: bridge-dispatch"))
+  assert_true(result.output.contains("[ok] package-readiness: ready=true"))
+  assert_true(result.output.contains("package-kind=macos-app-dmg"))
   assert_true(result.output.contains("[ok] native-launch: target=macos"))
   assert_true(result.output.contains("can-launch=true"))
   assert_true(result.output.contains("contract-ok=true"))
@@ -82,6 +84,8 @@ async test "doctor renders framework boundary checks" {
   assert_true(json_result.output.contains("\"manifest\":{"))
   assert_true(json_result.output.contains("\"handlers\":{"))
   assert_true(json_result.output.contains("\"bundleContract\":{"))
+  assert_true(json_result.output.contains("\"packageReadiness\":{"))
+  assert_true(json_result.output.contains("\"packageKind\":\"macos-app-dmg\""))
   assert_true(json_result.output.contains("\"kind\":\"bridge-dispatch\""))
   assert_true(json_result.output.contains("\"nativeLaunch\":{"))
   assert_true(json_result.output.contains("\"backendContract\":{"))
@@ -99,6 +103,8 @@ async test "doctor supports target-specific signing diagnostics" {
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("[ok] bundle: target=linux"))
   assert_true(result.output.contains("[ok] native-launch: target=linux"))
+  assert_true(result.output.contains("[ok] package-readiness: ready=true"))
+  assert_true(result.output.contains("package-kind=linux-portable-archive"))
   assert_true(result.output.contains("[ok] signing: prerequisites=2"))
   assert_false(result.output.contains("package-signing-key"))
   assert_true(result.output.contains("package signing key"))
@@ -816,6 +822,11 @@ async test "generated project config verifies end to end contracts" {
       "[warn] release-readiness: ready=false issues=signing is not configured",
     ),
   )
+  assert_true(
+    result.output.contains(
+      "[ok] package-readiness: ready=true package-kind=linux-portable-archive",
+    ),
+  )
   let windows = render_cli_async([
     "verify",
     "windows",
@@ -876,6 +887,9 @@ async test "generated project config verifies end to end contracts" {
   assert_true(
     signed_strict.output.contains("[ok] release-readiness: ready=true"),
   )
+  assert_true(
+    signed_strict.output.contains("[ok] package-readiness: ready=true"),
+  )
   let strict_windows = render_cli_async([
     "verify",
     "windows",
@@ -897,6 +911,10 @@ async test "generated project config verifies end to end contracts" {
   assert_true(json_result.output.contains("\"strict\":false"))
   assert_true(json_result.output.contains("\"ok\":true"))
   assert_true(json_result.output.contains("\"releaseReadiness\":{"))
+  assert_true(json_result.output.contains("\"packageReadiness\":{"))
+  assert_true(
+    json_result.output.contains("\"packageKind\":\"linux-portable-archive\""),
+  )
   assert_true(json_result.output.contains("\"ready\":false"))
   assert_true(json_result.output.contains("\"lines\":["))
   assert_true(json_result.output.contains("\"[ok] plan: windows=1"))

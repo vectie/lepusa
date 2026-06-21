@@ -218,8 +218,8 @@
     and reports target native launch gate, bundle contract checks, signing
     prerequisites, and backend preflight diagnostics, with one machine-readable
     health report for tooling and a strict CI gate for missing handlers, bundle
-    contract failures, release-readiness issues, and selected-target native
-    launch blockers.
+    contract failures, release-readiness issues, package-readiness blockers,
+    and selected-target native launch blockers.
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.
@@ -234,7 +234,7 @@
   - `lepusa bridge-loop`: feeds one source bridge message through the adapter loop and reports the window delivery envelope with immediate scripts, async completions, evaluation scripts, and executable evaluation operations. Runtime adapters also expose `drain_window` for async work captured by native message-handler callbacks.
   - `lepusa bridge-drain`: probes the source split native path by running the handoff callback before draining pending async bridge work into a window delivery envelope.
   - `lepusa launch-session [--async-bridge]`: emits a target-aware source launch readiness envelope with session JSON, backend preflight, launch capability, requested versus effective bridge mode, and optional async-capable bridge scheduler metadata.
-  - `lepusa verify [macos|windows|linux] [--json]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, and bundle contracts, with machine-readable output for CI.
+  - `lepusa verify [macos|windows|linux] [--json]`: runs the no-write project proof across runtime plan, dev plan, manifest assets, handler coverage, native launch session, bundle contracts, release-readiness, and package-readiness, with machine-readable output for CI.
   - `lepusa bundle-plan [--json]`: prints a target bundle plan, with a machine-readable artifact/resource/signing/file report for tooling.
   - `lepusa bundle-inspect [--json]`: parses packaged `lepusa/distribution.json` and reports installer-facing artifact, resource, dependency, runtime executable, and signing metadata.
   - `lepusa bundle-release-plan [--json]`: lowers packaged distribution metadata into ordered release steps for dependency validation, resource staging, signing, and artifact collection.

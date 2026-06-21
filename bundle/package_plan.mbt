@@ -142,6 +142,20 @@ pub fn BundleDistributionManifest::package_plan(
 }
 
 ///|
+pub fn package_plan_for_bundle(
+  bundle : @lepusa.BundlePlan,
+) -> Result[BundlePackagePlan, Array[String]] {
+  match
+    BundleDistributionManifest::parse(
+      "lepusa/distribution.json",
+      bundle.distribution_manifest_json(),
+    ) {
+    Ok(manifest) => Ok(manifest.package_plan())
+    Err(problem) => Err([problem])
+  }
+}
+
+///|
 pub fn BundlePackagePlan::manifest(
   self : BundlePackagePlan,
 ) -> BundleDistributionManifest {

@@ -125,6 +125,7 @@ fn render_doctor_host(
               "[ok] bundle: target=\{bundle.target().name()} files=\{files.length()} resources=\{bundle.resources().length()}\n" +
               render_doctor_bundle_contract(bundle_contract) +
               render_release_readiness(bundle) +
+              render_package_readiness(bundle) +
               "[ok] runtime-dependencies: count=\{bundle.runtime_dependencies().length()}\n" +
               render_doctor_native_launch_gate(bundle.target(), host) +
               "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
@@ -167,6 +168,7 @@ fn render_doctor_json(
     "\"bundle\":{\"target\":\{cli_json_string(bundle.target().name())},\"files\":\{files.length()},\"resources\":\{bundle.resources().length()},\"runtimeDependencies\":[\{bundle.runtime_dependencies().map(fn(dependency) { dependency.to_json() }).join(",")}]},",
     "\"bundleContract\":\{render_doctor_bundle_contract_json(bundle_contract)},",
     "\"releaseReadiness\":\{render_release_readiness_json(bundle)},",
+    "\"packageReadiness\":\{render_package_readiness_json(bundle)},",
     "\"nativeLaunch\":\{render_doctor_native_launch_json(bundle.target(), host)},",
     "\"signing\":{\"prerequisites\":[\{bundle.signing_prerequisites().map(fn(item) { item.to_json() }).join(",")}]},",
     "\"platforms\":[\{render_native_backend_diagnostics_json()}]",
@@ -181,6 +183,7 @@ fn doctor_readiness_pass(
 ) -> Bool {
   missing_handler_routes(host).is_empty() &&
   doctor_release_readiness_pass(bundle) &&
+  doctor_package_readiness_pass(bundle) &&
   doctor_native_launch_pass(bundle.target(), host)
 }
 
@@ -205,6 +208,14 @@ fn doctor_bundle_contract_pass(
 fn doctor_release_readiness_pass(bundle : @lepusa.BundlePlan) -> Bool {
   match bundle.release_readiness() {
     Ok(report) => report.ready()
+    Err(_) => false
+  }
+}
+
+///|
+fn doctor_package_readiness_pass(bundle : @lepusa.BundlePlan) -> Bool {
+  match @bundle.package_plan_for_bundle(bundle) {
+    Ok(plan) => plan.ready()
     Err(_) => false
   }
 }
@@ -264,6 +275,38 @@ fn render_release_readiness_json(bundle : @lepusa.BundlePlan) -> String {
         "\"target\":\{cli_json_string(bundle.target().name())},",
         "\"ready\":false,",
         "\"issues\":[\{problems.map(fn(problem) { cli_json_string(problem) }).join(",")}]",
+        "}",
+      ].join("")
+  }
+}
+
+///|
+fn render_package_readiness(bundle : @lepusa.BundlePlan) -> String {
+  match @bundle.package_plan_for_bundle(bundle) {
+    Ok(plan) => {
+      let status = if plan.ready() { "ok" } else { "warn" }
+      let blockers = if plan.blockers().is_empty() {
+        ""
+      } else {
+        " blockers=\{plan.blockers().join("; ")}"
+      }
+      "[\{status}] package-readiness: ready=\{plan.ready()} package-kind=\{plan.package_kind()} commands=\{plan.commands().length()} outputs=\{plan.outputs().length()}\{blockers}\n"
+    }
+    Err(problems) =>
+      "[warn] package-readiness: ready=false blockers=\{problems.join("; ")}\n"
+  }
+}
+
+///|
+fn render_package_readiness_json(bundle : @lepusa.BundlePlan) -> String {
+  match @bundle.package_plan_for_bundle(bundle) {
+    Ok(plan) => plan.to_json()
+    Err(problems) =>
+      [
+        "{",
+        "\"target\":\{cli_json_string(bundle.target().name())},",
+        "\"ready\":false,",
+        "\"blockers\":[\{problems.map(fn(problem) { cli_json_string(problem) }).join(",")}]",
         "}",
       ].join("")
   }
