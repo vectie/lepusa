@@ -68,7 +68,13 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     },
     control_window=fn(_) { NativeOperationExecuted },
     desktop_shell=fn(operation) {
-      if operation.domain() == "app" &&
+      if operation.domain() == "menu" &&
+        (
+          operation.action() == "setAppMenu" ||
+          operation.action() == "clearAppMenu"
+        ) {
+        NativeOperationExecuted
+      } else if operation.domain() == "app" &&
         (
           operation.action() == "setDockVisibility" ||
           operation.action() == "app.setDockVisibility"

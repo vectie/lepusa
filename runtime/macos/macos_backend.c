@@ -46,6 +46,7 @@ static const int LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_ACCESSORY = 1;
 
 typedef void *(*LepusaMsgSendId)(void *, void *);
 typedef void *(*LepusaMsgSendIdId)(void *, void *, void *);
+typedef void *(*LepusaMsgSendIdIdIdId)(void *, void *, void *, void *, void *);
 typedef void *(*LepusaMsgSendIdCStr)(void *, void *, const char *);
 typedef void *(*LepusaMsgSendIdULong)(void *, void *, unsigned long);
 typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
@@ -1479,6 +1480,135 @@ static void lepusa_apply_dock_visibility(
   }
 }
 
+static const char *lepusa_json_skip_space(const char *cursor, const char *end) {
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  return cursor;
+}
+
+static const char *lepusa_json_string_end(const char *cursor, const char *end) {
+  while (cursor < end) {
+    if (*cursor == '\\') {
+      cursor += 2;
+    } else if (*cursor == '"') {
+      return cursor;
+    } else {
+      cursor++;
+    }
+  }
+  return NULL;
+}
+
+static int lepusa_json_next_label(
+  const char **cursor,
+  const char *end,
+  const char **label_out,
+  int32_t *label_len_out
+) {
+  if (cursor == NULL ||
+      *cursor == NULL ||
+      label_out == NULL ||
+      label_len_out == NULL) {
+    return 0;
+  }
+  const char *pattern = "\"label\"";
+  size_t pattern_len = strlen(pattern);
+  const char *p = *cursor;
+  while (p + pattern_len <= end) {
+    if (memcmp(p, pattern, pattern_len) != 0) {
+      p++;
+      continue;
+    }
+    const char *value = lepusa_json_skip_space(p + pattern_len, end);
+    if (value >= end || *value != ':') {
+      p++;
+      continue;
+    }
+    value = lepusa_json_skip_space(value + 1, end);
+    if (value >= end || *value != '"') {
+      p++;
+      continue;
+    }
+    value++;
+    const char *value_end = lepusa_json_string_end(value, end);
+    if (value_end == NULL) {
+      return 0;
+    }
+    *label_out = value;
+    *label_len_out = (int32_t)(value_end - value);
+    *cursor = value_end + 1;
+    return 1;
+  }
+  return 0;
+}
+
+static void *lepusa_macos_menu_with_title(const char *title, int32_t title_len) {
+  void *menu_alloc = lepusa_msg_id(lepusa_cls("NSMenu"), "alloc");
+  if (menu_alloc == NULL) {
+    return NULL;
+  }
+  return ((LepusaMsgSendIdId)lepusa_objc_msg_send)(
+    menu_alloc,
+    lepusa_sel("initWithTitle:"),
+    lepusa_ns_string_from_range(title, title_len)
+  );
+}
+
+static void *lepusa_macos_menu_item_with_label(
+  const char *label,
+  int32_t label_len
+) {
+  if (label == NULL || label_len <= 0) {
+    return NULL;
+  }
+  void *item_alloc = lepusa_msg_id(lepusa_cls("NSMenuItem"), "alloc");
+  if (item_alloc == NULL) {
+    return NULL;
+  }
+  return ((LepusaMsgSendIdIdIdId)lepusa_objc_msg_send)(
+    item_alloc,
+    lepusa_sel("initWithTitle:action:keyEquivalent:"),
+    lepusa_ns_string_from_range(label, label_len),
+    NULL,
+    lepusa_ns_string_from_range("", 0)
+  );
+}
+
+static void lepusa_apply_app_menu(
+  const char *payload,
+  int32_t payload_len
+) {
+  if (payload == NULL || payload_len <= 0) {
+    return;
+  }
+  void *menu = lepusa_macos_menu_with_title("Lepusa", 6);
+  if (menu == NULL) {
+    return;
+  }
+  const char *cursor = payload;
+  const char *end = payload + payload_len;
+  const char *label = NULL;
+  int32_t label_len = 0;
+  while (lepusa_json_next_label(&cursor, end, &label, &label_len)) {
+    void *item = lepusa_macos_menu_item_with_label(label, label_len);
+    if (item != NULL) {
+      lepusa_msg_void_id(menu, "addItem:", item);
+    }
+  }
+  void *application = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+  if (application != NULL) {
+    lepusa_msg_void_id(application, "setMainMenu:", menu);
+  }
+}
+
+static void lepusa_clear_app_menu(void) {
+  void *application = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+  if (application != NULL) {
+    lepusa_msg_void_id(application, "setMainMenu:", NULL);
+  }
+}
+
 static void lepusa_apply_desktop_shell_from_handoff_packet(
   LepusaBridgeContext *context,
   moonbit_bytes_t packet
@@ -1516,6 +1646,14 @@ static void lepusa_apply_desktop_shell_from_handoff_packet(
     }
     if (lepusa_app_shell_action_equals(record.action, record.action_len, "setDockVisibility")) {
       lepusa_apply_dock_visibility(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "menu.setAppMenu")) {
+      lepusa_apply_app_menu(record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_range_equals(record.action, record.action_len, "menu.clearAppMenu")) {
+      lepusa_clear_app_menu();
       continue;
     }
     LepusaWindowSlot *slot = lepusa_find_window_slot(
