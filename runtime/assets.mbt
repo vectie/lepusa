@@ -93,11 +93,39 @@ pub fn RuntimeHost::resolve_asset_json(
 }
 
 ///|
+pub fn RuntimeHost::resolve_window_asset_json(
+  self : RuntimeHost,
+  window_label~ : String,
+  url : String,
+) -> String {
+  match self.snapshot() {
+    Ok(session) => session.resolve_window_asset_json(window_label~, url)
+    Err(problems) =>
+      runtime_asset_error_json(
+        url,
+        problems.get(0).unwrap_or("runtime session is invalid"),
+      )
+  }
+}
+
+///|
 pub fn RuntimeSession::resolve_asset_json(
   self : RuntimeSession,
   url : String,
 ) -> String {
   match self.resolve_asset(url) {
+    Ok(response) => response.to_json()
+    Err(problem) => runtime_asset_error_json(url, problem)
+  }
+}
+
+///|
+pub fn RuntimeSession::resolve_window_asset_json(
+  self : RuntimeSession,
+  window_label~ : String,
+  url : String,
+) -> String {
+  match self.resolve_window_asset(window_label~, url) {
     Ok(response) => response.to_json()
     Err(problem) => runtime_asset_error_json(url, problem)
   }
@@ -124,6 +152,55 @@ pub fn RuntimeSession::resolve_asset(
       } else {
         Err("unknown asset authority: \{parsed.authority}")
       }
+  }
+}
+
+///|
+pub fn RuntimeSession::resolve_window_asset(
+  self : RuntimeSession,
+  window_label~ : String,
+  url : String,
+) -> Result[RuntimeAssetResponse, String] {
+  if window_label == "" {
+    return Err("asset request window label is required")
+  }
+  match parse_asset_url(url) {
+    Err(problem) => Err(problem)
+    Ok(parsed) =>
+      if parsed.scheme != self.asset_protocol {
+        Err("asset scheme mismatch: \{parsed.scheme}")
+      } else if parsed.authority == "runtime" {
+        self.resolve_runtime_asset(url, parsed.path)
+      } else {
+        match parse_window_asset_path(parsed.path) {
+          Err(problem) => Err(problem)
+          Ok((asset_window, _)) =>
+            if asset_window != window_label {
+              Err(
+                "asset request for window \{window_label} cannot load window \{asset_window} asset",
+              )
+            } else {
+              self.resolve_asset_from_parsed(url, parsed)
+            }
+        }
+      }
+  }
+}
+
+///|
+fn RuntimeSession::resolve_asset_from_parsed(
+  self : RuntimeSession,
+  url : String,
+  parsed : ParsedAssetUrl,
+) -> Result[RuntimeAssetResponse, String] {
+  if parsed.authority == "inline" || parsed.authority == "rabbita" {
+    self.resolve_virtual_asset(url, parsed)
+  } else if parsed.authority == "local" {
+    self.resolve_local_asset(url, parsed)
+  } else if parsed.authority == "packaged" {
+    self.resolve_packaged_asset(url, parsed)
+  } else {
+    Err("unknown asset authority: \{parsed.authority}")
   }
 }
 

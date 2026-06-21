@@ -326,6 +326,7 @@ pub struct BundledRuntimeManifest {
 pub fn BundledRuntimeManifest::artifact_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
+pub fn BundledRuntimeManifest::asset_protocol_resolver_callback_for_window(Self, window_label~ : String) -> (Bytes) -> Bytes
 pub fn BundledRuntimeManifest::bootstrap_json(Self) -> String
 pub fn BundledRuntimeManifest::bootstrap_plan(Self) -> Result[BundledBootstrapPlan, String]
 pub fn BundledRuntimeManifest::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
@@ -356,6 +357,8 @@ pub fn BundledRuntimeManifest::registered_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::registered_sync_routes(Self) -> Array[String]
 pub fn BundledRuntimeManifest::resolve_asset_json(Self, String) -> String
 pub fn BundledRuntimeManifest::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
+pub fn BundledRuntimeManifest::resolve_window_asset_json(Self, window_label~ : String, String) -> String
+pub fn BundledRuntimeManifest::resolve_window_asset_protocol_packet_bytes(Self, window_label~ : String, Bytes) -> Bytes
 pub fn BundledRuntimeManifest::resource_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::run(Self, mode? : BundledRunMode) -> Result[BundledRunResult, String]
 pub fn BundledRuntimeManifest::run_plan(Self) -> Result[BundledRunPlan, String]

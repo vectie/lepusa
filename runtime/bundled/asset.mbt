@@ -28,6 +28,48 @@ pub fn BundledRuntimeManifest::resolve_asset_json(
 }
 
 ///|
+pub fn BundledRuntimeManifest::resolve_window_asset_json(
+  self : BundledRuntimeManifest,
+  window_label~ : String,
+  url : String,
+) -> String {
+  if window_label == "" {
+    return runtime_asset_error_json(
+      url, "asset request window label is required",
+    )
+  }
+  match parse_runtime_asset_url(url) {
+    Err(problem) => runtime_asset_error_json(url, problem)
+    Ok(parsed) => {
+      let expected_scheme = optional_string(self.runtime, "assetProtocol").unwrap_or(
+        "lepusa",
+      )
+      if parsed.scheme != expected_scheme {
+        return runtime_asset_error_json(
+          url,
+          "asset scheme mismatch: \{parsed.scheme}",
+        )
+      }
+      if parsed.authority == "runtime" {
+        return self.resolve_runtime_bridge_json(url, parsed.path)
+      }
+      match parse_window_asset_path(parsed.path) {
+        Err(problem) => runtime_asset_error_json(url, problem)
+        Ok((asset_window, _)) =>
+          if asset_window != window_label {
+            runtime_asset_error_json(
+              url,
+              "asset request for window \{window_label} cannot load window \{asset_window} asset",
+            )
+          } else {
+            self.resolve_asset_json(url)
+          }
+      }
+    }
+  }
+}
+
+///|
 fn BundledRuntimeManifest::resolve_runtime_bridge_json(
   self : BundledRuntimeManifest,
   url : String,

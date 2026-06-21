@@ -59,6 +59,15 @@ pub fn NativeRuntime::resolve_asset_json(
 }
 
 ///|
+pub fn NativeRuntime::resolve_window_asset_json(
+  self : NativeRuntime,
+  window_label~ : String,
+  url : String,
+) -> String {
+  self.host.resolve_window_asset_json(window_label~, url)
+}
+
+///|
 pub fn NativeRuntime::dispatch_json(
   self : NativeRuntime,
   input : String,

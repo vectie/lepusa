@@ -361,15 +361,17 @@ command dispatch through the plan's capability set. Platform backends should add
 event loop and WebView ownership underneath this package instead of reaching
 back into app construction APIs.
 
-`RuntimeSession::resolve_asset(url)` is the custom-protocol contract native
-backends should call from their WebView protocol handler. It resolves the
-generated bridge, inline virtual files, safe local asset paths, and safe
-packaged asset paths while rejecting traversal attempts before platform file IO
-happens.
+`RuntimeSession::resolve_window_asset(window_label, url)` is the custom-protocol
+contract native backends should call from their WebView protocol handler. It
+resolves the generated bridge, inline virtual files, safe local asset paths, and
+safe packaged asset paths while rejecting traversal attempts and cross-window
+asset requests before platform file IO happens.
 `RuntimeSession::resolve_asset_json(url)` and
 `RuntimeHost::resolve_asset_json(url)` expose the same decision as a compact
 backend wire envelope: `{ok,url,mimeType,body}` for virtual content, local file
 paths, or packaged file paths, and `{ok:false,url,error}` for denial or misses.
+Their `resolve_window_asset_json` variants are the production native boundary;
+the unscoped forms remain useful for CLI inspection and manifest smoke tests.
 The CLI command `lepusa asset <url>` runs that exact path against the current
 project manifest, giving backend implementers and app authors a no-window smoke
 test for protocol mappings and virtual asset generation.

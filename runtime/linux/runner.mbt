@@ -238,7 +238,9 @@ fn linux_open_window(
     fn(dispatch, message) { dispatch(message) },
     callbacks.handoff_packet_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    runtime.asset_protocol_resolver_callback(),
+    runtime.asset_protocol_resolver_callback_for_window(
+      window_label=packet.label_text(),
+    ),
   )
   linux_status_with_lifecycle_and_shutdown(
     match exit_code {
@@ -328,7 +330,9 @@ fn linux_open_bundled_window(
     fn(dispatch, message) { dispatch(message) },
     callbacks.handoff_packet_callback(),
     fn(resolve_asset, url) { resolve_asset(url) },
-    manifest.asset_protocol_resolver_callback(),
+    manifest.asset_protocol_resolver_callback_for_window(
+      window_label=packet.label_text(),
+    ),
   )
   linux_status_with_lifecycle_and_shutdown(
     linux_status_from_exit_code(exit_code),

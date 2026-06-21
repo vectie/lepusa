@@ -169,7 +169,9 @@ pub fn run(
         dispatch_for_window=fn(window_label) {
           adapter.callbacks(window_label~).handoff_packet_callback()
         },
-        resolve_asset=runtime.asset_protocol_resolver_callback(),
+        resolve_asset_for_window=fn(window_label) {
+          runtime.asset_protocol_resolver_callback_for_window(window_label~)
+        },
       )
     }
   }
@@ -190,7 +192,9 @@ pub fn run_bundled(
         dispatch_for_window=fn(window_label) {
           adapter.callbacks(window_label~).handoff_packet_callback()
         },
-        resolve_asset=manifest.asset_protocol_resolver_callback(),
+        resolve_asset_for_window=fn(window_label) {
+          manifest.asset_protocol_resolver_callback_for_window(window_label~)
+        },
       )
     }
   }
@@ -331,7 +335,7 @@ fn run_plan(
   plan : MacOSRunPlan,
   mode~ : MacOSRunMode,
   dispatch_for_window~ : (String) -> (Bytes) -> Bytes,
-  resolve_asset~ : (Bytes) -> Bytes,
+  resolve_asset_for_window~ : (String) -> (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
     MacOSDryRun => Ok({ plan, status: RunPrepared })
@@ -356,6 +360,7 @@ fn run_plan(
         None => ()
       }
       let dispatch = dispatch_for_window(packet.label_text())
+      let resolve_asset = resolve_asset_for_window(packet.label_text())
       let exit_code = run_webview_with_bridge(
         packet.title(),
         packet.load_url(),

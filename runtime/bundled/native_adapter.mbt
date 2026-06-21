@@ -8,7 +8,10 @@ pub fn BundledRuntimeManifest::initial_load_url(
     Ok(webview.url())
   } else {
     @runtime.native_asset_load_url_from_json(
-      self.resolve_asset_json(webview.url()),
+      self.resolve_window_asset_json(
+        window_label=webview.label(),
+        webview.url(),
+      ),
     )
   }
 }
@@ -21,6 +24,18 @@ pub fn BundledRuntimeManifest::resolve_asset_protocol_packet_bytes(
   let input = @utf8.decode(url) catch { _ => "" }
   @runtime.native_asset_protocol_packet_from_json(
     self.resolve_asset_json(input),
+  )
+}
+
+///|
+pub fn BundledRuntimeManifest::resolve_window_asset_protocol_packet_bytes(
+  self : BundledRuntimeManifest,
+  window_label~ : String,
+  url : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(url) catch { _ => "" }
+  @runtime.native_asset_protocol_packet_from_json(
+    self.resolve_window_asset_json(window_label~, input),
   )
 }
 
@@ -65,6 +80,16 @@ pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(
   self : BundledRuntimeManifest,
 ) -> (Bytes) -> Bytes {
   fn(url : Bytes) { self.resolve_asset_protocol_packet_bytes(url) }
+}
+
+///|
+pub fn BundledRuntimeManifest::asset_protocol_resolver_callback_for_window(
+  self : BundledRuntimeManifest,
+  window_label~ : String,
+) -> (Bytes) -> Bytes {
+  fn(url : Bytes) {
+    self.resolve_window_asset_protocol_packet_bytes(window_label~, url)
+  }
 }
 
 ///|

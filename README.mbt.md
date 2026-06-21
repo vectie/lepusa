@@ -532,14 +532,17 @@ step carries the operations and resulting session snapshot so native backends
 can resolve assets after shutdown or window-event navigation without retaining
 app construction state.
 
-`RuntimeSession::resolve_asset(url)` is the pure custom-protocol boundary for
-native WebViews. It resolves `lepusa://runtime/bridge.js`, inline/Rabbita
-virtual files, safe local asset paths, and packaged app assets without doing
-platform file IO.
+`RuntimeSession::resolve_window_asset(window_label, url)` is the pure
+custom-protocol boundary for native WebViews. It resolves
+`lepusa://runtime/bridge.js`, inline/Rabbita virtual files, safe local asset
+paths, and packaged app assets without doing platform file IO, while denying
+cross-window asset requests.
 `RuntimeSession::resolve_asset_json(url)` and
 `RuntimeHost::resolve_asset_json(url)` expose the same boundary as a stable
 JSON envelope for native protocol handlers: virtual content, local file paths,
 packaged file paths, or a structured error.
+Use their `resolve_window_asset_json` variants from platform handlers; the
+unscoped forms are for CLI and manifest inspection.
 `lepusa asset <url> --project lepusa.json` prints that envelope directly, so
 desktop projects can smoke-test the custom protocol without starting a WebView.
 

@@ -663,6 +663,7 @@ pub struct NativeRuntime {
   runner : NativeRunnerPlan
 }
 pub fn NativeRuntime::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
+pub fn NativeRuntime::asset_protocol_resolver_callback_for_window(Self, window_label~ : String) -> (Bytes) -> Bytes
 pub fn NativeRuntime::backend(Self) -> NativeBackend
 pub fn NativeRuntime::backend_contract(Self, capability~ : NativeLaunchCapability, platform_name? : String) -> NativeBackendContract
 pub fn NativeRuntime::bootstrap_json(Self) -> String
@@ -688,6 +689,8 @@ pub fn NativeRuntime::prepare_bridge_message(Self, String, window_label? : Strin
 pub fn NativeRuntime::prepare_run_plan(Self, prepare_webview~ : (RuntimeWebViewSpec) -> Result[NativeWebViewPlan, String], missing_webview_message? : String) -> Result[NativePreparedRunPlan, Array[String]]
 pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
 pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
+pub fn NativeRuntime::resolve_window_asset_json(Self, window_label~ : String, String) -> String
+pub fn NativeRuntime::resolve_window_asset_protocol_packet_bytes(Self, window_label~ : String, Bytes) -> Bytes
 pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, execution_report? : NativeOperationExecutionReport?, bridge_sync_routes? : Int, bridge_async_routes? : Int, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 pub fn NativeRuntime::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
@@ -931,6 +934,7 @@ pub fn RuntimeHost::plan(Self) -> @lepusa.RuntimePlan
 pub fn RuntimeHost::prepare_bridge_message(Self, String, window_label? : String) -> Result[NativeBridgeMessage, Array[String]]
 pub fn RuntimeHost::registry(Self) -> @lepusa.CommandRegistry
 pub fn RuntimeHost::resolve_asset_json(Self, String) -> String
+pub fn RuntimeHost::resolve_window_asset_json(Self, window_label~ : String, String) -> String
 pub fn RuntimeHost::runner_plan(Self) -> Result[RuntimeRunnerPlan, Array[String]]
 pub fn RuntimeHost::security_profile(Self) -> @lepusa.SecurityProfile
 pub fn RuntimeHost::service_plan(Self) -> Result[RuntimeServicePlan, Array[String]]
@@ -1034,6 +1038,8 @@ pub fn RuntimeSession::registered_routes(Self) -> Array[String]
 pub fn RuntimeSession::remove_event_target(Self, @lepusa.EventTarget) -> Array[@lepusa.EventListener]
 pub fn RuntimeSession::resolve_asset(Self, String) -> Result[RuntimeAssetResponse, String]
 pub fn RuntimeSession::resolve_asset_json(Self, String) -> String
+pub fn RuntimeSession::resolve_window_asset(Self, window_label~ : String, String) -> Result[RuntimeAssetResponse, String]
+pub fn RuntimeSession::resolve_window_asset_json(Self, window_label~ : String, String) -> String
 pub fn RuntimeSession::startup_actions(Self) -> Array[@lepusa.RuntimeAction]
 pub fn RuntimeSession::to_json(Self) -> String
 pub fn RuntimeSession::unlisten_event(Self, String) -> Result[@lepusa.EventListener, String]

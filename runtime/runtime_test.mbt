@@ -1495,6 +1495,70 @@ test "runtime session maps packaged assets distinctly" {
 }
 
 ///|
+test "runtime session scopes asset resolution to requesting window" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main>main</main>"))
+    .window(label="tools", source=@lepusa.Source::local_path("tools-dist"))
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).snapshot() {
+        Ok(session) => {
+          match
+            session.resolve_window_asset(
+              window_label="main",
+              "lepusa://inline/main/index.html",
+            ) {
+            Ok(response) =>
+              assert_true(
+                response.body() is VirtualContent("<main>main</main>"),
+              )
+            Err(problem) => abort(problem)
+          }
+          match
+            session.resolve_window_asset(
+              window_label="tools",
+              "lepusa://inline/main/index.html",
+            ) {
+            Ok(_) => abort("unexpected cross-window virtual asset")
+            Err(problem) =>
+              assert_eq(
+                problem, "asset request for window tools cannot load window main asset",
+              )
+          }
+          match
+            session.resolve_window_asset(
+              window_label="main",
+              "lepusa://local/tools/app.css",
+            ) {
+            Ok(_) => abort("unexpected cross-window local asset")
+            Err(problem) =>
+              assert_eq(
+                problem, "asset request for window main cannot load window tools asset",
+              )
+          }
+          let denied_json = RuntimeHost::new(plan).resolve_window_asset_json(
+            window_label="tools",
+            "lepusa://inline/main/index.html",
+          )
+          assert_true(denied_json.contains("\"ok\":false"))
+          assert_true(denied_json.contains("cannot load window main asset"))
+          let bridge_json = session.resolve_window_asset_json(
+            window_label="tools",
+            "lepusa://runtime/bridge.js",
+          )
+          assert_true(bridge_json.contains("\"ok\":true"))
+          assert_true(
+            bridge_json.contains("\"mimeType\":\"application/javascript\""),
+          )
+        }
+        Err(_) => abort("unexpected invalid runtime session")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
 test "runtime host dispatches through plan capabilities" {
   let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
     payload,

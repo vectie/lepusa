@@ -300,6 +300,17 @@ test "bundled runtime manifest resolves protocol assets" {
       )
       assert_true(unsafe_asset.contains("\"ok\":false"))
       assert_true(unsafe_asset.contains("unsafe asset path"))
+      let scoped_asset = runtime.resolve_window_asset_json(
+        window_label="main",
+        "lepusa://rabbita/main/index.html",
+      )
+      assert_true(scoped_asset.contains("\"ok\":true"))
+      let denied_asset = runtime.resolve_window_asset_json(
+        window_label="static",
+        "lepusa://rabbita/main/index.html",
+      )
+      assert_true(denied_asset.contains("\"ok\":false"))
+      assert_true(denied_asset.contains("cannot load window main asset"))
     }
     Err(problem) => abort(problem)
   }
@@ -328,6 +339,16 @@ test "bundled runtime manifest owns bridge and asset callbacks" {
         _ => abort("unexpected invalid bundled asset callback response")
       }
       assert_eq(packet, "ok\nvirtual\ntext/html\n<main></main>")
+      let scoped_resolve = runtime.asset_protocol_resolver_callback_for_window(
+        window_label="static",
+      )
+      let denied_packet = @utf8.decode(
+        scoped_resolve(@utf8.encode("lepusa://rabbita/main/index.html")),
+      ) catch {
+        _ => abort("unexpected invalid bundled scoped asset callback response")
+      }
+      assert_true(denied_packet.contains("error"))
+      assert_true(denied_packet.contains("cannot load window main asset"))
     }
     Err(problem) => abort(problem)
   }

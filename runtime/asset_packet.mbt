@@ -33,7 +33,8 @@ pub fn NativeRuntime::initial_load_url(
       Err(problems) =>
         Err(problems.get(0).unwrap_or("runtime session is invalid"))
       Ok(session) =>
-        match session.resolve_asset(spec.url()) {
+        match
+          session.resolve_window_asset(window_label=spec.label(), spec.url()) {
           Ok(asset) => Ok(asset.to_native_load_url())
           Err(problem) => Err(problem)
         }
@@ -48,6 +49,18 @@ pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(
 ) -> Bytes {
   let input = @utf8.decode(url) catch { _ => "" }
   native_asset_protocol_packet_from_json(self.resolve_asset_json(input))
+}
+
+///|
+pub fn NativeRuntime::resolve_window_asset_protocol_packet_bytes(
+  self : NativeRuntime,
+  window_label~ : String,
+  url : Bytes,
+) -> Bytes {
+  let input = @utf8.decode(url) catch { _ => "" }
+  native_asset_protocol_packet_from_json(
+    self.host.resolve_window_asset_json(window_label~, input),
+  )
 }
 
 ///|
