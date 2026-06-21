@@ -658,11 +658,11 @@ macOS also applies app dock visibility, macOS/Linux/Windows apply app and
 window menu bars plus status-item tray operations for icon, tooltip, menu, menu
 popup, visibility, and destroy; macOS menu items apply supported accelerator
 strings as native key equivalents and modifier masks, while Linux menu items
-attach the same shortcut strings through per-window GTK accel groups. Rendered
-macOS/Linux/Windows app-menu and tray action/check items dispatch
-`menu.onItemClick` or `tray.onMenuItemClick` frontend events with the clicked
-item id. Remaining Windows menu accelerator work is still reported as skipped
-until the native key dispatch registry lands.
+attach the same shortcut strings through per-window GTK accel groups and
+Windows menu items register the same shortcut strings in per-window key dispatch
+tables. Rendered macOS/Linux/Windows app-menu and tray action/check items
+dispatch `menu.onItemClick` or `tray.onMenuItemClick` frontend events with the
+clicked item id.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

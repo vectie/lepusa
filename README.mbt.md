@@ -756,11 +756,10 @@ closing the current window set, macOS also applies app dock visibility,
 macOS/Linux/Windows apply app and window menu bars plus tray operations for
 icon, tooltip, menu, menu popup, visibility, and destroy.
 Platform operation reports now mark supported app shell, macOS/Linux/Windows
-app-menu/window-menu and tray operations as executed, including macOS/Linux menu
-accelerator rendering for supported shortcut strings and macOS/Linux/Windows
-menu and tray item click dispatch to `menu.onItemClick` and
-`tray.onMenuItemClick`, while leaving Windows menu accelerator work explicitly
-skipped until the native key dispatch registry lands.
+app-menu/window-menu and tray operations as executed, including
+macOS/Linux/Windows menu accelerator rendering for supported shortcut strings
+and macOS/Linux/Windows menu and tray item click dispatch to
+`menu.onItemClick` and `tray.onMenuItemClick`.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

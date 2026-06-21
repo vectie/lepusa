@@ -743,6 +743,27 @@ static int lepusa_windows_range_equals(
     memcmp(value, expected, (size_t)value_len) == 0;
 }
 
+static int lepusa_windows_range_iequals(
+  const char *value,
+  int32_t value_len,
+  const char *expected
+) {
+  if (value == NULL || expected == NULL || value_len < 0) {
+    return 0;
+  }
+  size_t expected_len = strlen(expected);
+  if ((size_t)value_len != expected_len) {
+    return 0;
+  }
+  for (int32_t i = 0; i < value_len; i++) {
+    if (tolower((unsigned char)value[i]) !=
+        tolower((unsigned char)expected[i])) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
 static int lepusa_windows_read_packet_field(
   const char **cursor,
   const char *end,
@@ -1358,6 +1379,12 @@ typedef struct {
 
 typedef struct {
   UINT command_id;
+  UINT key;
+  UINT modifiers;
+} LepusaWindowsMenuAccelerator;
+
+typedef struct {
+  UINT command_id;
   char id[128];
 } LepusaWindowsTrayCommand;
 
@@ -1393,6 +1420,8 @@ struct LepusaWindowsWindowSlot {
   HWND hwnd;
   HMENU menu;
   int has_window_menu;
+  LepusaWindowsMenuAccelerator accelerators[128];
+  int accelerator_count;
   ICoreWebView2Controller *controller;
   ICoreWebView2 *webview;
   wchar_t *title;
@@ -1420,6 +1449,10 @@ typedef struct {
 } LepusaWindowsBridgeDrainRequest;
 
 #define LEPUSA_WINDOWS_TRAY_MESSAGE (WM_APP + 0x521)
+#define LEPUSA_WINDOWS_ACCEL_CTRL 1u
+#define LEPUSA_WINDOWS_ACCEL_ALT 2u
+#define LEPUSA_WINDOWS_ACCEL_SHIFT 4u
+#define LEPUSA_WINDOWS_ACCEL_WIN 8u
 
 struct LepusaWindowsWebView2Context {
   HINSTANCE instance;
@@ -2605,6 +2638,7 @@ static const ICoreWebView2WebResourceRequestedEventHandlerVtbl
 
 static HMENU lepusa_windows_menu_from_payload(
   LepusaWindowsWebView2Context *context,
+  LepusaWindowsWindowSlot *slot,
   const char *payload,
   int32_t payload_len
 );
@@ -2716,6 +2750,7 @@ static LepusaWindowsWindowSlot *lepusa_windows_create_window_slot(
   if (context->app_menu_payload != NULL && !slot->has_window_menu) {
     HMENU menu = lepusa_windows_menu_from_payload(
       context,
+      slot,
       context->app_menu_payload,
       context->app_menu_payload_len
     );
@@ -3576,6 +3611,38 @@ static char *lepusa_windows_cstr_from_range(const char *value, int32_t len) {
   return out;
 }
 
+static wchar_t *lepusa_windows_menu_label_text(
+  const char *object,
+  const char *end,
+  const char *label,
+  int32_t label_len
+) {
+  const char *accelerator = NULL;
+  int32_t accelerator_len = 0;
+  if (!lepusa_windows_json_member_string_range(
+        object,
+        end,
+        "accelerator",
+        &accelerator,
+        &accelerator_len
+      ) ||
+      accelerator_len <= 0) {
+    return lepusa_windows_wstr_from_range(label, label_len);
+  }
+  int32_t combined_len = label_len + accelerator_len + 1;
+  char *combined = (char *)malloc((size_t)combined_len + 1);
+  if (combined == NULL) {
+    return lepusa_windows_wstr_from_range(label, label_len);
+  }
+  memcpy(combined, label, (size_t)label_len);
+  combined[label_len] = '\t';
+  memcpy(combined + label_len + 1, accelerator, (size_t)accelerator_len);
+  combined[combined_len] = '\0';
+  wchar_t *out = lepusa_windows_wstr_from_range(combined, combined_len);
+  free(combined);
+  return out;
+}
+
 static int lepusa_windows_menu_action_equals(
   const char *action,
   int32_t action_len,
@@ -3587,6 +3654,232 @@ static int lepusa_windows_menu_action_equals(
      action_len == (int32_t)(name_len + 5) &&
      memcmp(action, "menu.", 5) == 0 &&
      memcmp(action + 5, name, name_len) == 0);
+}
+
+static void lepusa_windows_trim_range(
+  const char **value,
+  int32_t *value_len
+) {
+  if (value == NULL || *value == NULL || value_len == NULL) {
+    return;
+  }
+  while (*value_len > 0 && isspace((unsigned char)(*value)[0])) {
+    (*value)++;
+    (*value_len)--;
+  }
+  while (*value_len > 0 &&
+         isspace((unsigned char)(*value)[*value_len - 1])) {
+    (*value_len)--;
+  }
+}
+
+static int lepusa_windows_accelerator_modifier(
+  const char *modifier,
+  int32_t modifier_len,
+  UINT *modifiers
+) {
+  if (modifiers == NULL || modifier == NULL || modifier_len <= 0) {
+    return 0;
+  }
+  if (lepusa_windows_range_iequals(modifier, modifier_len, "cmdorctrl") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "ctrl") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "control")) {
+    *modifiers |= LEPUSA_WINDOWS_ACCEL_CTRL;
+    return 1;
+  }
+  if (lepusa_windows_range_iequals(modifier, modifier_len, "cmd") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "command") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "super") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "meta")) {
+    *modifiers |= LEPUSA_WINDOWS_ACCEL_WIN;
+    return 1;
+  }
+  if (lepusa_windows_range_iequals(modifier, modifier_len, "alt") ||
+      lepusa_windows_range_iequals(modifier, modifier_len, "option")) {
+    *modifiers |= LEPUSA_WINDOWS_ACCEL_ALT;
+    return 1;
+  }
+  if (lepusa_windows_range_iequals(modifier, modifier_len, "shift")) {
+    *modifiers |= LEPUSA_WINDOWS_ACCEL_SHIFT;
+    return 1;
+  }
+  return 0;
+}
+
+static UINT lepusa_windows_accelerator_key(
+  const char *key,
+  int32_t key_len
+) {
+  if (key == NULL || key_len <= 0) {
+    return 0;
+  }
+  if (key_len == 1) {
+    unsigned char ch = (unsigned char)key[0];
+    if (ch >= 'a' && ch <= 'z') {
+      ch = (unsigned char)toupper(ch);
+    }
+    SHORT vk = VkKeyScanA((char)ch);
+    if (vk == -1) {
+      return 0;
+    }
+    return (UINT)(vk & 0xff);
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "space")) {
+    return VK_SPACE;
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "tab")) {
+    return VK_TAB;
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "enter") ||
+      lepusa_windows_range_iequals(key, key_len, "return")) {
+    return VK_RETURN;
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "esc") ||
+      lepusa_windows_range_iequals(key, key_len, "escape")) {
+    return VK_ESCAPE;
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "delete")) {
+    return VK_DELETE;
+  }
+  if (lepusa_windows_range_iequals(key, key_len, "backspace")) {
+    return VK_BACK;
+  }
+  if (key_len >= 2 &&
+      key_len <= 3 &&
+      (key[0] == 'f' || key[0] == 'F')) {
+    int value = 0;
+    for (int32_t i = 1; i < key_len; i++) {
+      if (key[i] < '0' || key[i] > '9') {
+        return 0;
+      }
+      value = value * 10 + (key[i] - '0');
+    }
+    if (value >= 1 && value <= 24) {
+      return VK_F1 + (UINT)(value - 1);
+    }
+  }
+  return 0;
+}
+
+static int lepusa_windows_parse_accelerator(
+  const char *accelerator,
+  int32_t accelerator_len,
+  UINT *key_out,
+  UINT *modifiers_out
+) {
+  if (accelerator == NULL ||
+      accelerator_len <= 0 ||
+      key_out == NULL ||
+      modifiers_out == NULL) {
+    return 0;
+  }
+  const char *end = accelerator + accelerator_len;
+  const char *part = accelerator;
+  UINT modifiers = 0;
+  while (part < end) {
+    const char *plus = part;
+    while (plus < end && *plus != '+') {
+      plus++;
+    }
+    const char *token = part;
+    int32_t token_len = (int32_t)(plus - part);
+    lepusa_windows_trim_range(&token, &token_len);
+    if (token_len <= 0) {
+      return 0;
+    }
+    if (plus >= end) {
+      UINT key = lepusa_windows_accelerator_key(token, token_len);
+      if (key == 0) {
+        return 0;
+      }
+      *key_out = key;
+      *modifiers_out = modifiers;
+      return 1;
+    }
+    if (!lepusa_windows_accelerator_modifier(token, token_len, &modifiers)) {
+      return 0;
+    }
+    part = plus + 1;
+  }
+  return 0;
+}
+
+static void lepusa_windows_reset_menu_accelerators(
+  LepusaWindowsWindowSlot *slot
+) {
+  if (slot != NULL) {
+    slot->accelerator_count = 0;
+  }
+}
+
+static void lepusa_windows_register_menu_accelerator(
+  LepusaWindowsWindowSlot *slot,
+  const char *object,
+  const char *end,
+  UINT command_id
+) {
+  if (slot == NULL ||
+      object == NULL ||
+      command_id == 0 ||
+      slot->accelerator_count >= 128) {
+    return;
+  }
+  const char *accelerator = NULL;
+  int32_t accelerator_len = 0;
+  if (!lepusa_windows_json_member_string_range(
+        object,
+        end,
+        "accelerator",
+        &accelerator,
+        &accelerator_len
+      )) {
+    return;
+  }
+  UINT key = 0;
+  UINT modifiers = 0;
+  if (!lepusa_windows_parse_accelerator(
+        accelerator,
+        accelerator_len,
+        &key,
+        &modifiers
+      )) {
+    return;
+  }
+  LepusaWindowsMenuAccelerator *entry =
+    &slot->accelerators[slot->accelerator_count++];
+  entry->command_id = command_id;
+  entry->key = key;
+  entry->modifiers = modifiers;
+}
+
+static int lepusa_windows_accelerator_modifiers_match(UINT modifiers) {
+  int ctrl_down = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+  int alt_down = (GetKeyState(VK_MENU) & 0x8000) != 0;
+  int shift_down = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+  int win_down =
+    ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000) != 0;
+  return ctrl_down == ((modifiers & LEPUSA_WINDOWS_ACCEL_CTRL) != 0) &&
+    alt_down == ((modifiers & LEPUSA_WINDOWS_ACCEL_ALT) != 0) &&
+    shift_down == ((modifiers & LEPUSA_WINDOWS_ACCEL_SHIFT) != 0) &&
+    win_down == ((modifiers & LEPUSA_WINDOWS_ACCEL_WIN) != 0);
+}
+
+static UINT lepusa_windows_menu_accelerator_command(
+  LepusaWindowsWindowSlot *slot,
+  WPARAM wparam
+) {
+  if (slot == NULL || slot->accelerator_count <= 0) {
+    return 0;
+  }
+  UINT key = (UINT)wparam;
+  for (int i = 0; i < slot->accelerator_count; i++) {
+    LepusaWindowsMenuAccelerator *entry = &slot->accelerators[i];
+    if (entry->key == key &&
+        lepusa_windows_accelerator_modifiers_match(entry->modifiers)) {
+      return entry->command_id;
+    }
+  }
+  return 0;
 }
 
 static UINT lepusa_windows_register_menu_command(
@@ -3709,6 +4002,7 @@ static void lepusa_windows_dispatch_menu_click(
 
 static HMENU lepusa_windows_menu_from_array(
   LepusaWindowsWebView2Context *context,
+  LepusaWindowsWindowSlot *slot,
   const char *array,
   const char *array_end,
   int depth
@@ -3759,10 +4053,21 @@ static HMENU lepusa_windows_menu_from_array(
                    &label,
                    &label_len
                  )) {
-        wchar_t *label_text = lepusa_windows_wstr_from_range(label, label_len);
+        wchar_t *label_text = lepusa_windows_menu_label_text(
+          cursor,
+          item_end,
+          label,
+          label_len
+        );
         if (label_text != NULL) {
           UINT flags = MF_STRING;
-          if (!lepusa_windows_json_member_bool(cursor, item_end, "enabled", 1)) {
+          int enabled = lepusa_windows_json_member_bool(
+            cursor,
+            item_end,
+            "enabled",
+            1
+          );
+          if (!enabled) {
             flags |= MF_GRAYED;
           }
           if (lepusa_windows_range_equals(kind, kind_len, "check") &&
@@ -3781,6 +4086,7 @@ static HMENU lepusa_windows_menu_from_array(
                 )) {
               HMENU submenu = lepusa_windows_menu_from_array(
                 context,
+                slot,
                 children,
                 children_end,
                 depth + 1
@@ -3802,6 +4108,14 @@ static HMENU lepusa_windows_menu_from_array(
               ? lepusa_windows_register_menu_command(context, id, id_len)
               : 0;
             if (command_id != 0) {
+              if (enabled) {
+                lepusa_windows_register_menu_accelerator(
+                  slot,
+                  cursor,
+                  item_end,
+                  command_id
+                );
+              }
               AppendMenuW(menu, flags, command_id, label_text);
             }
           }
@@ -3819,12 +4133,14 @@ static HMENU lepusa_windows_menu_from_array(
 
 static HMENU lepusa_windows_menu_from_payload(
   LepusaWindowsWebView2Context *context,
+  LepusaWindowsWindowSlot *slot,
   const char *payload,
   int32_t payload_len
 ) {
   if (context == NULL || payload == NULL || payload_len <= 0) {
     return NULL;
   }
+  lepusa_windows_reset_menu_accelerators(slot);
   const char *end = payload + payload_len;
   const char *items = lepusa_windows_json_skip_space(payload, end);
   const char *items_end = end;
@@ -3835,7 +4151,7 @@ static HMENU lepusa_windows_menu_from_payload(
     items = member;
     items_end = member_end;
   }
-  return lepusa_windows_menu_from_array(context, items, items_end, 0);
+  return lepusa_windows_menu_from_array(context, slot, items, items_end, 0);
 }
 
 static void lepusa_windows_set_slot_menu(
@@ -3847,6 +4163,9 @@ static void lepusa_windows_set_slot_menu(
       DestroyMenu(menu);
     }
     return;
+  }
+  if (menu == NULL) {
+    lepusa_windows_reset_menu_accelerators(slot);
   }
   HMENU old_menu = slot->menu;
   slot->menu = menu;
@@ -3868,6 +4187,7 @@ static void lepusa_windows_apply_app_menu_to_windows(
     if (slot->hwnd != NULL && !slot->has_window_menu) {
       HMENU menu = lepusa_windows_menu_from_payload(
         context,
+        slot,
         context->app_menu_payload,
         context->app_menu_payload_len
       );
@@ -3924,7 +4244,12 @@ static void lepusa_windows_set_window_menu(
   if (slot == NULL) {
     return;
   }
-  HMENU menu = lepusa_windows_menu_from_payload(context, payload, payload_len);
+  HMENU menu = lepusa_windows_menu_from_payload(
+    context,
+    slot,
+    payload,
+    payload_len
+  );
   if (menu != NULL) {
     slot->has_window_menu = 1;
     lepusa_windows_set_slot_menu(slot, menu);
@@ -3948,6 +4273,7 @@ static void lepusa_windows_clear_window_menu(
   if (context != NULL && context->app_menu_payload != NULL) {
     HMENU menu = lepusa_windows_menu_from_payload(
       context,
+      slot,
       context->app_menu_payload,
       context->app_menu_payload_len
     );
@@ -4558,6 +4884,22 @@ static LRESULT CALLBACK lepusa_windows_webview_window_proc(
   case WM_SIZE:
     lepusa_windows_resize_slot(slot);
     return 0;
+  case WM_KEYDOWN:
+  case WM_SYSKEYDOWN:
+    if (slot != NULL && slot->context != NULL) {
+      UINT command_id = lepusa_windows_menu_accelerator_command(slot, wparam);
+      if (command_id != 0) {
+        const char *item_id = lepusa_windows_menu_command_id(
+          slot->context,
+          command_id
+        );
+        if (item_id != NULL) {
+          lepusa_windows_dispatch_menu_click(slot, item_id);
+          return 0;
+        }
+      }
+    }
+    return DefWindowProcW(hwnd, message, wparam, lparam);
   case WM_COMMAND:
     if (slot != NULL && slot->context != NULL) {
       UINT command_id = LOWORD(wparam);
@@ -4613,6 +4955,43 @@ static LRESULT CALLBACK lepusa_windows_webview_window_proc(
   default:
     return DefWindowProcW(hwnd, message, wparam, lparam);
   }
+}
+
+static int lepusa_windows_process_menu_accelerator_message(
+  LepusaWindowsWebView2Context *context,
+  MSG *message
+) {
+  if (context == NULL ||
+      message == NULL ||
+      (message->message != WM_KEYDOWN && message->message != WM_SYSKEYDOWN)) {
+    return 0;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    LepusaWindowsWindowSlot *slot = &context->windows[i];
+    if (slot->hwnd == NULL) {
+      continue;
+    }
+    if (message->hwnd != slot->hwnd && !IsChild(slot->hwnd, message->hwnd)) {
+      continue;
+    }
+    UINT command_id = lepusa_windows_menu_accelerator_command(
+      slot,
+      message->wParam
+    );
+    if (command_id == 0) {
+      return 0;
+    }
+    const char *item_id = lepusa_windows_menu_command_id(
+      context,
+      command_id
+    );
+    if (item_id == NULL) {
+      return 0;
+    }
+    lepusa_windows_dispatch_menu_click(slot, item_id);
+    return 1;
+  }
+  return 0;
 }
 
 static int lepusa_windows_register_webview_class(HINSTANCE instance) {
@@ -4749,6 +5128,9 @@ static int32_t lepusa_windows_run_webview2_loop(
   }
   MSG message;
   while (GetMessageW(&message, NULL, 0, 0) > 0) {
+    if (lepusa_windows_process_menu_accelerator_message(&context, &message)) {
+      continue;
+    }
     TranslateMessage(&message);
     DispatchMessageW(&message);
   }

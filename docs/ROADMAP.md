@@ -187,11 +187,9 @@
   support, with app show/hide/setTheme/exit/restart reported as executed,
   native restart relaunching the current command line before exit, macOS dock
   visibility, native macOS/Linux/Windows app-menu and window-menu bars,
-  macOS/Linux/Windows tray operations, macOS/Linux menu accelerators, and
-  macOS/Linux/Windows menu and tray item click dispatch reported as executed,
-  with remaining Windows menu accelerator work reported as skipped until its
-  native key dispatch registry lands; native
-  loops now execute retained async bridge drain requests through packetized
+  macOS/Linux/Windows tray operations and menu accelerators, and
+  macOS/Linux/Windows menu and tray item click dispatch reported as executed;
+  native loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
   Windows now route normal bridge handoffs and drain handoffs through one
   native packet-application path and drain bounded follow-up work until the
@@ -311,9 +309,8 @@ Stabilize the cross-platform core set first:
   from approved bridge dispatches, native macOS/Linux/Windows packet consumers
   for app show/hide/setTheme/exit/restart including current-command relaunch
   for restart, macOS dock visibility, macOS/Linux/Windows app-menu and
-  window-menu bars, macOS/Linux menu accelerators, and macOS/Linux/Windows
-  status-item tray handling, plus honest skipped execution reports for remaining
-  Windows menu accelerator work exist
+  window-menu bars, macOS/Linux/Windows menu accelerators, and
+  macOS/Linux/Windows status-item tray handling exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and
