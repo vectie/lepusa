@@ -169,9 +169,8 @@
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
-  async bridge drain/evaluate scheduling in the C/WebView loops, Windows
-  dynamic native `open-window` creation, and Windows custom asset serving
-  remain.
+  async bridge drain/evaluate scheduling in the C/WebView loops and Windows
+  custom asset serving remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

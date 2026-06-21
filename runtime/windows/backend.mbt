@@ -28,7 +28,17 @@ pub fn detect() -> Result[@runtime.NativeBackend, String] {
 
 ///|
 pub fn launch_capability() -> @runtime.NativeLaunchCapability {
-  preflight().launch_capability()
+  let preflight = preflight()
+  @runtime.NativeLaunchCapability::new(
+    webview_creation=preflight.can_launch(),
+    sync_bridge_evaluate=preflight.can_launch() &&
+      preflight.sync_bridge_evaluate(),
+    async_bridge_drain=preflight.async_bridge_drain(),
+    max_webviews=0,
+    webview_creation_message=preflight.problem(),
+    sync_bridge_evaluate_message="Windows WebView2 sync bridge response evaluation is unavailable",
+    async_bridge_drain_message="Windows WebView2 async bridge drain/evaluate support needs the WebView2 event-loop callback ABI",
+  )
 }
 
 ///|
@@ -51,6 +61,8 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
 ///|
 pub fn operation_executor() -> @runtime.NativeOperationExecutor {
   @runtime.NativeOperationExecutor::new(
+    open_window=fn(_) { NativeOperationExecuted },
+    close_window=fn(_) { NativeOperationExecuted },
     evaluate_script=fn(_) { NativeOperationExecuted },
     navigate_window=fn(_) {
       NativeOperationSkipped(

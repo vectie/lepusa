@@ -36,6 +36,25 @@ fn async_test_host() -> @runtime.RuntimeHost {
 }
 
 ///|
+fn multi_window_test_host() -> @runtime.RuntimeHost {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      title="Windows Main",
+      source=@lepusa.Source::html("<main>Main</main>"),
+    )
+    .window(
+      label="tools",
+      title="Windows Tools",
+      source=@lepusa.Source::html("<main>Tools</main>"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => @runtime.RuntimeHost::new(plan)
+    Err(_) => abort("unexpected invalid multi-window Windows runtime plan")
+  }
+}
+
+///|
 test "windows backend exposes webview2 descriptor" {
   let descriptor = backend()
   assert_eq(descriptor.name(), "windows")
@@ -79,6 +98,7 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(capability.webview_creation(), available())
   assert_eq(capability.sync_bridge_evaluate(), available())
   assert_false(capability.async_bridge_drain())
+  assert_eq(capability.max_webviews(), 0)
   assert_true(capability.webview_creation_message().contains("WebView2"))
   assert_true(
     capability.async_bridge_drain_message().contains("event-loop callback ABI"),
@@ -94,6 +114,32 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(execution.executed_count(), 1)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[0].status() is NativeOperationExecuted)
+}
+
+///|
+test "windows backend prepares multi-window launch session" {
+  match runtime(multi_window_test_host()) {
+    Ok(runtime) =>
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          assert_eq(result.plan().webview_count(), 2)
+          let session = result.launch_session()
+          assert_eq(session.webviews().length(), 2)
+          if available() {
+            assert_true(session.can_launch())
+          }
+          let packet = @runtime.native_initial_webview_open_handoff_packet(
+            result.plan().webviews(),
+            bridge_sources=[],
+          )
+          assert_true(packet.contains("open-window"))
+          assert_true(packet.contains("tools"))
+        }
+        Err(_) => abort("unexpected invalid Windows multi-window run")
+      }
+    Err(_) => abort("unexpected invalid Windows multi-window native runtime")
+  }
 }
 
 ///|

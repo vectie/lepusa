@@ -17,7 +17,7 @@ pub struct WindowsBundledRunResult {
 } derive(Debug)
 
 ///|
-#borrow(label, title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
+#borrow(label, title, url, initialization_script, native_hook, asset_protocol, initial_open_packet, dispatch, resolve_asset)
 extern "c" fn native_run_webview(
   label : Bytes,
   title : Bytes,
@@ -25,6 +25,7 @@ extern "c" fn native_run_webview(
   initialization_script : Bytes,
   native_hook : Bytes,
   asset_protocol : Bytes,
+  initial_open_packet : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
@@ -248,6 +249,7 @@ fn windows_open_window(
     packet.initialization_script(),
     packet.native_hook(),
     packet.asset_protocol(),
+    @utf8.encode(windows_initial_open_packet_from_runtime(runtime, plan)),
     packet.width(),
     packet.height(),
     packet.resizable(),
@@ -300,6 +302,7 @@ fn windows_open_bundled_window(
     packet.initialization_script(),
     packet.native_hook(),
     packet.asset_protocol(),
+    @utf8.encode(windows_initial_open_packet_from_bundled(plan)),
     packet.width(),
     packet.height(),
     packet.resizable(),
@@ -368,4 +371,61 @@ fn windows_initialization_script(
 ///|
 fn windows_native_hook_script(hook : String) -> String {
   @runtime.native_webview2_bridge_hook_script(hook)
+}
+
+///|
+fn windows_initial_open_packet_from_runtime(
+  runtime : @runtime.NativeRuntime,
+  plan : @runtime.NativePreparedRunPlan,
+) -> String {
+  @runtime.native_initial_webview_open_handoff_packet(
+    plan.webviews(),
+    bridge_sources=runtime_bridge_sources(runtime),
+  )
+}
+
+///|
+fn runtime_bridge_sources(runtime : @runtime.NativeRuntime) -> Array[String] {
+  match runtime.host().webviews() {
+    Ok(webviews) =>
+      webviews.map(fn(webview) { webview.initialization_scripts().join("\n") })
+    Err(_) => []
+  }
+}
+
+///|
+fn windows_initial_open_packet_from_bundled(
+  plan : @bundled.BundledNativeRunPlan,
+) -> String {
+  @runtime.native_initial_webview_open_handoff_packet(
+    plan.webviews(),
+    bridge_sources=bundled_bridge_sources(plan),
+  )
+}
+
+///|
+fn bundled_bridge_sources(
+  plan : @bundled.BundledNativeRunPlan,
+) -> Array[String] {
+  let execution = match plan.native_execution_plan() {
+    Ok(execution) => Some(execution)
+    Err(_) => None
+  }
+  plan
+  .bundled_webviews()
+  .map(fn(webview) {
+    let scripts = webview.initialization_scripts()
+    match execution {
+      Some(execution) => {
+        let startup = execution.startup_initialization_script(webview.label())
+        if startup == "" {
+          scripts.join("\n")
+        } else {
+          scripts.push(startup)
+          scripts.join("\n")
+        }
+      }
+      None => scripts.join("\n")
+    }
+  })
 }

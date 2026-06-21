@@ -645,18 +645,21 @@ They also consume `navigate-window` operations from that packet by loading the
 target URL in the live WebView after MoonBit dispatch succeeds. The macOS and
 Linux loops consume dynamic `open-window` records by creating labeled
 WKWebView/WebKitGTK windows with the carried bridge source, native hook, asset
-protocol, URL, title, size, and resizable flag. Source, bundled, and Windows
-runners pass URL-routed asset resolver callbacks into native loops, so dynamic
-WebViews can resolve assets for their own window labels. The Windows
+protocol, URL, title, size, and resizable flag. Windows consumes the same
+`open-window` and `close-window` records by creating or destroying labeled
+Win32/WebView2 windows from the shared `lepusa-ops-v3` packet format. Source,
+bundled, and Windows runners pass URL-routed asset resolver callbacks into
+native loops, so dynamic WebViews can resolve assets for their own window
+labels once the target backend has protocol serving wired. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows now owns a
 minimal Win32/WebView2 COM creation loop for dependency-backed native windows
 and wires WebView2 messages through the MoonBit handoff callback into
-`ExecuteScript` for sync bridge responses. Custom asset serving, Windows
-dynamic native `open-window` creation, and async bridge drain/evaluate support
-remain separately reported capabilities. Each platform package exposes a shared
-`runtime.NativeBackendPreflight`, so diagnostics separate host dependency
+`ExecuteScript` for sync bridge responses. Windows custom asset serving and
+async bridge drain/evaluate support remain separately reported capabilities.
+Each platform package exposes a shared `runtime.NativeBackendPreflight`, so
+diagnostics separate host dependency
 availability, WebView creation-loop support, sync bridge response evaluation,
 and async bridge drain support without duplicating CLI-specific checks. Its JSON
 reports the collapsed human `problem` plus `problemKind`, `dependencyProblem`,
