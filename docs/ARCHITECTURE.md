@@ -443,8 +443,9 @@ probes, and future supervisors share one status and counter contract.
 plus the first execution failure, so target checks can tell whether a run plan
 only prepared work or whether a platform executor could actually handle it.
 The macOS and Linux platform packages provide executors that mark WebView
-script evaluation as executable today; Windows keeps script evaluation skipped
-until the WebView2 creation loop lands.
+script evaluation as executable today; Windows can create a WebView2 window and
+navigate to the planned URL, but keeps script evaluation skipped until the
+bridge response operation loop lands.
 `NativeExecutionPlan` exposes startup evaluation scripts and navigations as
 typed views; source and bundled prepared run plans append startup frontend
 event scripts to the matching `NativeWebViewPlan` initialization script before a
@@ -649,10 +650,11 @@ runners pass URL-routed asset resolver callbacks into native loops, so dynamic
 WebViews can resolve assets for their own window labels. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
-routes launch attempts through the same capability gate. Windows currently
-declares the WebView2 creation loop unavailable until the COM creation path
-lands. Each platform package exposes a shared
-`runtime.NativeBackendPreflight`, so diagnostics separate host dependency
+routes launch attempts through the same capability gate. Windows now owns a
+minimal Win32/WebView2 COM creation loop for dependency-backed native windows,
+while custom asset serving, sync bridge response evaluation, and async bridge
+drain remain separately reported capabilities. Each platform package exposes a
+shared `runtime.NativeBackendPreflight`, so diagnostics separate host dependency
 availability, WebView creation-loop support, sync bridge response evaluation,
 and async bridge drain support without duplicating CLI-specific checks. Its JSON
 reports the collapsed human `problem` plus `problemKind`, `dependencyProblem`,

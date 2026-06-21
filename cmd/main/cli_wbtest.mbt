@@ -581,7 +581,7 @@ async test "generated project config drives doctor backend diagnostics" {
   assert_true(result.output.contains("platform: windows"))
   assert_true(result.output.contains("platform-detail: windows"))
   assert_true(result.output.contains("webview2-loader="))
-  assert_true(result.output.contains("creation-loop=false"))
+  assert_true(result.output.contains("creation-loop=true"))
   assert_true(result.output.contains("sync-bridge="))
   assert_true(result.output.contains("platform: linux"))
   assert_true(result.output.contains("platform-detail: linux"))

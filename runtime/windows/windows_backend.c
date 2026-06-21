@@ -10,6 +10,7 @@ typedef moonbit_bytes_t (*LepusaWindowsBytesCallback)(void *, moonbit_bytes_t);
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
+#include <objbase.h>
 
 typedef struct {
   char *name;
@@ -58,6 +59,170 @@ static LepusaWindowsSelect lepusa_windows_select = NULL;
 static LepusaWindowsGetSockOpt lepusa_windows_getsockopt = NULL;
 static LepusaWindowsSend lepusa_windows_send = NULL;
 static LepusaWindowsRecv lepusa_windows_recv = NULL;
+
+typedef struct ICoreWebView2 ICoreWebView2;
+typedef struct ICoreWebView2Controller ICoreWebView2Controller;
+typedef struct ICoreWebView2Environment ICoreWebView2Environment;
+typedef struct ICoreWebView2EnvironmentOptions ICoreWebView2EnvironmentOptions;
+typedef struct ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler;
+typedef struct ICoreWebView2CreateCoreWebView2ControllerCompletedHandler
+  ICoreWebView2CreateCoreWebView2ControllerCompletedHandler;
+
+typedef struct ICoreWebView2Vtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2 *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(ICoreWebView2 *);
+  ULONG (STDMETHODCALLTYPE *Release)(ICoreWebView2 *);
+  void *get_Settings;
+  void *get_Source;
+  HRESULT (STDMETHODCALLTYPE *Navigate)(ICoreWebView2 *, LPCWSTR);
+  HRESULT (STDMETHODCALLTYPE *NavigateToString)(ICoreWebView2 *, LPCWSTR);
+} ICoreWebView2Vtbl;
+
+struct ICoreWebView2 {
+  const ICoreWebView2Vtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2ControllerVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2Controller *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(ICoreWebView2Controller *);
+  ULONG (STDMETHODCALLTYPE *Release)(ICoreWebView2Controller *);
+  void *get_IsVisible;
+  void *put_IsVisible;
+  void *get_Bounds;
+  HRESULT (STDMETHODCALLTYPE *put_Bounds)(ICoreWebView2Controller *, RECT);
+  void *get_ZoomFactor;
+  void *put_ZoomFactor;
+  void *add_ZoomFactorChanged;
+  void *remove_ZoomFactorChanged;
+  void *SetBoundsAndZoomFactor;
+  void *MoveFocus;
+  void *add_MoveFocusRequested;
+  void *remove_MoveFocusRequested;
+  void *add_GotFocus;
+  void *remove_GotFocus;
+  void *add_LostFocus;
+  void *remove_LostFocus;
+  void *add_AcceleratorKeyPressed;
+  void *remove_AcceleratorKeyPressed;
+  void *get_ParentWindow;
+  void *put_ParentWindow;
+  void *NotifyParentWindowPositionChanged;
+  HRESULT (STDMETHODCALLTYPE *Close)(ICoreWebView2Controller *);
+  HRESULT (STDMETHODCALLTYPE *get_CoreWebView2)(
+    ICoreWebView2Controller *,
+    ICoreWebView2 **
+  );
+} ICoreWebView2ControllerVtbl;
+
+struct ICoreWebView2Controller {
+  const ICoreWebView2ControllerVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2EnvironmentVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2Environment *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(ICoreWebView2Environment *);
+  ULONG (STDMETHODCALLTYPE *Release)(ICoreWebView2Environment *);
+  HRESULT (STDMETHODCALLTYPE *CreateCoreWebView2Controller)(
+    ICoreWebView2Environment *,
+    HWND,
+    ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *
+  );
+  void *CreateWebResourceResponse;
+  void *get_BrowserVersionString;
+  void *add_NewBrowserVersionAvailable;
+  void *remove_NewBrowserVersionAvailable;
+} ICoreWebView2EnvironmentVtbl;
+
+struct ICoreWebView2Environment {
+  const ICoreWebView2EnvironmentVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(
+    ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *
+  );
+  ULONG (STDMETHODCALLTYPE *Release)(
+    ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *
+  );
+  HRESULT (STDMETHODCALLTYPE *Invoke)(
+    ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *,
+    HRESULT,
+    ICoreWebView2Environment *
+  );
+} ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl;
+
+struct ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler {
+  const ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl *lpVtbl;
+};
+
+typedef struct ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVtbl {
+  HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+    ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *,
+    REFIID,
+    void **
+  );
+  ULONG (STDMETHODCALLTYPE *AddRef)(
+    ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *
+  );
+  ULONG (STDMETHODCALLTYPE *Release)(
+    ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *
+  );
+  HRESULT (STDMETHODCALLTYPE *Invoke)(
+    ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *,
+    HRESULT,
+    ICoreWebView2Controller *
+  );
+} ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVtbl;
+
+struct ICoreWebView2CreateCoreWebView2ControllerCompletedHandler {
+  const ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVtbl *lpVtbl;
+};
+
+typedef HRESULT (WINAPI *LepusaCreateCoreWebView2EnvironmentWithOptions)(
+  PCWSTR,
+  PCWSTR,
+  ICoreWebView2EnvironmentOptions *,
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *
+);
+typedef HRESULT (WINAPI *LepusaWindowsCoInitializeEx)(LPVOID, DWORD);
+typedef void (WINAPI *LepusaWindowsCoUninitialize)(void);
+
+static const IID lepusa_iid_iunknown = {
+  0x00000000,
+  0x0000,
+  0x0000,
+  { 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46 }
+};
+static const IID lepusa_iid_environment_completed = {
+  0x4e8a3389,
+  0xc9d8,
+  0x4bd2,
+  { 0xb6, 0xb5, 0x12, 0x4f, 0xee, 0x6c, 0xc1, 0x4d }
+};
+static const IID lepusa_iid_controller_completed = {
+  0x6c4819f3,
+  0xc9b7,
+  0x4260,
+  { 0x81, 0x27, 0xc9, 0xf5, 0xbd, 0xe7, 0xf6, 0x8c }
+};
 
 static int lepusa_windows_load_winsock(void) {
   if (lepusa_windows_winsock != NULL) {
@@ -136,6 +301,41 @@ static char *lepusa_windows_cstr_from_bytes(moonbit_bytes_t bytes) {
   }
   memcpy(out, bytes, (size_t)len);
   out[len] = '\0';
+  return out;
+}
+
+static wchar_t *lepusa_windows_wstr_from_bytes(moonbit_bytes_t bytes) {
+  if (bytes == NULL) {
+    return NULL;
+  }
+  int32_t len = Moonbit_array_length(bytes);
+  int wide_len = MultiByteToWideChar(
+    CP_UTF8,
+    0,
+    (const char *)bytes,
+    len,
+    NULL,
+    0
+  );
+  if (wide_len <= 0) {
+    return NULL;
+  }
+  wchar_t *out = (wchar_t *)calloc((size_t)wide_len + 1, sizeof(wchar_t));
+  if (out == NULL) {
+    return NULL;
+  }
+  if (MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        (const char *)bytes,
+        len,
+        out,
+        wide_len
+      ) != wide_len) {
+    free(out);
+    return NULL;
+  }
+  out[wide_len] = L'\0';
   return out;
 }
 
@@ -494,6 +694,386 @@ static int lepusa_windows_try_http_ready(
 }
 #endif
 
+#if defined(_WIN32)
+typedef struct LepusaWindowsWebView2Context LepusaWindowsWebView2Context;
+
+typedef struct {
+  const ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl *lpVtbl;
+  LONG ref_count;
+  LepusaWindowsWebView2Context *context;
+} LepusaWindowsEnvironmentCompletedHandler;
+
+typedef struct {
+  const ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVtbl *lpVtbl;
+  LONG ref_count;
+  LepusaWindowsWebView2Context *context;
+} LepusaWindowsControllerCompletedHandler;
+
+struct LepusaWindowsWebView2Context {
+  HWND hwnd;
+  ICoreWebView2Controller *controller;
+  ICoreWebView2 *webview;
+  wchar_t *title;
+  wchar_t *url;
+  int width;
+  int height;
+  int resizable;
+  HRESULT result;
+  int controller_ready;
+  LepusaWindowsEnvironmentCompletedHandler environment_handler;
+  LepusaWindowsControllerCompletedHandler controller_handler;
+};
+
+static int lepusa_windows_iid_equals(REFIID left, const IID *right) {
+  return left != NULL && right != NULL && IsEqualGUID(left, right);
+}
+
+static HRESULT STDMETHODCALLTYPE lepusa_windows_environment_query_interface(
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *self,
+  REFIID riid,
+  void **object
+) {
+  if (object == NULL) {
+    return E_POINTER;
+  }
+  if (lepusa_windows_iid_equals(riid, &lepusa_iid_iunknown) ||
+      lepusa_windows_iid_equals(riid, &lepusa_iid_environment_completed)) {
+    *object = self;
+    self->lpVtbl->AddRef(self);
+    return S_OK;
+  }
+  *object = NULL;
+  return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_environment_add_ref(
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *self
+) {
+  LepusaWindowsEnvironmentCompletedHandler *handler =
+    (LepusaWindowsEnvironmentCompletedHandler *)self;
+  return (ULONG)InterlockedIncrement(&handler->ref_count);
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_environment_release(
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *self
+) {
+  LepusaWindowsEnvironmentCompletedHandler *handler =
+    (LepusaWindowsEnvironmentCompletedHandler *)self;
+  return (ULONG)InterlockedDecrement(&handler->ref_count);
+}
+
+static void lepusa_windows_resize_controller(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL || context->hwnd == NULL || context->controller == NULL) {
+    return;
+  }
+  RECT bounds;
+  GetClientRect(context->hwnd, &bounds);
+  context->controller->lpVtbl->put_Bounds(context->controller, bounds);
+}
+
+static HRESULT STDMETHODCALLTYPE lepusa_windows_controller_query_interface(
+  ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *self,
+  REFIID riid,
+  void **object
+) {
+  if (object == NULL) {
+    return E_POINTER;
+  }
+  if (lepusa_windows_iid_equals(riid, &lepusa_iid_iunknown) ||
+      lepusa_windows_iid_equals(riid, &lepusa_iid_controller_completed)) {
+    *object = self;
+    self->lpVtbl->AddRef(self);
+    return S_OK;
+  }
+  *object = NULL;
+  return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_controller_add_ref(
+  ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *self
+) {
+  LepusaWindowsControllerCompletedHandler *handler =
+    (LepusaWindowsControllerCompletedHandler *)self;
+  return (ULONG)InterlockedIncrement(&handler->ref_count);
+}
+
+static ULONG STDMETHODCALLTYPE lepusa_windows_controller_release(
+  ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *self
+) {
+  LepusaWindowsControllerCompletedHandler *handler =
+    (LepusaWindowsControllerCompletedHandler *)self;
+  return (ULONG)InterlockedDecrement(&handler->ref_count);
+}
+
+static HRESULT STDMETHODCALLTYPE lepusa_windows_controller_invoke(
+  ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *self,
+  HRESULT error_code,
+  ICoreWebView2Controller *controller
+) {
+  LepusaWindowsControllerCompletedHandler *handler =
+    (LepusaWindowsControllerCompletedHandler *)self;
+  LepusaWindowsWebView2Context *context = handler->context;
+  if (context == NULL) {
+    return S_OK;
+  }
+  context->result = error_code;
+  context->controller_ready = 1;
+  if (FAILED(error_code) || controller == NULL) {
+    PostMessageW(context->hwnd, WM_CLOSE, 0, 0);
+    return S_OK;
+  }
+  context->controller = controller;
+  context->controller->lpVtbl->AddRef(context->controller);
+  lepusa_windows_resize_controller(context);
+  HRESULT webview_result = context->controller->lpVtbl->get_CoreWebView2(
+    context->controller,
+    &context->webview
+  );
+  if (FAILED(webview_result) || context->webview == NULL) {
+    context->result = webview_result;
+    PostMessageW(context->hwnd, WM_CLOSE, 0, 0);
+    return S_OK;
+  }
+  if (context->url != NULL && context->url[0] != L'\0') {
+    HRESULT navigate_result = context->webview->lpVtbl->Navigate(
+      context->webview,
+      context->url
+    );
+    if (FAILED(navigate_result)) {
+      context->result = navigate_result;
+      PostMessageW(context->hwnd, WM_CLOSE, 0, 0);
+    }
+  }
+  return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE lepusa_windows_environment_invoke(
+  ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *self,
+  HRESULT error_code,
+  ICoreWebView2Environment *environment
+) {
+  LepusaWindowsEnvironmentCompletedHandler *handler =
+    (LepusaWindowsEnvironmentCompletedHandler *)self;
+  LepusaWindowsWebView2Context *context = handler->context;
+  if (context == NULL) {
+    return S_OK;
+  }
+  context->result = error_code;
+  if (FAILED(error_code) || environment == NULL) {
+    PostMessageW(context->hwnd, WM_CLOSE, 0, 0);
+    return S_OK;
+  }
+  HRESULT controller_result = environment->lpVtbl->CreateCoreWebView2Controller(
+    environment,
+    context->hwnd,
+    (ICoreWebView2CreateCoreWebView2ControllerCompletedHandler *)
+      &context->controller_handler
+  );
+  if (FAILED(controller_result)) {
+    context->result = controller_result;
+    PostMessageW(context->hwnd, WM_CLOSE, 0, 0);
+  }
+  return S_OK;
+}
+
+static const ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandlerVtbl
+  lepusa_windows_environment_handler_vtbl = {
+    lepusa_windows_environment_query_interface,
+    lepusa_windows_environment_add_ref,
+    lepusa_windows_environment_release,
+    lepusa_windows_environment_invoke
+  };
+
+static const ICoreWebView2CreateCoreWebView2ControllerCompletedHandlerVtbl
+  lepusa_windows_controller_handler_vtbl = {
+    lepusa_windows_controller_query_interface,
+    lepusa_windows_controller_add_ref,
+    lepusa_windows_controller_release,
+    lepusa_windows_controller_invoke
+  };
+
+static LRESULT CALLBACK lepusa_windows_webview_window_proc(
+  HWND hwnd,
+  UINT message,
+  WPARAM wparam,
+  LPARAM lparam
+) {
+  LepusaWindowsWebView2Context *context =
+    (LepusaWindowsWebView2Context *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+  switch (message) {
+  case WM_SIZE:
+    lepusa_windows_resize_controller(context);
+    return 0;
+  case WM_CLOSE:
+    DestroyWindow(hwnd);
+    return 0;
+  case WM_DESTROY:
+    if (context != NULL && context->controller != NULL) {
+      context->controller->lpVtbl->Close(context->controller);
+    }
+    PostQuitMessage(0);
+    return 0;
+  default:
+    return DefWindowProcW(hwnd, message, wparam, lparam);
+  }
+}
+
+static int lepusa_windows_register_webview_class(HINSTANCE instance) {
+  WNDCLASSEXW wc;
+  memset(&wc, 0, sizeof(wc));
+  wc.cbSize = sizeof(wc);
+  wc.lpfnWndProc = lepusa_windows_webview_window_proc;
+  wc.hInstance = instance;
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+  wc.lpszClassName = L"LepusaWebView2Window";
+  if (RegisterClassExW(&wc) != 0 ||
+      GetLastError() == ERROR_CLASS_ALREADY_EXISTS) {
+    return 1;
+  }
+  return 0;
+}
+
+static int32_t lepusa_windows_run_webview2_loop(
+  moonbit_bytes_t title,
+  moonbit_bytes_t url,
+  int32_t width,
+  int32_t height,
+  int32_t resizable
+) {
+  HMODULE loader = LoadLibraryA("WebView2Loader.dll");
+  if (loader == NULL) {
+    return 2;
+  }
+  LepusaCreateCoreWebView2EnvironmentWithOptions create_environment =
+    (LepusaCreateCoreWebView2EnvironmentWithOptions)GetProcAddress(
+      loader,
+      "CreateCoreWebView2EnvironmentWithOptions"
+    );
+  if (create_environment == NULL) {
+    FreeLibrary(loader);
+    return 2;
+  }
+  HMODULE ole32 = LoadLibraryA("Ole32.dll");
+  if (ole32 == NULL) {
+    FreeLibrary(loader);
+    return 2;
+  }
+  LepusaWindowsCoInitializeEx co_initialize =
+    (LepusaWindowsCoInitializeEx)GetProcAddress(ole32, "CoInitializeEx");
+  LepusaWindowsCoUninitialize co_uninitialize =
+    (LepusaWindowsCoUninitialize)GetProcAddress(ole32, "CoUninitialize");
+  if (co_initialize == NULL || co_uninitialize == NULL) {
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 2;
+  }
+  HRESULT co_result = co_initialize(NULL, COINIT_APARTMENTTHREADED);
+  if (FAILED(co_result) && co_result != RPC_E_CHANGED_MODE) {
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 3;
+  }
+  HINSTANCE instance = GetModuleHandleW(NULL);
+  if (!lepusa_windows_register_webview_class(instance)) {
+    if (SUCCEEDED(co_result)) {
+      co_uninitialize();
+    }
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 4;
+  }
+  LepusaWindowsWebView2Context context;
+  memset(&context, 0, sizeof(context));
+  context.title = lepusa_windows_wstr_from_bytes(title);
+  context.url = lepusa_windows_wstr_from_bytes(url);
+  context.width = width > 0 ? width : 960;
+  context.height = height > 0 ? height : 640;
+  context.resizable = resizable != 0;
+  context.result = S_OK;
+  context.environment_handler.lpVtbl = &lepusa_windows_environment_handler_vtbl;
+  context.environment_handler.ref_count = 1;
+  context.environment_handler.context = &context;
+  context.controller_handler.lpVtbl = &lepusa_windows_controller_handler_vtbl;
+  context.controller_handler.ref_count = 1;
+  context.controller_handler.context = &context;
+  if (context.title == NULL || context.url == NULL) {
+    free(context.title);
+    free(context.url);
+    if (SUCCEEDED(co_result)) {
+      co_uninitialize();
+    }
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 3;
+  }
+  DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+  if (context.resizable) {
+    style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+  }
+  RECT window_rect = { 0, 0, context.width, context.height };
+  AdjustWindowRect(&window_rect, style, FALSE);
+  context.hwnd = CreateWindowExW(
+    0,
+    L"LepusaWebView2Window",
+    context.title,
+    style,
+    CW_USEDEFAULT,
+    CW_USEDEFAULT,
+    window_rect.right - window_rect.left,
+    window_rect.bottom - window_rect.top,
+    NULL,
+    NULL,
+    instance,
+    NULL
+  );
+  if (context.hwnd == NULL) {
+    free(context.title);
+    free(context.url);
+    if (SUCCEEDED(co_result)) {
+      co_uninitialize();
+    }
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 4;
+  }
+  SetWindowLongPtrW(context.hwnd, GWLP_USERDATA, (LONG_PTR)&context);
+  ShowWindow(context.hwnd, SW_SHOW);
+  UpdateWindow(context.hwnd);
+  HRESULT create_result = create_environment(
+    NULL,
+    NULL,
+    NULL,
+    (ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *)
+      &context.environment_handler
+  );
+  if (FAILED(create_result)) {
+    context.result = create_result;
+    DestroyWindow(context.hwnd);
+  }
+  MSG message;
+  while (GetMessageW(&message, NULL, 0, 0) > 0) {
+    TranslateMessage(&message);
+    DispatchMessageW(&message);
+  }
+  if (context.webview != NULL) {
+    context.webview->lpVtbl->Release(context.webview);
+  }
+  if (context.controller != NULL) {
+    context.controller->lpVtbl->Release(context.controller);
+  }
+  free(context.title);
+  free(context.url);
+  if (SUCCEEDED(co_result)) {
+    co_uninitialize();
+  }
+  FreeLibrary(ole32);
+  FreeLibrary(loader);
+  return SUCCEEDED(context.result) ? 0 : 5;
+}
+#endif
+
 MOONBIT_FFI_EXPORT
 int32_t lepusa_windows_backend_available(void) {
 #if defined(_WIN32)
@@ -533,6 +1113,23 @@ int32_t lepusa_windows_run_webview(
   LepusaWindowsBytesCallback call_resolve_asset,
   void *resolve_asset
 ) {
+#if defined(_WIN32)
+  (void)label;
+  (void)initialization_script;
+  (void)native_hook;
+  (void)asset_protocol;
+  (void)call_dispatch;
+  (void)dispatch;
+  (void)call_resolve_asset;
+  (void)resolve_asset;
+  return lepusa_windows_run_webview2_loop(
+    title,
+    url,
+    width,
+    height,
+    resizable
+  );
+#else
   (void)label;
   (void)title;
   (void)url;
@@ -547,6 +1144,7 @@ int32_t lepusa_windows_run_webview(
   (void)call_resolve_asset;
   (void)resolve_asset;
   return 2;
+#endif
 }
 
 MOONBIT_FFI_EXPORT

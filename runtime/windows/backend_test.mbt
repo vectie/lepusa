@@ -45,25 +45,22 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(preflight.webview_engine(), "WebView2")
   assert_eq(preflight.dependency_name(), "webview2-loader")
   assert_eq(preflight.dependency_available(), available())
-  assert_false(preflight.webview_creation_loop())
+  assert_true(preflight.webview_creation_loop())
   assert_false(preflight.sync_bridge_evaluate())
   assert_false(preflight.async_bridge_drain())
-  assert_false(preflight.can_launch())
-  assert_true(preflight.problem().contains("WebView2"))
+  assert_eq(preflight.can_launch(), available())
   assert_true(
     preflight.problem_kind() == "dependency" ||
-    preflight.problem_kind() == "webview-creation",
+    preflight.problem_kind() == "none",
   )
   if preflight.dependency_available() {
     assert_true(preflight.dependency_problem() is None)
-    assert_true(
-      preflight.webview_creation_problem().unwrap().contains("WebView2"),
-    )
+    assert_true(preflight.webview_creation_problem() is None)
+    assert_eq(preflight.problem_kind(), "none")
   } else {
     assert_true(preflight.dependency_problem().unwrap().contains("WebView2"))
-    assert_true(
-      preflight.webview_creation_problem().unwrap().contains("WebView2"),
-    )
+    assert_true(preflight.webview_creation_problem() is None)
+    assert_true(preflight.problem().contains("WebView2"))
   }
   assert_true(
     preflight.sync_bridge_evaluate_problem().unwrap().contains("WebView2"),
@@ -74,14 +71,14 @@ test "windows backend exposes webview2 descriptor" {
     .unwrap()
     .contains("event-loop callback ABI"),
   )
-  assert_true(preflight.to_json().contains("\"canLaunch\":false"))
+  assert_true(preflight.to_json().contains("\"canLaunch\":"))
   assert_true(preflight.to_json().contains("\"problemKind\":"))
   assert_true(preflight.to_json().contains("\"dependencyProblem\":"))
   assert_true(preflight.to_json().contains("\"webviewCreationProblem\":"))
   assert_true(preflight.to_json().contains("\"syncBridgeEvaluateProblem\":"))
   assert_true(preflight.to_json().contains("\"asyncBridgeDrainProblem\":"))
   let capability = launch_capability()
-  assert_false(capability.webview_creation())
+  assert_eq(capability.webview_creation(), available())
   assert_false(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
   assert_true(capability.webview_creation_message().contains("WebView2"))
@@ -140,7 +137,7 @@ test "windows backend exposes native runtime facade" {
 }
 
 ///|
-test "windows backend prepares run plan and reports unsupported launch" {
+test "windows backend prepares run plan and gates native launch" {
   match runtime(test_host()) {
     Ok(runtime) => {
       match run(runtime) {
@@ -205,13 +202,18 @@ test "windows backend prepares run plan and reports unsupported launch" {
         }
         Err(_) => abort("unexpected invalid Windows dry run")
       }
-      match launch(runtime) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) => assert_true(message.contains("WebView2"))
-            _ => abort("unexpected Windows launch status")
-          }
-        Err(_) => abort("unexpected invalid Windows launch plan")
+      if available() {
+        assert_true(launch_capability().webview_creation())
+      } else {
+        match launch(runtime) {
+          Ok(result) =>
+            match result.status() {
+              RunUnsupported(message) =>
+                assert_true(message.contains("WebView2"))
+              _ => abort("unexpected Windows launch status")
+            }
+          Err(_) => abort("unexpected invalid Windows launch plan")
+        }
       }
     }
     Err(_) => abort("unexpected invalid Windows native runtime")
@@ -225,7 +227,12 @@ test "windows async launch reports target blocker first" {
       match launch(runtime) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) => assert_true(message.contains("WebView2"))
+            RunUnsupported(message) =>
+              if available() {
+                assert_true(message.contains("async command route"))
+              } else {
+                assert_true(message.contains("WebView2"))
+              }
             _ => abort("unexpected Windows async launch status")
           }
         Err(_) => abort("unexpected invalid Windows async launch plan")
@@ -241,7 +248,12 @@ test "windows async launch reports target blocker first" {
       match launch_bundled(manifest) {
         Ok(result) =>
           match result.status() {
-            RunUnsupported(message) => assert_true(message.contains("WebView2"))
+            RunUnsupported(message) =>
+              if available() {
+                assert_true(message.contains("async command route"))
+              } else {
+                assert_true(message.contains("WebView2"))
+              }
             _ => abort("unexpected Windows bundled async launch status")
           }
         Err(_) => abort("unexpected invalid Windows bundled async launch plan")

@@ -100,8 +100,9 @@
   for resolved HTML/file/remote URLs plus sync WebKitGTK script-message bridge
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
-  the final native launch ABI for source and packaged manifests, with that ABI
-  reporting unsupported until the COM creation loop lands; source and bundled
+  a Win32/WebView2 COM creation loop for source and packaged manifests when
+  `WebView2Loader.dll` is available, while bridge evaluation and custom asset
+  serving remain separately gated; source and bundled
   launch-session JSON can now advertise async-capable bridge scheduling for
   native loops that wire deferred completion, including the reusable async
   bridge executor descriptor over
@@ -168,8 +169,8 @@
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
-  async bridge drain/evaluate scheduling in the C/WebView loops and the Windows
-  WebView creation loop remain.
+  async bridge drain/evaluate scheduling in the C/WebView loops, Windows
+  WebView2 bridge evaluation, and Windows custom asset serving remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

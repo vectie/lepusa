@@ -38,7 +38,7 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     webview_engine="WebView2",
     dependency_name="webview2-loader",
     dependency_available=available(),
-    webview_creation_loop=false,
+    webview_creation_loop=true,
     sync_bridge_evaluate=false,
     async_bridge_drain=false,
     dependency_message="Windows WebView2 loader is not available",
@@ -53,12 +53,12 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
   @runtime.NativeOperationExecutor::new(
     evaluate_script=fn(_) {
       NativeOperationSkipped(
-        "Windows WebView2 script evaluation is unavailable until the creation loop lands",
+        "Windows WebView2 script evaluation is unavailable until bridge response evaluation lands",
       )
     },
     navigate_window=fn(_) {
       NativeOperationSkipped(
-        "Windows native navigation is unavailable until the WebView2 creation loop lands",
+        "Windows native navigation is unavailable until the WebView2 operation loop lands",
       )
     },
     run_effect=fn(name) {
