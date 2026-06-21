@@ -657,9 +657,12 @@ relaunches the current command line before the current window set closes, and
 macOS also applies app dock visibility, nested app-menu set/clear operations,
 and status-item tray operations for icon, tooltip, menu, menu popup,
 visibility, and destroy; macOS menu items also apply supported accelerator
-strings as native key equivalents and modifier masks. Remaining Linux/Windows
-tray, window-menu, non-macOS menu accelerator, and menu item action work is
-still reported as skipped until concrete OS menu and status-item renderers land.
+strings as native key equivalents and modifier masks. Rendered macOS app-menu
+and tray-menu action/check items dispatch `menu.onItemClick` and
+`tray.onMenuItemClick` frontend events with the clicked item id. Remaining
+Linux/Windows tray, window-menu, non-macOS menu accelerator, and non-macOS menu
+item action work is still reported as skipped until concrete OS menu and
+status-item renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

@@ -109,6 +109,7 @@ static LepusaSelRegisterName lepusa_sel_register_name = NULL;
 static LepusaObjcMsgSend lepusa_objc_msg_send = NULL;
 static void *lepusa_macos_tray_item = NULL;
 static void *lepusa_macos_tray_menu = NULL;
+static void *lepusa_macos_menu_item_target = NULL;
 static LepusaObjcAllocateClassPair lepusa_objc_allocate_class_pair = NULL;
 static LepusaObjcRegisterClassPair lepusa_objc_register_class_pair = NULL;
 static LepusaClassAddMethod lepusa_class_add_method = NULL;
@@ -1871,6 +1872,115 @@ static void lepusa_macos_apply_menu_item_accelerator(
   );
 }
 
+static void lepusa_evaluate_script_in_primary_webview(const char *script) {
+  LepusaBridgeContext *context = lepusa_current_bridge_context;
+  if (context == NULL || context->webview == NULL || script == NULL) {
+    return;
+  }
+  lepusa_msg_void_id_id(
+    context->webview,
+    "evaluateJavaScript:completionHandler:",
+    lepusa_ns_string_from_range(script, (int32_t)strlen(script)),
+    NULL
+  );
+}
+
+static void lepusa_macos_menu_item_selected(
+  void *self,
+  void *selector,
+  void *sender
+) {
+  (void)self;
+  (void)selector;
+  void *metadata = sender == NULL ? NULL : lepusa_msg_id(sender, "representedObject");
+  const char *text = metadata == NULL ?
+    NULL :
+    ((LepusaMsgSendCString)lepusa_objc_msg_send)(
+      metadata,
+      lepusa_sel("UTF8String")
+    );
+  if (text == NULL) {
+    return;
+  }
+  const char *separator = strchr(text, '\n');
+  if (separator == NULL || separator == text || separator[1] == '\0') {
+    return;
+  }
+  char *event_literal = lepusa_js_string_literal_from_range(
+    text,
+    (int32_t)(separator - text)
+  );
+  char *id_literal = lepusa_js_string_literal_from_range(
+    separator + 1,
+    (int32_t)strlen(separator + 1)
+  );
+  if (event_literal == NULL || id_literal == NULL) {
+    free(event_literal);
+    free(id_literal);
+    return;
+  }
+  size_t script_len =
+    strlen(event_literal) +
+    strlen(id_literal) +
+    128;
+  char *script = (char *)malloc(script_len);
+  if (script != NULL) {
+    snprintf(
+      script,
+      script_len,
+      "(globalThis[\"__lepusaDispatchEvent\"]||(()=>false))({name:%s,payload:JSON.stringify({id:%s})});",
+      event_literal,
+      id_literal
+    );
+    lepusa_evaluate_script_in_primary_webview(script);
+  }
+  free(script);
+  free(event_literal);
+  free(id_literal);
+}
+
+static void *lepusa_macos_menu_item_target_instance(void);
+
+static void lepusa_macos_attach_menu_item_click(
+  void *item,
+  const char *object,
+  const char *end,
+  const char *click_event
+) {
+  if (item == NULL || object == NULL || click_event == NULL || click_event[0] == '\0') {
+    return;
+  }
+  const char *id = NULL;
+  int32_t id_len = 0;
+  if (!lepusa_json_member_string(object, end, "id", &id, &id_len) || id_len <= 0) {
+    return;
+  }
+  size_t event_len = strlen(click_event);
+  char *metadata = (char *)malloc(event_len + 1 + (size_t)id_len + 1);
+  if (metadata == NULL) {
+    return;
+  }
+  memcpy(metadata, click_event, event_len);
+  metadata[event_len] = '\n';
+  memcpy(metadata + event_len + 1, id, (size_t)id_len);
+  metadata[event_len + 1 + (size_t)id_len] = '\0';
+  void *target = lepusa_macos_menu_item_target_instance();
+  if (target != NULL) {
+    lepusa_msg_void_id(
+      item,
+      "setRepresentedObject:",
+      lepusa_ns_string_from_range(metadata, (int32_t)strlen(metadata))
+    );
+    lepusa_msg_void_id(item, "setTarget:", target);
+    lepusa_msg_void_id(
+      item,
+      "setAction:",
+      lepusa_sel("lepusaMenuItemSelected:")
+    );
+  }
+  free(metadata);
+}
+
 static void *lepusa_macos_menu_with_title(const char *title, int32_t title_len) {
   void *menu_alloc = lepusa_msg_id(lepusa_cls("NSMenu"), "alloc");
   if (menu_alloc == NULL) {
@@ -1914,7 +2024,8 @@ static void lepusa_macos_add_menu_items_from_array(
   void *menu,
   const char *array,
   const char *end,
-  int depth
+  int depth,
+  const char *click_event
 ) {
   if (menu == NULL || array == NULL || array >= end || *array != '[' || depth > 8) {
     return;
@@ -1969,6 +2080,14 @@ static void lepusa_macos_add_menu_items_from_array(
           );
           lepusa_msg_void_int(item, "setEnabled:", enabled);
           lepusa_macos_apply_menu_item_accelerator(item, cursor, item_end + 1);
+          if (!lepusa_range_equals(kind, kind_len, "submenu")) {
+            lepusa_macos_attach_menu_item_click(
+              item,
+              cursor,
+              item_end + 1,
+              click_event
+            );
+          }
           if (checked || lepusa_range_equals(kind, kind_len, "check")) {
             lepusa_msg_void_int(item, "setState:", checked ? 1 : 0);
           }
@@ -1990,7 +2109,8 @@ static void lepusa_macos_add_menu_items_from_array(
                 submenu,
                 children,
                 children_end,
-                depth + 1
+                depth + 1,
+                click_event
               );
               lepusa_msg_void_id(item, "setSubmenu:", submenu);
             }
@@ -2009,7 +2129,8 @@ static void *lepusa_macos_menu_from_payload(
   const char *payload,
   int32_t payload_len,
   const char *title,
-  int32_t title_len
+  int32_t title_len,
+  const char *click_event
 ) {
   if (payload == NULL || payload_len <= 0) {
     return NULL;
@@ -2041,7 +2162,7 @@ static void *lepusa_macos_menu_from_payload(
       return menu;
     }
   }
-  lepusa_macos_add_menu_items_from_array(menu, items, items_end, 0);
+  lepusa_macos_add_menu_items_from_array(menu, items, items_end, 0, click_event);
   return menu;
 }
 
@@ -2049,7 +2170,13 @@ static void lepusa_apply_app_menu(
   const char *payload,
   int32_t payload_len
 ) {
-  void *menu = lepusa_macos_menu_from_payload(payload, payload_len, "Lepusa", 6);
+  void *menu = lepusa_macos_menu_from_payload(
+    payload,
+    payload_len,
+    "Lepusa",
+    6,
+    "menu.onItemClick"
+  );
   if (menu == NULL) {
     return;
   }
@@ -2196,7 +2323,13 @@ static void lepusa_apply_tray_menu(
   if (item == NULL) {
     return;
   }
-  void *menu = lepusa_macos_menu_from_payload(payload, payload_len, "Tray", 4);
+  void *menu = lepusa_macos_menu_from_payload(
+    payload,
+    payload_len,
+    "Tray",
+    4,
+    "tray.onMenuItemClick"
+  );
   if (menu == NULL) {
     return;
   }
@@ -2949,6 +3082,52 @@ static void *lepusa_window_delegate_class(void) {
   );
   lepusa_objc_register_class_pair(delegate_class);
   return delegate_class;
+}
+
+static void *lepusa_macos_menu_item_target_class(void) {
+  static void *target_class = NULL;
+  if (target_class != NULL) {
+    return target_class;
+  }
+  target_class = lepusa_objc_get_class("LepusaMenuItemTarget");
+  if (target_class != NULL) {
+    return target_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  target_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaMenuItemTarget",
+    0
+  );
+  if (target_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    target_class,
+    lepusa_sel("lepusaMenuItemSelected:"),
+    (void *)lepusa_macos_menu_item_selected,
+    "v@:@"
+  );
+  lepusa_objc_register_class_pair(target_class);
+  return target_class;
+}
+
+static void *lepusa_macos_menu_item_target_instance(void) {
+  if (lepusa_macos_menu_item_target != NULL) {
+    return lepusa_macos_menu_item_target;
+  }
+  void *target_class = lepusa_macos_menu_item_target_class();
+  if (target_class == NULL) {
+    return NULL;
+  }
+  lepusa_macos_menu_item_target = lepusa_msg_id(target_class, "new");
+  return lepusa_macos_menu_item_target;
 }
 
 static void *lepusa_bridge_handler_class(void) {

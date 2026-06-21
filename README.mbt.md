@@ -757,9 +757,10 @@ nested app-menu set/clear operations and status-item tray operations for icon,
 tooltip, menu, menu popup, visibility, and destroy. Platform operation reports
 now mark supported app shell, macOS app-menu, and macOS tray operations as
 executed, including macOS menu accelerator rendering for supported shortcut
-strings, while leaving remaining Linux/Windows tray, window-menu, non-macOS menu
-accelerator, and menu item action work explicitly skipped until native OS
-renderers land.
+strings and macOS menu/tray item click dispatch to `menu.onItemClick` and
+`tray.onMenuItemClick`, while leaving remaining Linux/Windows tray, window-menu,
+non-macOS menu accelerator, and non-macOS menu item action work explicitly
+skipped until native OS renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and
