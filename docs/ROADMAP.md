@@ -62,7 +62,9 @@
   startup before WebView creation, run `app-will-exit` lifecycle operations
   after the window loop, and execute service shutdown after that lifecycle step;
   native service hooks now terminate replaced tracked services and install
-  runner-exit/interruption cleanup on macOS, Linux, and Windows.
+  runner-exit/interruption cleanup on macOS, Linux, and Windows; macOS and
+  Linux native window-close paths now terminate tracked sidecar services inside
+  the platform event loop before the normal shutdown report path runs.
 - Add `NativeRuntime` as the single platform-loop facade for backend bootstrap,
   protocol asset resolution, bridge dispatch, service supervisor
   plans/reports/executors, and lifecycle steps.

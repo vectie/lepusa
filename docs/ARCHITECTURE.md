@@ -496,6 +496,10 @@ This keeps process spawning and HTTP probing owned by platform code while
 preserving one framework-level service contract. The macOS, Linux, and Windows
 packages map those hooks to native process launch, HTTP readiness polling, and
 tracked shutdown.
+Native macOS and Linux window-close paths also terminate tracked sidecar
+services from inside the platform event loop before normal MoonBit shutdown
+reports run, so closing a desktop window does not leave localhost sidecars
+behind if the WebView loop owns process lifetime.
 `BundledRuntimeManifest::service_plan()` provides the same sidecar view for
 packaged `lepusa/runtime.json` files, keeping source-run and bundle-run
 supervision contracts aligned; bundled service plans lower to the same

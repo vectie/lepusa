@@ -1120,6 +1120,55 @@ static void lepusa_url_scheme_stop_task(
   (void)task;
 }
 
+static void lepusa_window_will_close(
+  void *self,
+  void *selector,
+  void *notification
+) {
+  (void)self;
+  (void)selector;
+  (void)notification;
+  lepusa_terminate_tracked_services(1);
+  void *app = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+  if (app != NULL) {
+    lepusa_msg_void_id(app, "terminate:", NULL);
+  }
+}
+
+static void *lepusa_window_delegate_class(void) {
+  static void *delegate_class = NULL;
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  delegate_class = lepusa_objc_get_class("LepusaWindowDelegate");
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  delegate_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaWindowDelegate",
+    0
+  );
+  if (delegate_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    delegate_class,
+    lepusa_sel("windowWillClose:"),
+    (void *)lepusa_window_will_close,
+    "v@:@"
+  );
+  lepusa_objc_register_class_pair(delegate_class);
+  return delegate_class;
+}
+
 static void *lepusa_bridge_handler_class(void) {
   static void *handler_class = NULL;
   if (handler_class != NULL) {
@@ -1443,6 +1492,12 @@ static int32_t lepusa_macos_run_webview_impl(
   }
   bridge_context.window = window;
   bridge_context.webview = webview;
+
+  void *delegate_class = lepusa_window_delegate_class();
+  void *delegate = delegate_class == NULL ? NULL : lepusa_msg_id(delegate_class, "new");
+  if (delegate != NULL) {
+    lepusa_msg_void_id(window, "setDelegate:", delegate);
+  }
 
   lepusa_msg_void_id(window, "setTitle:", lepusa_ns_string(title));
   lepusa_msg_void_id(window, "setContentView:", webview);

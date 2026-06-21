@@ -1127,6 +1127,15 @@ static void lepusa_linux_cleanup_services_on_signal(int signo) {
   raise(signo);
 }
 
+static void lepusa_linux_window_destroyed(void *widget, void *data) {
+  (void)widget;
+  LepusaLinuxWebKit *api = (LepusaLinuxWebKit *)data;
+  lepusa_linux_terminate_tracked_services(1);
+  if (api != NULL && api->gtk_main_quit != NULL) {
+    api->gtk_main_quit();
+  }
+}
+
 static void lepusa_linux_install_service_signal_action(void) {
   struct sigaction action;
   memset(&action, 0, sizeof(action));
@@ -1417,8 +1426,8 @@ int32_t lepusa_linux_run_webview(
   api.g_signal_connect_data(
     window,
     "destroy",
-    (void *)api.gtk_main_quit,
-    NULL,
+    (void *)lepusa_linux_window_destroyed,
+    &api,
     NULL,
     0
   );
