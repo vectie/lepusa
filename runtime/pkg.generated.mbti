@@ -23,6 +23,8 @@ pub fn native_direct_load_url(String) -> Bool
 
 pub fn native_executable_operations_packet(Array[NativeExecutableOperation]) -> String
 
+pub fn native_initial_webview_open_handoff_packet(Array[NativeWebViewPlan], bridge_sources~ : Array[String], start_index? : Int) -> String
+
 pub fn native_protocol_load_url(String, String) -> Bool
 
 pub fn native_service_command_packet(Array[String]) -> Bytes

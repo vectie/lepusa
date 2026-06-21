@@ -512,6 +512,57 @@ pub fn native_executable_operations_packet(
 }
 
 ///|
+pub fn native_initial_webview_open_handoff_packet(
+  webviews : Array[NativeWebViewPlan],
+  bridge_sources~ : Array[String],
+  start_index? : Int = 1,
+) -> String {
+  let first = if start_index < 0 { 0 } else { start_index }
+  if webviews.length() <= first {
+    return "immediate\n\n0\nlepusa-ops-v3\n0\n"
+  }
+  let records : Array[String] = []
+  for index in first..<webviews.length() {
+    let bridge_source = match bridge_sources.get(index) {
+      Some(source) => source
+      None => ""
+    }
+    records.push(
+      webviews[index].native_open_window_packet_record(bridge_source),
+    )
+  }
+  [
+    "immediate\n\n0\n",
+    "lepusa-ops-v3\n",
+    "\{records.length()}\n",
+    records.join(""),
+  ].join("")
+}
+
+///|
+fn NativeWebViewPlan::native_open_window_packet_record(
+  self : NativeWebViewPlan,
+  bridge_source : String,
+) -> String {
+  [
+    packet_field("open-window"),
+    packet_field(self.label()),
+    packet_field(""),
+    packet_field(self.load_url()),
+    packet_field(self.title()),
+    packet_field(self.width().to_string()),
+    packet_field(self.height().to_string()),
+    packet_field(""),
+    packet_field(""),
+    packet_field(""),
+    packet_field(self.resizable().to_string()),
+    packet_field(bridge_source),
+    packet_field(self.native_hook()),
+    packet_field(self.asset_protocol()),
+  ].join("")
+}
+
+///|
 fn NativeExecutableOperation::native_packet_record(
   self : NativeExecutableOperation,
 ) -> String {

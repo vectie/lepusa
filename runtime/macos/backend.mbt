@@ -32,6 +32,7 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
     webview_creation=true,
     sync_bridge_evaluate=true,
     async_bridge_drain=false,
+    max_webviews=0,
     webview_creation_message="macOS WKWebView creation loop is unavailable",
     sync_bridge_evaluate_message="macOS WKWebView sync bridge response evaluation is unavailable",
     async_bridge_drain_message="macOS WKWebView async bridge drain/evaluate support needs an async MoonBit-to-native callback ABI",

@@ -16,6 +16,7 @@ pub struct MacOSRunPlan {
   execution : @runtime.NativeExecutionPlan
   bridge : MacOSBridgePlan
   service_supervisor : @runtime.NativeServiceSupervisorPlan
+  initial_open_packet : String
 } derive(Debug, Eq)
 
 ///|
@@ -25,7 +26,7 @@ pub struct MacOSRunResult {
 } derive(Debug, Eq)
 
 ///|
-#borrow(label, title, url, initialization_script, native_hook, asset_protocol, dispatch, resolve_asset)
+#borrow(label, title, url, initialization_script, native_hook, asset_protocol, initial_open_packet, dispatch, resolve_asset)
 extern "c" fn run_webview_with_bridge(
   label : Bytes,
   title : Bytes,
@@ -33,6 +34,7 @@ extern "c" fn run_webview_with_bridge(
   initialization_script : Bytes,
   native_hook : Bytes,
   asset_protocol : Bytes,
+  initial_open_packet : Bytes,
   width : Int,
   height : Int,
   resizable : Int,
@@ -92,6 +94,7 @@ pub fn prepare_bundled_run(
             execution,
             bridge: macos_bridge_plan_from_bundled(manifest),
             service_supervisor: plan.service_supervisor_plan(),
+            initial_open_packet: macos_initial_open_packet_from_bundled(plan),
           })
         Err(problems) => Err(problems)
       }
@@ -122,6 +125,7 @@ fn macos_run_plan_from_prepared(
     execution: plan.execution_plan(),
     bridge: macos_bridge_plan_from_runtime(runtime),
     service_supervisor: plan.service_supervisor_plan(),
+    initial_open_packet: macos_initial_open_packet_from_runtime(runtime, plan),
   }
 }
 
@@ -252,6 +256,11 @@ pub fn MacOSRunPlan::service_supervisor_plan(
 }
 
 ///|
+pub fn MacOSRunPlan::initial_open_packet(self : MacOSRunPlan) -> String {
+  self.initial_open_packet
+}
+
+///|
 pub fn MacOSRunPlan::launch_session(
   self : MacOSRunPlan,
   bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
@@ -369,6 +378,7 @@ fn run_plan(
         packet.initialization_script(),
         packet.native_hook(),
         packet.asset_protocol(),
+        @utf8.encode(plan.initial_open_packet()),
         packet.width(),
         packet.height(),
         packet.resizable(),
@@ -417,4 +427,61 @@ fn macos_initialization_script(
 ///|
 fn macos_native_hook_script(hook : String) -> String {
   @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS")
+}
+
+///|
+fn macos_initial_open_packet_from_runtime(
+  runtime : @runtime.NativeRuntime,
+  plan : @runtime.NativePreparedRunPlan,
+) -> String {
+  @runtime.native_initial_webview_open_handoff_packet(
+    plan.webviews(),
+    bridge_sources=runtime_bridge_sources(runtime),
+  )
+}
+
+///|
+fn runtime_bridge_sources(runtime : @runtime.NativeRuntime) -> Array[String] {
+  match runtime.host().webviews() {
+    Ok(webviews) =>
+      webviews.map(fn(webview) { webview.initialization_scripts().join("\n") })
+    Err(_) => []
+  }
+}
+
+///|
+fn macos_initial_open_packet_from_bundled(
+  plan : @bundled.BundledNativeRunPlan,
+) -> String {
+  @runtime.native_initial_webview_open_handoff_packet(
+    plan.webviews(),
+    bridge_sources=bundled_bridge_sources(plan),
+  )
+}
+
+///|
+fn bundled_bridge_sources(
+  plan : @bundled.BundledNativeRunPlan,
+) -> Array[String] {
+  let execution = match plan.native_execution_plan() {
+    Ok(execution) => Some(execution)
+    Err(_) => None
+  }
+  plan
+  .bundled_webviews()
+  .map(fn(webview) {
+    let scripts = webview.initialization_scripts()
+    match execution {
+      Some(execution) => {
+        let startup = execution.startup_initialization_script(webview.label())
+        if startup == "" {
+          scripts.join("\n")
+        } else {
+          scripts.push(startup)
+          scripts.join("\n")
+        }
+      }
+      None => scripts.join("\n")
+    }
+  })
 }

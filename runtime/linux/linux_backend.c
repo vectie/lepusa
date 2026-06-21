@@ -1810,6 +1810,7 @@ int32_t lepusa_linux_run_webview(
   moonbit_bytes_t initialization_script,
   moonbit_bytes_t native_hook,
   moonbit_bytes_t asset_protocol,
+  moonbit_bytes_t initial_open_packet,
   int32_t width,
   int32_t height,
   int32_t resizable,
@@ -1956,6 +1957,10 @@ int32_t lepusa_linux_run_webview(
   api.gtk_container_add(window, webview);
   api.webkit_web_view_load_uri(webview, url_text);
   api.gtk_widget_show_all(window);
+  lepusa_linux_apply_open_windows_from_handoff_packet(
+    &bridge_context,
+    initial_open_packet
+  );
   api.gtk_main();
   free(title_text);
   free(label_text);
@@ -1971,6 +1976,7 @@ int32_t lepusa_linux_run_webview(
   (void)initialization_script;
   (void)native_hook;
   (void)asset_protocol;
+  (void)initial_open_packet;
   (void)width;
   (void)height;
   (void)resizable;

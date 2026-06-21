@@ -103,6 +103,7 @@ test "macos backend exposes wkwebview descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  assert_eq(capability.max_webviews(), 0)
   assert_true(
     capability
     .async_bridge_drain_message()
@@ -397,18 +398,22 @@ test "macos backend preserves all webviews in run plan" {
 }
 
 ///|
-test "macos open-window launch rejects multi-window plans explicitly" {
+test "macos open-window launch prepares initial extra window operations" {
   match runtime(multi_window_test_host()) {
     Ok(runtime) =>
-      match run(runtime, mode=MacOSOpenWindow) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) => {
-              assert_true(message.contains("supports 1 webview"))
-              assert_true(message.contains("plan has 2"))
-            }
-            _ => abort("unexpected multi-window macOS launch status")
-          }
+      match prepare_run(runtime) {
+        Ok(plan) => {
+          assert_true(
+            plan.launch_blocker_with_capability("macOS", launch_capability())
+            is None,
+          )
+          let packet = plan.initial_open_packet()
+          assert_true(packet.contains("lepusa-ops-v3"))
+          assert_true(packet.contains("open-window"))
+          assert_true(packet.contains("settings"))
+          assert_true(packet.contains("lepusa://inline/settings/index.html"))
+          assert_true(packet.contains("Settings"))
+        }
         Err(_) => abort("unexpected invalid multi-window macOS run")
       }
     Err(_) => abort("unexpected invalid multi-window macOS runtime")

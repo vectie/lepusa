@@ -38,6 +38,7 @@ test "linux backend exposes webkitgtk descriptor" {
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
   assert_false(capability.async_bridge_drain())
+  assert_eq(capability.max_webviews(), 0)
   assert_true(
     capability
     .async_bridge_drain_message()

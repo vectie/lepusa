@@ -159,16 +159,17 @@
   hook, and asset protocol needed by native WebView creation handlers; macOS
   and Linux now consume those `open-window` records by creating labeled
   WKWebView/WebKitGTK windows with target-window response evaluation and
-  URL-routed asset resolution;
+  URL-routed asset resolution; source and bundled macOS/Linux launches now
+  feed additional initial WebViews through the same native open-window
+  consumer before entering the platform event loop, so static multi-window
+  plans and later dynamic windows share one creation boundary;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
-  their current WebView script-evaluation and window-control support; launch
-  capability still gates static multi-WebView launch plans so native loops do
-  not silently run partial initial-window apps; native async bridge
-  drain/evaluate scheduling in the C/WebView loops, static multi-initial-window
-  launch, and the Windows WebView creation loop remain.
+  their current WebView script-evaluation and window-control support; native
+  async bridge drain/evaluate scheduling in the C/WebView loops and the Windows
+  WebView creation loop remain.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.

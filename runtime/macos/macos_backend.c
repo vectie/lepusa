@@ -1839,6 +1839,7 @@ static int32_t lepusa_macos_run_webview_impl(
   moonbit_bytes_t initialization_script,
   moonbit_bytes_t native_hook,
   moonbit_bytes_t asset_protocol,
+  moonbit_bytes_t initial_open_packet,
   int32_t width,
   int32_t height,
   int32_t resizable,
@@ -1994,6 +1995,10 @@ static int32_t lepusa_macos_run_webview_impl(
   lepusa_load_webview_url_range(webview, initial_url, (int32_t)strlen(initial_url));
   free(initial_url);
   lepusa_msg_void_id(window, "makeKeyAndOrderFront:", NULL);
+  lepusa_apply_open_windows_from_handoff_packet(
+    &bridge_context,
+    initial_open_packet
+  );
   lepusa_msg_void_int(app, "activateIgnoringOtherApps:", 1);
   lepusa_reinstall_service_signal_handlers();
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(app, lepusa_sel("run"));
@@ -2020,6 +2025,7 @@ int32_t lepusa_macos_run_webview(
     initialization_script,
     NULL,
     NULL,
+    NULL,
     width,
     height,
     resizable,
@@ -2038,6 +2044,7 @@ int32_t lepusa_macos_run_webview_with_bridge(
   moonbit_bytes_t initialization_script,
   moonbit_bytes_t native_hook,
   moonbit_bytes_t asset_protocol,
+  moonbit_bytes_t initial_open_packet,
   int32_t width,
   int32_t height,
   int32_t resizable,
@@ -2053,6 +2060,7 @@ int32_t lepusa_macos_run_webview_with_bridge(
     initialization_script,
     native_hook,
     asset_protocol,
+    initial_open_packet,
     width,
     height,
     resizable,
@@ -2125,6 +2133,7 @@ int32_t lepusa_macos_run_webview_with_bridge(
   moonbit_bytes_t initialization_script,
   moonbit_bytes_t native_hook,
   moonbit_bytes_t asset_protocol,
+  moonbit_bytes_t initial_open_packet,
   int32_t width,
   int32_t height,
   int32_t resizable,
@@ -2139,6 +2148,7 @@ int32_t lepusa_macos_run_webview_with_bridge(
   (void)initialization_script;
   (void)native_hook;
   (void)asset_protocol;
+  (void)initial_open_packet;
   (void)width;
   (void)height;
   (void)resizable;
