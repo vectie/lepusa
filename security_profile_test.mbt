@@ -219,16 +219,24 @@ test "command registry dispatches through compiled security profile" {
     registered_routes=["fs.read"],
     check_handlers=true,
   )
-  let registry = @lepusa.CommandRegistry::new().register_fn("fs.read", handler=fn(
-    payload,
-  ) {
-    Ok("read:\{payload}")
-  })
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "fs.read",
+    handler=fn(payload) { Ok("read:\{payload}") },
+    operation_scope=fn(request) {
+      Ok(@lepusa.OperationScope::path(root=request.payload()))
+    },
+  )
   let allowed = registry.dispatch_with_profile(
     profile,
     security_profile_request("fs.read", payload="/app/data/config.json"),
   )
   assert_true(allowed is InvokeOk("1", "read:/app/data/config.json"))
+
+  let denied_scope = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("fs.read", payload="/app/cache/config.json"),
+  )
+  assert_true(denied_scope.error_kind() is Some(PermissionDenied))
 
   let denied_window = registry.dispatch_with_profile(
     profile,

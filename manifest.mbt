@@ -261,7 +261,11 @@ pub fn ProjectManifest::app(self : ProjectManifest, root : Cell) -> App {
   for plugin in self.plugins {
     app = app.with_plugin(plugin)
   }
-  for capability in self.capabilities {
+  for
+    capability in capabilities_with_file_system_scopes(
+      capabilities=self.capabilities,
+      scopes=self.filesystem_scopes,
+    ) {
     app = app.with_capability(capability)
   }
   for hook in self.lifecycle_hooks {

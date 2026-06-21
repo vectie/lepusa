@@ -1438,6 +1438,52 @@ test "project manifests validate filesystem scopes" {
 }
 
 ///|
+test "filesystem scopes augment filesystem capability operation scopes" {
+  let read_only = @lepusa.FileSystemScope::new(
+    name="assets",
+    root="/app/assets",
+  )
+  let writable = @lepusa.FileSystemScope::new(
+    name="data",
+    root="/app/data",
+    writable=true,
+  )
+  let capability = @lepusa.Capability::new("files")
+    .permission(FileSystemRead)
+    .permission(FileSystemWrite)
+    .path_scope(root="/app/data", writable=true)
+    .with_file_system_scopes([read_only, writable])
+  assert_true(
+    capability.allows_operation(
+      window_label="main",
+      permission=FileSystemRead,
+      scope=@lepusa.OperationScope::path(root="/app/assets/icon.png"),
+    ),
+  )
+  assert_false(
+    capability.allows_operation(
+      window_label="main",
+      permission=FileSystemWrite,
+      scope=@lepusa.OperationScope::path(
+        root="/app/assets/icon.png",
+        writable=true,
+      ),
+    ),
+  )
+  assert_true(
+    capability.allows_operation(
+      window_label="main",
+      permission=FileSystemWrite,
+      scope=@lepusa.OperationScope::path(
+        root="/app/data/config.json",
+        writable=true,
+      ),
+    ),
+  )
+  assert_eq(capability.operation_scopes().length(), 3)
+}
+
+///|
 test "project manifests build runtime and bundle plans" {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let manifest = @lepusa.ProjectManifest::new(

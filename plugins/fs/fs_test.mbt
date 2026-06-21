@@ -228,3 +228,50 @@ async test "fs registry enforces scope policy" {
     "invalid filesystem base64 content",
   )
 }
+
+///|
+async test "fs manager dispatch enforces compiled operation scopes" {
+  let root = "/tmp/lepusa-fs-profile-test"
+  @xfs.create_dir(root) catch {
+    _ => ()
+  }
+  @xfs.create_dir(root + "/allowed") catch {
+    _ => ()
+  }
+  let policy = FsPolicy::new().scope(
+    @lepusa.FileSystemScope::new(name="data", root~, writable=true),
+  )
+  let registry = register(@lepusa.CommandRegistry::new(), policy~)
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(plugin())
+    .with_capability(
+      @lepusa.Capability::new("main-fs")
+      .window("main")
+      .permission(FileSystemWrite)
+      .path_scope(root=root + "/allowed", writable=true),
+    )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  let allowed = manager.dispatch_async(
+    fs_request(
+      "writeText", "{\"scope\":\"data\",\"path\":\"allowed/file.txt\",\"content\":\"ok\"}",
+    ),
+  )
+  assert_true(allowed is InvokeOk(_, _))
+  let denied = manager.dispatch_async(
+    fs_request(
+      "writeText", "{\"scope\":\"data\",\"path\":\"blocked/file.txt\",\"content\":\"no\"}",
+    ),
+  )
+  assert_true(denied.error_kind() is Some(PermissionDenied))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: fs.writeText",
+  )
+}

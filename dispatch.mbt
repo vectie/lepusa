@@ -5,6 +5,12 @@ pub type CommandHandler = (String) -> Result[String, String]
 pub type AsyncCommandHandler = async (String) -> Result[String, String]
 
 ///|
+pub type OperationScopeResolver = (InvokeRequest) -> Result[
+  OperationScope,
+  String,
+]
+
+///|
 enum RegisteredCommandHandler {
   SyncCommandHandler(CommandHandler)
   AsyncCommandHandler(AsyncCommandHandler)
@@ -14,6 +20,7 @@ enum RegisteredCommandHandler {
 pub struct RegisteredCommand {
   route : String
   permission : Permission
+  operation_scope : OperationScopeResolver?
   handler : RegisteredCommandHandler
 }
 
@@ -21,18 +28,20 @@ pub struct RegisteredCommand {
 pub fn RegisteredCommand::new(
   route : String,
   permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
   handler~ : CommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, handler: SyncCommandHandler(handler) }
+  { route, permission, operation_scope, handler: SyncCommandHandler(handler) }
 }
 
 ///|
 pub fn RegisteredCommand::new_async(
   route : String,
   permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
   handler~ : AsyncCommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, handler: AsyncCommandHandler(handler) }
+  { route, permission, operation_scope, handler: AsyncCommandHandler(handler) }
 }
 
 ///|
@@ -43,6 +52,28 @@ pub fn RegisteredCommand::route(self : RegisteredCommand) -> String {
 ///|
 pub fn RegisteredCommand::permission(self : RegisteredCommand) -> Permission {
   self.permission
+}
+
+///|
+pub fn RegisteredCommand::requires_operation_scope(
+  self : RegisteredCommand,
+) -> Bool {
+  self.operation_scope is Some(_)
+}
+
+///|
+pub fn RegisteredCommand::resolve_operation_scope(
+  self : RegisteredCommand,
+  request : InvokeRequest,
+) -> Result[OperationScope?, String] {
+  match self.operation_scope {
+    Some(resolve) =>
+      match resolve(request) {
+        Ok(scope) => Ok(Some(scope))
+        Err(problem) => Err(problem)
+      }
+    None => Ok(None)
+  }
 }
 
 ///|
@@ -87,9 +118,12 @@ pub fn CommandRegistry::register_fn(
   self : CommandRegistry,
   route : String,
   permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
   handler~ : CommandHandler,
 ) -> CommandRegistry {
-  self.register(RegisteredCommand::new(route, permission~, handler~))
+  self.register(
+    RegisteredCommand::new(route, permission~, operation_scope?, handler~),
+  )
 }
 
 ///|
@@ -97,9 +131,12 @@ pub fn CommandRegistry::register_async_fn(
   self : CommandRegistry,
   route : String,
   permission? : Permission = Permission::command(route),
+  operation_scope? : OperationScopeResolver,
   handler~ : AsyncCommandHandler,
 ) -> CommandRegistry {
-  self.register(RegisteredCommand::new_async(route, permission~, handler~))
+  self.register(
+    RegisteredCommand::new_async(route, permission~, operation_scope?, handler~),
+  )
 }
 
 ///|
@@ -224,13 +261,13 @@ pub fn CommandRegistry::dispatch_with_profile(
   profile : SecurityProfile,
   request : InvokeRequest,
 ) -> InvokeResponse {
-  let authorization = profile.authorize_invoke(request)
-  if !authorization.allowed() {
-    return authorization.to_response(request.id())
-  }
   match self.commands.get(request.route()) {
     None => InvokeResponse::unknown_command(request.id(), request.route())
-    Some(command) => execute_command(request, command)
+    Some(command) =>
+      match authorize_profile_command(profile, request, command) {
+        Ok(_) => execute_command(request, command)
+        Err(response) => response
+      }
   }
 }
 
@@ -282,13 +319,37 @@ pub async fn CommandRegistry::dispatch_with_profile_async(
   profile : SecurityProfile,
   request : InvokeRequest,
 ) -> InvokeResponse {
-  let authorization = profile.authorize_invoke(request)
-  if !authorization.allowed() {
-    return authorization.to_response(request.id())
-  }
   match self.commands.get(request.route()) {
     None => InvokeResponse::unknown_command(request.id(), request.route())
-    Some(command) => execute_command_async(request, command)
+    Some(command) =>
+      match authorize_profile_command(profile, request, command) {
+        Ok(_) => execute_command_async(request, command)
+        Err(response) => response
+      }
+  }
+}
+
+///|
+fn authorize_profile_command(
+  profile : SecurityProfile,
+  request : InvokeRequest,
+  command : RegisteredCommand,
+) -> Result[Unit, InvokeResponse] {
+  let authorization = profile.authorize_invoke(request)
+  if !authorization.allowed() {
+    return Err(authorization.to_response(request.id()))
+  }
+  match command.resolve_operation_scope(request) {
+    Ok(None) => Ok(())
+    Ok(Some(scope)) => {
+      let operation_authorization = profile.authorize_operation(request, scope)
+      if operation_authorization.allowed() {
+        Ok(())
+      } else {
+        Err(operation_authorization.to_response(request.id()))
+      }
+    }
+    Err(problem) => Err(InvokeResponse::invalid_request(request.id(), problem))
   }
 }
 

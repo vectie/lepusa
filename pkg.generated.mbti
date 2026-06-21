@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn capabilities_with_file_system_scopes(capabilities~ : Array[Capability], scopes~ : Array[FileSystemScope]) -> Array[Capability]
+
 pub fn[Model, Msg] cell_with_dispatch(model~ : Model, update~ : (Msg, Model) -> (Model, Cmd), view~ : ((Msg) -> Cmd, Model) -> Html) -> ((Msg) -> Cmd, Cell)
 
 pub fn new(Cell) -> App
@@ -331,6 +333,7 @@ pub fn Capability::url_scope(Self, String) -> Self
 pub fn Capability::validate(Self) -> Array[String]
 pub fn Capability::window(Self, String) -> Self
 pub fn Capability::windows(Self) -> Array[String]
+pub fn Capability::with_file_system_scopes(Self, Array[FileSystemScope]) -> Self
 
 pub struct CapabilityCompileIssue {
   severity : CapabilityIssueSeverity
@@ -560,8 +563,8 @@ pub async fn CommandRegistry::dispatch_with_profile_async(Self, SecurityProfile,
 pub fn CommandRegistry::merge(Self, Self) -> Self
 pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
-pub fn CommandRegistry::register_async_fn(Self, String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
-pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
+pub fn CommandRegistry::register_async_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : async (String) -> Result[String, String]) -> Self
+pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::routes(Self) -> Array[String]
 pub fn CommandRegistry::sync_routes(Self) -> Array[String]
 pub fn CommandRegistry::validate(Self) -> Array[String]
@@ -1113,12 +1116,15 @@ pub fn ProtocolMapping::scheme(Self) -> String
 pub struct RegisteredCommand {
   route : String
   permission : Permission
+  operation_scope : ((InvokeRequest) -> Result[OperationScope, String])?
   handler : RegisteredCommandHandler
 }
 pub fn RegisteredCommand::mode(Self) -> CommandMode
-pub fn RegisteredCommand::new(String, permission? : Permission, handler~ : (String) -> Result[String, String]) -> Self
-pub fn RegisteredCommand::new_async(String, permission? : Permission, handler~ : async (String) -> Result[String, String]) -> Self
+pub fn RegisteredCommand::new(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
+pub fn RegisteredCommand::new_async(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : async (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::permission(Self) -> Permission
+pub fn RegisteredCommand::requires_operation_scope(Self) -> Bool
+pub fn RegisteredCommand::resolve_operation_scope(Self, InvokeRequest) -> Result[OperationScope?, String]
 pub fn RegisteredCommand::route(Self) -> String
 
 type RegisteredCommandHandler
@@ -1850,5 +1856,7 @@ pub type AsyncCommandHandler = async (String) -> Result[String, String]
 pub type CommandHandler = (String) -> Result[String, String]
 
 pub type Dispatch[Msg] = (Msg) -> Cmd
+
+pub type OperationScopeResolver = (InvokeRequest) -> Result[OperationScope, String]
 
 // Traits

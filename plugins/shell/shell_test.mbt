@@ -94,3 +94,54 @@ async test "shell registry records delegated process lifecycle" {
     None => fail("expected shell process")
   }
 }
+
+///|
+async test "shell manager dispatch enforces compiled operation scopes" {
+  let table = ShellProcessTable::new()
+  let registry = registry(
+    policy=ShellPolicy::new(allowed_commands=["moon", "rm"]),
+    table~,
+  )
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(plugin())
+    .with_capability(
+      @lepusa.Capability::new("main-shell")
+      .window("main")
+      .permission(Shell)
+      .shell_scope("moon"),
+    )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  let allowed = manager.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="allowed",
+      window_label="main",
+      plugin="shell",
+      command="execute",
+      payload="{\"command\":\"moon\",\"args\":[\"test\"]}",
+    ),
+  )
+  assert_true(
+    allowed.payload().unwrap_or("").contains("\"status\":\"delegated\""),
+  )
+  let denied = manager.dispatch_async(
+    @lepusa.InvokeRequest::new(
+      id="denied",
+      window_label="main",
+      plugin="shell",
+      command="execute",
+      payload="{\"command\":\"rm\"}",
+    ),
+  )
+  assert_true(denied.error_kind() is Some(PermissionDenied))
+  assert_eq(
+    denied.error_message().unwrap_or(""),
+    "permission denied: shell.execute",
+  )
+}

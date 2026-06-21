@@ -275,7 +275,11 @@ pub fn DesktopKit::apply(
   for plugin in self.plugins {
     next = next.with_plugin(plugin)
   }
-  for capability in self.capabilities {
+  for
+    capability in @lepusa.capabilities_with_file_system_scopes(
+      capabilities=self.capabilities,
+      scopes=self.filesystem_scopes,
+    ) {
     next = next.with_capability(capability)
   }
   Ok(next)

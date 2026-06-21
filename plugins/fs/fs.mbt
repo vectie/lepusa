@@ -149,49 +149,95 @@ pub fn register(
   policy? : FsPolicy = FsPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("fs.readText", permission=FileSystemRead, handler=fn(
-    payload,
-  ) {
-    handle_read_text(policy, payload)
-  })
-  .register_async_fn("fs.writeText", permission=FileSystemWrite, handler=fn(
-    payload,
-  ) {
-    handle_write_text(policy, payload)
-  })
-  .register_async_fn("fs.exists", permission=FileSystemRead, handler=fn(
-    payload,
-  ) {
-    handle_exists(policy, payload)
-  })
-  .register_async_fn("fs.createDir", permission=FileSystemWrite, handler=fn(
-    payload,
-  ) {
-    handle_create_dir(policy, payload)
-  })
-  .register_async_fn("fs.readBytes", permission=FileSystemRead, handler=fn(
-    payload,
-  ) {
-    handle_read_bytes(policy, payload)
-  })
-  .register_async_fn("fs.writeBytes", permission=FileSystemWrite, handler=fn(
-    payload,
-  ) {
-    handle_write_bytes(policy, payload)
-  })
-  .register_async_fn("fs.list", permission=FileSystemRead, handler=fn(payload) {
-    handle_list(policy, payload)
-  })
-  .register_async_fn("fs.metadata", permission=FileSystemRead, handler=fn(
-    payload,
-  ) {
-    handle_metadata(policy, payload)
-  })
-  .register_async_fn("fs.delete", permission=FileSystemWrite, handler=fn(
-    payload,
-  ) {
-    handle_delete(policy, payload)
-  })
+  .register_async_fn(
+    "fs.readText",
+    permission=FileSystemRead,
+    handler=fn(payload) { handle_read_text(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=false)
+    },
+  )
+  .register_async_fn(
+    "fs.writeText",
+    permission=FileSystemWrite,
+    handler=fn(payload) { handle_write_text(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=true)
+    },
+  )
+  .register_async_fn(
+    "fs.exists",
+    permission=FileSystemRead,
+    handler=fn(payload) { handle_exists(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=false)
+    },
+  )
+  .register_async_fn(
+    "fs.createDir",
+    permission=FileSystemWrite,
+    handler=fn(payload) { handle_create_dir(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=true)
+    },
+  )
+  .register_async_fn(
+    "fs.readBytes",
+    permission=FileSystemRead,
+    handler=fn(payload) { handle_read_bytes(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=false)
+    },
+  )
+  .register_async_fn(
+    "fs.writeBytes",
+    permission=FileSystemWrite,
+    handler=fn(payload) { handle_write_bytes(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=true)
+    },
+  )
+  .register_async_fn(
+    "fs.list",
+    permission=FileSystemRead,
+    handler=fn(payload) { handle_list(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=false)
+    },
+  )
+  .register_async_fn(
+    "fs.metadata",
+    permission=FileSystemRead,
+    handler=fn(payload) { handle_metadata(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=false)
+    },
+  )
+  .register_async_fn(
+    "fs.delete",
+    permission=FileSystemWrite,
+    handler=fn(payload) { handle_delete(policy, payload) },
+    operation_scope=fn(request) {
+      fs_operation_scope(policy, request.payload(), write=true)
+    },
+  )
+}
+
+///|
+fn fs_operation_scope(
+  policy : FsPolicy,
+  payload : String,
+  write~ : Bool,
+) -> Result[@lepusa.OperationScope, String] {
+  match decode_path_payload(payload) {
+    Ok((scope_name, path)) =>
+      match policy.resolve(scope_name~, path~, write~) {
+        Ok(full_path) =>
+          Ok(@lepusa.OperationScope::path(root=full_path, writable=write))
+        Err(problem) => Err(problem)
+      }
+    Err(problem) => Err(problem)
+  }
 }
 
 ///|

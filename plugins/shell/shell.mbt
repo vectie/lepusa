@@ -201,18 +201,39 @@ pub fn register(
   table? : ShellProcessTable = ShellProcessTable::new(),
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("shell.execute", permission=Shell, handler=payload => {
-    handle_execute(policy, payload)
-  })
-  .register_async_fn("shell.spawn", permission=Shell, handler=payload => {
-    handle_spawn(policy, table, payload)
-  })
+  .register_async_fn(
+    "shell.execute",
+    permission=Shell,
+    handler=payload => handle_execute(policy, payload),
+    operation_scope=fn(request) {
+      shell_operation_scope(request.payload(), context="shell execute")
+    },
+  )
+  .register_async_fn(
+    "shell.spawn",
+    permission=Shell,
+    handler=payload => handle_spawn(policy, table, payload),
+    operation_scope=fn(request) {
+      shell_operation_scope(request.payload(), context="shell spawn")
+    },
+  )
   .register_async_fn("shell.kill", permission=Shell, handler=payload => {
     handle_kill(table, payload)
   })
   .register_async_fn("shell.stdinWrite", permission=Shell, handler=payload => {
     handle_stdin_write(table, payload)
   })
+}
+
+///|
+fn shell_operation_scope(
+  payload : String,
+  context~ : String,
+) -> Result[@lepusa.OperationScope, String] {
+  match decode_command_payload(payload, context~) {
+    Ok(spec) => Ok(@lepusa.OperationScope::shell(spec.command))
+    Err(problem) => Err(problem)
+  }
 }
 
 ///|
