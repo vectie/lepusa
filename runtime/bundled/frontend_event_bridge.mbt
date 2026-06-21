@@ -30,7 +30,9 @@ fn BundledRuntime::dispatch_with_operations(
       ) {
       Ok(response) | Err(response) => response
     }
-    let operations = bundled_dispatch_followup_operations(request, response)
+    let operations = self.bundled_dispatch_followup_operations(
+      request, response,
+    )
     (response, operations)
   }
 }
@@ -53,21 +55,72 @@ async fn BundledRuntime::dispatch_with_operations_async(
       ) {
       Ok(response) | Err(response) => response
     }
-    let operations = bundled_dispatch_followup_operations(request, response)
+    let operations = self.bundled_dispatch_followup_operations(
+      request, response,
+    )
     (response, operations)
   }
 }
 
 ///|
-fn bundled_dispatch_followup_operations(
+fn BundledRuntime::bundled_dispatch_followup_operations(
+  self : BundledRuntime,
   request : @lepusa.InvokeRequest,
   response : @lepusa.InvokeResponse,
 ) -> Array[@runtime.NativeExecutableOperation] {
   let operations : Array[@runtime.NativeExecutableOperation] = []
+  for
+    operation in self.bundled_window_open_followup_operations(request, response) {
+    operations.push(operation)
+  }
   for operation in bundled_window_close_followup_operations(request, response) {
     operations.push(operation)
   }
   operations
+}
+
+///|
+fn BundledRuntime::bundled_window_open_followup_operations(
+  self : BundledRuntime,
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[@runtime.NativeExecutableOperation] {
+  if request.plugin() != "window" || request.command() != "open" {
+    return []
+  }
+  match response.payload() {
+    None => []
+    Some(_) =>
+      match @lepusa.WindowConfig::parse_open_payload(request.payload()) {
+        Err(_) => []
+        Ok(window) =>
+          match self.bundled_window_open_plan(window) {
+            Err(_) => []
+            Ok(plan) => [@runtime.NativeExecutableOperation::open_window(plan)]
+          }
+      }
+  }
+}
+
+///|
+fn BundledRuntime::bundled_window_open_plan(
+  self : BundledRuntime,
+  window : @lepusa.WindowConfig,
+) -> Result[@runtime.RuntimeWindowOpenPlan, Array[String]] {
+  match self.manifest.first_webview() {
+    Err(problem) => Err([problem])
+    Ok(base) =>
+      @runtime.RuntimeWindowOpenPlan::from_window_config(
+        window,
+        asset_protocol=base.asset_protocol(),
+        bridge_global_name=base.bridge_global_name(),
+        native_hook=base.native_hook(),
+        devtools=base.devtools(),
+        bridge_source=base.initialization_scripts().join("\n"),
+        allowed_routes=self.manifest.registered_routes(),
+        event_dispatch_hook=base.event_dispatch_hook(),
+      )
+  }
 }
 
 ///|

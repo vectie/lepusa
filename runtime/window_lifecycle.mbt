@@ -31,6 +31,34 @@ pub fn RuntimeWindowOpenPlan::new(
 }
 
 ///|
+pub fn RuntimeWindowOpenPlan::from_window_config(
+  window : @lepusa.WindowConfig,
+  asset_protocol~ : String,
+  bridge_global_name~ : String,
+  native_hook~ : String,
+  devtools~ : Bool,
+  bridge_source~ : String,
+  allowed_routes~ : Array[String],
+  event_dispatch_hook? : String = "__lepusaDispatchEvent",
+) -> Result[RuntimeWindowOpenPlan, Array[String]] {
+  match window.resolve(asset_protocol~) {
+    Ok(resolved) =>
+      Ok(
+        RuntimeWindowOpenPlan::new(
+          window=RuntimeWindow::from_resolved(resolved, event_dispatch_hook~),
+          asset_protocol~,
+          bridge_global_name~,
+          native_hook~,
+          devtools~,
+          bridge_source~,
+          allowed_routes~,
+        ),
+      )
+    Err(problems) => Err(problems)
+  }
+}
+
+///|
 pub fn RuntimeWindowOpenPlan::window(
   self : RuntimeWindowOpenPlan,
 ) -> RuntimeWindow {

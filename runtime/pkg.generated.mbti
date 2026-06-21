@@ -1217,6 +1217,7 @@ pub fn RuntimeWindowOpenPlan::asset_protocol(Self) -> String
 pub fn RuntimeWindowOpenPlan::bridge_global_name(Self) -> String
 pub fn RuntimeWindowOpenPlan::bridge_source(Self) -> String
 pub fn RuntimeWindowOpenPlan::devtools(Self) -> Bool
+pub fn RuntimeWindowOpenPlan::from_window_config(@lepusa.WindowConfig, asset_protocol~ : String, bridge_global_name~ : String, native_hook~ : String, devtools~ : Bool, bridge_source~ : String, allowed_routes~ : Array[String], event_dispatch_hook? : String) -> Result[Self, Array[String]]
 pub fn RuntimeWindowOpenPlan::initialization_scripts(Self) -> Array[String]
 pub fn RuntimeWindowOpenPlan::label(Self) -> String
 pub fn RuntimeWindowOpenPlan::native_hook(Self) -> String

@@ -675,6 +675,66 @@ test "bundled runtime dispatches sync official plugins" {
 }
 
 ///|
+test "bundled bridge dispatch lowers window open to native operation" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      {
+    #|        "label": "main",
+    #|        "url": "lepusa://rabbita/main/index.html",
+    #|        "allowedRoutes": ["window.open"],
+    #|        "initializationScripts": ["globalThis.__lepusaInvoke = function() {};"]
+    #|      }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["window.open"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let runtime = BundledRuntime::new(manifest)
+      let message = "{\"id\":\"open\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"open\",\"payload\":\"{\\\"label\\\":\\\"tools\\\",\\\"title\\\":\\\"Tools\\\",\\\"width\\\":480,\\\"height\\\":360,\\\"source\\\":{\\\"kind\\\":\\\"html\\\",\\\"content\\\":\\\"<aside>tools</aside>\\\"}}\"}"
+      match runtime.dispatch_bridge_message_sync(message) {
+        Ok(dispatch) => {
+          let operations = dispatch.operations()
+          assert_eq(operations.length(), 3)
+          assert_eq(operations[0].kind(), "evaluate-script")
+          assert_eq(operations[1].kind(), "open-window")
+          match operations[1].open_window_plan() {
+            Some(open_plan) => {
+              assert_eq(open_plan.label(), "tools")
+              assert_eq(open_plan.window().title(), "Tools")
+              assert_eq(open_plan.url(), "lepusa://inline/tools/index.html")
+              assert_true(open_plan.bridge_source().contains("__lepusaInvoke"))
+              assert_true(open_plan.allowed_routes().contains("window.open"))
+            }
+            None => abort("expected bundled open-window operation")
+          }
+          assert_eq(operations[2].kind(), "window-control")
+          assert_true(dispatch.to_json().contains("\"kind\":\"open-window\""))
+        }
+        Err(_) => abort("unexpected bundled open dispatch failure")
+      }
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled open handoff packet")
+      }
+      assert_true(packet.has_prefix("immediate\nmain\n"))
+      assert_true(packet.contains("lepusa-ops-v1\n3\n"))
+      assert_true(packet.contains("open-window"))
+      assert_true(packet.contains("window-control"))
+      assert_true(packet.contains("tools"))
+      assert_true(packet.contains("lepusa://inline/tools/index.html"))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled bridge dispatch lowers window close to native cleanup operation" {
   let manifest =
     #|{

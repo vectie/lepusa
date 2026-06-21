@@ -145,11 +145,11 @@
   bridge/webview boot data, and an `open-window` operation, while
   `request_window_close` and `close_window` separate close-request hooks from
   final asset/listener cleanup and the `close-window` operation; the official
-  `window.open` plugin route now gives frontend code the same app-facing
-  bridge boundary, lowering approved dispatches into `open-window` executable
-  operations, and approved source or packaged `window.close` dispatches now
-  emit the matching `close-window` lifecycle cleanup operation beside the
-  current native frame close control;
+  `window.open` plugin route now gives source and packaged frontend code the
+  same app-facing bridge boundary, lowering approved dispatches into
+  `open-window` executable operations, and approved source or packaged
+  `window.close` dispatches now emit the matching `close-window` lifecycle
+  cleanup operation beside the current native frame close control;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and
