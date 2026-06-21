@@ -24,6 +24,7 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("run") => render_run_async(args)
     Some("verify") => render_verify_async(args)
     Some("bridge") => render_bridge_async(args)
+    Some("frontend") => render_frontend_async(args)
     Some("dev") => render_dev_async(args)
     Some("bridge-task") => render_bridge_task_async(args)
     Some("bridge-handoff") => render_bridge_handoff_async(args)
@@ -70,6 +71,7 @@ fn help_text() -> String {
     #|  lepusa run [macos|windows|linux] [--launch] [--json]
     #|  lepusa verify [macos|windows|linux] [--strict] [--json]
     #|  lepusa bridge
+    #|  lepusa frontend [js|dts|json] [--global <name>] [--module <name>]
     #|  lepusa dev [--json]
     #|  lepusa bridge-task <window> <plugin.command> [payload]
     #|  lepusa bridge-handoff <window> <plugin.command> [payload]

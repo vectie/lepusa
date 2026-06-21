@@ -89,7 +89,10 @@ fn positional_args(args : Array[String]) -> Array[String] {
   for i in 1..<args.length() {
     if skip_next {
       skip_next = false
-    } else if args[i] == "--project" || args[i] == "--workspace" {
+    } else if args[i] == "--project" ||
+      args[i] == "--workspace" ||
+      args[i] == "--global" ||
+      args[i] == "--module" {
       skip_next = true
     } else if is_boolean_flag(args[i]) {
       continue
