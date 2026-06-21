@@ -266,6 +266,8 @@ pub struct NativeBridgeLoopContract {
   receive_window_message : String
   drain_window : String
   drain_window_scripts : String
+  drain_window_packet : String
+  drain_window_operation : String
   result_type : String
   delivery_type : String
   input_encoding : String
@@ -276,6 +278,8 @@ pub fn NativeBridgeLoopContract::available(Self) -> Bool
 pub fn NativeBridgeLoopContract::delivery_type(Self) -> String
 pub fn NativeBridgeLoopContract::drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeBridgeLoopContract::drain_window(Self) -> String
+pub fn NativeBridgeLoopContract::drain_window_operation(Self) -> String
+pub fn NativeBridgeLoopContract::drain_window_packet(Self) -> String
 pub fn NativeBridgeLoopContract::drain_window_scripts(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_callback(Self) -> String
 pub fn NativeBridgeLoopContract::handoff_packet_callback(Self) -> String

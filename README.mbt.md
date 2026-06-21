@@ -613,7 +613,10 @@ for post-callback WebView evaluation. The callback bundles also expose
 only need to evaluate the completed callback scripts, `drain_window_packet`, a
 UTF-8 handoff packet carrying the same typed `evaluate-script` operations, plus
 `drain_window_operation`, a `drain-bridge-window` executable operation naming
-the window and drain callback a platform loop must schedule.
+the window and packet-drain callback a platform loop must schedule. Deferred
+handoff packets carry that `drain-bridge-window` operation immediately, so
+native loops can enqueue the event-loop wakeup from the same packet they return
+to the WebView callback.
 `NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
 platform packages provide handlers for `drain-bridge-window`,
 `evaluate-script`, `navigate-window`, `run-effect`, and service operations, then

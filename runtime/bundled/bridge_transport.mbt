@@ -895,12 +895,20 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(
           let count = self.queue
             .enqueue_handoff(handoff)
             .unwrap_or(self.queue.pending_count())
+          let drain = @runtime.NativeExecutableOperation::drain_bridge(
+            @runtime.NativeBridgeDrain::new(
+              window_label=handoff.task().window_label(),
+              callback=bundled_bridge_drain_window_packet_callback(
+                handoff.task().window_label(),
+              ),
+            ),
+          )
           @utf8.encode(
             bundled_bridge_handoff_packet(
               "deferred",
               handoff.task().window_label(),
               "\{count}",
-              operations=[],
+              operations=[drain],
             ),
           )
         }
@@ -1051,7 +1059,7 @@ pub fn BundledBridgeLoopCallbacks::drain_window_operation(
   @runtime.NativeExecutableOperation::drain_bridge(
     @runtime.NativeBridgeDrain::new(
       window_label=self.window_label,
-      callback="bridge_loop_adapter().callbacks(\{self.window_label}).drain_window_scripts",
+      callback=bundled_bridge_drain_window_packet_callback(self.window_label),
     ),
   )
 }
@@ -1068,10 +1076,15 @@ pub fn BundledBridgeLoopCallbacks::to_json(
     "\"drainWindow\":\"async()->BundledBridgeLoopDelivery\",",
     "\"drainWindowScripts\":\"async()->utf8-javascript-callback-script\",",
     "\"drainWindowPacket\":\"async()->utf8-handoff-packet\",",
-    "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge\",",
+    "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge->drainWindowPacket\",",
     "\"drainWindowJson\":\"async()->utf8-json-bridge-loop-delivery\"",
     "}",
   ].join("")
+}
+
+///|
+fn bundled_bridge_drain_window_packet_callback(window_label : String) -> String {
+  "bridge_loop_adapter().callbacks(\{window_label}).drain_window_packet"
 }
 
 ///|

@@ -68,6 +68,8 @@ pub struct NativeBridgeLoopContract {
   receive_window_message : String
   drain_window : String
   drain_window_scripts : String
+  drain_window_packet : String
+  drain_window_operation : String
   result_type : String
   delivery_type : String
   input_encoding : String
@@ -271,6 +273,8 @@ pub fn NativeBridgeLoopContract::new(
     receive_window_message: "bridge_loop_adapter().receive_window_message",
     drain_window: "bridge_loop_adapter().drain_window",
     drain_window_scripts: "bridge_loop_adapter().callbacks(window).drain_window_scripts",
+    drain_window_packet: "bridge_loop_adapter().callbacks(window).drain_window_packet",
+    drain_window_operation: "drain-bridge-window",
     result_type: "NativeBridgeLoopResult|BundledBridgeLoopResult",
     delivery_type: "NativeBridgeLoopDelivery|BundledBridgeLoopDelivery",
     input_encoding: "utf8-json-bridge-message",
@@ -349,6 +353,20 @@ pub fn NativeBridgeLoopContract::drain_window_scripts(
 }
 
 ///|
+pub fn NativeBridgeLoopContract::drain_window_packet(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.drain_window_packet
+}
+
+///|
+pub fn NativeBridgeLoopContract::drain_window_operation(
+  self : NativeBridgeLoopContract,
+) -> String {
+  self.drain_window_operation
+}
+
+///|
 pub fn NativeBridgeLoopContract::result_type(
   self : NativeBridgeLoopContract,
 ) -> String {
@@ -392,6 +410,8 @@ pub fn NativeBridgeLoopContract::to_json(
     "\"receiveWindowMessage\":\{self.receive_window_message.json_string()},",
     "\"drainWindow\":\{self.drain_window.json_string()},",
     "\"drainWindowScripts\":\{self.drain_window_scripts.json_string()},",
+    "\"drainWindowPacket\":\{self.drain_window_packet.json_string()},",
+    "\"drainWindowOperation\":\{self.drain_window_operation.json_string()},",
     "\"resultType\":\{self.result_type.json_string()},",
     "\"deliveryType\":\{self.delivery_type.json_string()},",
     "\"inputEncoding\":\{self.input_encoding.json_string()},",

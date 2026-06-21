@@ -134,12 +134,14 @@
   source and bundled bridge adapters now expose a structured
   length-prefixed handoff-packet callback with executable-operation JSON, and
   macOS/Linux C handlers parse that packet so immediate scripts are evaluated
-  while deferred async work remains explicit;
+  while deferred async work remains explicit as a typed `drain-bridge-window`
+  operation in the same packet;
   source and bundled bridge callback bundles now expose a first-class
-  `drain-bridge-window` executable operation, giving platform loops a typed
-  scheduler hook for queued async bridge windows; approved `window.*` dispatches
-  now lower official plugin response payloads into `window-control` executable
-  operations, and macOS/Linux WebView loops now consume the sync window control
+  `drain-bridge-window` executable operation pointing at the packet-drain
+  callback, giving platform loops a typed scheduler hook for queued async bridge
+  windows; approved `window.*` dispatches now lower official plugin response
+  payloads into `window-control` executable operations, and macOS/Linux WebView
+  loops now consume the sync window control
   set for title, size, position, fullscreen, show/hide/focus,
   minimize/maximize/unmaximize, and close, plus `navigate-window` operations
   from approved bridge handoff packets;

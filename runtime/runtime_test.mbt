@@ -743,6 +743,11 @@ test "native runner plans expose async bridge blockers" {
         "bridge_loop_adapter().callbacks(window).drain_window_scripts",
       )
       assert_eq(
+        bridge_loop.drain_window_packet(),
+        "bridge_loop_adapter().callbacks(window).drain_window_packet",
+      )
+      assert_eq(bridge_loop.drain_window_operation(), "drain-bridge-window")
+      assert_eq(
         bridge_loop.result_type(),
         "NativeBridgeLoopResult|BundledBridgeLoopResult",
       )
@@ -817,6 +822,18 @@ test "native runner plans expose async bridge blockers" {
             .contains(
               "\"drainWindowScripts\":\"bridge_loop_adapter().callbacks(window).drain_window_scripts\"",
             ),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains(
+              "\"drainWindowPacket\":\"bridge_loop_adapter().callbacks(window).drain_window_packet\"",
+            ),
+          )
+          assert_true(
+            async_session
+            .to_json()
+            .contains("\"drainWindowOperation\":\"drain-bridge-window\""),
           )
           assert_true(
             async_session
@@ -3068,8 +3085,13 @@ async test "native runtime owns bridge message transport" {
           assert_true(
             callbacks
             .to_json()
+            .contains("\"drainWindowPacket\":\"async()->utf8-handoff-packet\""),
+          )
+          assert_true(
+            callbacks
+            .to_json()
             .contains(
-              "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge\"",
+              "\"drainWindowOperation\":\"NativeExecutableOperation::drain_bridge->drainWindowPacket\"",
             ),
           )
           let drain_operation = callbacks.drain_window_operation()
@@ -3077,7 +3099,7 @@ async test "native runtime owns bridge message transport" {
           assert_eq(drain_operation.window_label().unwrap(), "main")
           assert_eq(
             drain_operation.bridge_drain().unwrap().callback(),
-            "bridge_loop_adapter().callbacks(main).drain_window_scripts",
+            "bridge_loop_adapter().callbacks(main).drain_window_packet",
           )
           let callback_script = @utf8.decode(
             callbacks.handoff_callback()(@utf8.encode(message)),
@@ -3093,7 +3115,14 @@ async test "native runtime owns bridge message transport" {
           ) catch {
             _ => abort("unexpected invalid bridge handoff packet bytes")
           }
-          assert_eq(deferred_packet, "deferred\nmain\n1\n1\nlepusa-ops-v3\n0\n")
+          assert_true(deferred_packet.contains("deferred\nmain\n1\n1\n"))
+          assert_true(deferred_packet.contains("lepusa-ops-v3\n1\n"))
+          assert_true(deferred_packet.contains("drain-bridge-window"))
+          assert_true(
+            deferred_packet.contains(
+              "bridge_loop_adapter().callbacks(main).drain_window_packet",
+            ),
+          )
           assert_eq(packet_adapter.pending_count(), 1)
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bridge callback drain json bytes")

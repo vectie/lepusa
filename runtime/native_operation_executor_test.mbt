@@ -41,7 +41,7 @@ test "native operation executor runs executable operation batches" {
     NativeExecutableOperation::drain_bridge(
       NativeBridgeDrain::new(
         window_label="main",
-        callback="bridge_loop_adapter().callbacks(main).drain_window_scripts",
+        callback="bridge_loop_adapter().callbacks(main).drain_window_packet",
       ),
     ),
     NativeExecutableOperation::run_effect("boot"),
@@ -67,7 +67,7 @@ test "native operation executor runs executable operation batches" {
   assert_eq(scripts[0], "render()")
   assert_eq(
     drains[0],
-    "bridge_loop_adapter().callbacks(main).drain_window_scripts",
+    "bridge_loop_adapter().callbacks(main).drain_window_packet",
   )
   assert_eq(navigations[0], "lepusa://inline/main")
   assert_eq(window_controls[0], "setTitle")
@@ -90,6 +90,20 @@ test "native operation executor runs executable operation batches" {
   ])
   assert_true(packet.contains("evaluate-script"))
   assert_true(packet.contains("globalThis.done = true"))
+  let drain_packet = native_executable_operations_packet([
+    NativeExecutableOperation::drain_bridge(
+      NativeBridgeDrain::new(
+        window_label="main",
+        callback="bridge_loop_adapter().callbacks(main).drain_window_packet",
+      ),
+    ),
+  ])
+  assert_true(drain_packet.contains("drain-bridge-window"))
+  assert_true(
+    drain_packet.contains(
+      "bridge_loop_adapter().callbacks(main).drain_window_packet",
+    ),
+  )
 }
 
 ///|

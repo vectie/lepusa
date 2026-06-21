@@ -616,7 +616,21 @@ fn NativeExecutableOperation::native_packet_record(
         "",
       )
     NativeExecutableDrainBridge(drain) =>
-      (drain.window_label(), "", "", "", "", "", "", "", "", "", "", "", "")
+      (
+        drain.window_label(),
+        drain.callback(),
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      )
     NativeExecutableNavigate(navigation) =>
       (
         navigation.window_label(),
