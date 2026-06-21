@@ -723,9 +723,10 @@ packages can wire true multi-window lifecycle without parsing runtime JSON.
 Capability-approved `window.*` bridge dispatches also lower their plugin
 response into a `window-control` executable operation, so native loops can apply
 window actions without parsing JavaScript response callbacks. Approved
-`window.open` and `window.close` dispatches additionally emit the runtime-owned
-`open-window` and `close-window` lifecycle operations, keeping the dynamic
-window boundary visible before platform loops perform the concrete frame work.
+source-runtime `window.open` dispatches and source or packaged `window.close`
+dispatches additionally emit the runtime-owned `open-window` and `close-window`
+lifecycle operations, keeping the dynamic window boundary visible before
+platform loops perform the concrete frame work.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume

@@ -30,7 +30,8 @@ fn BundledRuntime::dispatch_with_operations(
       ) {
       Ok(response) | Err(response) => response
     }
-    (response, [])
+    let operations = bundled_dispatch_followup_operations(request, response)
+    (response, operations)
   }
 }
 
@@ -52,7 +53,48 @@ async fn BundledRuntime::dispatch_with_operations_async(
       ) {
       Ok(response) | Err(response) => response
     }
-    (response, [])
+    let operations = bundled_dispatch_followup_operations(request, response)
+    (response, operations)
+  }
+}
+
+///|
+fn bundled_dispatch_followup_operations(
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[@runtime.NativeExecutableOperation] {
+  let operations : Array[@runtime.NativeExecutableOperation] = []
+  for operation in bundled_window_close_followup_operations(request, response) {
+    operations.push(operation)
+  }
+  operations
+}
+
+///|
+fn bundled_window_close_followup_operations(
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[@runtime.NativeExecutableOperation] {
+  if request.plugin() != "window" || request.command() != "close" {
+    return []
+  }
+  let response_json = @runtime.encode_invoke_response_json(response)
+  let request_json = @runtime.encode_invoke_request_json(request)
+  match
+    @runtime.native_window_control_from_bridge_response(
+      request_json, response_json,
+    ) {
+    Some(control) =>
+      if control.action() == "close" {
+        [
+          @runtime.NativeExecutableOperation::close_window(
+            @runtime.NativeWindowClose::new(window_label=control.window_label()),
+          ),
+        ]
+      } else {
+        []
+      }
+    None => []
   }
 }
 

@@ -626,10 +626,11 @@ Bridge dispatches that return the official `window-control` response contract
 now expose a typed `NativeWindowControl` executable operation beside the
 response evaluation script; platform loops should execute that operation only
 after the MoonBit dispatch succeeds, preserving capability enforcement.
-Approved `window.open` and `window.close` source-runtime dispatches also emit
-the corresponding runtime-owned `open-window` and `close-window` executable
-operations, so plugin command success, session lifecycle cleanup, and native
-frame work stay visible as separate steps.
+Approved source-runtime `window.open` dispatches and source or packaged
+`window.close` dispatches also emit the corresponding runtime-owned
+`open-window` and `close-window` executable operations, so plugin command
+success, session lifecycle cleanup, and native frame work stay visible as
+separate steps.
 The macOS WKWebView and Linux WebKitGTK loops consume the sync window action
 set directly from the bridge handoff packet: title, size, position, fullscreen,
 show, hide, focus, minimize, maximize, unmaximize, and close. They also consume

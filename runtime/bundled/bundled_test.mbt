@@ -675,6 +675,54 @@ test "bundled runtime dispatches sync official plugins" {
 }
 
 ///|
+test "bundled bridge dispatch lowers window close to native cleanup operation" {
+  let manifest =
+    #|{
+    #|  "runtime": {
+    #|    "webviews": [
+    #|      {
+    #|        "label": "main",
+    #|        "url": "lepusa://rabbita/main/index.html",
+    #|        "allowedRoutes": ["window.close"]
+    #|      }
+    #|    ],
+    #|    "filesystemScopes": [],
+    #|    "registeredRoutes": ["window.close"]
+    #|  }
+    #|}
+  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+    Ok(manifest) => {
+      let runtime = BundledRuntime::new(manifest)
+      let message = "{\"id\":\"close\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"close\",\"payload\":\"{\\\"windowLabel\\\":\\\"main\\\"}\"}"
+      match runtime.dispatch_bridge_message_sync(message) {
+        Ok(dispatch) => {
+          let operations = dispatch.operations()
+          assert_eq(operations.length(), 3)
+          assert_eq(operations[0].kind(), "evaluate-script")
+          assert_eq(operations[1].kind(), "close-window")
+          assert_eq(operations[1].window_label().unwrap(), "main")
+          assert_eq(operations[2].kind(), "window-control")
+          assert_true(dispatch.to_json().contains("\"kind\":\"close-window\""))
+        }
+        Err(_) => abort("unexpected bundled close dispatch failure")
+      }
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid bundled close handoff packet")
+      }
+      assert_true(packet.has_prefix("immediate\nmain\n"))
+      assert_true(packet.contains("lepusa-ops-v1\n3\n"))
+      assert_true(packet.contains("close-window"))
+      assert_true(packet.contains("window-control"))
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "bundled runtime enforces command manifest origins" {
   let manifest =
     #|{
