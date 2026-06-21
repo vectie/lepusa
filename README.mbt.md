@@ -846,10 +846,11 @@ packaged-window loops when GTK3 and WebKit2GTK are available, including a
 package-owned `lepusa://` URI scheme callback for MoonBit-resolved runtime,
 virtual, local, and packaged assets.
 Windows source and packaged runs use the package-owned WebView2 COM loop when
-`WebView2Loader.dll` and the WebView2 Runtime are available, including sync
-bridge response evaluation, typed dynamic window operations, and a WebView2
-resource-request callback that maps `https://<protocol>.localhost/...` back to
-MoonBit-resolved runtime, virtual, local, and packaged `lepusa://...` assets.
+`WebView2Loader.dll`, its required factory exports, Ole32 COM support, and a
+discoverable WebView2 Runtime are available, including sync bridge response
+evaluation, typed dynamic window operations, and a WebView2 resource-request
+callback that maps `https://<protocol>.localhost/...` back to MoonBit-resolved
+runtime, virtual, local, and packaged `lepusa://...` assets.
 `lepusa-runtime run --manifest <runtime.json>` uses a target-aware planning path
 without opening a window, so bundles have a cheap validation probe.
 `lepusa-runtime bootstrap

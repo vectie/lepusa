@@ -101,10 +101,12 @@
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
   a Win32/WebView2 COM creation loop for source and packaged manifests when
-  `WebView2Loader.dll` is available, including sync bridge response evaluation,
-  dynamic open/close window consumption, packetized navigation, and WebView2
-  custom asset protocol serving through `https://<protocol>.localhost/...`
-  WebView2 requests mapped back to the stable MoonBit `lepusa://...` resolver
+  `WebView2Loader.dll`, its required factory exports, Ole32 COM support, and a
+  discoverable WebView2 Runtime are available, including sync bridge response
+  evaluation, dynamic open/close window consumption, packetized navigation, and
+  WebView2 custom asset protocol serving through
+  `https://<protocol>.localhost/...` WebView2 requests mapped back to the stable
+  MoonBit `lepusa://...` resolver
   contract; source and bundled launch-session JSON can now advertise
   async-capable bridge scheduling for native loops that wire deferred
   completion, including the reusable async

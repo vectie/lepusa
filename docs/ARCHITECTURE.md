@@ -666,9 +666,11 @@ labels once the target backend has protocol serving wired. The Windows
 package prepares typed WebView2 boot plans for source and packaged manifests,
 merges the generated bridge with a `chrome.webview.postMessage` bootstrap, and
 routes launch attempts through the same capability gate. Windows now owns a
-minimal Win32/WebView2 COM creation loop for dependency-backed native windows
-and wires WebView2 messages through the MoonBit handoff callback into
-`ExecuteScript` for sync bridge responses and packetized follow-up evaluation.
+minimal Win32/WebView2 COM creation loop for native windows once
+`WebView2Loader.dll`, its required factory exports, Ole32 COM support, and a
+discoverable WebView2 Runtime are available, and wires WebView2 messages
+through the MoonBit handoff callback into `ExecuteScript` for sync bridge
+responses and packetized follow-up evaluation.
 Windows custom asset serving and async bridge drain/wakeup support remain
 separately reported capabilities.
 Each platform package exposes a shared `runtime.NativeBackendPreflight`, so

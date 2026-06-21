@@ -322,7 +322,30 @@ fn windows_open_bundled_window(
 fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
   match exit_code {
     0 => RunLaunched
-    2 => RunUnsupported("Windows WebView2 launch loop is unavailable")
+    2 =>
+      RunUnsupported(
+        "Windows WebView2 launch loop is unavailable on this host platform",
+      )
+    20 =>
+      RunUnsupported(
+        "Windows WebView2Loader.dll is missing beside the runtime executable",
+      )
+    21 =>
+      RunUnsupported(
+        "Windows WebView2Loader.dll does not expose the required WebView2 factory APIs",
+      )
+    22 =>
+      RunUnsupported(
+        "Windows WebView2 Runtime is not installed or is not discoverable",
+      )
+    23 => RunUnsupported("Windows Ole32.dll is not available")
+    24 =>
+      RunUnsupported(
+        "Windows Ole32.dll does not expose the required COM stream APIs",
+      )
+    3 => RunFailed("Windows COM apartment initialization failed")
+    4 => RunFailed("Windows WebView2 window class registration failed")
+    5 => RunFailed("Windows WebView2 environment or window creation failed")
     code => RunFailed("Windows WebView2 launch failed: code \{code}")
   }
 }

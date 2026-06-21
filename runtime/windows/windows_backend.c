@@ -447,6 +447,10 @@ typedef HRESULT (WINAPI *LepusaCreateCoreWebView2EnvironmentWithOptions)(
   ICoreWebView2EnvironmentOptions *,
   ICoreWebView2CreateCoreWebView2EnvironmentCompletedHandler *
 );
+typedef HRESULT (WINAPI *LepusaGetAvailableCoreWebView2BrowserVersionString)(
+  PCWSTR,
+  LPWSTR *
+);
 typedef HRESULT (WINAPI *LepusaWindowsCoInitializeEx)(LPVOID, DWORD);
 typedef void (WINAPI *LepusaWindowsCoUninitialize)(void);
 typedef void (WINAPI *LepusaWindowsCoTaskMemFree)(LPVOID);
@@ -2989,21 +2993,26 @@ static int32_t lepusa_windows_run_webview2_loop(
 ) {
   HMODULE loader = LoadLibraryA("WebView2Loader.dll");
   if (loader == NULL) {
-    return 2;
+    return 20;
   }
   LepusaCreateCoreWebView2EnvironmentWithOptions create_environment =
     (LepusaCreateCoreWebView2EnvironmentWithOptions)GetProcAddress(
       loader,
       "CreateCoreWebView2EnvironmentWithOptions"
     );
-  if (create_environment == NULL) {
+  LepusaGetAvailableCoreWebView2BrowserVersionString get_available_version =
+    (LepusaGetAvailableCoreWebView2BrowserVersionString)GetProcAddress(
+      loader,
+      "GetAvailableCoreWebView2BrowserVersionString"
+    );
+  if (create_environment == NULL || get_available_version == NULL) {
     FreeLibrary(loader);
-    return 2;
+    return 21;
   }
   HMODULE ole32 = LoadLibraryA("Ole32.dll");
   if (ole32 == NULL) {
     FreeLibrary(loader);
-    return 2;
+    return 23;
   }
   LepusaWindowsCoInitializeEx co_initialize =
     (LepusaWindowsCoInitializeEx)GetProcAddress(ole32, "CoInitializeEx");
@@ -3022,7 +3031,19 @@ static int32_t lepusa_windows_run_webview2_loop(
       create_stream_on_hglobal == NULL) {
     FreeLibrary(ole32);
     FreeLibrary(loader);
-    return 2;
+    return 24;
+  }
+  LPWSTR webview2_version = NULL;
+  HRESULT version_result = get_available_version(NULL, &webview2_version);
+  int has_webview2_runtime = SUCCEEDED(version_result) &&
+    webview2_version != NULL;
+  if (webview2_version != NULL) {
+    co_task_mem_free(webview2_version);
+  }
+  if (!has_webview2_runtime) {
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 22;
   }
   HRESULT co_result = co_initialize(NULL, COINIT_APARTMENTTHREADED);
   if (FAILED(co_result) && co_result != RPC_E_CHANGED_MODE) {
@@ -3106,11 +3127,47 @@ static int32_t lepusa_windows_run_webview2_loop(
 MOONBIT_FFI_EXPORT
 int32_t lepusa_windows_backend_available(void) {
 #if defined(_WIN32)
-  HMODULE handle = LoadLibraryA("WebView2Loader.dll");
-  if (handle == NULL) {
+  HMODULE loader = LoadLibraryA("WebView2Loader.dll");
+  if (loader == NULL) {
     return 0;
   }
-  FreeLibrary(handle);
+  LepusaCreateCoreWebView2EnvironmentWithOptions create_environment =
+    (LepusaCreateCoreWebView2EnvironmentWithOptions)GetProcAddress(
+      loader,
+      "CreateCoreWebView2EnvironmentWithOptions"
+    );
+  LepusaGetAvailableCoreWebView2BrowserVersionString get_available_version =
+    (LepusaGetAvailableCoreWebView2BrowserVersionString)GetProcAddress(
+      loader,
+      "GetAvailableCoreWebView2BrowserVersionString"
+    );
+  if (create_environment == NULL || get_available_version == NULL) {
+    FreeLibrary(loader);
+    return 0;
+  }
+  HMODULE ole32 = LoadLibraryA("Ole32.dll");
+  if (ole32 == NULL) {
+    FreeLibrary(loader);
+    return 0;
+  }
+  LepusaWindowsCoTaskMemFree co_task_mem_free =
+    (LepusaWindowsCoTaskMemFree)GetProcAddress(ole32, "CoTaskMemFree");
+  if (co_task_mem_free == NULL) {
+    FreeLibrary(ole32);
+    FreeLibrary(loader);
+    return 0;
+  }
+  LPWSTR webview2_version = NULL;
+  HRESULT result = get_available_version(NULL, &webview2_version);
+  int available = SUCCEEDED(result) && webview2_version != NULL;
+  if (webview2_version != NULL) {
+    co_task_mem_free(webview2_version);
+  }
+  FreeLibrary(ole32);
+  FreeLibrary(loader);
+  if (!available) {
+    return 0;
+  }
   return 1;
 #else
   return 0;
