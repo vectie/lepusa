@@ -41,6 +41,7 @@ test "frontend api bundle generates javascript from runtime command manifest" {
       assert_true(js.contains("export const routes"))
       assert_true(js.contains("export const isInvokeError"))
       assert_true(js.contains("export const emit = (name, payload = null)"))
+      assert_true(js.contains("export const emitTo = (target, name"))
       assert_true(js.contains("options = {}) => getApi().invoke"))
       assert_true(
         js.contains("makeInvoker = (route) => (payload = null, options = {})"),
@@ -80,9 +81,11 @@ test "frontend api bundle generates typescript declarations" {
       )
       assert_true(
         dts.contains(
-          "export declare function emit(name: string, payload?: LepusaPayload): boolean;",
+          "export declare function emit(name: string, payload?: LepusaPayload): Promise<number>;",
         ),
       )
+      assert_true(dts.contains("export type LepusaEventTarget"))
+      assert_true(dts.contains("export declare function emitTo"))
       assert_true(dts.contains("export declare const commands: {"))
       assert_true(dts.contains("core: {"))
       assert_true(

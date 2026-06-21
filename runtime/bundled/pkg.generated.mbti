@@ -44,6 +44,7 @@ pub struct BundledBridgeDispatch {
   message : String
   response_json : String
   evaluation_script : String
+  extra_operations : Array[@runtime.NativeExecutableOperation]
 } derive(Eq, @debug.Debug)
 pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
 pub fn BundledBridgeDispatch::message(Self) -> String

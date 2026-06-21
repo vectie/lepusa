@@ -12,6 +12,7 @@ pub struct BundledBridgeDispatch {
   message : String
   response_json : String
   evaluation_script : String
+  extra_operations : Array[@runtime.NativeExecutableOperation]
 } derive(Debug, Eq)
 
 ///|
@@ -264,20 +265,21 @@ pub fn BundledBridgeMessage::dispatch_sync(
   self : BundledBridgeMessage,
   runtime : BundledRuntime,
 ) -> BundledBridgeDispatch {
-  let response_json = match @runtime.decode_invoke_request_json(self.message) {
-    Ok(request) =>
-      runtime.dispatch_json(
-        id=request.id(),
-        window_label=request.window_label(),
-        route=request.route(),
-        payload=request.payload(),
+  match @runtime.decode_invoke_request_json(self.message) {
+    Ok(request) => {
+      let (response, operations) = runtime.dispatch_with_operations(request)
+      self.to_dispatch_with_operations(
+        @runtime.encode_invoke_response_json(response),
+        operations,
       )
+    }
     Err(problem) =>
-      @runtime.encode_invoke_response_json(
-        @lepusa.InvokeResponse::invalid_request("", problem),
+      self.to_dispatch(
+        @runtime.encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
       )
   }
-  self.to_dispatch(response_json)
 }
 
 ///|
@@ -285,26 +287,38 @@ pub async fn BundledBridgeMessage::dispatch(
   self : BundledBridgeMessage,
   runtime : BundledRuntime,
 ) -> BundledBridgeDispatch {
-  let response_json = match @runtime.decode_invoke_request_json(self.message) {
-    Ok(request) =>
-      runtime.dispatch_json_async(
-        id=request.id(),
-        window_label=request.window_label(),
-        route=request.route(),
-        payload=request.payload(),
+  match @runtime.decode_invoke_request_json(self.message) {
+    Ok(request) => {
+      let (response, operations) = runtime.dispatch_with_operations_async(
+        request,
       )
+      self.to_dispatch_with_operations(
+        @runtime.encode_invoke_response_json(response),
+        operations,
+      )
+    }
     Err(problem) =>
-      @runtime.encode_invoke_response_json(
-        @lepusa.InvokeResponse::invalid_request("", problem),
+      self.to_dispatch(
+        @runtime.encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
       )
   }
-  self.to_dispatch(response_json)
 }
 
 ///|
 fn BundledBridgeMessage::to_dispatch(
   self : BundledBridgeMessage,
   response_json : String,
+) -> BundledBridgeDispatch {
+  self.to_dispatch_with_operations(response_json, [])
+}
+
+///|
+fn BundledBridgeMessage::to_dispatch_with_operations(
+  self : BundledBridgeMessage,
+  response_json : String,
+  extra_operations : Array[@runtime.NativeExecutableOperation],
 ) -> BundledBridgeDispatch {
   {
     window_label: self.window_label,
@@ -315,6 +329,7 @@ fn BundledBridgeMessage::to_dispatch(
       self.response_hook,
       response_json,
     ),
+    extra_operations,
   }
 }
 
@@ -1087,6 +1102,9 @@ pub fn BundledBridgeDispatch::operations(
       ),
     ),
   ]
+  for operation in self.extra_operations {
+    operations.push(operation)
+  }
   match self.native_window_control() {
     Some(control) =>
       operations.push(
@@ -1110,6 +1128,7 @@ pub fn BundledBridgeDispatch::to_json(self : BundledBridgeDispatch) -> String {
     "\"message\":\{self.message.json_string()},",
     "\"responseJson\":\{self.response_json.json_string()},",
     "\"evaluationScript\":\{self.evaluation_script.json_string()},",
+    "\"extraOperations\":[\{self.extra_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"nativeWindowControl\":\{control_json},",
     "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",

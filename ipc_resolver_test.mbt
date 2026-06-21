@@ -47,7 +47,13 @@ test "frontend bridge emits invoke resolver ids" {
           assert_true(script.source().contains("id: callbackId"))
           assert_true(script.source().contains("callback_id: callbackId"))
           assert_true(script.source().contains("error_id: errorId"))
-          assert_true(script.source().contains("emit: (name, payload = null)"))
+          assert_true(
+            script
+            .source()
+            .contains("emit: (name, payload = null) => emitNative"),
+          )
+          assert_true(script.source().contains("emitTo: (target, name"))
+          assert_true(script.source().contains("\"__lepusa\", \"event.emit\""))
           assert_true(
             script
             .source()

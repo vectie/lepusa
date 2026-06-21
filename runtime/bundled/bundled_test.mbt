@@ -787,6 +787,18 @@ async test "bundled runtime owns bridge message transport" {
         }
         Err(_) => abort("unexpected bundled sync bridge failure")
       }
+      let event_message = "{\"id\":\"event\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"app\\\"},\\\"name\\\":\\\"ready\\\",\\\"payload\\\":\\\"{\\\\\\\"ok\\\\\\\":true}\\\"}\"}"
+      match runtime.dispatch_bridge_message_sync(event_message) {
+        Ok(dispatch) => {
+          assert_true(dispatch.response_json().contains("\"id\":\"event\""))
+          assert_true(dispatch.response_json().contains("\\\"delivered\\\":1"))
+          let operations = dispatch.operations()
+          assert_eq(operations.length(), 2)
+          assert_true(operations[1].to_json().contains("__lepusaDispatchEvent"))
+          assert_true(dispatch.to_json().contains("\"extraOperations\":[{"))
+        }
+        Err(_) => abort("unexpected bundled frontend event bridge failure")
+      }
       let sync_script = @utf8.decode(
         runtime.dispatch_bridge_script_bytes(@utf8.encode(sync_message)),
       ) catch {

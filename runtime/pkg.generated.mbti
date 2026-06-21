@@ -109,6 +109,7 @@ pub struct NativeBridgeDispatch {
   message : String
   response_json : String
   evaluation_script : String
+  extra_operations : Array[NativeExecutableOperation]
 } derive(Eq, @debug.Debug)
 pub fn NativeBridgeDispatch::evaluation_script(Self) -> String
 pub fn NativeBridgeDispatch::message(Self) -> String

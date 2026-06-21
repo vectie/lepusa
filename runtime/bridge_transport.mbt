@@ -12,6 +12,7 @@ pub struct NativeBridgeDispatch {
   message : String
   response_json : String
   evaluation_script : String
+  extra_operations : Array[NativeExecutableOperation]
 } derive(Debug, Eq)
 
 ///|
@@ -318,8 +319,23 @@ pub async fn NativeBridgeMessage::dispatch(
   self : NativeBridgeMessage,
   runtime : NativeRuntime,
 ) -> NativeBridgeDispatch {
-  let response_json = runtime.dispatch_json_async(self.message)
-  self.to_dispatch(response_json)
+  match decode_invoke_request_json(self.message) {
+    Err(problem) =>
+      self.to_dispatch(
+        encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
+      )
+    Ok(request) => {
+      let (response, operations) = runtime.dispatch_with_operations_async(
+        request,
+      )
+      self.to_dispatch_with_operations(
+        encode_invoke_response_json(response),
+        operations,
+      )
+    }
+  }
 }
 
 ///|
@@ -327,8 +343,21 @@ async fn NativeBridgeMessage::dispatch_host(
   self : NativeBridgeMessage,
   host : RuntimeHost,
 ) -> NativeBridgeDispatch {
-  let response_json = host.dispatch_json_async(self.message)
-  self.to_dispatch(response_json)
+  match decode_invoke_request_json(self.message) {
+    Err(problem) =>
+      self.to_dispatch(
+        encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
+      )
+    Ok(request) => {
+      let (response, operations) = host.dispatch_with_operations_async(request)
+      self.to_dispatch_with_operations(
+        encode_invoke_response_json(response),
+        operations,
+      )
+    }
+  }
 }
 
 ///|
@@ -336,8 +365,21 @@ pub fn NativeBridgeMessage::dispatch_sync(
   self : NativeBridgeMessage,
   runtime : NativeRuntime,
 ) -> NativeBridgeDispatch {
-  let response_json = runtime.dispatch_json(self.message)
-  self.to_dispatch(response_json)
+  match decode_invoke_request_json(self.message) {
+    Err(problem) =>
+      self.to_dispatch(
+        encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
+      )
+    Ok(request) => {
+      let (response, operations) = runtime.dispatch_with_operations(request)
+      self.to_dispatch_with_operations(
+        encode_invoke_response_json(response),
+        operations,
+      )
+    }
+  }
 }
 
 ///|
@@ -345,14 +387,36 @@ fn NativeBridgeMessage::dispatch_host_sync(
   self : NativeBridgeMessage,
   host : RuntimeHost,
 ) -> NativeBridgeDispatch {
-  let response_json = host.dispatch_json(self.message)
-  self.to_dispatch(response_json)
+  match decode_invoke_request_json(self.message) {
+    Err(problem) =>
+      self.to_dispatch(
+        encode_invoke_response_json(
+          @lepusa.InvokeResponse::invalid_request("", problem),
+        ),
+      )
+    Ok(request) => {
+      let (response, operations) = host.dispatch_with_operations(request)
+      self.to_dispatch_with_operations(
+        encode_invoke_response_json(response),
+        operations,
+      )
+    }
+  }
 }
 
 ///|
 fn NativeBridgeMessage::to_dispatch(
   self : NativeBridgeMessage,
   response_json : String,
+) -> NativeBridgeDispatch {
+  self.to_dispatch_with_operations(response_json, [])
+}
+
+///|
+fn NativeBridgeMessage::to_dispatch_with_operations(
+  self : NativeBridgeMessage,
+  response_json : String,
+  extra_operations : Array[NativeExecutableOperation],
 ) -> NativeBridgeDispatch {
   {
     window_label: self.window_label,
@@ -363,6 +427,7 @@ fn NativeBridgeMessage::to_dispatch(
       self.response_hook,
       response_json,
     ),
+    extra_operations,
   }
 }
 
@@ -1140,6 +1205,9 @@ pub fn NativeBridgeDispatch::operations(
       ),
     ),
   ]
+  for operation in self.extra_operations {
+    operations.push(operation)
+  }
   match self.native_window_control() {
     Some(control) =>
       operations.push(NativeExecutableOperation::window_control(control))
@@ -1161,6 +1229,7 @@ pub fn NativeBridgeDispatch::to_json(self : NativeBridgeDispatch) -> String {
     "\"message\":\{self.message.json_string()},",
     "\"responseJson\":\{self.response_json.json_string()},",
     "\"evaluationScript\":\{self.evaluation_script.json_string()},",
+    "\"extraOperations\":[\{self.extra_operations.map(fn(operation) { operation.to_json() }).join(",")}],",
     "\"nativeWindowControl\":\{control_json},",
     "\"operations\":[\{self.operations().map(fn(operation) { operation.to_json() }).join(",")}]",
     "}",
