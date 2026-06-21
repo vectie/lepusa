@@ -654,15 +654,15 @@ capability and registry boundary. Native macOS, Linux, and Windows loops parse
 those records from `lepusa-ops-v3` packets; app
 show/hide/setTheme/exit/restart execute inside the event loop, restart
 relaunches the current command line before the current window set closes, and
-macOS also applies app dock visibility and nested app-menu set/clear
-operations, and macOS/Linux apply status-item tray operations for icon, tooltip,
-menu, menu popup, visibility, and destroy; macOS menu items also apply supported
+macOS also applies app dock visibility, macOS/Linux apply app and window menu
+bars, and macOS/Linux apply status-item tray operations for icon, tooltip, menu,
+menu popup, visibility, and destroy; macOS menu items also apply supported
 accelerator strings as native key equivalents and modifier masks. Rendered
-macOS app-menu/tray-menu items and Linux tray-menu action/check items dispatch
+macOS app-menu/tray-menu items and Linux menu/tray action/check items dispatch
 `menu.onItemClick` or `tray.onMenuItemClick` frontend events with the clicked
-item id. Remaining Windows tray, Linux/Windows app-menu and window-menu,
-non-macOS menu accelerator, and non-tray non-macOS menu item action work is
-still reported as skipped until concrete OS menu and status-item renderers land.
+item id. Remaining Windows tray/menu, non-macOS menu accelerator, and non-tray
+Windows menu item action work is still reported as skipped until concrete OS
+menu and status-item renderers land.
 The macOS WKWebView, Linux WebKitGTK, and Windows WebView2 loops consume the
 sync window action set directly from the bridge handoff packet: title, size,
 position, fullscreen, show, hide, focus, minimize, maximize, unmaximize, and

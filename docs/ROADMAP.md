@@ -186,12 +186,11 @@
   their current WebView script-evaluation, window-control, and desktop-shell
   support, with app show/hide/setTheme/exit/restart reported as executed,
   native restart relaunching the current command line before exit, macOS dock
-  visibility, native nested macOS app-menu set/clear, and macOS/Linux tray
-  operations, macOS menu accelerators, and macOS menu/tray plus Linux tray item
-  click dispatch reported as executed, with remaining Windows tray,
-  Linux/Windows app-menu and window-menu, non-macOS menu accelerator, and
-  non-tray non-macOS menu item action work reported as skipped until concrete
-  native renderers land; native
+  visibility, native macOS/Linux app-menu and window-menu bars,
+  macOS/Linux tray operations, macOS menu accelerators, and macOS menu/tray
+  plus Linux menu/tray item click dispatch reported as executed, with remaining
+  Windows tray/menu, non-macOS menu accelerator, and non-tray Windows menu item
+  action work reported as skipped until concrete native renderers land; native
   loops now execute retained async bridge drain requests through packetized
   `lepusa-drain-v1` callbacks from the platform event loop; macOS, Linux, and
   Windows now route normal bridge handoffs and drain handoffs through one
@@ -311,10 +310,9 @@ Stabilize the cross-platform core set first:
   delegated sync state handlers, typed `desktop-shell` executable operations
   from approved bridge dispatches, native macOS/Linux/Windows packet consumers
   for app show/hide/setTheme/exit/restart including current-command relaunch
-  for restart, macOS dock visibility, macOS nested app-menu set/clear, and
-  macOS/Linux status-item tray handling, plus honest skipped execution reports
-  for remaining Windows tray and Linux/Windows app-menu/window-menu renderer
-  work exist
+  for restart, macOS dock visibility, macOS/Linux app-menu and window-menu bars,
+  and macOS/Linux status-item tray handling, plus honest skipped execution
+  reports for remaining Windows tray/menu renderer work exist
 - window: initial sync window control contract and delegated operation recording
   handlers exist
 - autoLaunch: launch-at-login contract, portable enablement state handlers, and

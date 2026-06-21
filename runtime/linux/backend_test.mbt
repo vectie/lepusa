@@ -91,6 +91,40 @@ test "linux backend exposes webkitgtk descriptor" {
     ),
     @runtime.NativeExecutableOperation::desktop_shell(
       @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="setAppMenu",
+        target="app",
+        window_label="main",
+        payload="{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"open\",\"label\":\"Open\"},{\"id\":\"sync\",\"label\":\"Sync\",\"kind\":\"check\",\"checked\":true}]}]}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="setWindowMenu",
+        target="window",
+        window_label="main",
+        payload="{\"items\":[{\"id\":\"tools\",\"label\":\"Tools\",\"kind\":\"submenu\",\"items\":[{\"id\":\"inspect\",\"label\":\"Inspect\"}]}]}",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="clearWindowMenu",
+        target="window",
+        window_label="main",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
+        domain="menu",
+        action="clearAppMenu",
+        target="app",
+        window_label="main",
+      ),
+    ),
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
         domain="tray",
         action="setIcon",
         window_label="main",
@@ -136,7 +170,7 @@ test "linux backend exposes webkitgtk descriptor" {
       ),
     ),
   ])
-  assert_eq(execution.executed_count(), 13)
+  assert_eq(execution.executed_count(), 17)
   assert_eq(execution.skipped_count(), 0)
   assert_true(execution.outcomes()[5].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[6].status() is NativeOperationExecuted)
@@ -146,6 +180,10 @@ test "linux backend exposes webkitgtk descriptor" {
   assert_true(execution.outcomes()[10].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[11].status() is NativeOperationExecuted)
   assert_true(execution.outcomes()[12].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[13].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[14].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[15].status() is NativeOperationExecuted)
+  assert_true(execution.outcomes()[16].status() is NativeOperationExecuted)
 }
 
 ///|

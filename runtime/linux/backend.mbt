@@ -68,7 +68,15 @@ pub fn operation_executor() -> @runtime.NativeOperationExecutor {
     },
     control_window=fn(_) { NativeOperationExecuted },
     desktop_shell=fn(operation) {
-      if operation.domain() == "tray" &&
+      if operation.domain() == "menu" &&
+        (
+          operation.action() == "setAppMenu" ||
+          operation.action() == "clearAppMenu" ||
+          operation.action() == "setWindowMenu" ||
+          operation.action() == "clearWindowMenu"
+        ) {
+        NativeOperationExecuted
+      } else if operation.domain() == "tray" &&
         (
           operation.action() == "setIcon" ||
           operation.action() == "setTooltip" ||
