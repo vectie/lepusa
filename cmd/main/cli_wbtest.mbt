@@ -1046,6 +1046,8 @@ async test "foundation examples write bundles with runtime contracts" {
   assert_eq(rabbita.exit_code, 0)
   assert_true(rabbita.output.contains("resources: 0"))
   assert_true(rabbita.output.contains("resources-written: 0"))
+  assert_true(rabbita.output.contains("[ok] verify: bridge-dispatch"))
+  assert_true(rabbita.output.contains("bridge dispatch verified: log.write"))
   let rabbita_json = @fs.read_file(
     rabbita_out + "/lepusa-rabbita-example/lepusa/runtime.json",
   ).text()
@@ -1885,7 +1887,7 @@ async test "bundle write materializes planned files" {
   assert_true(result.output.contains("local-services: 0"))
   assert_true(result.output.contains("resources: 0"))
   assert_true(result.output.contains("runtime-dependencies: 1"))
-  assert_true(result.output.contains("verification-checks: 9"))
+  assert_true(result.output.contains("verification-checks: 10"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: planned-file"))
   assert_true(result.output.contains("planned file content matches"))
@@ -1902,6 +1904,10 @@ async test "bundle write materializes planned files" {
   )
   assert_true(result.output.contains("[ok] verify: initial-content"))
   assert_true(result.output.contains("initial content checked=1 skipped=0"))
+  assert_true(result.output.contains("[ok] verify: bridge-dispatch"))
+  assert_true(
+    result.output.contains("bridge dispatch skipped: no built-in sync route"),
+  )
   assert_true(result.output.contains("[ok] verify: native-launch-session"))
   assert_true(result.output.contains("native launch session prepares"))
   assert_true(result.output.contains("[ok] verify: runtime-dependency"))
@@ -1991,12 +1997,18 @@ async test "bundle write materializes planned files" {
   assert_true(json_result.output.contains("\"kind\":\"runtime-manifest\""))
   assert_true(json_result.output.contains("\"kind\":\"distribution-manifest\""))
   assert_true(json_result.output.contains("\"kind\":\"initial-content\""))
+  assert_true(json_result.output.contains("\"kind\":\"bridge-dispatch\""))
   assert_true(json_result.output.contains("\"kind\":\"native-launch-session\""))
   assert_true(json_result.output.contains("\"kind\":\"runtime-dependency\""))
   assert_true(json_result.output.contains("WebKitGTK 4.1 or 4.0"))
   assert_true(
     json_result.output.contains(
       "\"message\":\"native launch session prepares\"",
+    ),
+  )
+  assert_true(
+    json_result.output.contains(
+      "\"message\":\"bridge dispatch skipped: no built-in sync route\"",
     ),
   )
   assert_true(json_result.output.contains("\"signingPrerequisites\":2"))
@@ -2014,7 +2026,7 @@ async test "bundle write embeds host runtime executable when compatible" {
     _ => false
   }
   if @macos_backend.available() && source_exists {
-    assert_true(result.output.contains("verification-checks: 10"))
+    assert_true(result.output.contains("verification-checks: 11"))
     assert_true(result.output.contains("files: 5"))
     assert_true(result.output.contains("[ok] verify: runtime-executable"))
     assert_true(result.output.contains("runtime executable is bundled"))
@@ -2022,7 +2034,7 @@ async test "bundle write embeds host runtime executable when compatible" {
       @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
     )
   } else {
-    assert_true(result.output.contains("verification-checks: 9"))
+    assert_true(result.output.contains("verification-checks: 10"))
     assert_true(result.output.contains("[ok] verify: runtime-dependency"))
     assert_true(
       result.output.contains("external runtime dependency declared: WKWebView"),
@@ -2225,7 +2237,7 @@ async test "bundle write materializes planned resources" {
   assert_true(result.output.contains("resources: 1"))
   assert_true(result.output.contains("resources-written: 1"))
   assert_true(result.output.contains("runtime-dependencies: 1"))
-  assert_true(result.output.contains("verification-checks: 10"))
+  assert_true(result.output.contains("verification-checks: 11"))
   assert_true(result.output.contains("verified: true"))
   assert_true(result.output.contains("[ok] verify: initial-content"))
   assert_true(result.output.contains("[ok] verify: planned-resource"))

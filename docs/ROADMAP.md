@@ -352,12 +352,13 @@ desktop core is reliable.
   flow into bundle manifests.
 - `@lepusa/bundle` verifies materialized bundle files, resources, runtime
   manifests, runtime dependencies, nonblank initial WebView content,
-  host-compatible runtime executable copies, and target launch-session contract
-  after `bundle-write` as the pre-install smoke boundary. Host/runtime
-  dependency availability is reported separately, so cross-target Windows
-  bundles can pass structural launch verification while `WebView2Loader.dll`
-  placement remains an explicit dependency check. `bundle-write --json` exposes
-  the same checks as a machine-readable CI report.
+  built-in packaged bridge dispatch smoke, host-compatible runtime executable
+  copies, and target launch-session contract after `bundle-write` as the
+  pre-install smoke boundary. Host/runtime dependency availability is reported
+  separately, so cross-target Windows bundles can pass structural launch
+  verification while `WebView2Loader.dll` placement remains an explicit
+  dependency check. `bundle-write --json` exposes the same checks as a
+  machine-readable CI report.
 - `BundleReleasePlan` now emits required/optional release step counts, item
   counts, readiness state, and missing required steps so `bundle-release-plan`
   can act as a compact CI gate before platform-specific installer tooling.

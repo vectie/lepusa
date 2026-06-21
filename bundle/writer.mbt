@@ -15,6 +15,7 @@ pub(all) enum BundleWriteCheckKind {
   RuntimeManifestCheck
   DistributionManifestCheck
   InitialContentCheck
+  BridgeDispatchCheck
   NativeLaunchSessionCheck
 } derive(Debug, Eq)
 
@@ -123,6 +124,7 @@ pub fn BundleWriteCheckKind::name(self : BundleWriteCheckKind) -> String {
     RuntimeManifestCheck => "runtime-manifest"
     DistributionManifestCheck => "distribution-manifest"
     InitialContentCheck => "initial-content"
+    BridgeDispatchCheck => "bridge-dispatch"
     NativeLaunchSessionCheck => "native-launch-session"
   }
 }
@@ -223,6 +225,7 @@ async fn verify_written_plan(
     if file.path().has_suffix("lepusa/runtime.json") {
       checks.push(verify_runtime_manifest(path))
       checks.push(verify_initial_content(path))
+      checks.push(verify_bridge_dispatch(path))
       checks.push(verify_native_launch_session(path))
     } else if file.path().has_suffix("lepusa/distribution.json") {
       checks.push(verify_distribution_manifest(path))

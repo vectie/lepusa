@@ -854,14 +854,18 @@ cross-compiled runtime artifacts.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
 into a target native launch session against the target launch contract, separate
 from host dependency availability, and that resolvable initial WebView content
-is present and nonblank. It also parses `lepusa/distribution.json` and checks
-that installer metadata includes required artifact, dependency, resource,
-runtime executable, and signing fields. Windows bundles now pass structural
-native launch-session verification cross-target; missing `WebView2Loader.dll`
-or system WebView runtime placement remains a runtime-dependency verification
-failure. Passing `--json` emits target, identifier, signing prerequisites, and
-the reusable `BundleWriteResult` payload with written files,
-resources, runtime dependency checks, and verification checks for CI tooling.
+is present and nonblank. For built-in sync routes that are allowed by a bundled
+WebView, it also runs a packaged bridge dispatch smoke check and verifies the
+response callback script can be produced; custom app routes are skipped until
+the app supplies generated handlers. It also parses `lepusa/distribution.json`
+and checks that installer metadata includes required artifact, dependency,
+resource, runtime executable, and signing fields. Windows bundles now pass
+structural native launch-session verification cross-target; missing
+`WebView2Loader.dll` or system WebView runtime placement remains a
+runtime-dependency verification failure. Passing `--json` emits target,
+identifier, signing prerequisites, and the reusable `BundleWriteResult` payload
+with written files, resources, runtime dependency checks, and verification
+checks for CI tooling.
 Generated desktop launcher stubs wrap
 `lepusa-runtime launch --manifest <runtime.json>` instead of replacing the
 launcher process with `exec`. POSIX wrappers trap `INT`, `TERM`, and `HUP`, wait
