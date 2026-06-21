@@ -40,6 +40,7 @@ typedef void (*LepusaGtkContainerAdd)(void *, void *);
 typedef void (*LepusaGtkWidgetShowAll)(void *);
 typedef void (*LepusaGtkWidgetHide)(void *);
 typedef void (*LepusaGtkWidgetDestroy)(void *);
+typedef void (*LepusaGtkWidgetSetSensitive)(void *, int);
 typedef void (*LepusaGtkWindowPresent)(void *);
 typedef void (*LepusaGtkWindowIconify)(void *);
 typedef void (*LepusaGtkWindowMaximize)(void *);
@@ -48,6 +49,17 @@ typedef void (*LepusaGtkWindowResize)(void *, int, int);
 typedef void (*LepusaGtkWindowMove)(void *, int, int);
 typedef void (*LepusaGtkWindowFullscreen)(void *);
 typedef void (*LepusaGtkWindowUnfullscreen)(void *);
+typedef void *(*LepusaGtkStatusIconNew)(void);
+typedef void (*LepusaGtkStatusIconSetFromFile)(void *, const char *);
+typedef void (*LepusaGtkStatusIconSetTooltipText)(void *, const char *);
+typedef void (*LepusaGtkStatusIconSetVisible)(void *, int);
+typedef void *(*LepusaGtkMenuNew)(void);
+typedef void *(*LepusaGtkMenuItemNewWithLabel)(const char *);
+typedef void *(*LepusaGtkCheckMenuItemNewWithLabel)(const char *);
+typedef void *(*LepusaGtkSeparatorMenuItemNew)(void);
+typedef void (*LepusaGtkCheckMenuItemSetActive)(void *, int);
+typedef void (*LepusaGtkMenuShellAppend)(void *, void *);
+typedef void (*LepusaGtkMenuPopupAtPointer)(void *, void *);
 typedef void (*LepusaGtkMain)(void);
 typedef void (*LepusaGtkMainQuit)(void);
 typedef void (*LepusaGFree)(void *);
@@ -123,6 +135,7 @@ typedef struct {
   LepusaGtkWidgetShowAll gtk_widget_show_all;
   LepusaGtkWidgetHide gtk_widget_hide;
   LepusaGtkWidgetDestroy gtk_widget_destroy;
+  LepusaGtkWidgetSetSensitive gtk_widget_set_sensitive;
   LepusaGtkWindowPresent gtk_window_present;
   LepusaGtkWindowIconify gtk_window_iconify;
   LepusaGtkWindowMaximize gtk_window_maximize;
@@ -131,6 +144,17 @@ typedef struct {
   LepusaGtkWindowMove gtk_window_move;
   LepusaGtkWindowFullscreen gtk_window_fullscreen;
   LepusaGtkWindowUnfullscreen gtk_window_unfullscreen;
+  LepusaGtkStatusIconNew gtk_status_icon_new;
+  LepusaGtkStatusIconSetFromFile gtk_status_icon_set_from_file;
+  LepusaGtkStatusIconSetTooltipText gtk_status_icon_set_tooltip_text;
+  LepusaGtkStatusIconSetVisible gtk_status_icon_set_visible;
+  LepusaGtkMenuNew gtk_menu_new;
+  LepusaGtkMenuItemNewWithLabel gtk_menu_item_new_with_label;
+  LepusaGtkCheckMenuItemNewWithLabel gtk_check_menu_item_new_with_label;
+  LepusaGtkSeparatorMenuItemNew gtk_separator_menu_item_new;
+  LepusaGtkCheckMenuItemSetActive gtk_check_menu_item_set_active;
+  LepusaGtkMenuShellAppend gtk_menu_shell_append;
+  LepusaGtkMenuPopupAtPointer gtk_menu_popup_at_pointer;
   LepusaGtkMain gtk_main;
   LepusaGtkMainQuit gtk_main_quit;
   LepusaGFree g_free;
@@ -172,6 +196,8 @@ typedef struct {
   int live_windows;
   LepusaLinuxBridgeDrainRequest drain_requests[32];
   int drain_request_count;
+  void *tray_icon;
+  void *tray_menu;
   LepusaLinuxWebKit *api;
   LepusaLinuxBytesCallback call_dispatch;
   void *dispatch;
@@ -252,6 +278,7 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_show_all", (void **)&api->gtk_widget_show_all);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_hide", (void **)&api->gtk_widget_hide);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_destroy", (void **)&api->gtk_widget_destroy);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_widget_set_sensitive", (void **)&api->gtk_widget_set_sensitive);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_present", (void **)&api->gtk_window_present);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_iconify", (void **)&api->gtk_window_iconify);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_maximize", (void **)&api->gtk_window_maximize);
@@ -260,6 +287,17 @@ static int lepusa_linux_load_webkit(LepusaLinuxWebKit *api) {
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_move", (void **)&api->gtk_window_move);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_fullscreen", (void **)&api->gtk_window_fullscreen);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_window_unfullscreen", (void **)&api->gtk_window_unfullscreen);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_status_icon_new", (void **)&api->gtk_status_icon_new);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_status_icon_set_from_file", (void **)&api->gtk_status_icon_set_from_file);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_status_icon_set_tooltip_text", (void **)&api->gtk_status_icon_set_tooltip_text);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_status_icon_set_visible", (void **)&api->gtk_status_icon_set_visible);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_menu_new", (void **)&api->gtk_menu_new);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_menu_item_new_with_label", (void **)&api->gtk_menu_item_new_with_label);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_check_menu_item_new_with_label", (void **)&api->gtk_check_menu_item_new_with_label);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_separator_menu_item_new", (void **)&api->gtk_separator_menu_item_new);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_check_menu_item_set_active", (void **)&api->gtk_check_menu_item_set_active);
+  ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_menu_shell_append", (void **)&api->gtk_menu_shell_append);
+  lepusa_linux_load_symbol(api->gtk, "gtk_menu_popup_at_pointer", (void **)&api->gtk_menu_popup_at_pointer);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main", (void **)&api->gtk_main);
   ok = ok && lepusa_linux_load_symbol(api->gtk, "gtk_main_quit", (void **)&api->gtk_main_quit);
   ok = ok && lepusa_linux_load_symbol(api->glib, "g_free", (void **)&api->g_free);
@@ -1070,19 +1108,6 @@ static int lepusa_linux_handoff_operation_records(
   return 1;
 }
 
-static char *lepusa_linux_cstr_from_range(const char *value, int32_t value_len) {
-  if (value == NULL || value_len <= 0) {
-    return NULL;
-  }
-  char *copy = (char *)malloc((size_t)value_len + 1);
-  if (copy == NULL) {
-    return NULL;
-  }
-  memcpy(copy, value, (size_t)value_len);
-  copy[value_len] = '\0';
-  return copy;
-}
-
 static void lepusa_linux_apply_window_controls_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1363,6 +1388,202 @@ static int lepusa_linux_range_contains_text(
   return 0;
 }
 
+static const char *lepusa_linux_json_skip_space(const char *cursor, const char *end) {
+  while (cursor < end && isspace((unsigned char)*cursor)) {
+    cursor++;
+  }
+  return cursor;
+}
+
+static const char *lepusa_linux_json_string_end(const char *cursor, const char *end) {
+  if (cursor >= end || *cursor != '"') {
+    return NULL;
+  }
+  cursor++;
+  while (cursor < end) {
+    if (*cursor == '\\') {
+      cursor += cursor + 1 < end ? 2 : 1;
+    } else if (*cursor == '"') {
+      return cursor + 1;
+    } else {
+      cursor++;
+    }
+  }
+  return NULL;
+}
+
+static const char *lepusa_linux_json_value_end(const char *cursor, const char *end) {
+  cursor = lepusa_linux_json_skip_space(cursor, end);
+  if (cursor >= end) {
+    return NULL;
+  }
+  if (*cursor == '"') {
+    return lepusa_linux_json_string_end(cursor, end);
+  }
+  if (*cursor == '{' || *cursor == '[') {
+    char open = *cursor;
+    char close = open == '{' ? '}' : ']';
+    int depth = 1;
+    cursor++;
+    while (cursor < end) {
+      if (*cursor == '"') {
+        cursor = lepusa_linux_json_string_end(cursor, end);
+        if (cursor == NULL) {
+          return NULL;
+        }
+      } else if (*cursor == open) {
+        depth++;
+        cursor++;
+      } else if (*cursor == close) {
+        depth--;
+        cursor++;
+        if (depth == 0) {
+          return cursor;
+        }
+      } else {
+        cursor++;
+      }
+    }
+    return NULL;
+  }
+  while (cursor < end &&
+         *cursor != ',' &&
+         *cursor != '}' &&
+         *cursor != ']') {
+    cursor++;
+  }
+  return cursor;
+}
+
+static int lepusa_linux_json_find_member_value(
+  const char *object,
+  const char *end,
+  const char *name,
+  const char **value_out,
+  const char **value_end_out
+) {
+  if (object == NULL || end == NULL || name == NULL || value_out == NULL || value_end_out == NULL) {
+    return 0;
+  }
+  const char *cursor = lepusa_linux_json_skip_space(object, end);
+  if (cursor >= end || *cursor != '{') {
+    return 0;
+  }
+  cursor++;
+  size_t name_len = strlen(name);
+  while (cursor < end) {
+    cursor = lepusa_linux_json_skip_space(cursor, end);
+    if (cursor >= end || *cursor == '}') {
+      return 0;
+    }
+    const char *key_start = cursor;
+    const char *key_end = lepusa_linux_json_string_end(cursor, end);
+    if (key_end == NULL) {
+      return 0;
+    }
+    cursor = lepusa_linux_json_skip_space(key_end, end);
+    if (cursor >= end || *cursor != ':') {
+      return 0;
+    }
+    cursor++;
+    const char *value = lepusa_linux_json_skip_space(cursor, end);
+    const char *value_end = lepusa_linux_json_value_end(value, end);
+    if (value_end == NULL) {
+      return 0;
+    }
+    if ((size_t)(key_end - key_start - 2) == name_len &&
+        memcmp(key_start + 1, name, name_len) == 0) {
+      *value_out = value;
+      *value_end_out = value_end;
+      return 1;
+    }
+    cursor = lepusa_linux_json_skip_space(value_end, end);
+    if (cursor < end && *cursor == ',') {
+      cursor++;
+    }
+  }
+  return 0;
+}
+
+static char *lepusa_linux_json_string_value_to_cstr(
+  const char *value,
+  const char *end
+) {
+  value = lepusa_linux_json_skip_space(value, end);
+  if (value >= end || *value != '"') {
+    return NULL;
+  }
+  const char *value_end = lepusa_linux_json_string_end(value, end);
+  if (value_end == NULL || value_end > end) {
+    return NULL;
+  }
+  return lepusa_linux_cstr_from_range(value + 1, (int32_t)(value_end - value - 2));
+}
+
+static char *lepusa_linux_json_payload_string(
+  const char *payload,
+  int32_t payload_len,
+  const char *field
+) {
+  if (payload == NULL || payload_len <= 0) {
+    return NULL;
+  }
+  const char *end = payload + payload_len;
+  const char *cursor = lepusa_linux_json_skip_space(payload, end);
+  if (cursor < end && *cursor == '"') {
+    return lepusa_linux_json_string_value_to_cstr(cursor, end);
+  }
+  const char *value = NULL;
+  const char *value_end = NULL;
+  if (lepusa_linux_json_find_member_value(cursor, end, field, &value, &value_end)) {
+    return lepusa_linux_json_string_value_to_cstr(value, value_end);
+  }
+  return NULL;
+}
+
+static int lepusa_linux_json_bool_value(
+  const char *value,
+  const char *end,
+  int *out
+) {
+  if (out == NULL) {
+    return 0;
+  }
+  value = lepusa_linux_json_skip_space(value, end);
+  if (value + 4 <= end && memcmp(value, "true", 4) == 0) {
+    *out = 1;
+    return 1;
+  }
+  if (value + 5 <= end && memcmp(value, "false", 5) == 0) {
+    *out = 0;
+    return 1;
+  }
+  return 0;
+}
+
+static int lepusa_linux_json_payload_bool(
+  const char *payload,
+  int32_t payload_len,
+  const char *field,
+  int fallback
+) {
+  int value = fallback;
+  if (payload == NULL || payload_len <= 0) {
+    return value;
+  }
+  const char *end = payload + payload_len;
+  const char *cursor = lepusa_linux_json_skip_space(payload, end);
+  if (lepusa_linux_json_bool_value(cursor, end, &value)) {
+    return value;
+  }
+  const char *member = NULL;
+  const char *member_end = NULL;
+  if (lepusa_linux_json_find_member_value(cursor, end, field, &member, &member_end)) {
+    lepusa_linux_json_bool_value(member, member_end, &value);
+  }
+  return value;
+}
+
 static int lepusa_linux_theme_payload_prefers_dark(
   const char *payload,
   int32_t payload_len,
@@ -1408,6 +1629,360 @@ static void lepusa_linux_apply_app_theme(
   }
 }
 
+typedef struct {
+  LepusaLinuxBridgeContext *context;
+  char *event;
+  char *id;
+} LepusaLinuxMenuClick;
+
+static void lepusa_linux_free_menu_click(void *data) {
+  LepusaLinuxMenuClick *click = (LepusaLinuxMenuClick *)data;
+  if (click == NULL) {
+    return;
+  }
+  free(click->event);
+  free(click->id);
+  free(click);
+}
+
+static void lepusa_linux_dispatch_menu_click(
+  LepusaLinuxBridgeContext *context,
+  const char *event,
+  const char *id
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->webview == NULL ||
+      context->api->webkit_web_view_run_javascript == NULL ||
+      event == NULL ||
+      id == NULL) {
+    return;
+  }
+  char *event_literal = lepusa_linux_js_string_literal_from_range(
+    event,
+    (int32_t)strlen(event)
+  );
+  char *id_literal = lepusa_linux_js_string_literal_from_range(
+    id,
+    (int32_t)strlen(id)
+  );
+  if (event_literal == NULL || id_literal == NULL) {
+    free(event_literal);
+    free(id_literal);
+    return;
+  }
+  const char *template_text =
+    "(globalThis[\"__lepusaDispatchEvent\"]||(()=>false))({name:%s,payload:JSON.stringify({id:%s})});";
+  int needed = snprintf(NULL, 0, template_text, event_literal, id_literal);
+  if (needed >= 0) {
+    char *script = (char *)malloc((size_t)needed + 1);
+    if (script != NULL) {
+      snprintf(script, (size_t)needed + 1, template_text, event_literal, id_literal);
+      context->api->webkit_web_view_run_javascript(
+        context->webview,
+        script,
+        NULL,
+        NULL,
+        NULL
+      );
+      free(script);
+    }
+  }
+  free(event_literal);
+  free(id_literal);
+}
+
+static void lepusa_linux_menu_item_activated(void *widget, void *data) {
+  (void)widget;
+  LepusaLinuxMenuClick *click = (LepusaLinuxMenuClick *)data;
+  if (click != NULL) {
+    lepusa_linux_dispatch_menu_click(click->context, click->event, click->id);
+  }
+}
+
+static void lepusa_linux_show_tray_menu(LepusaLinuxBridgeContext *context) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->tray_menu == NULL ||
+      context->api->gtk_widget_show_all == NULL) {
+    return;
+  }
+  context->api->gtk_widget_show_all(context->tray_menu);
+  if (context->api->gtk_menu_popup_at_pointer != NULL) {
+    context->api->gtk_menu_popup_at_pointer(context->tray_menu, NULL);
+  }
+}
+
+static void lepusa_linux_tray_popup_menu(
+  void *status_icon,
+  unsigned int button,
+  unsigned int activate_time,
+  void *data
+) {
+  (void)status_icon;
+  (void)button;
+  (void)activate_time;
+  lepusa_linux_show_tray_menu((LepusaLinuxBridgeContext *)data);
+}
+
+static void lepusa_linux_tray_activated(void *status_icon, void *data) {
+  (void)status_icon;
+  lepusa_linux_show_tray_menu((LepusaLinuxBridgeContext *)data);
+}
+
+static void lepusa_linux_ensure_tray_icon(LepusaLinuxBridgeContext *context) {
+  if (context == NULL || context->api == NULL || context->tray_icon != NULL) {
+    return;
+  }
+  if (context->api->gtk_status_icon_new == NULL ||
+      context->api->gtk_status_icon_set_visible == NULL ||
+      context->api->g_signal_connect_data == NULL) {
+    return;
+  }
+  context->tray_icon = context->api->gtk_status_icon_new();
+  if (context->tray_icon == NULL) {
+    return;
+  }
+  context->api->gtk_status_icon_set_visible(context->tray_icon, 1);
+  context->api->g_signal_connect_data(
+    context->tray_icon,
+    "popup-menu",
+    (void *)lepusa_linux_tray_popup_menu,
+    context,
+    NULL,
+    0
+  );
+  context->api->g_signal_connect_data(
+    context->tray_icon,
+    "activate",
+    (void *)lepusa_linux_tray_activated,
+    context,
+    NULL,
+    0
+  );
+}
+
+static int lepusa_linux_json_member_string_range(
+  const char *object,
+  const char *end,
+  const char *field,
+  const char **value_out,
+  int32_t *value_len_out
+) {
+  const char *value = NULL;
+  const char *value_end = NULL;
+  if (!lepusa_linux_json_find_member_value(object, end, field, &value, &value_end)) {
+    return 0;
+  }
+  value = lepusa_linux_json_skip_space(value, value_end);
+  const char *string_end = lepusa_linux_json_string_end(value, value_end);
+  if (string_end == NULL) {
+    return 0;
+  }
+  *value_out = value + 1;
+  *value_len_out = (int32_t)(string_end - value - 2);
+  return 1;
+}
+
+static int lepusa_linux_json_member_bool(
+  const char *object,
+  const char *end,
+  const char *field,
+  int fallback
+) {
+  const char *value = NULL;
+  const char *value_end = NULL;
+  int out = fallback;
+  if (lepusa_linux_json_find_member_value(object, end, field, &value, &value_end)) {
+    lepusa_linux_json_bool_value(value, value_end, &out);
+  }
+  return out;
+}
+
+static void lepusa_linux_attach_menu_item_click(
+  LepusaLinuxBridgeContext *context,
+  void *item,
+  const char *event,
+  const char *id,
+  int32_t id_len
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->api->g_signal_connect_data == NULL ||
+      item == NULL ||
+      event == NULL ||
+      id == NULL ||
+      id_len <= 0) {
+    return;
+  }
+  LepusaLinuxMenuClick *click =
+    (LepusaLinuxMenuClick *)calloc(1, sizeof(LepusaLinuxMenuClick));
+  if (click == NULL) {
+    return;
+  }
+  click->context = context;
+  click->event = lepusa_linux_cstr_from_range(event, (int32_t)strlen(event));
+  click->id = lepusa_linux_cstr_from_range(id, id_len);
+  if (click->event == NULL || click->id == NULL) {
+    lepusa_linux_free_menu_click(click);
+    return;
+  }
+  context->api->g_signal_connect_data(
+    item,
+    "activate",
+    (void *)lepusa_linux_menu_item_activated,
+    click,
+    (void *)lepusa_linux_free_menu_click,
+    0
+  );
+}
+
+static void lepusa_linux_add_tray_menu_items_from_array(
+  LepusaLinuxBridgeContext *context,
+  void *menu,
+  const char *array,
+  const char *array_end
+) {
+  if (context == NULL || context->api == NULL || menu == NULL) {
+    return;
+  }
+  const char *cursor = lepusa_linux_json_skip_space(array, array_end);
+  if (cursor >= array_end || *cursor != '[') {
+    return;
+  }
+  cursor++;
+  while (cursor < array_end) {
+    cursor = lepusa_linux_json_skip_space(cursor, array_end);
+    if (cursor >= array_end || *cursor == ']') {
+      return;
+    }
+    const char *item_end = lepusa_linux_json_value_end(cursor, array_end);
+    if (item_end == NULL) {
+      return;
+    }
+    const char *kind = NULL;
+    int32_t kind_len = 0;
+    const char *label = NULL;
+    int32_t label_len = 0;
+    const char *id = NULL;
+    int32_t id_len = 0;
+    int is_separator = 0;
+    int is_check = 0;
+    void *item = NULL;
+    if (cursor < item_end && *cursor == '{') {
+      if (lepusa_linux_json_member_string_range(cursor, item_end, "kind", &kind, &kind_len)) {
+        is_separator = lepusa_linux_range_equals(kind, kind_len, "separator");
+        is_check = lepusa_linux_range_equals(kind, kind_len, "check");
+      }
+      if (is_separator) {
+        item = context->api->gtk_separator_menu_item_new();
+      } else {
+        lepusa_linux_json_member_string_range(cursor, item_end, "label", &label, &label_len);
+        char *label_text = lepusa_linux_cstr_from_range(label, label_len);
+        if (label_text != NULL) {
+          item = is_check ?
+            context->api->gtk_check_menu_item_new_with_label(label_text) :
+            context->api->gtk_menu_item_new_with_label(label_text);
+          free(label_text);
+        }
+        if (item != NULL && is_check) {
+          int checked = lepusa_linux_json_member_bool(cursor, item_end, "checked", 0);
+          context->api->gtk_check_menu_item_set_active(item, checked);
+        }
+        if (item != NULL) {
+          int enabled = lepusa_linux_json_member_bool(cursor, item_end, "enabled", 1);
+          context->api->gtk_widget_set_sensitive(item, enabled);
+          if (lepusa_linux_json_member_string_range(cursor, item_end, "id", &id, &id_len)) {
+            lepusa_linux_attach_menu_item_click(
+              context,
+              item,
+              "tray.onMenuItemClick",
+              id,
+              id_len
+            );
+          }
+        }
+      }
+    }
+    if (item != NULL) {
+      context->api->gtk_menu_shell_append(menu, item);
+    }
+    cursor = lepusa_linux_json_skip_space(item_end, array_end);
+    if (cursor < array_end && *cursor == ',') {
+      cursor++;
+    }
+  }
+}
+
+static void lepusa_linux_apply_tray_menu(
+  LepusaLinuxBridgeContext *context,
+  const char *payload,
+  int32_t payload_len
+) {
+  if (context == NULL || context->api == NULL || payload == NULL || payload_len <= 0) {
+    return;
+  }
+  lepusa_linux_ensure_tray_icon(context);
+  if (context->api->gtk_menu_new == NULL ||
+      context->api->gtk_menu_shell_append == NULL ||
+      context->api->gtk_menu_item_new_with_label == NULL ||
+      context->api->gtk_check_menu_item_new_with_label == NULL ||
+      context->api->gtk_separator_menu_item_new == NULL ||
+      context->api->gtk_widget_set_sensitive == NULL ||
+      context->api->gtk_check_menu_item_set_active == NULL) {
+    return;
+  }
+  const char *end = payload + payload_len;
+  const char *items = lepusa_linux_json_skip_space(payload, end);
+  const char *items_end = end;
+  const char *member = NULL;
+  const char *member_end = NULL;
+  if (items < end && *items == '{' &&
+      lepusa_linux_json_find_member_value(items, end, "items", &member, &member_end)) {
+    items = member;
+    items_end = member_end;
+  }
+  void *menu = context->api->gtk_menu_new();
+  if (menu == NULL) {
+    return;
+  }
+  lepusa_linux_add_tray_menu_items_from_array(context, menu, items, items_end);
+  if (context->tray_menu != NULL && context->api->g_object_unref != NULL) {
+    context->api->g_object_unref(context->tray_menu);
+  }
+  context->tray_menu = menu;
+}
+
+static int lepusa_linux_tray_action_equals(
+  const char *action,
+  int32_t action_len,
+  const char *name
+) {
+  size_t name_len = strlen(name);
+  return lepusa_linux_range_equals(action, action_len, name) ||
+    (action != NULL &&
+     action_len == (int32_t)(name_len + 5) &&
+     memcmp(action, "tray.", 5) == 0 &&
+     memcmp(action + 5, name, name_len) == 0);
+}
+
+static void lepusa_linux_destroy_tray(LepusaLinuxBridgeContext *context) {
+  if (context == NULL || context->api == NULL) {
+    return;
+  }
+  if (context->tray_icon != NULL) {
+    context->api->gtk_status_icon_set_visible(context->tray_icon, 0);
+    if (context->api->g_object_unref != NULL) {
+      context->api->g_object_unref(context->tray_icon);
+    }
+    context->tray_icon = NULL;
+  }
+  if (context->tray_menu != NULL && context->api->g_object_unref != NULL) {
+    context->api->g_object_unref(context->tray_menu);
+  }
+  context->tray_menu = NULL;
+}
+
 static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
   LepusaLinuxBridgeContext *context,
   moonbit_bytes_t packet
@@ -1431,6 +2006,44 @@ static void lepusa_linux_apply_desktop_shell_from_handoff_packet(
           record.kind_len,
           "desktop-shell"
         )) {
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "setIcon")) {
+      lepusa_linux_ensure_tray_icon(context);
+      char *icon_path = lepusa_linux_json_payload_string(record.url, record.url_len, "iconPath");
+      if (context->tray_icon != NULL && icon_path != NULL) {
+        context->api->gtk_status_icon_set_from_file(context->tray_icon, icon_path);
+      }
+      free(icon_path);
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "setTooltip")) {
+      lepusa_linux_ensure_tray_icon(context);
+      char *tooltip = lepusa_linux_json_payload_string(record.url, record.url_len, "tooltip");
+      if (context->tray_icon != NULL && tooltip != NULL) {
+        context->api->gtk_status_icon_set_tooltip_text(context->tray_icon, tooltip);
+      }
+      free(tooltip);
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "setMenu")) {
+      lepusa_linux_apply_tray_menu(context, record.url, record.url_len);
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "showMenu")) {
+      lepusa_linux_show_tray_menu(context);
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "setVisible")) {
+      lepusa_linux_ensure_tray_icon(context);
+      int visible = lepusa_linux_json_payload_bool(record.url, record.url_len, "visible", 1);
+      if (context->tray_icon != NULL) {
+        context->api->gtk_status_icon_set_visible(context->tray_icon, visible);
+      }
+      continue;
+    }
+    if (lepusa_linux_tray_action_equals(record.action, record.action_len, "destroy")) {
+      lepusa_linux_destroy_tray(context);
       continue;
     }
     if (lepusa_linux_app_shell_action_equals(record.action, record.action_len, "restart")) {
@@ -2408,6 +3021,8 @@ int32_t lepusa_linux_run_webview(
     .live_windows = 0,
     .drain_requests = { 0 },
     .drain_request_count = 0,
+    .tray_icon = NULL,
+    .tray_menu = NULL,
     .api = &api,
     .call_dispatch = call_dispatch,
     .dispatch = dispatch,
@@ -2477,6 +3092,7 @@ int32_t lepusa_linux_run_webview(
     initial_open_packet
   );
   api.gtk_main();
+  lepusa_linux_destroy_tray(&bridge_context);
   free(title_text);
   free(label_text);
   free(url_text);
