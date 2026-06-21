@@ -46,6 +46,8 @@ pub struct BundledBridgeDrainResult {
 ///|
 pub struct BundledBridgeWorkQueue {
   tasks : Array[BundledBridgeDispatchTask]
+  policy : @lepusa.BackpressurePolicy
+  mut dropped_count : Int
 } derive(Debug, Eq)
 
 ///|
@@ -657,8 +659,10 @@ pub fn BundledBridgeDrainResult::to_json(
 }
 
 ///|
-pub fn BundledBridgeWorkQueue::new() -> BundledBridgeWorkQueue {
-  { tasks: [] }
+pub fn BundledBridgeWorkQueue::new(
+  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+) -> BundledBridgeWorkQueue {
+  { tasks: [], policy, dropped_count: 0 }
 }
 
 ///|
@@ -666,6 +670,20 @@ pub fn BundledBridgeWorkQueue::pending_count(
   self : BundledBridgeWorkQueue,
 ) -> Int {
   self.tasks.length()
+}
+
+///|
+pub fn BundledBridgeWorkQueue::policy(
+  self : BundledBridgeWorkQueue,
+) -> @lepusa.BackpressurePolicy {
+  self.policy
+}
+
+///|
+pub fn BundledBridgeWorkQueue::dropped_count(
+  self : BundledBridgeWorkQueue,
+) -> Int {
+  self.dropped_count
 }
 
 ///|
@@ -686,6 +704,23 @@ pub fn BundledBridgeWorkQueue::enqueue_task(
   task : BundledBridgeDispatchTask,
 ) -> Result[Int, String] {
   if task.requires_async_dispatch() {
+    if self.policy.at_capacity(self.pending_count()) {
+      match self.policy.overflow() {
+        RejectNew =>
+          return Err(
+            "bundled bridge queue is full: \{self.pending_count()}/\{self.policy.max_pending()}",
+          )
+        DropOldest =>
+          if self.policy.max_pending() < 1 {
+            return Err(
+              "bundled bridge queue is full: \{self.pending_count()}/\{self.policy.max_pending()}",
+            )
+          } else if !self.tasks.is_empty() {
+            ignore(self.tasks.remove(0))
+            self.dropped_count += 1
+          }
+      }
+    }
     self.tasks.push(task)
     Ok(self.pending_count())
   } else {
@@ -766,6 +801,8 @@ pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String 
   [
     "{",
     "\"pendingCount\":\{self.pending_count()},",
+    "\"droppedCount\":\{self.dropped_count},",
+    "\"backpressure\":\{self.policy.to_json()},",
     "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
@@ -774,8 +811,9 @@ pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String 
 ///|
 pub fn BundledBridgeLoopAdapter::new(
   runtime : BundledRuntime,
+  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> BundledBridgeLoopAdapter {
-  { runtime, queue: BundledBridgeWorkQueue::new() }
+  { runtime, queue: BundledBridgeWorkQueue::new(policy~) }
 }
 
 ///|

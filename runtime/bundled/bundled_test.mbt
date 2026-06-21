@@ -1106,6 +1106,38 @@ async test "bundled runtime owns bridge message transport" {
           assert_eq(completions.length(), 1)
           assert_true(queue.is_empty())
           assert_eq(queue.drain(runtime).length(), 0)
+          let rejecting_queue = BundledBridgeWorkQueue::new(
+            policy=@lepusa.BackpressurePolicy::bounded(max_pending=1),
+          )
+          ignore(rejecting_queue.enqueue_handoff(handoff))
+          match rejecting_queue.enqueue_handoff(handoff) {
+            Err(problem) =>
+              assert_eq(problem, "bundled bridge queue is full: 1/1")
+            Ok(_) => abort("expected bundled bridge queue rejection")
+          }
+          assert_eq(rejecting_queue.pending_count(), 1)
+          assert_eq(rejecting_queue.dropped_count(), 0)
+          assert_true(
+            rejecting_queue.to_json().contains("\"overflow\":\"reject-new\""),
+          )
+          let dropping_queue = BundledBridgeWorkQueue::new(
+            policy=@lepusa.BackpressurePolicy::bounded(
+              max_pending=1,
+              overflow=DropOldest,
+            ),
+          )
+          ignore(dropping_queue.enqueue_handoff(handoff))
+          match dropping_queue.enqueue_handoff(handoff) {
+            Ok(count) => assert_eq(count, 1)
+            Err(problem) => abort(problem)
+          }
+          assert_eq(dropping_queue.pending_count(), 1)
+          assert_eq(dropping_queue.dropped_count(), 1)
+          assert_true(
+            dropping_queue.to_json().contains("\"overflow\":\"drop-oldest\""),
+          )
+          assert_eq(dropping_queue.drain(runtime).length(), 1)
+          assert_true(dropping_queue.is_empty())
           assert_true(
             completions[0]
             .evaluation_script()

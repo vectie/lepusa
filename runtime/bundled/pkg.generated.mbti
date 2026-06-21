@@ -114,7 +114,7 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::is_empty(Self) -> Bool
-pub fn BundledBridgeLoopAdapter::new(BundledRuntime) -> Self
+pub fn BundledBridgeLoopAdapter::new(BundledRuntime, policy? : @lepusa.BackpressurePolicy) -> Self
 pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn BundledBridgeLoopAdapter::queue(Self) -> BundledBridgeWorkQueue
 pub async fn BundledBridgeLoopAdapter::receive_message(Self, Bytes) -> BundledBridgeLoopResult
@@ -175,16 +175,20 @@ pub fn BundledBridgeMessage::window_label(Self) -> String
 
 pub struct BundledBridgeWorkQueue {
   tasks : Array[BundledBridgeDispatchTask]
+  policy : @lepusa.BackpressurePolicy
+  mut dropped_count : Int
 } derive(Eq, @debug.Debug)
 pub async fn BundledBridgeWorkQueue::drain(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
 pub async fn BundledBridgeWorkQueue::drain_result(Self, BundledRuntime) -> BundledBridgeDrainResult
+pub fn BundledBridgeWorkQueue::dropped_count(Self) -> Int
 pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int, String]
 pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int, String]
 pub fn BundledBridgeWorkQueue::handoff_callback(Self, BundledRuntime) -> (Bytes) -> Bytes
 pub fn BundledBridgeWorkQueue::handoff_script_bytes(Self, BundledRuntime, Bytes) -> Bytes
 pub fn BundledBridgeWorkQueue::is_empty(Self) -> Bool
-pub fn BundledBridgeWorkQueue::new() -> Self
+pub fn BundledBridgeWorkQueue::new(policy? : @lepusa.BackpressurePolicy) -> Self
 pub fn BundledBridgeWorkQueue::pending_count(Self) -> Int
+pub fn BundledBridgeWorkQueue::policy(Self) -> @lepusa.BackpressurePolicy
 pub fn BundledBridgeWorkQueue::tasks(Self) -> Array[BundledBridgeDispatchTask]
 pub fn BundledBridgeWorkQueue::to_json(Self) -> String
 

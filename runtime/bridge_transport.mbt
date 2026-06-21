@@ -52,6 +52,8 @@ pub struct NativeBridgeDrainResult {
 ///|
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
+  policy : @lepusa.BackpressurePolicy
+  mut dropped_count : Int
 } derive(Debug, Eq)
 
 ///|
@@ -767,8 +769,10 @@ pub fn NativeBridgeDrainResult::to_json(
 }
 
 ///|
-pub fn NativeBridgeWorkQueue::new() -> NativeBridgeWorkQueue {
-  { tasks: [] }
+pub fn NativeBridgeWorkQueue::new(
+  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+) -> NativeBridgeWorkQueue {
+  { tasks: [], policy, dropped_count: 0 }
 }
 
 ///|
@@ -776,6 +780,20 @@ pub fn NativeBridgeWorkQueue::pending_count(
   self : NativeBridgeWorkQueue,
 ) -> Int {
   self.tasks.length()
+}
+
+///|
+pub fn NativeBridgeWorkQueue::policy(
+  self : NativeBridgeWorkQueue,
+) -> @lepusa.BackpressurePolicy {
+  self.policy
+}
+
+///|
+pub fn NativeBridgeWorkQueue::dropped_count(
+  self : NativeBridgeWorkQueue,
+) -> Int {
+  self.dropped_count
 }
 
 ///|
@@ -796,6 +814,23 @@ pub fn NativeBridgeWorkQueue::enqueue_task(
   task : NativeBridgeDispatchTask,
 ) -> Result[Int, String] {
   if task.requires_async_dispatch() {
+    if self.policy.at_capacity(self.pending_count()) {
+      match self.policy.overflow() {
+        RejectNew =>
+          return Err(
+            "native bridge queue is full: \{self.pending_count()}/\{self.policy.max_pending()}",
+          )
+        DropOldest =>
+          if self.policy.max_pending() < 1 {
+            return Err(
+              "native bridge queue is full: \{self.pending_count()}/\{self.policy.max_pending()}",
+            )
+          } else if !self.tasks.is_empty() {
+            ignore(self.tasks.remove(0))
+            self.dropped_count += 1
+          }
+      }
+    }
     self.tasks.push(task)
     Ok(self.pending_count())
   } else {
@@ -876,6 +911,8 @@ pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
   [
     "{",
     "\"pendingCount\":\{self.pending_count()},",
+    "\"droppedCount\":\{self.dropped_count},",
+    "\"backpressure\":\{self.policy.to_json()},",
     "\"tasks\":[\{self.tasks.map(fn(task) { task.to_json() }).join(",")}]",
     "}",
   ].join("")
@@ -884,8 +921,9 @@ pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
 ///|
 pub fn NativeBridgeLoopAdapter::new(
   runtime : NativeRuntime,
+  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> NativeBridgeLoopAdapter {
-  { runtime, queue: NativeBridgeWorkQueue::new() }
+  { runtime, queue: NativeBridgeWorkQueue::new(policy~) }
 }
 
 ///|

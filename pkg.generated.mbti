@@ -129,6 +129,27 @@ pub fn AppStateStore::remove(Self, String) -> Result[AppStateEntry, String]
 pub fn AppStateStore::set(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
 pub fn AppStateStore::to_json(Self) -> String
 
+pub(all) enum BackpressureOverflow {
+  RejectNew
+  DropOldest
+} derive(Eq, @debug.Debug)
+pub fn BackpressureOverflow::name(Self) -> String
+
+pub struct BackpressurePolicy {
+  max_pending : Int
+  overflow : BackpressureOverflow
+} derive(Eq, @debug.Debug)
+pub fn BackpressurePolicy::at_capacity(Self, Int) -> Bool
+pub fn BackpressurePolicy::bounded(max_pending~ : Int, overflow? : BackpressureOverflow) -> Self
+pub fn BackpressurePolicy::is_bounded(Self) -> Bool
+pub fn BackpressurePolicy::is_unbounded(Self) -> Bool
+pub fn BackpressurePolicy::max_pending(Self) -> Int
+pub fn BackpressurePolicy::new(max_pending? : Int, overflow? : BackpressureOverflow) -> Self
+pub fn BackpressurePolicy::overflow(Self) -> BackpressureOverflow
+pub fn BackpressurePolicy::to_json(Self) -> String
+pub fn BackpressurePolicy::unbounded() -> Self
+pub fn BackpressurePolicy::validate(Self) -> Array[String]
+
 pub struct BridgeConfig {
   global_name : String
   native_hook : String

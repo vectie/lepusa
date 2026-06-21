@@ -200,7 +200,7 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool
-pub fn NativeBridgeLoopAdapter::new(NativeRuntime) -> Self
+pub fn NativeBridgeLoopAdapter::new(NativeRuntime, policy? : @lepusa.BackpressurePolicy) -> Self
 pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int
 pub fn NativeBridgeLoopAdapter::queue(Self) -> NativeBridgeWorkQueue
 pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBridgeLoopResult
@@ -333,16 +333,20 @@ pub fn NativeBridgeSchedulerMode::name(Self) -> String
 
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
+  policy : @lepusa.BackpressurePolicy
+  mut dropped_count : Int
 } derive(Eq, @debug.Debug)
 pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeWorkQueue::drain_result(Self, NativeRuntime) -> NativeBridgeDrainResult
+pub fn NativeBridgeWorkQueue::dropped_count(Self) -> Int
 pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::handoff_callback(Self, NativeRuntime) -> (Bytes) -> Bytes
 pub fn NativeBridgeWorkQueue::handoff_script_bytes(Self, NativeRuntime, Bytes) -> Bytes
 pub fn NativeBridgeWorkQueue::is_empty(Self) -> Bool
-pub fn NativeBridgeWorkQueue::new() -> Self
+pub fn NativeBridgeWorkQueue::new(policy? : @lepusa.BackpressurePolicy) -> Self
 pub fn NativeBridgeWorkQueue::pending_count(Self) -> Int
+pub fn NativeBridgeWorkQueue::policy(Self) -> @lepusa.BackpressurePolicy
 pub fn NativeBridgeWorkQueue::tasks(Self) -> Array[NativeBridgeDispatchTask]
 pub fn NativeBridgeWorkQueue::to_json(Self) -> String
 
