@@ -570,7 +570,7 @@ pub fn CommandRegistry::new() -> Self
 pub fn CommandRegistry::register(Self, RegisteredCommand) -> Self
 pub fn CommandRegistry::register_async_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : async (String) -> Result[String, String]) -> Self
 pub fn CommandRegistry::register_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
-pub fn CommandRegistry::register_stream_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
+pub fn CommandRegistry::register_stream_fn(Self, String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String, StreamSink) -> Result[Unit, String]) -> Self
 pub fn CommandRegistry::routes(Self) -> Array[String]
 pub fn CommandRegistry::sync_routes(Self) -> Array[String]
 pub fn CommandRegistry::validate(Self) -> Array[String]
@@ -1186,7 +1186,7 @@ pub struct RegisteredCommand {
 pub fn RegisteredCommand::mode(Self) -> CommandMode
 pub fn RegisteredCommand::new(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
 pub fn RegisteredCommand::new_async(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : async (String) -> Result[String, String]) -> Self
-pub fn RegisteredCommand::new_stream(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String) -> Result[String, String]) -> Self
+pub fn RegisteredCommand::new_stream(String, permission? : Permission, operation_scope? : (InvokeRequest) -> Result[OperationScope, String], handler~ : (String, StreamSink) -> Result[Unit, String]) -> Self
 pub fn RegisteredCommand::permission(Self) -> Permission
 pub fn RegisteredCommand::requires_operation_scope(Self) -> Bool
 pub fn RegisteredCommand::resolve_operation_scope(Self, InvokeRequest) -> Result[OperationScope?, String]
@@ -1823,6 +1823,22 @@ pub fn Source::rabbita(Cell) -> Self
 pub fn Source::resolve(Self, window_label~ : String, asset_protocol? : String) -> Result[ResolvedSource, String]
 pub fn Source::url(String) -> Self
 
+pub struct StreamSink {
+  route : String
+  channel_id : String
+  channels : ChannelTable
+}
+pub fn StreamSink::cancel(Self) -> Result[ChannelMessage, String]
+pub fn StreamSink::channel(Self) -> Channel?
+pub fn StreamSink::channel_id(Self) -> String
+pub fn StreamSink::closed(Self) -> Bool
+pub fn StreamSink::end(Self) -> Result[ChannelMessage, String]
+pub fn StreamSink::fail(Self, String) -> Result[ChannelMessage, String]
+pub fn StreamSink::handle(Self) -> ResourceHandle?
+pub fn StreamSink::route(Self) -> String
+pub fn StreamSink::send(Self, String) -> Result[ChannelMessage, String]
+pub fn StreamSink::to_json(Self) -> String
+
 pub(all) enum TitleBarStyle {
   Native
   Transparent
@@ -1923,5 +1939,7 @@ pub type CommandHandler = (String) -> Result[String, String]
 pub type Dispatch[Msg] = (Msg) -> Cmd
 
 pub type OperationScopeResolver = (InvokeRequest) -> Result[OperationScope, String]
+
+pub type StreamCommandHandler = (String, StreamSink) -> Result[Unit, String]
 
 // Traits

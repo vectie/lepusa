@@ -103,7 +103,10 @@ fn sample_manifest() -> @lepusa.ProjectManifest {
 fn sample_registry() -> @lepusa.CommandRegistry {
   @lepusa.CommandRegistry::new()
   .register_fn("core.invoke", handler=fn(payload) { Ok(payload) })
-  .register_stream_fn("core.events", handler=fn(_) { Ok("") })
+  .register_stream_fn("core.events", handler=fn(_, sink) {
+    ignore(sink.send("{\"event\":\"sample\"}"))
+    Ok(())
+  })
 }
 
 ///|

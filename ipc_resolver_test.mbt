@@ -55,6 +55,13 @@ test "frontend bridge emits invoke resolver ids" {
             .contains("emit: (name, payload = null) => emitNative"),
           )
           assert_true(script.source().contains("emitTo: (target, name"))
+          assert_true(
+            script
+            .source()
+            .contains(
+              "stream: async (route, payload = null, options = {}) => api.invoke",
+            ),
+          )
           assert_true(script.source().contains("\"__lepusa\", \"event.emit\""))
           assert_true(
             script

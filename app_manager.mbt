@@ -491,7 +491,11 @@ pub fn AppManager::dispatch(
   self : AppManager,
   request : InvokeRequest,
 ) -> InvokeResponse {
-  self.registry.dispatch_with_profile(self.security_profile(), request)
+  self.registry.dispatch_with_profile_channels(
+    self.security_profile(),
+    request,
+    self.channels,
+  )
 }
 
 ///|
@@ -499,7 +503,11 @@ pub async fn AppManager::dispatch_async(
   self : AppManager,
   request : InvokeRequest,
 ) -> InvokeResponse {
-  self.registry.dispatch_with_profile_async(self.security_profile(), request)
+  self.registry.dispatch_with_profile_channels_async(
+    self.security_profile(),
+    request,
+    self.channels,
+  )
 }
 
 ///|

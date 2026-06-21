@@ -186,6 +186,7 @@ fn frontend_api_javascript(
     "export const routes = Object.freeze(routeList.slice());",
     "export const can = (route) => getApi().can(route);",
     "export const invoke = (route, payload = null, options = {}) => getApi().invoke(route, payload, options);",
+    "export const stream = (route, payload = null, options = {}) => getApi().stream(route, payload, options);",
     "export const isInvokeError = (error) => getApi().isInvokeError(error);",
     "export const listen = (name, handler) => getApi().listen(name, handler);",
     "export const unlisten = (name, handler) => getApi().unlisten(name, handler);",
@@ -224,6 +225,7 @@ fn frontend_api_javascript(
     "  routes,",
     "  can,",
     "  invoke,",
+    "  stream,",
     "  isInvokeError,",
     "  listen,",
     "  unlisten,",
@@ -305,6 +307,8 @@ fn frontend_api_typescript(
     "export type LepusaInvokeErrorCode = \"invalid-request\" | \"unknown-command\" | \"permission-denied\" | \"async-required\" | \"handler-error\" | \"transport-error\" | \"timeout\" | \"cancelled\" | string;",
     "export type LepusaInvokeFailure = { code: LepusaInvokeErrorCode; message: string; route?: string | null };",
     "export interface LepusaInvokeError extends Error { name: \"LepusaInvokeError\"; code: LepusaInvokeErrorCode; route: string; id: string; failure: LepusaInvokeFailure | null; response: unknown; }",
+    "export type LepusaResourceHandle = { id: string; kind: string; owner: string; name: string };",
+    "export type LepusaStream = { kind: \"stream\"; route: string; channelId: string; channel: LepusaResourceHandle | null };",
     "export type LepusaEventTarget = { kind: \"app\" } | { kind: \"window\"; label: string } | { kind: \"webview\"; label: string } | string;",
     "export type LepusaEvent = { name: string; payload?: string };",
     "export type LepusaUnlisten = () => boolean;",
@@ -320,6 +324,7 @@ fn frontend_api_typescript(
     "export declare const routes: readonly LepusaRoute[];",
     "export declare function can(route: string): boolean;",
     "export declare function invoke<Route extends LepusaRoute>(route: Route, payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions): Promise<LepusaResponseFor<Route>>;",
+    "export declare function stream<Route extends LepusaRoute>(route: Route, payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions): Promise<LepusaStream>;",
     "export declare function isInvokeError(error: unknown): error is LepusaInvokeError;",
     "export declare function listen(name: string, handler: LepusaEventHandler): LepusaUnlisten;",
     "export declare function unlisten(name: string, handler: LepusaEventHandler): boolean;",
@@ -335,6 +340,7 @@ fn frontend_api_typescript(
     "  routes: typeof routes;",
     "  can: typeof can;",
     "  invoke: typeof invoke;",
+    "  stream: typeof stream;",
     "  isInvokeError: typeof isInvokeError;",
     "  listen: typeof listen;",
     "  unlisten: typeof unlisten;",
@@ -362,7 +368,7 @@ fn typescript_command_tree(manifest : @lepusa.CommandManifest) -> String {
     for entry in manifest.entries() {
       if entry.plugin() == plugin {
         command_lines.push(
-          "    \{entry.command().typescript_property_name()}: (payload?: \{entry.request_schema().typescript()}, options?: LepusaInvokeOptions) => Promise<\{entry.response_schema().typescript()}>;",
+          "    \{entry.command().typescript_property_name()}: (payload?: \{entry.request_schema().typescript()}, options?: LepusaInvokeOptions) => Promise<\{typescript_entry_response(entry)}>;",
         )
       }
     }
@@ -383,14 +389,23 @@ fn typescript_command_schema_map(
   }
   let lines : Array[String] = []
   for entry in manifest.entries() {
-    let schema = if request {
-      entry.request_schema()
+    let value = if request {
+      entry.request_schema().typescript()
     } else {
-      entry.response_schema()
+      typescript_entry_response(entry)
     }
-    lines.push("  \{entry.route().json_literal()}: \{schema.typescript()};")
+    lines.push("  \{entry.route().json_literal()}: \{value};")
   }
   "{\n\{lines.join("\n")}\n}"
+}
+
+///|
+fn typescript_entry_response(entry : @lepusa.CommandManifestEntry) -> String {
+  if entry.mode() is Stream {
+    "LepusaStream"
+  } else {
+    entry.response_schema().typescript()
+  }
 }
 
 ///|

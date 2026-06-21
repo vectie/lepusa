@@ -166,7 +166,10 @@ test "invoke contract accepts registered stream handlers" {
   }
   let registry = @lepusa.CommandRegistry::new().register_stream_fn(
     "core.events",
-    handler=fn(_) { Ok("{\"channel\":\"events\"}") },
+    handler=fn(_, sink) {
+      ignore(sink.send("{\"channel\":\"events\"}"))
+      Ok(())
+    },
   )
   let profile = plan.security_profile(
     registered_routes=registry.routes(),
@@ -177,8 +180,8 @@ test "invoke contract accepts registered stream handlers" {
   let contract = invoke_contract_by_route(report.contracts(), "core.events")
   assert_true(contract.registered_mode() is Some(Stream))
   assert_true(contract.dispatchable())
-  let response = registry.dispatch_with_profile(
-    profile,
+  let manager = @lepusa.AppManager::new(plan, registry~)
+  let response = manager.dispatch(
     @lepusa.InvokeRequest::new(
       id="stream",
       window_label="main",
@@ -186,5 +189,19 @@ test "invoke contract accepts registered stream handlers" {
       command="events",
     ),
   )
-  assert_true(response is InvokeOk("stream", "{\"channel\":\"events\"}"))
+  match response {
+    InvokeOk("stream", payload) => {
+      assert_true(payload.contains("\"kind\":\"stream\""))
+      assert_true(payload.contains("\"channelId\":\"channel-1\""))
+    }
+    _ => abort("unexpected stream response")
+  }
+  match manager.drain_channel("channel-1") {
+    Ok(messages) => {
+      assert_eq(messages.length(), 2)
+      assert_true(messages[0].kind() is ChannelData)
+      assert_true(messages[1].kind() is ChannelEnd)
+    }
+    Err(problem) => abort(problem)
+  }
 }

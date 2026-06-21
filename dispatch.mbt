@@ -14,7 +14,7 @@ pub type OperationScopeResolver = (InvokeRequest) -> Result[
 enum RegisteredCommandHandler {
   SyncCommandHandler(CommandHandler)
   AsyncCommandHandler(AsyncCommandHandler)
-  StreamCommandHandler(CommandHandler)
+  StreamCommandHandler(StreamCommandHandler)
 }
 
 ///|
@@ -50,7 +50,7 @@ pub fn RegisteredCommand::new_stream(
   route : String,
   permission? : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
-  handler~ : CommandHandler,
+  handler~ : StreamCommandHandler,
 ) -> RegisteredCommand {
   { route, permission, operation_scope, handler: StreamCommandHandler(handler) }
 }
@@ -157,7 +157,7 @@ pub fn CommandRegistry::register_stream_fn(
   route : String,
   permission? : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
-  handler~ : CommandHandler,
+  handler~ : StreamCommandHandler,
 ) -> CommandRegistry {
   self.register(
     RegisteredCommand::new_stream(
@@ -307,6 +307,32 @@ pub fn CommandRegistry::dispatch_with_profile(
 }
 
 ///|
+fn CommandRegistry::dispatch_with_profile_channels(
+  self : CommandRegistry,
+  profile : SecurityProfile,
+  request : InvokeRequest,
+  channels : ChannelTable,
+) -> InvokeResponse {
+  match self.commands.get(request.route()) {
+    None => InvokeResponse::unknown_command(request.id(), request.route())
+    Some(command) =>
+      match authorize_profile_command(profile, request, command) {
+        Ok(_) =>
+          if command.mode() is Stream {
+            execute_stream_command(request, command, channels)
+          } else {
+            validate_profile_response(
+              profile,
+              request,
+              execute_command(request, command),
+            )
+          }
+        Err(response) => response
+      }
+  }
+}
+
+///|
 pub async fn CommandRegistry::dispatch_async(
   self : CommandRegistry,
   request : InvokeRequest,
@@ -364,6 +390,32 @@ pub async fn CommandRegistry::dispatch_with_profile_async(
             request,
             execute_command_async(request, command),
           )
+        Err(response) => response
+      }
+  }
+}
+
+///|
+async fn CommandRegistry::dispatch_with_profile_channels_async(
+  self : CommandRegistry,
+  profile : SecurityProfile,
+  request : InvokeRequest,
+  channels : ChannelTable,
+) -> InvokeResponse {
+  match self.commands.get(request.route()) {
+    None => InvokeResponse::unknown_command(request.id(), request.route())
+    Some(command) =>
+      match authorize_profile_command(profile, request, command) {
+        Ok(_) =>
+          if command.mode() is Stream {
+            execute_stream_command(request, command, channels)
+          } else {
+            validate_profile_response(
+              profile,
+              request,
+              execute_command_async(request, command),
+            )
+          }
         Err(response) => response
       }
   }
@@ -492,12 +544,12 @@ fn execute_command(
         Err(message) =>
           InvokeResponse::handler_error(request.id(), message, route~)
       }
-    StreamCommandHandler(handler) =>
-      match handler(request.payload()) {
-        Ok(payload) => InvokeResponse::ok(request.id(), payload)
-        Err(message) =>
-          InvokeResponse::handler_error(request.id(), message, route~)
-      }
+    StreamCommandHandler(_) =>
+      InvokeResponse::handler_error(
+        request.id(),
+        "stream command requires channel-backed dispatch: \{route}",
+        route~,
+      )
     AsyncCommandHandler(_) =>
       InvokeResponse::async_required(request.id(), route)
   }
@@ -516,12 +568,12 @@ async fn execute_command_async(
         Err(message) =>
           InvokeResponse::handler_error(request.id(), message, route~)
       }
-    StreamCommandHandler(handler) =>
-      match handler(request.payload()) {
-        Ok(payload) => InvokeResponse::ok(request.id(), payload)
-        Err(message) =>
-          InvokeResponse::handler_error(request.id(), message, route~)
-      }
+    StreamCommandHandler(_) =>
+      InvokeResponse::handler_error(
+        request.id(),
+        "stream command requires channel-backed dispatch: \{route}",
+        route~,
+      )
     AsyncCommandHandler(handler) =>
       match handler(request.payload()) {
         Ok(payload) => InvokeResponse::ok(request.id(), payload)
@@ -529,4 +581,63 @@ async fn execute_command_async(
           InvokeResponse::handler_error(request.id(), message, route~)
       }
   }
+}
+
+///|
+fn execute_stream_command(
+  request : InvokeRequest,
+  command : RegisteredCommand,
+  channels : ChannelTable,
+) -> InvokeResponse {
+  let route = request.route()
+  match command.handler {
+    StreamCommandHandler(handler) =>
+      match
+        channels.open(
+          owner=request.plugin(),
+          name=request.command(),
+          metadata=stream_channel_metadata(request),
+        ) {
+        Ok(channel) => {
+          let sink = StreamSink::new(route~, channel_id=channel.id(), channels~)
+          match handler(request.payload(), sink) {
+            Ok(_) => {
+              if !sink.closed() {
+                ignore(sink.end())
+              }
+              InvokeResponse::ok(
+                request.id(),
+                stream_response_payload(route, sink),
+              )
+            }
+            Err(message) => {
+              ignore(sink.fail(message))
+              InvokeResponse::handler_error(request.id(), message, route~)
+            }
+          }
+        }
+        Err(problems) =>
+          InvokeResponse::handler_error(
+            request.id(),
+            problems.join("; "),
+            route~,
+          )
+      }
+    _ =>
+      InvokeResponse::handler_error(
+        request.id(),
+        "registered command is not a stream: \{route}",
+        route~,
+      )
+  }
+}
+
+///|
+fn stream_channel_metadata(request : InvokeRequest) -> String {
+  [
+    "{",
+    "\"route\":\{request.route().json_string()},",
+    "\"window\":\{request.window_label().json_string()}",
+    "}",
+  ].join("")
 }

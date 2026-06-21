@@ -102,6 +102,71 @@ test "app manager owns dispatch resources channels events and state" {
 }
 
 ///|
+test "app manager dispatches stream commands into managed channels" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(@lepusa.Plugin::new("core").command_stream("events"))
+    .with_capability(
+      @lepusa.Capability::new("core").window("main").command("core.events"),
+    )
+  let registry = @lepusa.CommandRegistry::new().register_stream_fn(
+    "core.events",
+    handler=fn(payload, sink) {
+      ignore(sink.send("{\"payload\":\{payload}}"))
+      Ok(())
+    },
+  )
+  let manager = match
+    app.manager(config=@lepusa.RuntimeConfig::headless(), registry~) {
+    Ok(manager) => manager
+    Err(problems) => abort(problems.join(", "))
+  }
+  let response = manager.dispatch(
+    @lepusa.InvokeRequest::new(
+      id="stream",
+      window_label="main",
+      plugin="core",
+      command="events",
+      payload="7",
+    ),
+  )
+  match response {
+    InvokeOk("stream", payload) => {
+      assert_true(payload.contains("\"kind\":\"stream\""))
+      assert_true(payload.contains("\"route\":\"core.events\""))
+      assert_true(payload.contains("\"channelId\":\"channel-1\""))
+      assert_true(payload.contains("\"kind\":\"channel\""))
+    }
+    _ => abort("unexpected stream response")
+  }
+  assert_eq(manager.channel_count(), 1)
+  match manager.channel("channel-1") {
+    Some(channel) => {
+      let handle = channel.resource().handle()
+      assert_eq(handle.kind(), "channel")
+      assert_eq(handle.owner(), "core")
+      assert_eq(handle.name(), "events")
+      assert_eq(
+        channel.resource().metadata(),
+        "{\"route\":\"core.events\",\"window\":\"main\"}",
+      )
+    }
+    None => abort("missing stream channel")
+  }
+  match manager.drain_channel("channel-1") {
+    Ok(messages) => {
+      assert_eq(messages.length(), 2)
+      assert_true(messages[0].kind() is ChannelData)
+      assert_eq(messages[0].payload(), "{\"payload\":7}")
+      assert_true(messages[1].kind() is ChannelEnd)
+    }
+    Err(problem) => abort(problem)
+  }
+}
+
+///|
 test "app manager closes generic resources and channel resources by handle" {
   let manager = match
     manager_test_app().manager(config=@lepusa.RuntimeConfig::headless()) {

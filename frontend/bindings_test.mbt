@@ -13,7 +13,8 @@ fn frontend_test_plan() -> @lepusa.RuntimePlan {
         ),
         response=@lepusa.IpcSchema::string(),
       )
-      .command_async("write", permission=FileSystemWrite),
+      .command_async("write", permission=FileSystemWrite)
+      .command_stream("events"),
     )
     .with_plugin(
       @lepusa.Plugin::new("window-state").command_sync(
@@ -29,6 +30,9 @@ fn frontend_test_plan() -> @lepusa.RuntimePlan {
       .window("main")
       .permission(FileSystemWrite),
     )
+    .with_capability(
+      @lepusa.Capability::new("events").window("main").command("core.events"),
+    )
     .with_capability(@lepusa.Capability::new("window").permission(Window))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => plan
@@ -41,13 +45,14 @@ test "frontend api bundle generates javascript from runtime command manifest" {
   match FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
     Ok(bundle) => {
       assert_eq(bundle.config().global_name(), "lepusa")
-      assert_eq(bundle.command_manifest().entries().length(), 3)
+      assert_eq(bundle.command_manifest().entries().length(), 4)
       let js = bundle.javascript()
       assert_true(js.contains("export const commandManifest"))
       assert_true(js.contains("export const invokeContractReport = null;"))
       assert_true(js.contains("\"route\":\"core.read\""))
       assert_true(js.contains("export const routes"))
       assert_true(js.contains("export const isInvokeError"))
+      assert_true(js.contains("export const stream = (route"))
       assert_true(js.contains("export const emit = (name, payload = null)"))
       assert_true(js.contains("export const emitTo = (target, name"))
       assert_true(js.contains("options = {}) => getApi().invoke"))
@@ -68,13 +73,15 @@ test "frontend api bundle generates typescript declarations" {
   match FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
     Ok(bundle) => {
       let dts = bundle.typescript()
-      assert_true(
-        dts.contains(
-          "export type LepusaRoute = \"core.read\" | \"core.write\" | \"window-state.get-value\";",
-        ),
-      )
+      assert_true(dts.contains("export type LepusaRoute = "))
+      assert_true(dts.contains("\"core.events\""))
+      assert_true(dts.contains("\"core.read\""))
+      assert_true(dts.contains("\"core.write\""))
+      assert_true(dts.contains("\"window-state.get-value\""))
       assert_true(dts.contains("export declare function invoke"))
+      assert_true(dts.contains("export declare function stream"))
       assert_true(dts.contains("export type LepusaInvokeOptions"))
+      assert_true(dts.contains("export type LepusaStream"))
       assert_true(dts.contains("export type LepusaCommandPayloads = {"))
       assert_true(
         dts.contains(
@@ -83,6 +90,7 @@ test "frontend api bundle generates typescript declarations" {
       )
       assert_true(dts.contains("\"core.read\": { readonly path: string };"))
       assert_true(dts.contains("\"core.read\": string;"))
+      assert_true(dts.contains("\"core.events\": LepusaStream;"))
       assert_true(
         dts.contains(
           "payload?: LepusaPayloadFor<Route>, options?: LepusaInvokeOptions",
@@ -109,6 +117,11 @@ test "frontend api bundle generates typescript declarations" {
       assert_true(
         dts.contains(
           "read: (payload?: { readonly path: string }, options?: LepusaInvokeOptions) => Promise<string>;",
+        ),
+      )
+      assert_true(
+        dts.contains(
+          "events: (payload?: unknown, options?: LepusaInvokeOptions) => Promise<LepusaStream>;",
         ),
       )
       assert_true(dts.contains("\"window-state\": {"))
