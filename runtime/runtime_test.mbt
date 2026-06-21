@@ -873,6 +873,140 @@ test "native launch capability gates webview and async bridge loops" {
 }
 
 ///|
+test "native backend contract joins launch capability bridge and invoke readiness" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+    payload,
+  ) {
+    Ok(payload)
+  })
+  let host = RuntimeHost::new(test_plan(), registry~)
+  let capability = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=false,
+  )
+  match backend.contract(host, capability~, platform_name="Test") {
+    Ok(contract) => {
+      assert_true(contract.ok())
+      assert_true(contract.can_launch())
+      assert_eq(contract.backend_name(), "test")
+      assert_eq(contract.webview_engine(), "SystemWebView")
+      assert_eq(contract.platform_name(), "Test")
+      assert_eq(contract.webview_count(), 1)
+      assert_true(contract.launch_blocker() is None)
+      assert_true(contract.bridge_scheduler().mode() is NativeBridgeSyncOnly)
+      assert_false(contract.async_executor().required())
+      assert_false(contract.bridge_loop().required())
+      assert_true(contract.invoke_contract_report().ok())
+      assert_eq(
+        contract.invoke_contract_report().dispatchable_routes()[0],
+        "core.invoke",
+      )
+      assert_true(contract.to_json().contains("\"ok\":true"))
+      assert_true(contract.to_json().contains("\"bridgeLoop\""))
+      assert_true(contract.to_json().contains("\"invokeContractReport\""))
+    }
+    Err(_) => abort("unexpected invalid native backend contract")
+  }
+}
+
+///|
+test "native backend contract reports async drain and invoke drift blockers" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let registry = @lepusa.CommandRegistry::new()
+    .register_async_fn("core.invoke", handler=fn(payload) { Ok(payload) })
+    .register_fn("extra.ping", handler=fn(payload) { Ok(payload) })
+  let host = RuntimeHost::new(async_bridge_plan(), registry~)
+  let sync_capability = NativeLaunchCapability::new(
+    webview_creation=true,
+    async_bridge_drain=false,
+  )
+  match
+    backend.contract(host, capability=sync_capability, platform_name="Test") {
+    Ok(contract) => {
+      assert_false(contract.ok())
+      assert_false(contract.can_launch())
+      assert_true(
+        contract.launch_blocker().unwrap().contains("1 async command route"),
+      )
+      assert_true(contract.async_executor().required())
+      assert_false(contract.async_executor().available())
+      assert_true(contract.bridge_loop().required())
+      assert_false(contract.bridge_loop().available())
+      assert_true(
+        contract
+        .problems()
+        .any(fn(problem) {
+          problem.contains("registered handler is not declared")
+        }),
+      )
+      assert_true(
+        contract
+        .problems()
+        .any(fn(problem) {
+          problem.contains("bridge sync route is not dispatchable")
+        }),
+      )
+      assert_true(
+        contract
+        .problems()
+        .any(fn(problem) { problem.contains("async command route") }),
+      )
+      assert_true(contract.to_json().contains("\"canLaunch\":false"))
+      assert_true(contract.to_json().contains("\"launchBlocker\""))
+    }
+    Err(_) => abort("unexpected invalid blocked native backend contract")
+  }
+}
+
+///|
+test "native runtime and prepared run expose backend contracts" {
+  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let registry = @lepusa.CommandRegistry::new().register_async_fn(
+    "core.invoke",
+    handler=fn(payload) { Ok(payload) },
+  )
+  match
+    NativeRuntime::new(
+      backend,
+      RuntimeHost::new(async_bridge_plan(), registry~),
+    ) {
+    Ok(runtime) => {
+      let capability = NativeLaunchCapability::new(
+        webview_creation=true,
+        async_bridge_drain=true,
+      )
+      let contract = runtime.backend_contract(capability~, platform_name="Test")
+      assert_true(contract.ok())
+      assert_true(
+        contract.bridge_scheduler().mode() is NativeBridgeAsyncCapable,
+      )
+      assert_true(contract.bridge_loop().available())
+      match
+        runtime.prepare_run_plan(prepare_webview=fn(spec) {
+          runtime.webview_plan(spec, initialization_script="")
+        }) {
+        Ok(plan) => {
+          let prepared = plan.backend_contract(
+            capability~,
+            invoke_contract_report=runtime.host().invoke_contract_report(),
+            platform_name="Test",
+          )
+          assert_true(prepared.ok())
+          assert_eq(prepared.webview_count(), 1)
+          assert_true(
+            prepared.bridge_loop().drain_strategy()
+            is NativeBridgeDrainEventLoop,
+          )
+        }
+        Err(_) => abort("unexpected invalid prepared contract plan")
+      }
+    }
+    Err(_) => abort("unexpected invalid runtime contract")
+  }
+}
+
+///|
 test "native backend preflight reports dependency and launch readiness" {
   let ready = NativeBackendPreflight::new(
     platform="test",

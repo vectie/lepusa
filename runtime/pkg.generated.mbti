@@ -40,12 +40,41 @@ pub struct NativeBackend {
   name : String
   webview_engine : String
 } derive(Eq, @debug.Debug)
+pub fn NativeBackend::contract(Self, RuntimeHost, capability~ : NativeLaunchCapability, platform_name? : String) -> Result[NativeBackendContract, Array[String]]
 pub fn NativeBackend::name(Self) -> String
 pub fn NativeBackend::new(name~ : String, webview_engine~ : String) -> Self
 pub fn NativeBackend::plan(Self, RuntimeHost) -> Result[NativeLaunchPlan, Array[String]]
 pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan, Array[String]]
 pub fn NativeBackend::service_executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeBackend::webview_engine(Self) -> String
+
+pub struct NativeBackendContract {
+  backend_name : String
+  webview_engine : String
+  platform_name : String
+  capability : NativeLaunchCapability
+  bridge_scheduler : NativeBridgeScheduler
+  async_executor : NativeBridgeAsyncExecutor
+  bridge_loop : NativeBridgeLoopContract
+  invoke_contract_report : @lepusa.InvokeContractReport
+  webview_count : Int
+  launch_blocker : String?
+  problems : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn NativeBackendContract::async_executor(Self) -> NativeBridgeAsyncExecutor
+pub fn NativeBackendContract::backend_name(Self) -> String
+pub fn NativeBackendContract::bridge_loop(Self) -> NativeBridgeLoopContract
+pub fn NativeBackendContract::bridge_scheduler(Self) -> NativeBridgeScheduler
+pub fn NativeBackendContract::can_launch(Self) -> Bool
+pub fn NativeBackendContract::capability(Self) -> NativeLaunchCapability
+pub fn NativeBackendContract::invoke_contract_report(Self) -> @lepusa.InvokeContractReport
+pub fn NativeBackendContract::launch_blocker(Self) -> String?
+pub fn NativeBackendContract::ok(Self) -> Bool
+pub fn NativeBackendContract::platform_name(Self) -> String
+pub fn NativeBackendContract::problems(Self) -> Array[String]
+pub fn NativeBackendContract::to_json(Self) -> String
+pub fn NativeBackendContract::webview_count(Self) -> Int
+pub fn NativeBackendContract::webview_engine(Self) -> String
 
 pub struct NativeBackendPreflight {
   platform : String
@@ -561,6 +590,7 @@ pub struct NativePreparedRunPlan {
   webviews : Array[NativeWebViewPlan]
 } derive(Eq, @debug.Debug)
 pub fn NativePreparedRunPlan::async_bridge_launch_message(Self, String) -> String
+pub fn NativePreparedRunPlan::backend_contract(Self, capability~ : NativeLaunchCapability, invoke_contract_report~ : @lepusa.InvokeContractReport, platform_name~ : String) -> NativeBackendContract
 pub fn NativePreparedRunPlan::bridge_async_routes(Self) -> Array[String]
 pub fn NativePreparedRunPlan::bridge_scheduler(Self, mode? : NativeBridgeSchedulerMode) -> NativeBridgeScheduler
 pub fn NativePreparedRunPlan::bridge_sync_routes(Self) -> Array[String]
@@ -634,6 +664,7 @@ pub struct NativeRuntime {
 }
 pub fn NativeRuntime::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeRuntime::backend(Self) -> NativeBackend
+pub fn NativeRuntime::backend_contract(Self, capability~ : NativeLaunchCapability, platform_name? : String) -> NativeBackendContract
 pub fn NativeRuntime::bootstrap_json(Self) -> String
 pub fn NativeRuntime::bridge_async_dispatch_callback(Self) -> async (Bytes) -> Bytes
 pub fn NativeRuntime::bridge_dispatch_callback(Self) -> (Bytes) -> Bytes
