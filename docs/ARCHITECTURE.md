@@ -613,10 +613,9 @@ The platform packages expose `NativeLaunchCapability` so WebView creation, sync
 bridge response evaluation, maximum live WebView count, and async bridge
 drain/wakeup support are declared in one place and consumed by `doctor`,
 `verify --strict`, launch-session readiness rendering, and open-window launch
-paths. Current macOS, Linux, and Windows native loops advertise one live
-WebView, so multi-window plans still prepare and render in dry-run/readiness
-artifacts but open-window launch returns `RunUnsupported` instead of silently
-opening only the first window.
+paths. Current macOS, Linux, and Windows native loops advertise no hard WebView
+count cap, so static multi-window launch plans and later dynamic `open-window`
+records use the same native creation boundary.
 Source and packaged native run plans expose capability-aware launch-session
 helpers, so platform runners build the same bridge mode that the selected
 backend capability advertises instead of hand-assembling sync-only schedulers.
