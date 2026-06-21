@@ -180,9 +180,8 @@
   and canonical `RunReport` values expose those execution counts for source and
   packaged native plans; platform packages now expose operation executors for
   their current WebView script-evaluation and window-control support; native
-  loops can evaluate typed drain packets, while async bridge launch remains
-  gated on the MoonBit-to-native async callback/wakeup ABI that executes retained
-  drain requests from the platform event loop.
+  loops now execute retained async bridge drain requests through packetized
+  `lepusa-drain-v1` callbacks from the platform event loop.
 - Support `Source::html`, `Source::local_path`, `Source::packaged`,
   `Source::url`, and `Source::localhost` source modes.
 - Validate native link behavior on each supported platform.
@@ -333,9 +332,12 @@ desktop core is reliable.
   flow into bundle manifests.
 - `@lepusa/bundle` verifies materialized bundle files, resources, runtime
   manifests, runtime dependencies, nonblank initial WebView content,
-  host-compatible runtime executable copies, and target launch capability after
-  `bundle-write` as the pre-install smoke boundary, with `bundle-write --json`
-  exposing the same checks as a machine-readable CI report.
+  host-compatible runtime executable copies, and target launch-session contract
+  after `bundle-write` as the pre-install smoke boundary. Host/runtime
+  dependency availability is reported separately, so cross-target Windows
+  bundles can pass structural launch verification while `WebView2Loader.dll`
+  placement remains an explicit dependency check. `bundle-write --json` exposes
+  the same checks as a machine-readable CI report.
 - `BundleReleasePlan` now emits required/optional release step counts, item
   counts, readiness state, and missing required steps so `bundle-release-plan`
   can act as a compact CI gate before platform-specific installer tooling.

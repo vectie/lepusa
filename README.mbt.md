@@ -617,8 +617,8 @@ the window and packet-drain callback a platform loop must schedule. Deferred
 handoff packets carry that `drain-bridge-window` operation immediately, so
 native loops can enqueue the event-loop wakeup from the same packet they return
 to the WebView callback. The native C loops parse and retain those drain
-requests; the remaining async bridge gap is executing that retained request
-through a MoonBit async callback/wakeup ABI.
+requests, then issue a `lepusa-drain-v1` request through the same packet
+handoff callback and execute the returned `lepusa-ops-v3` drain operations.
 `NativeOperationExecutor` is the MoonBit-side runner contract for that delivery:
 platform packages provide handlers for `drain-bridge-window`,
 `evaluate-script`, `navigate-window`, `run-effect`, and service operations, then
@@ -825,14 +825,15 @@ exposes that target location before materialization. Cross-target bundles keep
 a launcher fallback to `lepusa-runtime` on `PATH` until Lepusa owns
 cross-compiled runtime artifacts.
 `bundle-write` also verifies that the generated `lepusa/runtime.json` lowers
-into a target native launch session that passes the selected backend launch
-capability, and that resolvable initial WebView content is present and
-nonblank. It also parses `lepusa/distribution.json` and checks that installer
-metadata includes required artifact, dependency, resource, runtime executable,
-and signing fields. Windows bundles and bundles with async bridge routes stay
-unverified until the backend advertises WebView creation and async bridge
-drain/evaluate support. Passing `--json` emits target, identifier, signing
-prerequisites, and the reusable `BundleWriteResult` payload with written files,
+into a target native launch session against the target launch contract, separate
+from host dependency availability, and that resolvable initial WebView content
+is present and nonblank. It also parses `lepusa/distribution.json` and checks
+that installer metadata includes required artifact, dependency, resource,
+runtime executable, and signing fields. Windows bundles now pass structural
+native launch-session verification cross-target; missing `WebView2Loader.dll`
+or system WebView runtime placement remains a runtime-dependency verification
+failure. Passing `--json` emits target, identifier, signing prerequisites, and
+the reusable `BundleWriteResult` payload with written files,
 resources, runtime dependency checks, and verification checks for CI tooling.
 Generated desktop launcher stubs wrap
 `lepusa-runtime launch --manifest <runtime.json>` instead of replacing the

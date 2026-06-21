@@ -458,7 +458,9 @@ async fn verify_native_launch_session(path : String) -> BundleWriteCheck {
         Ok(plan) =>
           match plan.launch_session() {
             Ok(session) => {
-              let capability = bundle_launch_capability(manifest.target())
+              let capability = bundle_launch_contract_capability(
+                manifest.target(),
+              )
               let blocker = session.launch_blocker_with_capability(
                 bundle_target_display_name(manifest.target()),
                 capability,
@@ -628,11 +630,40 @@ fn verify_runtime_dependency(
 }
 
 ///|
-fn bundle_launch_capability(target : String) -> @runtime.NativeLaunchCapability {
+fn bundle_launch_contract_capability(
+  target : String,
+) -> @runtime.NativeLaunchCapability {
   match target {
-    "macos" => @macos_backend.launch_capability()
-    "linux" => @linux_backend.launch_capability()
-    "windows" => @windows_backend.launch_capability()
+    "macos" =>
+      @runtime.NativeLaunchCapability::new(
+        webview_creation=true,
+        sync_bridge_evaluate=true,
+        async_bridge_drain=true,
+        max_webviews=0,
+        webview_creation_message="macOS WKWebView launch contract is unavailable",
+        sync_bridge_evaluate_message="macOS WKWebView sync bridge evaluation contract is unavailable",
+        async_bridge_drain_message="macOS WKWebView async bridge drain uses packetized event-loop requests",
+      )
+    "linux" =>
+      @runtime.NativeLaunchCapability::new(
+        webview_creation=true,
+        sync_bridge_evaluate=true,
+        async_bridge_drain=true,
+        max_webviews=0,
+        webview_creation_message="Linux WebKitGTK launch contract is unavailable",
+        sync_bridge_evaluate_message="Linux WebKitGTK sync bridge evaluation contract is unavailable",
+        async_bridge_drain_message="Linux WebKitGTK async bridge drain uses packetized event-loop requests",
+      )
+    "windows" =>
+      @runtime.NativeLaunchCapability::new(
+        webview_creation=true,
+        sync_bridge_evaluate=true,
+        async_bridge_drain=true,
+        max_webviews=0,
+        webview_creation_message="Windows WebView2 launch contract is unavailable",
+        sync_bridge_evaluate_message="Windows WebView2 sync bridge evaluation contract is unavailable",
+        async_bridge_drain_message="Windows WebView2 async bridge drain uses packetized event-loop requests",
+      )
     _ =>
       @runtime.NativeLaunchCapability::new(
         webview_creation=false,
