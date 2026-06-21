@@ -247,6 +247,8 @@ pub fn BundlePlan::signing(Self) -> SigningConfig
 pub fn BundlePlan::signing_prerequisites(Self) -> Array[SigningPrerequisite]
 pub fn BundlePlan::signing_steps(Self) -> Array[SigningStep]
 pub fn BundlePlan::target(Self) -> BundleTarget
+pub fn BundlePlan::update_manifest(Self, base_url~ : String, channel? : String, public_key? : String, artifact_trust? : Array[UpdateArtifactTrust]) -> Result[UpdateManifest, Array[String]]
+pub fn BundlePlan::update_manifest_json(Self, base_url~ : String, channel? : String, public_key? : String, artifact_trust? : Array[UpdateArtifactTrust]) -> Result[String, Array[String]]
 
 pub struct BundleResource {
   kind : BundleResourceKind
@@ -1717,6 +1719,68 @@ pub(all) enum TitleBarStyle {
   Transparent
   Hidden
 } derive(Eq, @debug.Debug)
+
+pub struct UpdateArtifactTrust {
+  path : String
+  sha256 : String
+  signature : String?
+} derive(Eq, @debug.Debug)
+pub fn UpdateArtifactTrust::new(path~ : String, sha256~ : String, signature? : String) -> Self
+pub fn UpdateArtifactTrust::path(Self) -> String
+pub fn UpdateArtifactTrust::sha256(Self) -> String
+pub fn UpdateArtifactTrust::signature(Self) -> String?
+pub fn UpdateArtifactTrust::validate(Self) -> Array[String]
+
+pub struct UpdateManifest {
+  identifier : String
+  product_name : String
+  version : String
+  channel : String
+  public_key : String?
+  artifacts : Array[UpdateManifestArtifact]
+} derive(Eq, @debug.Debug)
+pub fn UpdateManifest::artifacts(Self) -> Array[UpdateManifestArtifact]
+pub fn UpdateManifest::channel(Self) -> String
+pub fn UpdateManifest::identifier(Self) -> String
+pub fn UpdateManifest::new(identifier~ : String, product_name~ : String, version~ : String, channel? : String, public_key? : String, artifacts~ : Array[UpdateManifestArtifact]) -> Self
+pub fn UpdateManifest::product_name(Self) -> String
+pub fn UpdateManifest::public_key(Self) -> String?
+pub fn UpdateManifest::to_json(Self) -> String
+pub fn UpdateManifest::trust_report(Self) -> UpdateTrustReport
+pub fn UpdateManifest::validate(Self) -> Array[String]
+pub fn UpdateManifest::version(Self) -> String
+
+pub struct UpdateManifestArtifact {
+  target : BundleTarget
+  kind : BundleArtifactKind
+  path : String
+  url : String
+  sha256 : String
+  signature : String?
+} derive(Eq, @debug.Debug)
+pub fn UpdateManifestArtifact::kind(Self) -> BundleArtifactKind
+pub fn UpdateManifestArtifact::new(target~ : BundleTarget, kind~ : BundleArtifactKind, path~ : String, url~ : String, sha256~ : String, signature? : String) -> Self
+pub fn UpdateManifestArtifact::path(Self) -> String
+pub fn UpdateManifestArtifact::sha256(Self) -> String
+pub fn UpdateManifestArtifact::signature(Self) -> String?
+pub fn UpdateManifestArtifact::target(Self) -> BundleTarget
+pub fn UpdateManifestArtifact::to_json(Self) -> String
+pub fn UpdateManifestArtifact::url(Self) -> String
+pub fn UpdateManifestArtifact::validate(Self, signature_required? : Bool) -> Array[String]
+
+pub struct UpdateTrustReport {
+  trusted : Bool
+  signature_required : Bool
+  artifact_count : Int
+  signed_artifacts : Int
+  problems : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn UpdateTrustReport::artifact_count(Self) -> Int
+pub fn UpdateTrustReport::problems(Self) -> Array[String]
+pub fn UpdateTrustReport::signature_required(Self) -> Bool
+pub fn UpdateTrustReport::signed_artifacts(Self) -> Int
+pub fn UpdateTrustReport::to_json(Self) -> String
+pub fn UpdateTrustReport::trusted(Self) -> Bool
 
 pub struct VirtualFile {
   path : String
