@@ -47,6 +47,14 @@ test "frontend bridge emits invoke resolver ids" {
           assert_true(script.source().contains("id: callbackId"))
           assert_true(script.source().contains("callback_id: callbackId"))
           assert_true(script.source().contains("error_id: errorId"))
+          assert_true(script.source().contains("emit: (name, payload = null)"))
+          assert_true(
+            script
+            .source()
+            .contains(
+              "payload: payload == null ? \"\" : JSON.stringify(payload)",
+            ),
+          )
           assert_true(script.source().contains("class LepusaInvokeError"))
           assert_true(script.source().contains("const createInvokeError"))
           assert_true(script.source().contains("response.errorCode"))
