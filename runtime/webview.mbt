@@ -21,56 +21,36 @@ pub fn RuntimeHost::webviews(
   self : RuntimeHost,
 ) -> Result[Array[RuntimeWebViewSpec], Array[String]] {
   let specs : Array[RuntimeWebViewSpec] = []
-  let problems : Array[String] = []
-  for window in self.plan.windows() {
-    match
-      self.plan.bridge_script(
-        config=@lepusa.BridgeConfig::new(window_label=window.label()),
-      ) {
-      Ok(bridge) =>
-        specs.push(
-          RuntimeWebViewSpec::from_window(
-            window,
-            devtools=self.plan.devtools(),
-            asset_protocol=self.plan.asset_protocol(),
-            bridge~,
-          ),
-        )
-      Err(bridge_problems) =>
-        for problem in bridge_problems {
-          problems.push(problem)
-        }
+  match self.launch_manifest() {
+    Ok(manifest) => {
+      for webview in manifest.webviews() {
+        specs.push(RuntimeWebViewSpec::from_boot(webview))
+      }
+      Ok(specs)
     }
-  }
-  if problems.is_empty() {
-    Ok(specs)
-  } else {
-    Err(problems)
+    Err(problems) => Err(problems)
   }
 }
 
 ///|
-fn RuntimeWebViewSpec::from_window(
-  window : @lepusa.ResolvedWindow,
-  devtools~ : Bool,
-  asset_protocol~ : String,
-  bridge~ : @lepusa.BridgeScript,
+fn RuntimeWebViewSpec::from_boot(
+  webview : @lepusa.RuntimeWebViewBoot,
 ) -> RuntimeWebViewSpec {
   {
-    label: window.label(),
-    title: window.title(),
-    url: window.url(),
-    width: window.width(),
-    height: window.height(),
-    resizable: window.resizable(),
-    title_bar: window.title_bar(),
-    devtools,
-    asset_protocol,
-    bridge_global_name: bridge.global_name(),
-    native_hook: bridge.native_hook(),
-    event_dispatch_hook: bridge.event_dispatch_hook(),
-    allowed_routes: bridge.routes(),
-    initialization_scripts: [bridge.source()],
+    label: webview.label(),
+    title: webview.title(),
+    url: webview.url(),
+    width: webview.width(),
+    height: webview.height(),
+    resizable: webview.resizable(),
+    title_bar: webview.title_bar(),
+    devtools: webview.devtools(),
+    asset_protocol: webview.asset_protocol(),
+    bridge_global_name: webview.bridge_global_name(),
+    native_hook: webview.native_hook(),
+    event_dispatch_hook: webview.event_dispatch_hook(),
+    allowed_routes: webview.allowed_routes(),
+    initialization_scripts: webview.initialization_scripts(),
   }
 }
 

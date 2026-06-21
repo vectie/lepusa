@@ -79,8 +79,22 @@ pub fn RuntimePlan::bridge_script(
   self : RuntimePlan,
   config? : BridgeConfig = BridgeConfig::new(),
 ) -> Result[BridgeScript, Array[String]] {
+  self.bridge_script_with_registered_routes(config~, registered_routes=[])
+}
+
+///|
+fn RuntimePlan::bridge_script_with_registered_routes(
+  self : RuntimePlan,
+  config? : BridgeConfig = BridgeConfig::new(),
+  registered_routes~ : Array[String],
+  restrict_registered? : Bool = false,
+) -> Result[BridgeScript, Array[String]] {
   let problems = config.validate()
-  let routes = self.window_command_routes(config.window_label)
+  let routes = self.bridge_routes(
+    window_label=config.window_label,
+    registered_routes~,
+    restrict_registered~,
+  )
   for route in routes {
     if route == "" {
       problems.push("bridge route is required")
@@ -97,6 +111,32 @@ pub fn RuntimePlan::bridge_script(
     })
   } else {
     Err(problems)
+  }
+}
+
+///|
+fn RuntimePlan::bridge_routes(
+  self : RuntimePlan,
+  window_label~ : String,
+  registered_routes~ : Array[String],
+  restrict_registered~ : Bool,
+) -> Array[String] {
+  let routes : Array[String] = []
+  for entry in self.command_manifest().entries() {
+    if entry.allowed_in_window(window_label) &&
+      entry.mode().requires_bridge_route() &&
+      (!restrict_registered || registered_routes.contains(entry.route())) {
+      routes.push(entry.route())
+    }
+  }
+  routes
+}
+
+///|
+fn CommandMode::requires_bridge_route(self : CommandMode) -> Bool {
+  match self {
+    Sync | Async | Stream => true
+    Event => false
   }
 }
 

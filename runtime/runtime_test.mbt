@@ -1157,8 +1157,13 @@ test "runtime host produces per-window webview boot specs" {
     app.runtime_plan(
       config=@lepusa.RuntimeConfig::system_webview(devtools=true),
     ) {
-    Ok(plan) =>
-      match RuntimeHost::new(plan).webviews() {
+    Ok(plan) => {
+      let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
+        payload,
+      ) {
+        Ok(payload)
+      })
+      match RuntimeHost::new(plan, registry~).webviews() {
         Ok(specs) => {
           assert_eq(specs.length(), 2)
           assert_eq(specs[0].label(), "main")
@@ -1188,6 +1193,7 @@ test "runtime host produces per-window webview boot specs" {
         }
         Err(_) => abort("unexpected invalid webview specs")
       }
+    }
     Err(_) => abort("unexpected invalid runtime plan")
   }
 }

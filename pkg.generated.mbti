@@ -1200,6 +1200,7 @@ pub struct RuntimeLaunchManifest {
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
+  declared_routes : Array[String]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Eq, @debug.Debug)
@@ -1209,6 +1210,7 @@ pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
 pub fn RuntimeLaunchManifest::capabilities(Self) -> Array[RuntimeCapabilityGrant]
 pub fn RuntimeLaunchManifest::command_manifest(Self) -> CommandManifest
 pub fn RuntimeLaunchManifest::command_routes(Self) -> Array[String]
+pub fn RuntimeLaunchManifest::declared_routes(Self) -> Array[String]
 pub fn RuntimeLaunchManifest::devtools(Self) -> Bool
 pub fn RuntimeLaunchManifest::file_system_scopes(Self) -> Array[FileSystemScope]
 pub fn RuntimeLaunchManifest::lifecycle_hooks(Self) -> Array[RuntimeLifecycleHook]
@@ -1256,7 +1258,7 @@ pub fn RuntimePlan::command_routes(Self) -> Array[String]
 pub fn RuntimePlan::command_routes_by_mode(Self, CommandMode) -> Array[String]
 pub fn RuntimePlan::devtools(Self) -> Bool
 pub fn RuntimePlan::file_system_scopes(Self) -> Array[FileSystemScope]
-pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String]) -> Result[RuntimeLaunchManifest, Array[String]]
+pub fn RuntimePlan::launch_manifest(Self, registered_routes? : Array[String], restrict_registered? : Bool) -> Result[RuntimeLaunchManifest, Array[String]]
 pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
 pub fn RuntimePlan::permission_manifest(Self) -> PermissionManifest

@@ -14,6 +14,7 @@ pub struct RuntimeLaunchManifest {
   lifecycle_hooks : Array[RuntimeLifecycleHook]
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
+  declared_routes : Array[String]
   command_routes : Array[String]
   registered_routes : Array[String]
 } derive(Debug, Eq)
@@ -84,6 +85,7 @@ struct ParsedLaunchAssetUrl {
 pub fn RuntimePlan::launch_manifest(
   self : RuntimePlan,
   registered_routes? : Array[String] = [],
+  restrict_registered? : Bool = false,
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
   let webviews : Array[RuntimeWebViewBoot] = []
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
@@ -94,7 +96,11 @@ pub fn RuntimePlan::launch_manifest(
   let problems : Array[String] = []
   for window in self.windows() {
     match
-      self.bridge_script(config=BridgeConfig::new(window_label=window.label())) {
+      self.bridge_script_with_registered_routes(
+        config=BridgeConfig::new(window_label=window.label()),
+        registered_routes~,
+        restrict_registered~,
+      ) {
       Ok(bridge) =>
         webviews.push(RuntimeWebViewBoot::from_window(self, window, bridge))
       Err(bridge_problems) =>
@@ -135,6 +141,16 @@ pub fn RuntimePlan::launch_manifest(
       }
   }
   if problems.is_empty() {
+    let declared_routes = self.command_manifest().routes()
+    let command_manifest = if restrict_registered {
+      registered_command_manifest(self.command_manifest(), registered_routes)
+    } else {
+      self.command_manifest()
+    }
+    let permission_manifest = PermissionManifest::from_command_manifest(
+      command_manifest,
+      capabilities=self.capabilities(),
+    )
     Ok({
       backend: self.backend().name(),
       asset_protocol: self.asset_protocol(),
@@ -150,13 +166,37 @@ pub fn RuntimePlan::launch_manifest(
       .map(RuntimeCapabilityGrant::from_capability),
       startup_actions,
       lifecycle_hooks,
-      command_manifest: self.command_manifest(),
-      permission_manifest: self.permission_manifest(),
-      command_routes: self.command_routes(),
+      command_manifest,
+      permission_manifest,
+      declared_routes,
+      command_routes: command_manifest.routes(),
       registered_routes: registered_routes.copy(),
     })
   } else {
     Err(problems)
+  }
+}
+
+///|
+fn registered_command_manifest(
+  manifest : CommandManifest,
+  registered_routes : Array[String],
+) -> CommandManifest {
+  let entries : Array[CommandManifestEntry] = []
+  for entry in manifest.entries() {
+    if entry.mode().requires_launch_route() &&
+      registered_routes.contains(entry.route()) {
+      entries.push(entry)
+    }
+  }
+  CommandManifest::new(entries~)
+}
+
+///|
+fn CommandMode::requires_launch_route(self : CommandMode) -> Bool {
+  match self {
+    Sync | Async | Stream => true
+    Event => false
   }
 }
 
@@ -293,6 +333,13 @@ pub fn RuntimeLaunchManifest::command_routes(
 }
 
 ///|
+pub fn RuntimeLaunchManifest::declared_routes(
+  self : RuntimeLaunchManifest,
+) -> Array[String] {
+  self.declared_routes.copy()
+}
+
+///|
 pub fn RuntimeLaunchManifest::command_manifest(
   self : RuntimeLaunchManifest,
 ) -> CommandManifest {
@@ -331,6 +378,7 @@ pub fn RuntimeLaunchManifest::to_json(self : RuntimeLaunchManifest) -> String {
     "\"lifecycleHooks\":[\{self.lifecycle_hooks.map(fn(hook) { hook.to_json() }).join(",")}],",
     "\"commandManifest\":\{self.command_manifest.to_json()},",
     "\"permissionManifest\":\{self.permission_manifest.to_json()},",
+    "\"declaredRoutes\":[\{self.declared_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"commandRoutes\":[\{self.command_routes.map(fn(route) { route.json_string() }).join(",")}],",
     "\"registeredRoutes\":[\{self.registered_routes.map(fn(route) { route.json_string() }).join(",")}]",
     "}",

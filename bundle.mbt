@@ -386,7 +386,11 @@ fn BundlePlan::icon_resource_path(self : BundlePlan) -> String {
 pub fn BundlePlan::runtime_manifest(
   self : BundlePlan,
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
-  match self.runtime.launch_manifest(registered_routes=self.registered_routes) {
+  match
+    self.runtime.launch_manifest(
+      registered_routes=self.registered_routes,
+      restrict_registered=true,
+    ) {
     Ok(manifest) => Ok(with_bundle_packaged_roots(manifest))
     Err(problems) => Err(problems)
   }
