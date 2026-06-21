@@ -208,9 +208,11 @@
 ## Milestone 4: CLI
 
 - Implement:
-  - `lepusa doctor [--json]`: validates public planning boundaries and reports
-    target native launch gate, signing prerequisites, and backend preflight
-    diagnostics, with one machine-readable health report for tooling.
+  - `lepusa doctor [--strict] [--json]`: validates public planning boundaries
+    and reports target native launch gate, signing prerequisites, and backend
+    preflight diagnostics, with one machine-readable health report for tooling
+    and a strict CI gate for missing handlers, release-readiness issues, and
+    selected-target native launch blockers.
   - `lepusa plan`: prints a runtime plan summary.
   - `lepusa manifest`: prints the native-runner launch manifest JSON.
   - `lepusa native-plan`: prints backend bootstrap JSON for platform runners.

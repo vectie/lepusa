@@ -64,7 +64,7 @@ fn help_text() -> String {
     #|lepusa: MoonBit-native desktop framework
     #|
     #|Usage:
-    #|  lepusa doctor [macos|windows|linux] [--json]
+    #|  lepusa doctor [macos|windows|linux] [--strict] [--json]
     #|  lepusa plan
     #|  lepusa manifest
     #|  lepusa native-plan [macos|windows|linux]

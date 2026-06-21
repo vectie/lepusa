@@ -2,12 +2,13 @@
 async fn render_doctor_async(args : Array[String]) -> CliResult {
   let values = positional_args(args)
   let json = has_flag(args, "--json")
+  let strict = has_flag(args, "--strict")
   match parse_bundle_target(values.get(0)) {
     Ok(target) =>
       match project_runtime_host(args) {
         Ok(host) =>
           match project_bundle_plan(args, target) {
-            Ok(bundle) => render_doctor_host(host, bundle, json~)
+            Ok(bundle) => render_doctor_host(host, bundle, strict~, json~)
             Err(problems) => fail(render_problems("Lepusa doctor", problems))
           }
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
@@ -86,18 +87,33 @@ async fn render_launch_session_async(args : Array[String]) -> CliResult {
 fn render_doctor_host(
   host : @runtime.RuntimeHost,
   bundle : @lepusa.BundlePlan,
+  strict~ : Bool,
   json~ : Bool,
 ) -> CliResult {
   let plan = host.plan()
+  let passed = doctor_readiness_pass(host, bundle)
   match host.launch_manifest() {
     Ok(manifest) =>
       match bundle.files() {
         Ok(files) =>
           if json {
-            ok(render_doctor_json(host, bundle, manifest, files) + "\n")
+            let output = render_doctor_json(
+                host,
+                bundle,
+                manifest,
+                files,
+                strict~,
+                passed~,
+              ) +
+              "\n"
+            if passed || !strict {
+              ok(output)
+            } else {
+              fail(output)
+            }
           } else {
-            ok(
-              "Lepusa doctor\n" +
+            let output = "Lepusa doctor\n" +
+              (if strict { "mode: strict\n" } else { "" }) +
               "[ok] public-api: root package can build launch/runtime plans\n" +
               "[ok] runtime: backend=\{plan.backend().name()} protocol=\{plan.asset_protocol()}\n" +
               "[ok] manifest: webviews=\{manifest.webviews().length()} routes=\{manifest.command_routes().length()}\n" +
@@ -109,8 +125,13 @@ fn render_doctor_host(
               render_doctor_native_launch_gate(bundle.target(), host) +
               "[ok] signing: prerequisites=\{bundle.signing_prerequisites().length()}\n" +
               render_signing_prerequisites(bundle) +
-              render_native_backend_diagnostics(),
-            )
+              render_native_backend_diagnostics() +
+              render_doctor_strict_line(strict, passed)
+            if passed || !strict {
+              ok(output)
+            } else {
+              fail(output)
+            }
           }
         Err(problems) => fail(render_problems("Lepusa doctor", problems))
       }
@@ -124,11 +145,15 @@ fn render_doctor_json(
   bundle : @lepusa.BundlePlan,
   manifest : @lepusa.RuntimeLaunchManifest,
   files : Array[@lepusa.BundleFile],
+  strict~ : Bool,
+  passed~ : Bool,
 ) -> String {
   let plan = host.plan()
   [
     "{",
     "\"target\":\{cli_json_string(bundle.target().name())},",
+    "\"strict\":\{cli_json_bool(strict)},",
+    "\"ok\":\{cli_json_bool(passed)},",
     "\"publicApi\":true,",
     "\"runtime\":{\"backend\":\{cli_json_string(plan.backend().name())},\"protocol\":\{cli_json_string(plan.asset_protocol())}},",
     "\"manifest\":{\"webviews\":\{manifest.webviews().length()},\"routes\":\{manifest.command_routes().length()}},",
@@ -141,6 +166,52 @@ fn render_doctor_json(
     "\"platforms\":[\{render_native_backend_diagnostics_json()}]",
     "}",
   ].join("")
+}
+
+///|
+fn doctor_readiness_pass(
+  host : @runtime.RuntimeHost,
+  bundle : @lepusa.BundlePlan,
+) -> Bool {
+  missing_handler_routes(host).is_empty() &&
+  doctor_release_readiness_pass(bundle) &&
+  doctor_native_launch_pass(bundle.target(), host)
+}
+
+///|
+fn doctor_release_readiness_pass(bundle : @lepusa.BundlePlan) -> Bool {
+  match bundle.release_readiness() {
+    Ok(report) => report.ready()
+    Err(_) => false
+  }
+}
+
+///|
+fn doctor_native_launch_pass(
+  target : @lepusa.BundleTarget,
+  host : @runtime.RuntimeHost,
+) -> Bool {
+  match native_runtime_for_target(target, host) {
+    Ok(runtime) => {
+      let contract = native_backend_contract_for_target(target, runtime)
+      match verify_native_dry_run(target, runtime) {
+        Ok(_) => contract.can_launch()
+        Err(_) => false
+      }
+    }
+    Err(_) => false
+  }
+}
+
+///|
+fn render_doctor_strict_line(strict : Bool, passed : Bool) -> String {
+  if !strict {
+    ""
+  } else if passed {
+    "[ok] strict: doctor readiness gate passed\n"
+  } else {
+    "[fail] strict: doctor readiness gate failed\n"
+  }
 }
 
 ///|

@@ -227,6 +227,9 @@ for tooling.
 Passing `--json` emits one machine-readable health report with runtime,
 manifest, handler coverage, bundle, native launch, signing, and platform
 preflight sections.
+Passing `--strict` turns the aggregate health report into a CI gate: missing
+handlers, release-readiness issues, or selected-target native launch blockers
+make `doctor` exit with failure.
 
 `lepusa plan` includes resolved WebView load URLs, so backend work can consume
 `RuntimePlan::windows()` directly.

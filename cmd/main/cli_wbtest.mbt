@@ -3,7 +3,9 @@ test "help text names available commands" {
   let result = render_cli([])
   assert_eq(result.exit_code, 0)
   assert_true(
-    result.output.contains("lepusa doctor [macos|windows|linux] [--json]"),
+    result.output.contains(
+      "lepusa doctor [macos|windows|linux] [--strict] [--json]",
+    ),
   )
   assert_true(result.output.contains("lepusa bridge"))
   assert_true(result.output.contains("lepusa dev"))
@@ -68,6 +70,8 @@ async test "doctor renders framework boundary checks" {
   let json_result = render_cli_async(["doctor", "--json"])
   assert_eq(json_result.exit_code, 0)
   assert_true(json_result.output.contains("\"target\":\"macos\""))
+  assert_true(json_result.output.contains("\"strict\":false"))
+  assert_true(json_result.output.contains("\"ok\":true"))
   assert_true(json_result.output.contains("\"publicApi\":true"))
   assert_true(json_result.output.contains("\"runtime\":{"))
   assert_true(json_result.output.contains("\"manifest\":{"))
@@ -97,6 +101,20 @@ async test "doctor supports target-specific signing diagnostics" {
   assert_true(windows.output.contains("can-launch=false"))
   assert_true(windows.output.contains("contract-ok=false"))
   assert_true(windows.output.contains("Windows WebView2"))
+  let strict_windows = render_cli_async(["doctor", "windows", "--strict"])
+  assert_eq(strict_windows.exit_code, 1)
+  assert_true(strict_windows.output.contains("mode: strict"))
+  assert_true(
+    strict_windows.output.contains(
+      "[fail] strict: doctor readiness gate failed",
+    ),
+  )
+  let strict_windows_json = render_cli_async([
+    "doctor", "windows", "--strict", "--json",
+  ])
+  assert_eq(strict_windows_json.exit_code, 1)
+  assert_true(strict_windows_json.output.contains("\"strict\":true"))
+  assert_true(strict_windows_json.output.contains("\"ok\":false"))
   let unknown = render_cli_async(["doctor", "ios"])
   assert_eq(unknown.exit_code, 1)
   assert_true(unknown.output.contains("unknown bundle target: ios"))
