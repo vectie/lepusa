@@ -287,3 +287,83 @@ async test "command registry async dispatches through compiled security profile"
   )
   assert_true(sync_response.error_kind() is Some(AsyncRequired))
 }
+
+///|
+fn schema_profile_test_plan() -> @lepusa.RuntimePlan {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("api").command_sync(
+        "submit",
+        request=@lepusa.IpcSchema::object(
+          "SubmitRequest", "{ readonly value: string }",
+        ),
+        response=@lepusa.IpcSchema::object(
+          "SubmitResponse", "{ readonly accepted: boolean }",
+        ),
+      ),
+    )
+    .with_capability(
+      @lepusa.Capability::new("api").window("main").command("api.submit"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => plan
+    Err(problems) => abort(problems.join(", "))
+  }
+}
+
+///|
+test "profile dispatch enforces command request schemas" {
+  let profile = schema_profile_test_plan().security_profile(
+    registered_routes=["api.submit"],
+    check_handlers=true,
+  )
+  let registry = @lepusa.CommandRegistry::new().register_fn("api.submit", handler=fn(
+    _,
+  ) {
+    Ok("{\"accepted\":true}")
+  })
+  let valid = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("api.submit", payload="{\"value\":\"ok\"}"),
+  )
+  assert_true(valid is InvokeOk("1", "{\"accepted\":true}"))
+
+  let invalid = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("api.submit", payload="not-json"),
+  )
+  assert_true(invalid.error_kind() is Some(InvalidRequest))
+  assert_true(
+    invalid
+    .error_message()
+    .unwrap_or("")
+    .contains("request schema mismatch for api.submit"),
+  )
+}
+
+///|
+test "profile dispatch enforces command response schemas" {
+  let profile = schema_profile_test_plan().security_profile(
+    registered_routes=["api.submit"],
+    check_handlers=true,
+  )
+  let registry = @lepusa.CommandRegistry::new().register_fn("api.submit", handler=fn(
+    _,
+  ) {
+    Ok("not-json")
+  })
+  let response = registry.dispatch_with_profile(
+    profile,
+    security_profile_request("api.submit", payload="{\"value\":\"ok\"}"),
+  )
+  assert_true(response.error_kind() is Some(HandlerError))
+  assert_true(
+    response
+    .error_message()
+    .unwrap_or("")
+    .contains("response schema mismatch for api.submit"),
+  )
+}

@@ -265,7 +265,12 @@ pub fn CommandRegistry::dispatch_with_profile(
     None => InvokeResponse::unknown_command(request.id(), request.route())
     Some(command) =>
       match authorize_profile_command(profile, request, command) {
-        Ok(_) => execute_command(request, command)
+        Ok(_) =>
+          validate_profile_response(
+            profile,
+            request,
+            execute_command(request, command),
+          )
         Err(response) => response
       }
   }
@@ -323,7 +328,12 @@ pub async fn CommandRegistry::dispatch_with_profile_async(
     None => InvokeResponse::unknown_command(request.id(), request.route())
     Some(command) =>
       match authorize_profile_command(profile, request, command) {
-        Ok(_) => execute_command_async(request, command)
+        Ok(_) =>
+          validate_profile_response(
+            profile,
+            request,
+            execute_command_async(request, command),
+          )
         Err(response) => response
       }
   }
@@ -339,6 +349,11 @@ fn authorize_profile_command(
   if !authorization.allowed() {
     return Err(authorization.to_response(request.id()))
   }
+  match validate_profile_request(profile, request) {
+    Some(problem) =>
+      return Err(InvokeResponse::invalid_request(request.id(), problem))
+    None => ()
+  }
   match command.resolve_operation_scope(request) {
     Ok(None) => Ok(())
     Ok(Some(scope)) => {
@@ -350,6 +365,47 @@ fn authorize_profile_command(
       }
     }
     Err(problem) => Err(InvokeResponse::invalid_request(request.id(), problem))
+  }
+}
+
+///|
+fn validate_profile_request(
+  profile : SecurityProfile,
+  request : InvokeRequest,
+) -> String? {
+  match profile.command_manifest().entry(request.route()) {
+    Some(entry) =>
+      match entry.request_schema().validate_payload(request.payload()) {
+        Some(problem) =>
+          Some("request schema mismatch for \{request.route()}: \{problem}")
+        None => None
+      }
+    None => Some("command is not declared: \{request.route()}")
+  }
+}
+
+///|
+fn validate_profile_response(
+  profile : SecurityProfile,
+  request : InvokeRequest,
+  response : InvokeResponse,
+) -> InvokeResponse {
+  match response {
+    InvokeOk(id, payload) =>
+      match profile.command_manifest().entry(request.route()) {
+        Some(entry) =>
+          match entry.response_schema().validate_payload(payload) {
+            Some(problem) =>
+              InvokeResponse::handler_error(
+                id,
+                "response schema mismatch for \{request.route()}: \{problem}",
+                route=request.route(),
+              )
+            None => response
+          }
+        None => response
+      }
+    InvokeError(_, _) => response
   }
 }
 

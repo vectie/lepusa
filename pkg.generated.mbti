@@ -756,6 +756,7 @@ pub struct IpcSchema {
   typescript : String
   description : String
 } derive(Eq, @debug.Debug)
+pub fn IpcSchema::accepts_payload(Self, String) -> Bool
 pub fn IpcSchema::any() -> Self
 pub fn IpcSchema::array(Self) -> Self
 pub fn IpcSchema::boolean() -> Self
@@ -770,6 +771,7 @@ pub fn IpcSchema::to_json(Self) -> String
 pub fn IpcSchema::typescript(Self) -> String
 pub fn IpcSchema::unit() -> Self
 pub fn IpcSchema::validate(Self) -> Array[String]
+pub fn IpcSchema::validate_payload(Self, String) -> String?
 
 pub struct LaunchPlan {
   root : Cell

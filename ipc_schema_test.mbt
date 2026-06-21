@@ -30,6 +30,40 @@ test "ipc schemas validate required public metadata" {
 }
 
 ///|
+test "ipc schemas validate runtime payload categories" {
+  assert_true(@lepusa.IpcSchema::any().accepts_payload("raw text"))
+  assert_true(@lepusa.IpcSchema::string().accepts_payload("raw text"))
+  assert_true(@lepusa.IpcSchema::unit().accepts_payload(""))
+  assert_true(@lepusa.IpcSchema::unit().accepts_payload("null"))
+  assert_false(@lepusa.IpcSchema::unit().accepts_payload("{}"))
+  assert_true(@lepusa.IpcSchema::json().accepts_payload("{\"ok\":true}"))
+  assert_false(@lepusa.IpcSchema::json().accepts_payload("not-json"))
+  assert_true(@lepusa.IpcSchema::boolean().accepts_payload("true"))
+  assert_false(@lepusa.IpcSchema::boolean().accepts_payload("\"true\""))
+  assert_true(@lepusa.IpcSchema::number().accepts_payload("12"))
+  assert_false(@lepusa.IpcSchema::number().accepts_payload("\"12\""))
+  assert_true(
+    @lepusa.IpcSchema::array(@lepusa.IpcSchema::string()).accepts_payload(
+      "[\"a\",\"b\"]",
+    ),
+  )
+  assert_false(
+    @lepusa.IpcSchema::array(@lepusa.IpcSchema::string()).accepts_payload("{}"),
+  )
+  let object = @lepusa.IpcSchema::object(
+    "Request", "{ readonly value: string }",
+  )
+  assert_true(object.accepts_payload("{\"value\":\"ok\"}"))
+  assert_false(object.accepts_payload("[\"value\"]"))
+  assert_true(
+    object
+    .validate_payload("[\"value\"]")
+    .unwrap_or("")
+    .contains("expected object payload"),
+  )
+}
+
+///|
 test "plugin commands carry request and response schemas" {
   let plugin = @lepusa.Plugin::new("window").command_sync(
     "setTitle",
