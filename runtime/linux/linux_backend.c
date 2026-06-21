@@ -165,6 +165,7 @@ typedef struct {
   void *webview;
   LepusaLinuxWindowSlot windows[32];
   int window_count;
+  int live_windows;
   LepusaLinuxBridgeDrainRequest drain_requests[32];
   int drain_request_count;
   LepusaLinuxWebKit *api;
@@ -745,6 +746,9 @@ static void lepusa_linux_register_window_slot(
     label_len
   );
   if (existing != NULL) {
+    if (existing->window == NULL) {
+      context->live_windows++;
+    }
     existing->window = window;
     existing->webview = webview;
     return;
@@ -761,6 +765,42 @@ static void lepusa_linux_register_window_slot(
   );
   slot->window = window;
   slot->webview = webview;
+  context->live_windows++;
+}
+
+static void lepusa_linux_remove_window_slot(
+  LepusaLinuxBridgeContext *context,
+  void *window
+) {
+  if (context == NULL || window == NULL) {
+    return;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (context->windows[i].window != window) {
+      continue;
+    }
+    for (int j = i; j + 1 < context->window_count; j++) {
+      context->windows[j] = context->windows[j + 1];
+    }
+    context->window_count--;
+    memset(
+      &context->windows[context->window_count],
+      0,
+      sizeof(LepusaLinuxWindowSlot)
+    );
+    if (context->live_windows > 0) {
+      context->live_windows--;
+    }
+    if (context->window == window) {
+      context->window = context->window_count > 0 ?
+        context->windows[0].window :
+        NULL;
+      context->webview = context->window_count > 0 ?
+        context->windows[0].webview :
+        NULL;
+    }
+    return;
+  }
 }
 
 static void lepusa_linux_register_bridge_drain_request(
@@ -1297,6 +1337,7 @@ static void lepusa_linux_script_message_received(
   void *js_result,
   void *user_data
 );
+static void lepusa_linux_window_destroyed(void *widget, void *data);
 
 static void lepusa_linux_open_window_from_record(
   LepusaLinuxBridgeContext *context,
@@ -1441,6 +1482,14 @@ static void lepusa_linux_open_window_from_record(
     record->window_len,
     window,
     webview
+  );
+  context->api->g_signal_connect_data(
+    window,
+    "destroy",
+    (void *)lepusa_linux_window_destroyed,
+    context,
+    NULL,
+    0
   );
   context->api->webkit_web_view_load_uri(webview, url);
   context->api->gtk_widget_show_all(window);
@@ -1818,11 +1867,17 @@ static void lepusa_linux_cleanup_services_on_signal(int signo) {
 }
 
 static void lepusa_linux_window_destroyed(void *widget, void *data) {
-  (void)widget;
-  LepusaLinuxWebKit *api = (LepusaLinuxWebKit *)data;
-  lepusa_linux_terminate_tracked_services(1);
-  if (api != NULL && api->gtk_main_quit != NULL) {
-    api->gtk_main_quit();
+  LepusaLinuxBridgeContext *context = (LepusaLinuxBridgeContext *)data;
+  if (context != NULL) {
+    lepusa_linux_remove_window_slot(context, widget);
+  }
+  if (context == NULL || context->live_windows <= 0) {
+    lepusa_linux_terminate_tracked_services(1);
+    if (context != NULL &&
+        context->api != NULL &&
+        context->api->gtk_main_quit != NULL) {
+      context->api->gtk_main_quit();
+    }
   }
 }
 
@@ -2083,6 +2138,7 @@ int32_t lepusa_linux_run_webview(
     .webview = webview,
     .windows = { 0 },
     .window_count = 0,
+    .live_windows = 0,
     .drain_requests = { 0 },
     .drain_request_count = 0,
     .api = &api,
@@ -2136,7 +2192,7 @@ int32_t lepusa_linux_run_webview(
     window,
     "destroy",
     (void *)lepusa_linux_window_destroyed,
-    &api,
+    &bridge_context,
     NULL,
     0
   );

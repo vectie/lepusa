@@ -94,9 +94,9 @@
   source and bundled runtime bridge tasks now expose route-level sync/async
   scheduling metadata for backend event loops;
   bundled runtime bridge transport now preserves packaged plugin registry state
-  across repeated bridge calls; open-window macOS launches now report
-  unsupported when async routes require native scheduling; Linux now has a
-  first WebKitGTK source-window loop
+  across repeated bridge calls; macOS, Linux, and Windows launchers now grant
+  async-capable bridge sessions when the backend advertises packetized
+  event-loop drains; Linux has a WebKitGTK source-window loop
   for resolved HTML/file/remote URLs plus sync WebKitGTK script-message bridge
   dispatch and package-owned URI scheme asset resolution for packaged manifests;
   Windows now prepares typed WebView2 boot plans, bridge bootstrap scripts, and
@@ -172,7 +172,9 @@
   WebView; source and bundled macOS/Linux/Windows launches now feed additional
   initial WebViews through the same native open-window consumer before entering
   the platform event loop, so static multi-window plans and later dynamic
-  windows share one creation boundary;
+  windows share one creation boundary; macOS and Linux now track native window
+  lifetime across dynamic windows and quit service supervision only after the
+  last native window closes;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and

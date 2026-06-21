@@ -86,6 +86,7 @@ typedef struct {
   void *webview;
   LepusaWindowSlot windows[32];
   int window_count;
+  int live_windows;
   LepusaBridgeDrainRequest drain_requests[32];
   int drain_request_count;
   LepusaBytesCallback call_dispatch;
@@ -823,6 +824,9 @@ static void lepusa_register_window_slot(
       label != NULL &&
       label_len > 0 &&
       lepusa_range_equals(label, label_len, existing->label)) {
+    if (existing->window == NULL) {
+      context->live_windows++;
+    }
     existing->window = window;
     existing->webview = webview;
     return;
@@ -834,6 +838,38 @@ static void lepusa_register_window_slot(
   lepusa_copy_label_range(slot->label, sizeof(slot->label), label, label_len);
   slot->window = window;
   slot->webview = webview;
+  context->live_windows++;
+}
+
+static void lepusa_remove_window_slot(
+  LepusaBridgeContext *context,
+  void *window
+) {
+  if (context == NULL || window == NULL) {
+    return;
+  }
+  for (int i = 0; i < context->window_count; i++) {
+    if (context->windows[i].window != window) {
+      continue;
+    }
+    for (int j = i; j + 1 < context->window_count; j++) {
+      context->windows[j] = context->windows[j + 1];
+    }
+    context->window_count--;
+    memset(&context->windows[context->window_count], 0, sizeof(LepusaWindowSlot));
+    if (context->live_windows > 0) {
+      context->live_windows--;
+    }
+    if (context->window == window) {
+      context->window = context->window_count > 0 ?
+        context->windows[0].window :
+        NULL;
+      context->webview = context->window_count > 0 ?
+        context->windows[0].webview :
+        NULL;
+    }
+    return;
+  }
 }
 
 static void lepusa_register_bridge_drain_request(
@@ -1086,6 +1122,7 @@ static void lepusa_load_webview_url_range(
 }
 
 static void *lepusa_bridge_handler_class(void);
+static void *lepusa_window_delegate_class(void);
 static void *lepusa_url_scheme_handler_class(void);
 
 static void lepusa_apply_window_controls_from_handoff_packet(
@@ -1467,6 +1504,11 @@ static void lepusa_open_window_from_record(
   );
   lepusa_msg_void_id(window, "setContentView:", webview);
   ((LepusaMsgSendVoid)lepusa_objc_msg_send)(window, lepusa_sel("center"));
+  void *delegate_class = lepusa_window_delegate_class();
+  void *delegate = delegate_class == NULL ? NULL : lepusa_msg_id(delegate_class, "new");
+  if (delegate != NULL) {
+    lepusa_msg_void_id(window, "setDelegate:", delegate);
+  }
   lepusa_register_window_slot(
     context,
     record->window,
@@ -1785,11 +1827,19 @@ static void lepusa_window_will_close(
 ) {
   (void)self;
   (void)selector;
-  (void)notification;
-  lepusa_terminate_tracked_services(1);
-  void *app = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
-  if (app != NULL) {
-    lepusa_msg_void_id(app, "terminate:", NULL);
+  void *window = notification == NULL ?
+    NULL :
+    lepusa_msg_id(notification, "object");
+  LepusaBridgeContext *context = lepusa_current_bridge_context;
+  if (context != NULL && window != NULL) {
+    lepusa_remove_window_slot(context, window);
+  }
+  if (context == NULL || context->live_windows <= 0) {
+    lepusa_terminate_tracked_services(1);
+    void *app = lepusa_msg_id(lepusa_cls("NSApplication"), "sharedApplication");
+    if (app != NULL) {
+      lepusa_msg_void_id(app, "terminate:", NULL);
+    }
   }
 }
 
@@ -2105,6 +2155,7 @@ static int32_t lepusa_macos_run_webview_impl(
     .webview = NULL,
     .windows = { 0 },
     .window_count = 0,
+    .live_windows = 0,
     .drain_requests = { 0 },
     .drain_request_count = 0,
     .call_dispatch = call_dispatch,

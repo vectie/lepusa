@@ -183,9 +183,10 @@ Native launch-session JSON is a target-aware readiness envelope. Its `session`
 field carries bridge scheduler metadata: sync-only mode is the conservative
 default, while `--async-bridge` records an async-capable request. The envelope
 keeps `requestedBridgeMode`, `effectiveBridgeMode`, and `bridgeModeGranted`
-separate, so tooling can see when a backend safely downgraded the session
-because its native loop cannot drain async completions yet. The envelope also
-carries `launchCapability`, `targetCanLaunch`, and `targetLaunchBlocker`, so
+separate, so tooling can see whether the selected backend granted the
+packetized event-loop drain contract or safely downgraded the session. The
+envelope also carries `launchCapability`, `targetCanLaunch`, and
+`targetLaunchBlocker`, so
 tooling can distinguish prepared launch plans from platform backends that can
 actually open them. `backendPreflight` carries the host dependency, WebView
 loop, sync bridge response evaluation, and async bridge support state through
@@ -609,14 +610,11 @@ so platform code does not duplicate callback semantics.
 `@lepusa/runtime/bundled` exposes the matching `BundledRuntime` bridge
 transport for packaged `lepusa/runtime.json` launches, preserving official
 plugin state across repeated bridge calls and the same dispatch task contract
-for packaged manifests. Native handoff packets can now carry `evaluate-script`
-operations and macOS, Linux, and Windows loops evaluate those records in the
-target WebView; wiring the deferred dispatch task wakeup from MoonBit async work
-onto each backend event loop is the remaining native integration step for async
-commands. `MacOSOpenWindow` reports the shared
-`RunUnsupported` status when the plan contains async command routes, so the
-current sync Objective-C callback cannot accidentally launch a partially working
-async bridge.
+for packaged manifests. Native handoff packets can now carry `evaluate-script`,
+`open-window`, and `navigate-window` operations. macOS, Linux, and Windows loops
+consume those records in the target labeled WebView, and async completions use a
+typed `lepusa-drain-v1` request over the existing handoff callback to produce
+the same `lepusa-ops-v3` operation packets from the platform event loop.
 The platform packages expose `NativeLaunchCapability` so WebView creation, sync
 bridge response evaluation, maximum live WebView count, and async bridge
 drain/wakeup support are declared in one place and consumed by `doctor`,
@@ -916,7 +914,7 @@ lepusa-runtime run --manifest <lepusa/runtime.json>
   -> prepares a target-aware bundled runtime launch plan and reports launch readiness without opening a window
 
 lepusa-runtime launch --manifest <lepusa/runtime.json>
-  -> opens the first bundled macOS WKWebView window or reports unsupported for other targets
+  -> opens the bundled runtime on macOS WKWebView, Linux WebKitGTK, or Windows WebView2 when target dependencies are available
 
 lepusa-runtime bootstrap --manifest <lepusa/runtime.json>
   -> emits bundled bootstrap JSON for native platform loops

@@ -250,10 +250,10 @@ after leaving the WebView callback.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
-Launch capability also carries the backend's maximum live WebView count, so
-multi-window plans stay visible in dry-run/readiness output while current
-single-window native loops refuse open-window launch instead of silently
-opening only the first window.
+Launch capability also carries the backend's maximum live WebView count. Current
+macOS, Linux, and Windows native loops advertise no hard cap and consume
+`open-window` packets through the same labeled WebView creation boundary used
+for static multi-window startup and later dynamic windows.
 
 Generated bridges only expose command routes granted to the current window by
 capabilities. `RuntimePlan::command_routes()` still reports all declared plugin
@@ -838,13 +838,12 @@ Generated desktop launcher stubs wrap
 `lepusa-runtime launch --manifest <runtime.json>` instead of replacing the
 launcher process with `exec`. The wrapper traps `INT`, `TERM`, and `HUP`, waits
 on the runtime PID, and forwards termination to the runtime so CLI smoke runs do
-not strand supervised local services. The macOS runtime also installs a window
-delegate that stops tracked local services when the native window closes. The
-runtime opens the first macOS WKWebView from the packaged `lepusa/runtime.json`
-today. The Linux
-package owns WebKitGTK source and packaged-window loops when GTK3 and
-WebKit2GTK are available, including a package-owned `lepusa://` URI scheme
-callback for MoonBit-resolved runtime, virtual, local, and packaged assets.
+not strand supervised local services. The macOS and Linux runtimes track all
+native windows and stop tracked local services only after the last WKWebView or
+WebKitGTK window closes. The Linux package owns WebKitGTK source and
+packaged-window loops when GTK3 and WebKit2GTK are available, including a
+package-owned `lepusa://` URI scheme callback for MoonBit-resolved runtime,
+virtual, local, and packaged assets.
 Windows source and packaged runs use the package-owned WebView2 COM loop when
 `WebView2Loader.dll` and the WebView2 Runtime are available, including sync
 bridge response evaluation, typed dynamic window operations, and a WebView2
