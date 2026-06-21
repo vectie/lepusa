@@ -112,6 +112,9 @@ fn RuntimeHost::dispatch_followup_operations(
   for operation in self.window_open_followup_operations(request, response) {
     operations.push(operation)
   }
+  for operation in self.window_close_followup_operations(request, response) {
+    operations.push(operation)
+  }
   operations
 }
 
@@ -140,6 +143,68 @@ fn RuntimeHost::window_open_followup_operations(
               }
           }
       }
+  }
+}
+
+///|
+fn RuntimeHost::window_close_followup_operations(
+  self : RuntimeHost,
+  request : @lepusa.InvokeRequest,
+  response : @lepusa.InvokeResponse,
+) -> Array[NativeExecutableOperation] {
+  if request.plugin() != "window" || request.command() != "close" {
+    return []
+  }
+  if window_followup_operation_action(response) != "close" {
+    return []
+  }
+  let window_label = window_followup_operation_label(response)
+  if window_label == "" {
+    return []
+  }
+  match self.snapshot() {
+    Err(_) => []
+    Ok(session) =>
+      match session.close_window(window_label) {
+        Err(_) => []
+        Ok(step) => native_executable_operations_from_runtime(step.operations())
+      }
+  }
+}
+
+///|
+fn window_followup_operation_label(response : @lepusa.InvokeResponse) -> String {
+  window_followup_operation_string(response, "windowLabel")
+}
+
+///|
+fn window_followup_operation_action(
+  response : @lepusa.InvokeResponse,
+) -> String {
+  window_followup_operation_string(response, "action")
+}
+
+///|
+fn window_followup_operation_string(
+  response : @lepusa.InvokeResponse,
+  key : String,
+) -> String {
+  let payload = match response.payload() {
+    Some(payload) => payload
+    None => return ""
+  }
+  let parsed = @json.parse(payload) catch { _ => return "" }
+  match parsed {
+    Object(object) =>
+      match object.get("operation") {
+        Some(Object(operation)) =>
+          match operation.get(key) {
+            Some(String(value)) => value
+            _ => ""
+          }
+        _ => ""
+      }
+    _ => ""
   }
 }
 

@@ -147,7 +147,9 @@
   final asset/listener cleanup and the `close-window` operation; the official
   `window.open` plugin route now gives frontend code the same app-facing
   bridge boundary, lowering approved dispatches into `open-window` executable
-  operations;
+  operations, and approved source-runtime `window.close` dispatches now emit
+  the matching `close-window` lifecycle cleanup operation beside the current
+  native frame close control;
   `NativeOperationExecutor` now gives platform loops one typed execution report
   boundary for startup, lifecycle, bridge-drain, and dynamic window operations,
   and canonical `RunReport` values expose those execution counts for source and

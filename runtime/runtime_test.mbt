@@ -2803,6 +2803,80 @@ test "bridge dispatch lowers approved window open to native operation" {
 }
 
 ///|
+test "bridge dispatch lowers approved window close to runtime cleanup" {
+  let app = @lepusa.new(
+      @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
+    )
+    .window(
+      label="main",
+      title="Runtime",
+      source=@lepusa.Source::html("<main>runtime</main>"),
+    )
+    .with_plugin(
+      @lepusa.Plugin::new("window").command_sync("close", permission=Window),
+    )
+    .with_capability(
+      @lepusa.Capability::new("window").window("main").permission(Window),
+    )
+  let plan = match
+    app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid window close plan")
+  }
+  let registry = @lepusa.CommandRegistry::new().register_fn(
+    "window.close",
+    permission=Window,
+    handler=fn(payload) {
+      Ok(
+        Json::object({
+          "status": Json::string("queued"),
+          "windowLabel": Json::string("main"),
+          "action": Json::string("close"),
+          "operation": Json::object({
+            "windowLabel": Json::string("main"),
+            "action": Json::string("close"),
+            "payload": Json::string(payload),
+          }),
+        }).stringify(),
+      )
+    },
+  )
+  let host = RuntimeHost::new(plan, registry~)
+  let message = "{\"id\":\"close\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"close\",\"payload\":\"{\\\"windowLabel\\\":\\\"main\\\"}\"}"
+  match host.prepare_bridge_message(message) {
+    Ok(prepared) => {
+      let runtime = NativeRuntime::new(
+        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        host,
+      ).unwrap()
+      let dispatch = prepared.dispatch_sync(runtime)
+      let operations = dispatch.operations()
+      assert_eq(operations.length(), 3)
+      assert_eq(operations[0].kind(), "evaluate-script")
+      assert_eq(operations[1].kind(), "close-window")
+      assert_eq(operations[1].window_label().unwrap(), "main")
+      assert_eq(operations[2].kind(), "window-control")
+      match dispatch.native_window_control() {
+        Some(control) => assert_eq(control.action(), "close")
+        None => abort("expected native close window control operation")
+      }
+      assert_true(dispatch.to_json().contains("\"kind\":\"close-window\""))
+      let packet = @utf8.decode(
+        runtime
+        .bridge_loop_adapter()
+        .handoff_packet_bytes(@utf8.encode(message)),
+      ) catch {
+        _ => abort("unexpected invalid window close packet bytes")
+      }
+      assert_true(packet.contains("lepusa-ops-v1\n3\n"))
+      assert_true(packet.contains("close-window"))
+      assert_true(packet.contains("window-control"))
+    }
+    Err(_) => abort("unexpected bridge prepare failure")
+  }
+}
+
+///|
 async test "runtime host dispatches async bridge handlers" {
   let registry = @lepusa.CommandRegistry::new().register_async_fn(
     "core.invoke",
