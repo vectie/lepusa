@@ -1942,6 +1942,21 @@ test "runtime host builds dev plan for backend runners" {
           assert_eq(dev.lifecycle_steps().length(), 0)
           assert_eq(dev.bridge_sync_routes().length(), 0)
           assert_eq(dev.bridge_async_routes().length(), 0)
+          let dev_session = dev.dev_session()
+          assert_eq(dev_session.webviews().length(), 1)
+          assert_eq(
+            dev_session.webviews()[0].source_kind().name(),
+            "inline-assets",
+          )
+          assert_eq(
+            dev_session.webviews()[0].reload_mode().name(),
+            "window-reload",
+          )
+          assert_true(dev_session.webviews()[0].uses_runtime_asset_protocol())
+          assert_eq(dev_session.window_reload_count(), 1)
+          assert_eq(dev_session.external_reload_count(), 0)
+          assert_false(dev_session.requires_supervisor())
+          assert_eq(dev_session.proxy_mode(), "none")
           assert_eq(dev.commands().length(), 5)
           assert_eq(dev.commands()[0].name(), "inspect")
           assert_eq(dev.commands()[3].name(), "run")
@@ -1949,6 +1964,10 @@ test "runtime host builds dev plan for backend runners" {
           assert_true(dev.commands()[3].template().contains("{target}"))
           assert_true(dev.to_json().contains("\"kind\":\"runtime-dev-plan\""))
           assert_true(dev.to_json().contains("\"launchManifest\":{"))
+          assert_true(dev.to_json().contains("\"devSession\":{"))
+          assert_true(
+            dev.to_json().contains("\"sourceKind\":\"inline-assets\""),
+          )
           assert_true(dev.to_json().contains("\"startupOperations\":[{"))
           assert_true(dev.to_json().contains("\"lifecycleSteps\":[]"))
           assert_true(dev.to_json().contains("\"bridgeRoutes\":{"))
@@ -1961,6 +1980,69 @@ test "runtime host builds dev plan for backend runners" {
           let services = dev.service_plan()
           assert_eq(services.services().length(), 0)
           assert_false(services.requires_supervisor())
+        }
+        Err(_) => abort("unexpected invalid dev plan")
+      }
+    Err(_) => abort("unexpected invalid runtime plan")
+  }
+}
+
+///|
+test "runtime dev plan classifies supervised and external frontend sources" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(
+      label="ui",
+      title="UI",
+      source=@lepusa.Source::localhost(port=5173, readiness_path="/ready", command=[
+        "npm", "run", "dev",
+      ]),
+    )
+    .window(
+      label="docs",
+      title="Docs",
+      source=@lepusa.Source::url("https://example.test/docs"),
+    )
+  match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
+    Ok(plan) =>
+      match RuntimeHost::new(plan).dev_plan() {
+        Ok(dev) => {
+          let session = dev.dev_session()
+          assert_eq(session.webviews().length(), 2)
+          assert_eq(session.webviews()[0].label(), "ui")
+          assert_eq(
+            session.webviews()[0].source_kind().name(),
+            "supervised-localhost",
+          )
+          assert_eq(session.webviews()[0].reload_mode().name(), "external")
+          assert_true(session.webviews()[0].requires_supervisor())
+          match session.webviews()[0].local_service() {
+            Some(service) => {
+              assert_eq(service.name(), "ui")
+              assert_eq(service.command().length(), 3)
+              assert_eq(service.command()[0], "npm")
+              assert_eq(service.command()[1], "run")
+              assert_eq(service.command()[2], "dev")
+              assert_eq(service.readiness_url(), "http://127.0.0.1:5173/ready")
+            }
+            None => abort("expected supervised frontend service")
+          }
+          assert_eq(session.webviews()[1].label(), "docs")
+          assert_eq(session.webviews()[1].source_kind().name(), "external-url")
+          assert_false(session.webviews()[1].uses_runtime_asset_protocol())
+          assert_eq(session.window_reload_count(), 0)
+          assert_eq(session.external_reload_count(), 2)
+          assert_true(session.requires_supervisor())
+          assert_eq(session.service_plan().startup_service_names().length(), 1)
+          assert_eq(session.service_plan().startup_service_names()[0], "ui")
+          assert_true(dev.to_json().contains("\"devSession\":{"))
+          assert_true(
+            dev.to_json().contains("\"sourceKind\":\"supervised-localhost\""),
+          )
+          assert_true(dev.to_json().contains("\"sourceKind\":\"external-url\""))
+          assert_true(
+            dev.to_json().contains("\"localService\":{\"name\":\"ui\""),
+          )
         }
         Err(_) => abort("unexpected invalid dev plan")
       }

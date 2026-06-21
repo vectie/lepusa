@@ -489,6 +489,7 @@ fn render_dev_plan(
   args : Array[String],
 ) -> CliResult {
   let session = dev.session()
+  let dev_session = dev.dev_session()
   let services = dev.service_plan()
   let routes = session.command_routes().join(",")
   let registered_routes = session.registered_routes().join(",")
@@ -506,6 +507,9 @@ fn render_dev_plan(
     "registered-routes: \{registered_routes}\n" +
     "bridge-sync-routes: \{dev.bridge_sync_routes().length()}\n" +
     "bridge-async-routes: \{dev.bridge_async_routes().length()}\n" +
+    "dev-window-reloads: \{dev_session.window_reload_count()}\n" +
+    "dev-external-reloads: \{dev_session.external_reload_count()}\n" +
+    "dev-proxy-mode: \{dev_session.proxy_mode()}\n" +
     "local-services: \{services.services().length()}\n" +
     "service-supervisor: \{services.requires_supervisor()}\n" +
     "service-start-order: \{services.startup_service_names().join(",")}\n" +

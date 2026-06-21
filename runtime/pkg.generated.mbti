@@ -889,6 +889,7 @@ pub fn RuntimeDevCommand::to_json(Self) -> String
 pub struct RuntimeDevPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
+  dev_session : RuntimeDevSession
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
   lifecycle_steps : Array[RuntimeRunnerStep]
@@ -899,6 +900,7 @@ pub struct RuntimeDevPlan {
 pub fn RuntimeDevPlan::bridge_async_routes(Self) -> Array[String]
 pub fn RuntimeDevPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn RuntimeDevPlan::commands(Self) -> Array[RuntimeDevCommand]
+pub fn RuntimeDevPlan::dev_session(Self) -> RuntimeDevSession
 pub fn RuntimeDevPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn RuntimeDevPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
 pub fn RuntimeDevPlan::service_plan(Self) -> RuntimeServicePlan
@@ -906,6 +908,61 @@ pub fn RuntimeDevPlan::session(Self) -> RuntimeSession
 pub fn RuntimeDevPlan::startup_operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeDevPlan::to_json(Self) -> String
 pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
+
+pub(all) enum RuntimeDevReloadMode {
+  RuntimeDevReloadWindow
+  RuntimeDevReloadExternal
+  RuntimeDevReloadNone
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevReloadMode::name(Self) -> String
+
+pub struct RuntimeDevSession {
+  webviews : Array[RuntimeDevWebView]
+  service_plan : RuntimeServicePlan
+  reload_event : String
+  proxy_mode : String
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevSession::external_reload_count(Self) -> Int
+pub fn RuntimeDevSession::proxy_mode(Self) -> String
+pub fn RuntimeDevSession::reload_event(Self) -> String
+pub fn RuntimeDevSession::requires_supervisor(Self) -> Bool
+pub fn RuntimeDevSession::service_plan(Self) -> RuntimeServicePlan
+pub fn RuntimeDevSession::to_json(Self) -> String
+pub fn RuntimeDevSession::webviews(Self) -> Array[RuntimeDevWebView]
+pub fn RuntimeDevSession::window_reload_count(Self) -> Int
+
+pub(all) enum RuntimeDevSourceKind {
+  RuntimeDevInlineAssets
+  RuntimeDevRabbitaAssets
+  RuntimeDevLocalAssets
+  RuntimeDevPackagedAssets
+  RuntimeDevSupervisedLocalhost
+  RuntimeDevExternalUrl
+  RuntimeDevCustomUrl
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevSourceKind::name(Self) -> String
+
+pub struct RuntimeDevWebView {
+  label : String
+  url : String
+  source_kind : RuntimeDevSourceKind
+  reload_mode : RuntimeDevReloadMode
+  asset_protocol : String
+  native_hook : String
+  event_dispatch_hook : String
+  local_service : @lepusa.LocalService?
+} derive(Eq, @debug.Debug)
+pub fn RuntimeDevWebView::asset_protocol(Self) -> String
+pub fn RuntimeDevWebView::event_dispatch_hook(Self) -> String
+pub fn RuntimeDevWebView::label(Self) -> String
+pub fn RuntimeDevWebView::local_service(Self) -> @lepusa.LocalService?
+pub fn RuntimeDevWebView::native_hook(Self) -> String
+pub fn RuntimeDevWebView::reload_mode(Self) -> RuntimeDevReloadMode
+pub fn RuntimeDevWebView::requires_supervisor(Self) -> Bool
+pub fn RuntimeDevWebView::source_kind(Self) -> RuntimeDevSourceKind
+pub fn RuntimeDevWebView::to_json(Self) -> String
+pub fn RuntimeDevWebView::url(Self) -> String
+pub fn RuntimeDevWebView::uses_runtime_asset_protocol(Self) -> Bool
 
 pub struct RuntimeHost {
   manager : @lepusa.AppManager
