@@ -47,7 +47,10 @@ pub fn FrontendApiBundle::from_runtime_plan(
   plan : @lepusa.RuntimePlan,
   config? : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
-  FrontendApiBundle::from_command_manifest(plan.command_manifest(), config~)
+  FrontendApiBundle::from_command_manifest(
+    frontend_invokable_manifest(plan.command_manifest()),
+    config~,
+  )
 }
 
 ///|
@@ -55,7 +58,14 @@ pub fn FrontendApiBundle::from_launch_manifest(
   manifest : @lepusa.RuntimeLaunchManifest,
   config? : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
-  FrontendApiBundle::from_command_manifest(manifest.command_manifest(), config~)
+  FrontendApiBundle::from_command_manifest(
+    frontend_invokable_manifest(
+      manifest.command_manifest(),
+      registered_routes=manifest.registered_routes(),
+      restrict_registered=true,
+    ),
+    config~,
+  )
 }
 
 ///|
@@ -192,6 +202,28 @@ fn frontend_api_javascript(
   .filter(fn(line) { line != "" })
   .join("\n") +
   "\n"
+}
+
+///|
+fn frontend_invokable_manifest(
+  manifest : @lepusa.CommandManifest,
+  registered_routes? : Array[String] = [],
+  restrict_registered? : Bool = false,
+) -> @lepusa.CommandManifest {
+  let entries : Array[@lepusa.CommandManifestEntry] = []
+  for entry in manifest.entries() {
+    if entry.allowed_windows().is_empty() {
+      continue
+    }
+    if entry.mode() is Event {
+      continue
+    }
+    if restrict_registered && !registered_routes.contains(entry.route()) {
+      continue
+    }
+    entries.push(entry)
+  }
+  @lepusa.CommandManifest::new(entries~)
 }
 
 ///|

@@ -35,3 +35,48 @@ async test "frontend command validates mode and named options" {
   assert_eq(missing_module.exit_code, 1)
   assert_eq(missing_module.output, "--module requires a name\n")
 }
+
+///|
+async test "frontend command emits only registered project invoke routes" {
+  let root = "/tmp/lepusa-frontend-filter-\{@async.now().to_int()}"
+  @fs.mkdir(root, recursive=true, permission=0o755)
+  @fs.write_file(
+    root + "/lepusa.json",
+    (
+      #|{
+      #|  "identifier": "dev.local.frontend-filter",
+      #|  "productName": "Frontend Filter",
+      #|  "version": "0.1.0",
+      #|  "window": {
+      #|    "label": "main",
+      #|    "source": { "html": "<main>filter</main>" }
+      #|  },
+      #|  "plugins": [
+      #|    { "name": "custom", "commands": [{ "name": "run" }] }
+      #|  ],
+      #|  "capabilities": [
+      #|    { "name": "main", "windows": ["main"], "permissions": ["custom:custom.run"] }
+      #|  ]
+      #|}
+    ),
+    create_mode=CreateOrTruncate,
+    permission=0o644,
+  )
+  let js = render_cli_async([
+    "frontend",
+    "js",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(js.exit_code, 0)
+  assert_false(js.output.contains("custom.run"))
+  assert_true(js.output.contains("const routeList = [];"))
+  let dts = render_cli_async([
+    "frontend",
+    "dts",
+    "--project",
+    root + "/lepusa.json",
+  ])
+  assert_eq(dts.exit_code, 0)
+  assert_true(dts.output.contains("Record<string, never>"))
+}

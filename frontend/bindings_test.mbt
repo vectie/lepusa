@@ -123,7 +123,7 @@ test "frontend api bundle generates typescript declarations" {
 ///|
 test "frontend api bundle can use launch manifests and validates config" {
   let plan = frontend_test_plan()
-  match plan.launch_manifest() {
+  match plan.launch_manifest(registered_routes=plan.command_routes()) {
     Ok(manifest) =>
       match
         FrontendApiBundle::from_launch_manifest(
@@ -151,5 +151,58 @@ test "frontend api bundle can use launch manifests and validates config" {
       assert_eq(problems[0], "frontend api global name is required")
       assert_eq(problems[1], "frontend api module name is required")
     }
+  }
+}
+
+///|
+test "frontend api bundle filters denied event and unregistered routes" {
+  let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
+  let app = @lepusa.new(root)
+    .window(label="main", source=@lepusa.Source::html("<main></main>"))
+    .with_plugin(
+      @lepusa.Plugin::new("core")
+      .command_sync("read")
+      .command_sync("admin")
+      .command_event("changed"),
+    )
+    .with_capability(
+      @lepusa.Capability::new("main")
+      .window("main")
+      .command("core.read")
+      .command("core.changed"),
+    )
+  let plan = match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
+    Ok(plan) => plan
+    Err(_) => abort("unexpected invalid frontend filter plan")
+  }
+  match FrontendApiBundle::from_runtime_plan(plan) {
+    Ok(bundle) => {
+      let js = bundle.javascript()
+      assert_true(js.contains("\"route\":\"core.read\""))
+      assert_false(js.contains("\"route\":\"core.admin\""))
+      assert_false(js.contains("\"route\":\"core.changed\""))
+      assert_eq(bundle.command_manifest().entries().length(), 1)
+    }
+    Err(_) => abort("unexpected filtered frontend bundle error")
+  }
+  match plan.launch_manifest(registered_routes=["core.read"]) {
+    Ok(open_manifest) =>
+      match FrontendApiBundle::from_launch_manifest(open_manifest) {
+        Ok(bundle) => assert_eq(bundle.command_manifest().entries().length(), 1)
+        Err(_) => abort("unexpected registered launch frontend bundle error")
+      }
+    Err(_) => abort("unexpected launch manifest error")
+  }
+  match plan.launch_manifest(registered_routes=[]) {
+    Ok(registered_manifest) =>
+      match FrontendApiBundle::from_launch_manifest(registered_manifest) {
+        Ok(bundle) => {
+          assert_eq(bundle.command_manifest().entries().length(), 0)
+          assert_true(bundle.typescript().contains("Record<string, never>"))
+        }
+        Err(_) =>
+          abort("unexpected empty registered launch frontend bundle error")
+      }
+    Err(_) => abort("unexpected registered launch manifest error")
   }
 }
