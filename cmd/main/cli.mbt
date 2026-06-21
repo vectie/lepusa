@@ -41,6 +41,8 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
     Some("bundle-inspect") => render_bundle_inspect_async(args)
     Some("bundle-release-plan") => render_bundle_release_plan_async(args)
     Some("bundle-release-write") => render_bundle_release_write_async(args)
+    Some("bundle-package-plan") => render_bundle_package_plan_async(args)
+    Some("bundle-package-write") => render_bundle_package_write_async(args)
     Some("bundle-write") => render_bundle_write(args)
     Some("deploy-dry-run") => render_deploy_dry_run_async(args)
     Some("bundle") => render_bundle_write(args.with_first("bundle-write"))
@@ -92,6 +94,8 @@ fn help_text() -> String {
     #|  lepusa bundle-inspect <lepusa/distribution.json> [--json]
     #|  lepusa bundle-release-plan <lepusa/distribution.json> [--json]
     #|  lepusa bundle-release-write <lepusa/distribution.json> [out-dir] [--json]
+    #|  lepusa bundle-package-plan <lepusa/distribution.json> [--json]
+    #|  lepusa bundle-package-write <lepusa/distribution.json> [out-dir] [--json]
     #|  lepusa bundle-write [macos|windows|linux] [out-dir] [--json]
     #|  lepusa deploy-dry-run <update.json> <macos|windows|linux> <install-root> <staging-root> [current-version] [--allow-restart] [--json]
     #|  lepusa build [macos|windows|linux] [out-dir]

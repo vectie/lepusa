@@ -193,6 +193,8 @@ moon run cmd/main --target native -- bundle-write linux _build/lepusa-bundle --p
 moon run cmd/main --target native -- bundle-inspect _build/lepusa-bundle/lepusa-app/lepusa/distribution.json
 moon run cmd/main --target native -- bundle-release-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json --json
 moon run cmd/main --target native -- bundle-release-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-release
+moon run cmd/main --target native -- bundle-package-plan _build/lepusa-bundle/lepusa-app/lepusa/distribution.json --json
+moon run cmd/main --target native -- bundle-package-write _build/lepusa-bundle/lepusa-app/lepusa/distribution.json _build/lepusa-package
 moon run cmd/runtime --target native -- --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- run --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
 moon run cmd/runtime --target native -- launch --manifest _build/lepusa-bundle/lepusa-app/lepusa/runtime.json
@@ -830,6 +832,13 @@ commands run.
 `release-plan.json` plus a human-readable `release-checklist.md`, and
 `lepusa bundle-release-write <lepusa/distribution.json> [out-dir]` is the CLI
 wrapper for release jobs and future package generators.
+`BundleDistributionManifest::package_plan()` then lowers the same distribution
+contract into target-aware package commands, expected outputs, and blockers.
+`@lepusa/bundle.write_package_plan` writes `package-plan.json`,
+`package-checklist.md`, and a platform package script (`package.sh` or
+`package.ps1`); Windows also receives an `installer.nsi` script for the setup
+artifact. `lepusa bundle-package-plan` and `lepusa bundle-package-write` are the
+CLI wrappers.
 
 `@lepusa/bundle.write_plan` materializes those planned files under an output
 directory. `lepusa bundle-write` is the CLI wrapper. Project bundles carry

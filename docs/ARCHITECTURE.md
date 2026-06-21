@@ -764,6 +764,13 @@ JSON, so package generators do not need ad hoc manifest parsing.
 `release-plan.json` plus `release-checklist.md`; the CLI exposes it as
 `lepusa bundle-release-write`, giving release automation a concrete handoff
 artifact without moving installer policy into the bundle writer.
+`BundleDistributionManifest::package_plan()` is the next handoff: it maps the
+same manifest to target-aware package commands, expected outputs, and blockers.
+`@lepusa/bundle.write_package_plan` writes `package-plan.json`,
+`package-checklist.md`, and a platform package script (`package.sh` or
+`package.ps1`), with Windows also receiving a generated NSIS script. Lepusa
+still does not execute external signing or installer tools inside the core
+writer; it produces the contract and scripts that release automation can run.
 
 This split keeps application configuration, runtime planning, and installer
 work separate. Future macOS, Windows, and Linux packaging code should consume

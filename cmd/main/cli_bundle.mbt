@@ -67,6 +67,49 @@ async fn render_bundle_release_write_async(args : Array[String]) -> CliResult {
 }
 
 ///|
+async fn render_bundle_package_plan_async(args : Array[String]) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-package-plan") {
+    Ok(manifest) => {
+      let plan = manifest.package_plan()
+      if has_flag(args, "--json") {
+        ok(plan.to_json() + "\n")
+      } else {
+        ok(plan.summary())
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
+async fn render_bundle_package_write_async(args : Array[String]) -> CliResult {
+  match read_bundle_distribution_manifest(args, "bundle-package-write") {
+    Ok(manifest) => {
+      let values = positional_args(args)
+      let out_dir = values.get(1).unwrap_or("_build/lepusa-package")
+      let plan = manifest.package_plan()
+      match @bundle.write_package_plan(plan, out_dir) {
+        Ok(result) => {
+          let output = if has_flag(args, "--json") {
+            result.to_json() + "\n"
+          } else {
+            render_bundle_package_write_summary(result)
+          }
+          if result.ready() {
+            ok(output)
+          } else {
+            fail(output)
+          }
+        }
+        Err(problems) =>
+          fail(render_problems("Lepusa bundle package write", problems))
+      }
+    }
+    Err(problem) => fail(problem)
+  }
+}
+
+///|
 async fn read_bundle_distribution_manifest(
   args : Array[String],
   command : String,
@@ -209,6 +252,23 @@ fn render_bundle_release_write_summary(
   "files: \{result.files().length()}\n" +
   "plan: \{result.plan_path()}\n" +
   "checklist: \{result.checklist_path()}\n"
+}
+
+///|
+fn render_bundle_package_write_summary(
+  result : @bundle.BundlePackageWriteResult,
+) -> String {
+  let plan = result.plan()
+  "Lepusa bundle package write\n" +
+  "root: \{result.root()}\n" +
+  "ready: \{result.ready().to_string()}\n" +
+  "package-kind: \{plan.package_kind()}\n" +
+  "commands: \{plan.commands().length()}\n" +
+  "outputs: \{plan.outputs().length()}\n" +
+  "files: \{result.files().length()}\n" +
+  "plan: \{result.plan_path()}\n" +
+  "checklist: \{result.checklist_path()}\n" +
+  "script: \{result.script_path()}\n"
 }
 
 ///|

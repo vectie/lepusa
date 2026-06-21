@@ -238,6 +238,8 @@
   - `lepusa bundle-plan [--json]`: prints a target bundle plan, with a machine-readable artifact/resource/signing/file report for tooling.
   - `lepusa bundle-inspect [--json]`: parses packaged `lepusa/distribution.json` and reports installer-facing artifact, resource, dependency, runtime executable, and signing metadata.
   - `lepusa bundle-release-plan [--json]`: lowers packaged distribution metadata into ordered release steps for dependency validation, resource staging, signing, and artifact collection.
+  - `lepusa bundle-package-plan [--json]`: lowers packaged distribution metadata into target-aware packaging commands, expected outputs, and blockers.
+  - `lepusa bundle-package-write [--json]`: writes `package-plan.json`, `package-checklist.md`, and a target package script for release automation.
   - `lepusa bundle-write`: writes planned platform bundle files.
   - `lepusa init`: writes a standalone MoonBit project skeleton, with `--workspace <lepusa-root>` for local pre-publish development against a checkout.
   - `lepusa build`: alias for materializing the current bundle plan.
@@ -363,6 +365,11 @@ desktop core is reliable.
 - `BundleReleasePlan` now emits required/optional release step counts, item
   counts, readiness state, and missing required steps so `bundle-release-plan`
   can act as a compact CI gate before platform-specific installer tooling.
+- `BundlePackagePlan` now lowers the distribution manifest into target-aware
+  package outputs and command scripts. `bundle-package-write` persists
+  `package-plan.json`, `package-checklist.md`, and `package.sh`/`package.ps1`
+  handoff artifacts so release automation has one package contract before it
+  executes external signing or installer tools.
 - Clean-machine install tests per platform.
 
 ## Milestone 7: Foundation Proof

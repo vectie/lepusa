@@ -102,6 +102,32 @@ test "distribution manifest parser exposes installer-facing bundle data" {
               )
               assert_true(release.to_json().contains("\"ready\":true"))
               assert_true(release.to_json().contains("\"requiredStepCount\":3"))
+              let package_plan = manifest.package_plan()
+              assert_true(package_plan.ready())
+              assert_eq(package_plan.package_kind(), "linux-portable-archive")
+              assert_eq(package_plan.commands().length(), 2)
+              assert_eq(package_plan.outputs().length(), 3)
+              assert_eq(package_plan.script_name(), "package.sh")
+              assert_eq(
+                package_plan.commands()[0].tool(),
+                "desktop-file-validate",
+              )
+              assert_eq(package_plan.commands()[1].tool(), "tar")
+              assert_true(
+                package_plan.commands()[1]
+                .arguments()
+                .contains("distribution-app-1.0.0-linux.tar.gz"),
+              )
+              assert_true(
+                package_plan
+                .summary()
+                .contains("package-kind: linux-portable-archive"),
+              )
+              assert_true(
+                package_plan
+                .to_json()
+                .contains("\"packageKind\":\"linux-portable-archive\""),
+              )
             }
             Err(problem) => abort("unexpected invalid distribution: \{problem}")
           }
@@ -152,6 +178,95 @@ test "release plan reports missing required release data" {
       )
       assert_true(release.to_json().contains("\"ready\":false"))
       assert_true(release.to_json().contains("\"missingRequiredSteps\":[{"))
+    }
+    Err(problem) => abort("unexpected invalid distribution: \{problem}")
+  }
+}
+
+///|
+test "package plan reports missing target package artifacts" {
+  match
+    BundleDistributionManifest::parse(
+      "app/lepusa/distribution.json",
+      (
+        #|{
+        #|  "identifier": "dev.local.package",
+        #|  "productName": "Package Data",
+        #|  "version": "1.0.0",
+        #|  "target": "windows",
+        #|  "executable": "package-data",
+        #|  "bundle": "package-data.exe",
+        #|  "runtimeExecutable": "package-data/lepusa-runtime.exe",
+        #|  "artifacts": [
+        #|    { "kind": "executable", "name": "package-data.exe", "path": "package-data/package-data.exe" }
+        #|  ],
+        #|  "resources": [],
+        #|  "runtimeDependencies": [
+        #|    { "kind": "native-loader-library", "name": "WebView2Loader.dll", "path": "package-data/WebView2Loader.dll", "required": true }
+        #|  ],
+        #|  "signing": {},
+        #|  "signingPrerequisites": [],
+        #|  "signingSteps": []
+        #|}
+      ),
+    ) {
+    Ok(manifest) => {
+      let package_plan = manifest.package_plan()
+      assert_false(package_plan.ready())
+      assert_eq(package_plan.package_kind(), "windows-exe-installer")
+      assert_eq(package_plan.script_name(), "package.ps1")
+      assert_eq(package_plan.blockers().length(), 1)
+      assert_eq(
+        package_plan.blockers()[0],
+        "missing required package artifact: installer",
+      )
+      assert_true(package_plan.to_json().contains("\"ready\":false"))
+    }
+    Err(problem) => abort("unexpected invalid distribution: \{problem}")
+  }
+}
+
+///|
+test "package plan emits windows package scripts" {
+  match
+    BundleDistributionManifest::parse(
+      "/tmp/lepusa-windows-bundle/package-data/lepusa/distribution.json",
+      (
+        #|{
+        #|  "identifier": "dev.local.package",
+        #|  "productName": "Package Data",
+        #|  "version": "1.0.0",
+        #|  "target": "windows",
+        #|  "executable": "package-data",
+        #|  "bundle": "package-data.exe",
+        #|  "runtimeExecutable": "package-data/lepusa-runtime.exe",
+        #|  "artifacts": [
+        #|    { "kind": "executable", "name": "package-data.exe", "path": "package-data/package-data.exe" },
+        #|    { "kind": "installer", "name": "package-data setup", "path": "package-data-1.0.0-setup.exe" }
+        #|  ],
+        #|  "resources": [],
+        #|  "runtimeDependencies": [
+        #|    { "kind": "native-loader-library", "name": "WebView2Loader.dll", "path": "package-data/WebView2Loader.dll", "required": true }
+        #|  ],
+        #|  "signing": {},
+        #|  "signingPrerequisites": [],
+        #|  "signingSteps": []
+        #|}
+      ),
+    ) {
+    Ok(manifest) => {
+      let package_plan = manifest.package_plan()
+      assert_true(package_plan.ready())
+      assert_eq(package_plan.commands().length(), 2)
+      assert_eq(package_plan.script_name(), "package.ps1")
+      let script = package_plan.package_script()
+      assert_true(script.contains("Set-Location $BundleRoot"))
+      assert_true(script.contains("makensis"))
+      let installer = package_plan.windows_installer_script()
+      assert_true(
+        installer.contains("OutFile \"package-data-1.0.0-setup.exe\""),
+      )
+      assert_true(installer.contains("File /r \"package-data\\*\""))
     }
     Err(problem) => abort("unexpected invalid distribution: \{problem}")
   }

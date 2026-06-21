@@ -40,6 +40,8 @@ test "help text names available commands" {
   assert_true(result.output.contains("lepusa bundle-inspect"))
   assert_true(result.output.contains("lepusa bundle-release-plan"))
   assert_true(result.output.contains("lepusa bundle-release-write"))
+  assert_true(result.output.contains("lepusa bundle-package-plan"))
+  assert_true(result.output.contains("lepusa bundle-package-write"))
   assert_true(
     result.output.contains(
       "lepusa bundle-write [macos|windows|linux] [out-dir] [--json]",
@@ -2036,6 +2038,74 @@ async test "bundle write materializes planned files" {
   )
   assert_true(release_write_json.output.contains("\"plan\":{"))
   assert_true(release_write_json.output.contains("\"missingRequiredSteps\":[]"))
+  let package_result = render_cli_async([
+    "bundle-package-plan", distribution_path,
+  ])
+  assert_eq(package_result.exit_code, 0)
+  assert_true(package_result.output.contains("Lepusa package plan"))
+  assert_true(
+    package_result.output.contains("package-kind: linux-portable-archive"),
+  )
+  assert_true(package_result.output.contains("commands: 2"))
+  assert_true(package_result.output.contains("outputs: 3"))
+  assert_true(package_result.output.contains("command: validate desktop entry"))
+  assert_true(
+    package_result.output.contains("command: create portable archive"),
+  )
+  let package_json = render_cli_async([
+    "bundle-package-plan", distribution_path, "--json",
+  ])
+  assert_eq(package_json.exit_code, 0)
+  assert_true(
+    package_json.output.contains("\"packageKind\":\"linux-portable-archive\""),
+  )
+  assert_true(package_json.output.contains("\"scriptName\":\"package.sh\""))
+  assert_true(
+    package_json.output.contains("\"tool\":\"desktop-file-validate\""),
+  )
+  assert_true(package_json.output.contains("\"tool\":\"tar\""))
+  let package_root = "/tmp/lepusa-package-write-\{@async.now().to_int()}"
+  let package_write = render_cli_async([
+    "bundle-package-write", distribution_path, package_root,
+  ])
+  assert_eq(package_write.exit_code, 0)
+  assert_true(package_write.output.contains("Lepusa bundle package write"))
+  assert_true(
+    package_write.output.contains("package-kind: linux-portable-archive"),
+  )
+  assert_true(package_write.output.contains("commands: 2"))
+  assert_true(package_write.output.contains("outputs: 3"))
+  assert_true(package_write.output.contains("files: 3"))
+  let package_plan_path = package_root + "/package-plan.json"
+  let package_checklist_path = package_root + "/package-checklist.md"
+  let package_script_path = package_root + "/package.sh"
+  assert_true(@fs.exists(package_plan_path))
+  assert_true(@fs.exists(package_checklist_path))
+  assert_true(@fs.exists(package_script_path))
+  let package_plan = @fs.read_file(package_plan_path).text()
+  assert_true(package_plan.contains("\"ready\":true"))
+  assert_true(
+    package_plan.contains("\"packageKind\":\"linux-portable-archive\""),
+  )
+  let package_checklist = @fs.read_file(package_checklist_path).text()
+  assert_true(package_checklist.contains("# Lepusa Package Checklist"))
+  assert_true(package_checklist.contains("[ ] validate desktop entry"))
+  assert_true(package_checklist.contains("[ ] portable-archive"))
+  let package_script = @fs.read_file(package_script_path).text()
+  assert_true(package_script.contains("desktop-file-validate"))
+  assert_true(package_script.contains("tar"))
+  assert_true(package_script.contains("BUNDLE_ROOT="))
+  let package_json_root = "/tmp/lepusa-package-write-json-\{@async.now().to_int()}"
+  let package_write_json = render_cli_async([
+    "bundle-package-write", distribution_path, package_json_root, "--json",
+  ])
+  assert_eq(package_write_json.exit_code, 0)
+  assert_true(package_write_json.output.contains("\"ready\":true"))
+  assert_true(
+    package_write_json.output.contains(
+      "\"files\":[\"\{package_json_root}/package-plan.json\",\"\{package_json_root}/package-checklist.md\",\"\{package_json_root}/package.sh\"]",
+    ),
+  )
   let json_root = "/tmp/lepusa-bundle-write-json-\{@async.now().to_int()}"
   let json_result = render_cli_async([
     "bundle-write", "linux", json_root, "--json",
