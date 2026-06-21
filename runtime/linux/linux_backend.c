@@ -1475,6 +1475,74 @@ static void lepusa_linux_apply_open_windows_from_handoff_packet(
   }
 }
 
+static moonbit_bytes_t lepusa_linux_bridge_drain_request_message(
+  const char *window_label
+) {
+  const char *prefix = "lepusa-drain-v1\n";
+  size_t prefix_len = strlen(prefix);
+  size_t label_len = window_label == NULL ? 0 : strlen(window_label);
+  moonbit_bytes_t bytes = moonbit_make_bytes(
+    (int32_t)(prefix_len + label_len),
+    0
+  );
+  memcpy(bytes, prefix, prefix_len);
+  if (label_len > 0) {
+    memcpy(bytes + prefix_len, window_label, label_len);
+  }
+  return bytes;
+}
+
+static void lepusa_linux_process_bridge_drain_requests(
+  LepusaLinuxBridgeContext *context
+) {
+  if (context == NULL ||
+      context->api == NULL ||
+      context->call_dispatch == NULL ||
+      context->dispatch == NULL ||
+      context->drain_request_count <= 0) {
+    return;
+  }
+  LepusaLinuxBridgeDrainRequest requests[32];
+  int request_count = context->drain_request_count;
+  if (request_count > 32) {
+    request_count = 32;
+  }
+  for (int i = 0; i < request_count; i++) {
+    requests[i] = context->drain_requests[i];
+  }
+  context->drain_request_count = 0;
+  for (int i = 0; i < request_count; i++) {
+    moonbit_bytes_t request = lepusa_linux_bridge_drain_request_message(
+      requests[i].window_label
+    );
+    moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
+    moonbit_bytes_t script = lepusa_linux_immediate_script_from_handoff_packet(
+      packet
+    );
+    char *script_text = lepusa_linux_cstr_from_bytes(script);
+    LepusaLinuxWindowSlot *slot = lepusa_linux_find_window_slot(
+      context,
+      requests[i].window_label,
+      (int32_t)strlen(requests[i].window_label)
+    );
+    void *target_webview = slot == NULL ? context->webview : slot->webview;
+    if (script_text != NULL && target_webview != NULL) {
+      context->api->webkit_web_view_run_javascript(
+        target_webview,
+        script_text,
+        NULL,
+        NULL,
+        NULL
+      );
+    }
+    free(script_text);
+    lepusa_linux_apply_evaluate_scripts_from_handoff_packet(context, packet);
+    lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
+    lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
+    lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
+  }
+}
+
 static void lepusa_linux_uri_scheme_request(
   void *request,
   void *user_data
@@ -1593,6 +1661,7 @@ static void lepusa_linux_script_message_received(
   lepusa_linux_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_linux_apply_window_controls_from_handoff_packet(context, packet);
   lepusa_linux_apply_navigation_from_handoff_packet(context, packet);
+  lepusa_linux_process_bridge_drain_requests(context);
   if (message != NULL) {
     context->api->g_free(message);
   }

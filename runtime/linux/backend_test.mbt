@@ -37,12 +37,12 @@ test "linux backend exposes webkitgtk descriptor" {
   let capability = launch_capability()
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
-  assert_false(capability.async_bridge_drain())
+  assert_true(capability.async_bridge_drain())
   assert_eq(capability.max_webviews(), 0)
   assert_true(
     capability
     .async_bridge_drain_message()
-    .contains("async MoonBit-to-native callback ABI"),
+    .contains("packetized event-loop requests"),
   )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
@@ -193,19 +193,19 @@ test "linux backend prepares run plan and reports unsupported launch" {
 }
 
 ///|
-test "linux launch reports async bridge scheduler requirement" {
+test "linux launch allows async bridge scheduler" {
   match runtime(async_test_host()) {
     Ok(runtime) =>
-      match launch(runtime) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              assert_true(
-                message.contains("async MoonBit-to-native callback ABI"),
-              )
-            _ => abort("unexpected Linux async launch status")
-          }
-        Err(_) => abort("unexpected invalid Linux async launch plan")
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          assert_true(
+            result
+            .launch_session(bridge_mode=NativeBridgeAsyncCapable)
+            .can_launch(),
+          )
+        }
+        Err(_) => abort("unexpected invalid Linux async run plan")
       }
     Err(_) => abort("unexpected invalid Linux async native runtime")
   }
@@ -215,16 +215,15 @@ test "linux launch reports async bridge scheduler requirement" {
       linux_async_bundled_manifest(),
     ) {
     Ok(manifest) =>
-      match launch_bundled(manifest) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              assert_true(
-                message.contains("async MoonBit-to-native callback ABI"),
-              )
-            _ => abort("unexpected Linux bundled async launch status")
+      match run_bundled(manifest) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          match result.launch_session(bridge_mode=NativeBridgeAsyncCapable) {
+            Ok(session) => assert_true(session.can_launch())
+            Err(problem) => abort(problem)
           }
-        Err(_) => abort("unexpected invalid Linux bundled async launch plan")
+        }
+        Err(_) => abort("unexpected invalid Linux bundled async run plan")
       }
     Err(problem) => abort(problem)
   }

@@ -239,14 +239,14 @@ drain contract. The envelope also records `requestedBridgeMode`,
 `effectiveBridgeMode`, and `bridgeModeGranted`, then reports backend capability
 through `launchCapability`, `backendPreflight`, `targetCanLaunch`, and
 `targetLaunchBlocker`. Passing `--async-bridge` records an async-capable request;
-platforms that cannot drain async completions keep the effective session
-sync-only, report `bridgeModeGranted: false`, and expose a `drainStrategy` of
-`unavailable`. The target launch blocker now includes the backend's concrete
-`asyncBridgeDrainMessage`, so macOS/Linux report the missing async
-MoonBit-to-native callback ABI separately from route scheduling metadata.
-Async-capable sessions advertise an `event-loop` drain strategy: the native
-message handler may queue deferred work synchronously, then the host event loop
-must drain and evaluate completion scripts after leaving the WebView callback.
+platforms with packetized drain support keep that effective mode, report
+`bridgeModeGranted: true`, and expose a `drainStrategy` of `event-loop`. The
+target launch blocker includes the backend's concrete `asyncBridgeDrainMessage`,
+so dependency or creation-loop failures stay separate from bridge scheduler
+readiness. Async-capable sessions advertise a packetized event-loop drain: the
+native message handler may queue deferred work synchronously, then the host loop
+asks MoonBit for a `lepusa-ops-v3` drain packet and evaluates completion scripts
+after leaving the WebView callback.
 Platform runners now lower the first WebView from that session through
 `NativeWebViewLaunchContext`, which keeps the native byte packet together with
 the scheduler, async executor, and `bridgeLoop` contract the backend must honor.
@@ -923,14 +923,12 @@ The macOS runner prepares and injects the generated bridge as a document-start
 WKUserScript, together with a native hook bootstrap and
 `window.webkit.messageHandlers.__lepusaInvoke` dispatch path for sync command
 responses. Native loops now understand the typed packet format needed to
-evaluate queued callback scripts and retain deferred drain requests, but launch
-paths still refuse async bridge routes with an explicit scheduler requirement
-until a backend launch capability declares that its event loop can wake and
-drain queued completions without blocking the WebView callback. That launch
-capability now carries an
-`asyncBridgeDrainMessage` field, which distinguishes the final async
-MoonBit-to-native callback ABI work from WebView dependency, script evaluation,
-or creation-loop failures. Launch-session JSON also carries
+evaluate queued callback scripts, retain deferred drain requests, and request a
+window-scoped `lepusa-ops-v3` drain packet from MoonBit through the existing
+handoff callback. That launch capability carries an
+`asyncBridgeDrainMessage` field, which describes the packetized event-loop drain
+contract separately from WebView dependency, script evaluation, or creation-loop
+failures. Launch-session JSON also carries
 `asyncBridgeExecutor`, which names `NativeRuntime::bridge_async_dispatch_callback`
 and its UTF-8 bridge-message to JavaScript-callback-script byte contract. The
 same `bridgeScheduler` field appears in source and bundled bootstrap JSON so

@@ -31,11 +31,11 @@ pub fn launch_capability() -> @runtime.NativeLaunchCapability {
   @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     sync_bridge_evaluate=true,
-    async_bridge_drain=false,
+    async_bridge_drain=true,
     max_webviews=0,
     webview_creation_message="macOS WKWebView creation loop is unavailable",
     sync_bridge_evaluate_message="macOS WKWebView sync bridge response evaluation is unavailable",
-    async_bridge_drain_message="macOS WKWebView async bridge drain/evaluate support needs an async MoonBit-to-native callback ABI",
+    async_bridge_drain_message="macOS WKWebView async bridge drain uses packetized event-loop requests",
   )
 }
 
@@ -48,11 +48,11 @@ pub fn preflight() -> @runtime.NativeBackendPreflight {
     dependency_available=available(),
     webview_creation_loop=true,
     sync_bridge_evaluate=true,
-    async_bridge_drain=false,
+    async_bridge_drain=true,
     dependency_message="macOS Cocoa/WebKit backend is not available",
     webview_creation_message="macOS WKWebView creation loop is unavailable",
     sync_bridge_evaluate_message="macOS WKWebView sync bridge response evaluation is unavailable",
-    async_bridge_drain_message="macOS WKWebView async bridge drain/evaluate support is unavailable",
+    async_bridge_drain_message="macOS WKWebView async bridge drain uses packetized event-loop requests",
   )
 }
 

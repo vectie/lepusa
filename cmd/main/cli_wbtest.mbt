@@ -180,15 +180,15 @@ async test "launch session prints source native handoff json" {
     "launch-session", "linux", "--async-bridge",
   ])
   assert_eq(async_bridge.exit_code, 0)
-  assert_true(async_bridge.output.contains("\"mode\":\"sync-only\""))
-  assert_true(async_bridge.output.contains("\"available\":false"))
+  assert_true(async_bridge.output.contains("\"mode\":\"async-capable\""))
+  assert_true(async_bridge.output.contains("\"available\":true"))
   assert_true(
     async_bridge.output.contains("\"requestedBridgeMode\":\"async-capable\""),
   )
   assert_true(
-    async_bridge.output.contains("\"effectiveBridgeMode\":\"sync-only\""),
+    async_bridge.output.contains("\"effectiveBridgeMode\":\"async-capable\""),
   )
-  assert_true(async_bridge.output.contains("\"bridgeModeGranted\":false"))
+  assert_true(async_bridge.output.contains("\"bridgeModeGranted\":true"))
   assert_true(
     async_bridge.output.contains(
       "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",
@@ -2034,7 +2034,7 @@ async test "bundle write copies configured runtime dependency files" {
 }
 
 ///|
-async test "bundle write fails when native launch session is blocked" {
+async test "bundle write verifies async native launch session" {
   let stamp = @async.now().to_int()
   let root = "/tmp/lepusa-async-bundle-\{stamp}"
   let out = "/tmp/lepusa-async-bundle-out-\{stamp}"
@@ -2059,10 +2059,9 @@ async test "bundle write fails when native launch session is blocked" {
     "--project",
     root + "/lepusa.json",
   ])
-  assert_eq(result.exit_code, 1)
-  assert_true(result.output.contains("verified: false"))
-  assert_true(result.output.contains("[fail] verify: native-launch-session"))
-  assert_true(result.output.contains("requires native async bridge scheduling"))
+  assert_eq(result.exit_code, 0)
+  assert_true(result.output.contains("verified: true"))
+  assert_true(result.output.contains("[ok] verify: native-launch-session"))
 }
 
 ///|

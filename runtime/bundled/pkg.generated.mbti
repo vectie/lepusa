@@ -8,6 +8,7 @@ import {
 }
 
 // Values
+pub fn bundled_bridge_drain_request_packet(String) -> Bytes
 
 // Errors
 
@@ -109,6 +110,7 @@ pub fn BundledBridgeLoopAdapter::callbacks(Self, window_label~ : String) -> Bund
 pub async fn BundledBridgeLoopAdapter::drain(Self) -> Array[BundledBridgeCompletion]
 pub async fn BundledBridgeLoopAdapter::drain_result(Self) -> BundledBridgeDrainResult
 pub async fn BundledBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> BundledBridgeLoopDelivery
+pub fn BundledBridgeLoopAdapter::drain_window_packet_bytes(Self, window_label~ : String) -> Bytes
 pub fn BundledBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Bytes
@@ -181,6 +183,8 @@ pub struct BundledBridgeWorkQueue {
 } derive(Eq, @debug.Debug)
 pub async fn BundledBridgeWorkQueue::drain(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
 pub async fn BundledBridgeWorkQueue::drain_result(Self, BundledRuntime) -> BundledBridgeDrainResult
+pub fn BundledBridgeWorkQueue::drain_result_sync(Self, BundledRuntime) -> BundledBridgeDrainResult
+pub fn BundledBridgeWorkQueue::drain_sync(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
 pub fn BundledBridgeWorkQueue::dropped_count(Self) -> Int
 pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int, String]
 pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int, String]

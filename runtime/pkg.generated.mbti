@@ -17,6 +17,8 @@ pub fn native_asset_load_url_from_json(String) -> Result[String, String]
 
 pub fn native_asset_protocol_packet_from_json(String) -> Bytes
 
+pub fn native_bridge_drain_request_packet(String) -> Bytes
+
 pub fn native_bridge_response_script(String, String) -> String
 
 pub fn native_direct_load_url(String) -> Bool
@@ -226,6 +228,7 @@ pub fn NativeBridgeLoopAdapter::callbacks(Self, window_label~ : String) -> Nativ
 pub async fn NativeBridgeLoopAdapter::drain(Self) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeLoopAdapter::drain_result(Self) -> NativeBridgeDrainResult
 pub async fn NativeBridgeLoopAdapter::drain_window(Self, window_label~ : String) -> NativeBridgeLoopDelivery
+pub fn NativeBridgeLoopAdapter::drain_window_packet_bytes(Self, window_label~ : String) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_callback(Self) -> (Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Bytes
@@ -374,6 +377,8 @@ pub struct NativeBridgeWorkQueue {
 } derive(Eq, @debug.Debug)
 pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeWorkQueue::drain_result(Self, NativeRuntime) -> NativeBridgeDrainResult
+pub fn NativeBridgeWorkQueue::drain_result_sync(Self, NativeRuntime) -> NativeBridgeDrainResult
+pub fn NativeBridgeWorkQueue::drain_sync(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
 pub fn NativeBridgeWorkQueue::dropped_count(Self) -> Int
 pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
 pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]

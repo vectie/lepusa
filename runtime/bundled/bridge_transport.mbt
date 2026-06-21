@@ -65,6 +65,9 @@ pub struct BundledBridgeLoopCallbacks {
 }
 
 ///|
+let bundled_bridge_drain_request_prefix = "lepusa-drain-v1\n"
+
+///|
 pub struct BundledBridgeLoopResult {
   immediate_script : String
   completions : Array[BundledBridgeCompletion]
@@ -422,6 +425,14 @@ pub async fn BundledBridgeDispatchTask::complete(
   runtime : BundledRuntime,
 ) -> BundledBridgeCompletion {
   { task: self, dispatch: self.dispatch(runtime) }
+}
+
+///|
+fn BundledBridgeDispatchTask::complete_sync(
+  self : BundledBridgeDispatchTask,
+  runtime : BundledRuntime,
+) -> BundledBridgeCompletion {
+  { task: self, dispatch: self.dispatch_sync(runtime) }
 }
 
 ///|
@@ -797,6 +808,34 @@ pub async fn BundledBridgeWorkQueue::drain_result(
 }
 
 ///|
+pub fn BundledBridgeWorkQueue::drain_sync(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+) -> Array[BundledBridgeCompletion] {
+  let tasks = self.tasks.copy()
+  self.tasks.clear()
+  let completions : Array[BundledBridgeCompletion] = []
+  for task in tasks {
+    completions.push(task.complete_sync(runtime))
+  }
+  completions
+}
+
+///|
+pub fn BundledBridgeWorkQueue::drain_result_sync(
+  self : BundledBridgeWorkQueue,
+  runtime : BundledRuntime,
+) -> BundledBridgeDrainResult {
+  let pending_before = self.pending_count()
+  let completions = self.drain_sync(runtime)
+  BundledBridgeDrainResult::new(
+    pending_before~,
+    pending_after=self.pending_count(),
+    completions~,
+  )
+}
+
+///|
 pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String {
   [
     "{",
@@ -879,6 +918,10 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_bytes(
   message : Bytes,
 ) -> Bytes {
   let input = @utf8.decode(message) catch { _ => "" }
+  match bundled_bridge_drain_request_window(input) {
+    Some(window_label) => return self.drain_window_packet_bytes(window_label~)
+    None => ()
+  }
   match self.runtime.bridge_handoff(input) {
     Ok(handoff) =>
       match handoff.immediate_dispatch() {
@@ -925,6 +968,25 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_callback(
   self : BundledBridgeLoopAdapter,
 ) -> (Bytes) -> Bytes {
   fn(message : Bytes) { self.handoff_packet_bytes(message) }
+}
+
+///|
+pub fn BundledBridgeLoopAdapter::drain_window_packet_bytes(
+  self : BundledBridgeLoopAdapter,
+  window_label~ : String,
+) -> Bytes {
+  let delivery = BundledBridgeLoopDelivery::from_result(window_label~, result={
+    immediate_script: "",
+    completions: self.queue.drain_sync(self.runtime),
+  })
+  @utf8.encode(
+    bundled_bridge_handoff_packet(
+      "immediate",
+      delivery.window_label(),
+      "",
+      operations=delivery.operations(),
+    ),
+  )
 }
 
 ///|
@@ -1085,6 +1147,20 @@ pub fn BundledBridgeLoopCallbacks::to_json(
 ///|
 fn bundled_bridge_drain_window_packet_callback(window_label : String) -> String {
   "bridge_loop_adapter().callbacks(\{window_label}).drain_window_packet"
+}
+
+///|
+pub fn bundled_bridge_drain_request_packet(window_label : String) -> Bytes {
+  @utf8.encode("\{bundled_bridge_drain_request_prefix}\{window_label}")
+}
+
+///|
+fn bundled_bridge_drain_request_window(input : String) -> String? {
+  if input.has_prefix(bundled_bridge_drain_request_prefix) {
+    Some(input[bundled_bridge_drain_request_prefix.length():].to_owned())
+  } else {
+    None
+  }
 }
 
 ///|

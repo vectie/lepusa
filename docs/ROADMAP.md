@@ -128,8 +128,7 @@
   capability, and bridge-loop JSON now expose the concrete async drain strategy
   (`unavailable` or `event-loop`) plus a platform-specific
   `asyncBridgeDrainMessage`, so readiness can distinguish route scheduling from
-  the remaining async MoonBit-to-native callback ABI; source and packaged run
-  plans
+  the packetized event-loop drain contract; source and packaged run plans
   now build capability-aware launch sessions for open-window runners before
   they pass the queue-backed handoff callback into native message handlers;
   source and bundled bridge adapters now expose a structured
@@ -140,8 +139,9 @@
   source and bundled bridge callback bundles now expose a first-class
   `drain-bridge-window` executable operation pointing at the packet-drain
   callback, giving platform loops a typed scheduler hook for queued async bridge
-  windows; macOS, Linux, and Windows C loops now parse that operation and retain
-  the target window plus packet-drain callback for the future event-loop pump;
+  windows; macOS, Linux, and Windows C loops now parse that operation, retain
+  the target window, issue `lepusa-drain-v1` requests through the existing
+  handoff callback, and evaluate returned `lepusa-ops-v3` drain packets;
   approved `window.*` dispatches now lower official plugin response payloads
   into `window-control` executable operations, and macOS/Linux WebView loops now
   consume the sync window control

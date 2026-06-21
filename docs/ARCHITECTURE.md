@@ -242,9 +242,11 @@ report `unavailable`, while async-capable sessions report `event-loop`, meaning
 the platform host must leave the synchronous WebView message callback before
 draining queued completions and evaluating their scripts.
 `NativeLaunchCapability` also carries `asyncBridgeDrainMessage`, so target
-launch blockers can name the concrete missing platform work, such as the final
-async MoonBit-to-native callback ABI, instead of reporting only that async
-routes exist.
+launch blockers can describe the concrete platform drain contract instead of
+reporting only that async routes exist. macOS, Linux, and Windows use a typed
+`lepusa-drain-v1` packet over the existing handoff callback to ask MoonBit for a
+window-scoped `lepusa-ops-v3` drain packet, then evaluate the returned scripts
+from the native event loop.
 `NativeBridgeLoopEvaluationPlan` converts that script list into window-scoped
 `NativeExecutableOperation::evaluate_script` operations, so source and packaged
 runtime loops share one executable drain/evaluate model before platform code

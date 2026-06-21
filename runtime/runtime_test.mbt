@@ -3124,6 +3124,22 @@ async test "native runtime owns bridge message transport" {
             ),
           )
           assert_eq(packet_adapter.pending_count(), 1)
+          let native_drain_packet = @utf8.decode(
+            packet_callbacks.handoff_packet_callback()(
+              native_bridge_drain_request_packet("main"),
+            ),
+          ) catch {
+            _ => abort("unexpected invalid native drain request packet bytes")
+          }
+          assert_true(native_drain_packet.contains("immediate\nmain\n0\n\n"))
+          assert_true(native_drain_packet.contains("evaluate-script"))
+          assert_true(
+            native_drain_packet.contains(
+              "globalThis[\"__lepusaInvokeResponse\"]",
+            ),
+          )
+          assert_true(native_drain_packet.contains("\"id\":\"9\""))
+          assert_true(packet_adapter.is_empty())
           let callback_json = @utf8.decode(callbacks.drain_window_json()) catch {
             _ => abort("unexpected invalid bridge callback drain json bytes")
           }

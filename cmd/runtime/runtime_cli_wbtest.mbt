@@ -185,15 +185,15 @@ test "runtime cli renders bundled launch-session json" {
     bridge_mode=NativeBridgeAsyncCapable,
   )
   assert_eq(async_bridge.exit_code, 0)
-  assert_true(async_bridge.output.contains("\"mode\":\"sync-only\""))
-  assert_true(async_bridge.output.contains("\"available\":false"))
+  assert_true(async_bridge.output.contains("\"mode\":\"async-capable\""))
+  assert_true(async_bridge.output.contains("\"available\":true"))
   assert_true(
     async_bridge.output.contains("\"requestedBridgeMode\":\"async-capable\""),
   )
   assert_true(
-    async_bridge.output.contains("\"effectiveBridgeMode\":\"sync-only\""),
+    async_bridge.output.contains("\"effectiveBridgeMode\":\"async-capable\""),
   )
-  assert_true(async_bridge.output.contains("\"bridgeModeGranted\":false"))
+  assert_true(async_bridge.output.contains("\"bridgeModeGranted\":true"))
   assert_true(
     async_bridge.output.contains(
       "\"callback\":\"NativeRuntime::bridge_async_dispatch_callback\"",

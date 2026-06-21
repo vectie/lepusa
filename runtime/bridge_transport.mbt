@@ -71,6 +71,9 @@ pub struct NativeBridgeLoopCallbacks {
 }
 
 ///|
+let native_bridge_drain_request_prefix = "lepusa-drain-v1\n"
+
+///|
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
@@ -529,6 +532,14 @@ pub async fn NativeBridgeDispatchTask::complete(
 }
 
 ///|
+fn NativeBridgeDispatchTask::complete_sync(
+  self : NativeBridgeDispatchTask,
+  runtime : NativeRuntime,
+) -> NativeBridgeCompletion {
+  { task: self, dispatch: self.dispatch_sync(runtime) }
+}
+
+///|
 fn NativeBridgeDispatchTask::dispatch_sync(
   self : NativeBridgeDispatchTask,
   runtime : NativeRuntime,
@@ -907,6 +918,34 @@ pub async fn NativeBridgeWorkQueue::drain_result(
 }
 
 ///|
+pub fn NativeBridgeWorkQueue::drain_sync(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+) -> Array[NativeBridgeCompletion] {
+  let tasks = self.tasks.copy()
+  self.tasks.clear()
+  let completions : Array[NativeBridgeCompletion] = []
+  for task in tasks {
+    completions.push(task.complete_sync(runtime))
+  }
+  completions
+}
+
+///|
+pub fn NativeBridgeWorkQueue::drain_result_sync(
+  self : NativeBridgeWorkQueue,
+  runtime : NativeRuntime,
+) -> NativeBridgeDrainResult {
+  let pending_before = self.pending_count()
+  let completions = self.drain_sync(runtime)
+  NativeBridgeDrainResult::new(
+    pending_before~,
+    pending_after=self.pending_count(),
+    completions~,
+  )
+}
+
+///|
 pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
   [
     "{",
@@ -982,6 +1021,10 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_bytes(
   message : Bytes,
 ) -> Bytes {
   let input = @utf8.decode(message) catch { _ => "" }
+  match native_bridge_drain_request_window(input) {
+    Some(window_label) => return self.drain_window_packet_bytes(window_label~)
+    None => ()
+  }
   match self.runtime.bridge_handoff(input) {
     Ok(handoff) =>
       match handoff.immediate_dispatch() {
@@ -1028,6 +1071,25 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_callback(
   self : NativeBridgeLoopAdapter,
 ) -> (Bytes) -> Bytes {
   fn(message : Bytes) { self.handoff_packet_bytes(message) }
+}
+
+///|
+pub fn NativeBridgeLoopAdapter::drain_window_packet_bytes(
+  self : NativeBridgeLoopAdapter,
+  window_label~ : String,
+) -> Bytes {
+  let delivery = NativeBridgeLoopDelivery::from_result(window_label~, result={
+    immediate_script: "",
+    completions: self.queue.drain_sync(self.runtime),
+  })
+  @utf8.encode(
+    native_bridge_handoff_packet(
+      "immediate",
+      delivery.window_label(),
+      "",
+      operations=delivery.operations(),
+    ),
+  )
 }
 
 ///|
@@ -1188,6 +1250,20 @@ pub fn NativeBridgeLoopCallbacks::to_json(
 ///|
 fn native_bridge_drain_window_packet_callback(window_label : String) -> String {
   "bridge_loop_adapter().callbacks(\{window_label}).drain_window_packet"
+}
+
+///|
+pub fn native_bridge_drain_request_packet(window_label : String) -> Bytes {
+  @utf8.encode("\{native_bridge_drain_request_prefix}\{window_label}")
+}
+
+///|
+fn native_bridge_drain_request_window(input : String) -> String? {
+  if input.has_prefix(native_bridge_drain_request_prefix) {
+    Some(input[native_bridge_drain_request_prefix.length():].to_owned())
+  } else {
+    None
+  }
 }
 
 ///|

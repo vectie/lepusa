@@ -102,12 +102,12 @@ test "macos backend exposes wkwebview descriptor" {
   let capability = launch_capability()
   assert_true(capability.webview_creation())
   assert_true(capability.sync_bridge_evaluate())
-  assert_false(capability.async_bridge_drain())
+  assert_true(capability.async_bridge_drain())
   assert_eq(capability.max_webviews(), 0)
   assert_true(
     capability
     .async_bridge_drain_message()
-    .contains("async MoonBit-to-native callback ABI"),
+    .contains("packetized event-loop requests"),
   )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
@@ -301,7 +301,7 @@ test "macos backend prepares first webview load url" {
           assert_eq(bridge.sync_command_routes().length(), 0)
           assert_eq(bridge.async_command_routes().length(), 0)
           assert_false(bridge.requires_async_dispatch())
-          let session = plan.launch_session()
+          let session = plan.launch_session_with_capability(launch_capability())
           assert_eq(session.webviews().length(), 1)
           assert_eq(session.execution().startup_operations().length(), 3)
           assert_eq(session.service_supervisor().backend_name(), "macos")
@@ -325,19 +325,12 @@ test "macos backend marks async bridge routes" {
           assert_eq(async_routes.length(), 1)
           assert_eq(async_routes[0], "fs.readText")
           assert_true(bridge.requires_async_dispatch())
-          let session = plan.launch_session()
-          assert_false(session.can_launch())
+          let session = plan.launch_session_with_capability(launch_capability())
+          assert_true(session.can_launch())
+          assert_true(session.launch_blocker("macOS") is None)
           assert_true(
-            session
-            .launch_blocker("macOS")
-            .unwrap()
-            .contains("1 async command route"),
-          )
-          assert_true(
-            plan
-            .launch_blocker_with_capability("macOS", launch_capability())
-            .unwrap()
-            .contains("async MoonBit-to-native callback ABI"),
+            plan.launch_blocker_with_capability("macOS", launch_capability())
+            is None,
           )
         }
         Err(_) => abort("unexpected invalid async macOS run plan")
@@ -347,19 +340,18 @@ test "macos backend marks async bridge routes" {
 }
 
 ///|
-test "macos open-window launch reports unsupported async bridge routes" {
+test "macos open-window launch allows async bridge routes" {
   match runtime(async_bridge_test_host()) {
     Ok(runtime) =>
-      match run(runtime, mode=MacOSOpenWindow) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              assert_true(
-                message.contains("async MoonBit-to-native callback ABI"),
-              )
-            _ => abort("unexpected async macOS launch status")
-          }
-        Err(_) => abort("unexpected invalid async macOS run")
+      match prepare_run(runtime) {
+        Ok(plan) => {
+          assert_true(plan.bridge().requires_async_dispatch())
+          assert_true(
+            plan.launch_blocker_with_capability("macOS", launch_capability())
+            is None,
+          )
+        }
+        Err(_) => abort("unexpected invalid async macOS run plan")
       }
     Err(_) => abort("unexpected invalid async macOS runtime")
   }
@@ -511,10 +503,10 @@ test "macos backend prepares bundled runtime manifest" {
           assert_eq(async_routes.length(), 1)
           assert_eq(async_routes[0], "fs.writeText")
           assert_true(bridge.requires_async_dispatch())
-          let session = plan.launch_session()
+          let session = plan.launch_session_with_capability(launch_capability())
           assert_eq(session.webviews().length(), 1)
           assert_eq(session.execution().startup_operations().length(), 3)
-          assert_false(session.can_launch())
+          assert_true(session.can_launch())
           let supervisor = plan.service_supervisor_plan()
           assert_eq(supervisor.backend_name(), "macos")
           assert_eq(supervisor.webview_engine(), "WKWebView")
@@ -578,21 +570,23 @@ test "macos service executor reports native service failures" {
 }
 
 ///|
-test "macos bundled open-window launch reports unsupported async bridge routes" {
+test "macos bundled open-window launch allows async bridge routes" {
   match
     @bundled.BundledRuntimeManifest::parse(
       "/Example.app/Contents/Resources/lepusa/runtime.json",
       bundled_macos_manifest(),
     ) {
     Ok(manifest) =>
-      match run_bundled(manifest, mode=MacOSOpenWindow) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              assert_true(message.contains("1 async command route"))
-            _ => abort("unexpected bundled async macOS launch status")
-          }
-        Err(_) => abort("unexpected invalid bundled macOS launch")
+      match prepare_bundled_run(manifest) {
+        Ok(plan) => {
+          assert_true(plan.bridge().requires_async_dispatch())
+          assert_true(
+            plan
+            .launch_session_with_capability(launch_capability())
+            .can_launch(),
+          )
+        }
+        Err(_) => abort("unexpected invalid bundled macOS run plan")
       }
     Err(problem) => abort(problem)
   }

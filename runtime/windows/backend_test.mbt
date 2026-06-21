@@ -66,7 +66,7 @@ test "windows backend exposes webview2 descriptor" {
   assert_eq(preflight.dependency_available(), available())
   assert_true(preflight.webview_creation_loop())
   assert_true(preflight.sync_bridge_evaluate())
-  assert_false(preflight.async_bridge_drain())
+  assert_true(preflight.async_bridge_drain())
   assert_eq(preflight.can_launch(), available())
   assert_true(
     preflight.problem_kind() == "dependency" ||
@@ -82,12 +82,7 @@ test "windows backend exposes webview2 descriptor" {
     assert_true(preflight.problem().contains("WebView2"))
   }
   assert_true(preflight.sync_bridge_evaluate_problem() is None)
-  assert_true(
-    preflight
-    .async_bridge_drain_problem()
-    .unwrap()
-    .contains("event-loop callback ABI"),
-  )
+  assert_true(preflight.async_bridge_drain_problem() is None)
   assert_true(preflight.to_json().contains("\"canLaunch\":"))
   assert_true(preflight.to_json().contains("\"problemKind\":"))
   assert_true(preflight.to_json().contains("\"dependencyProblem\":"))
@@ -97,11 +92,13 @@ test "windows backend exposes webview2 descriptor" {
   let capability = launch_capability()
   assert_eq(capability.webview_creation(), available())
   assert_eq(capability.sync_bridge_evaluate(), available())
-  assert_false(capability.async_bridge_drain())
+  assert_true(capability.async_bridge_drain())
   assert_eq(capability.max_webviews(), 0)
   assert_true(capability.webview_creation_message().contains("WebView2"))
   assert_true(
-    capability.async_bridge_drain_message().contains("event-loop callback ABI"),
+    capability
+    .async_bridge_drain_message()
+    .contains("packetized event-loop requests"),
   )
   let execution = operation_executor().execute_all([
     @runtime.NativeExecutableOperation::evaluate_script(
@@ -272,21 +269,30 @@ test "windows backend prepares run plan and gates native launch" {
 }
 
 ///|
-test "windows async launch reports target blocker first" {
+test "windows async launch allows scheduler when target is available" {
   match runtime(async_test_host()) {
     Ok(runtime) =>
-      match launch(runtime) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              if available() {
-                assert_true(message.contains("async command route"))
-              } else {
-                assert_true(message.contains("WebView2"))
-              }
-            _ => abort("unexpected Windows async launch status")
+      match run(runtime) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          let session = result.launch_session(
+            bridge_mode=NativeBridgeAsyncCapable,
+          )
+          assert_true(session.can_launch())
+          assert_eq(
+            session.can_launch_with_capability(launch_capability()),
+            available(),
+          )
+          match
+            session.launch_blocker_with_capability(
+              "Windows",
+              launch_capability(),
+            ) {
+            Some(message) => assert_true(message.contains("WebView2"))
+            None => assert_true(available())
           }
-        Err(_) => abort("unexpected invalid Windows async launch plan")
+        }
+        Err(_) => abort("unexpected invalid Windows async run plan")
       }
     Err(_) => abort("unexpected invalid Windows async native runtime")
   }
@@ -296,18 +302,29 @@ test "windows async launch reports target blocker first" {
       windows_async_bundled_manifest(),
     ) {
     Ok(manifest) =>
-      match launch_bundled(manifest) {
-        Ok(result) =>
-          match result.status() {
-            RunUnsupported(message) =>
-              if available() {
-                assert_true(message.contains("async command route"))
-              } else {
-                assert_true(message.contains("WebView2"))
+      match run_bundled(manifest) {
+        Ok(result) => {
+          assert_true(result.status() is RunPrepared)
+          match result.launch_session(bridge_mode=NativeBridgeAsyncCapable) {
+            Ok(session) => {
+              assert_true(session.can_launch())
+              assert_eq(
+                session.can_launch_with_capability(launch_capability()),
+                available(),
+              )
+              match
+                session.launch_blocker_with_capability(
+                  "Windows",
+                  launch_capability(),
+                ) {
+                Some(message) => assert_true(message.contains("WebView2"))
+                None => assert_true(available())
               }
-            _ => abort("unexpected Windows bundled async launch status")
+            }
+            Err(problem) => abort(problem)
           }
-        Err(_) => abort("unexpected invalid Windows bundled async launch plan")
+        }
+        Err(_) => abort("unexpected invalid Windows bundled async run plan")
       }
     Err(problem) => abort(problem)
   }

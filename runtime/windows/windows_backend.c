@@ -1698,6 +1698,10 @@ static void lepusa_windows_apply_navigation_from_handoff_packet(
   moonbit_bytes_t packet
 );
 
+static void lepusa_windows_process_bridge_drain_requests(
+  LepusaWindowsWebView2Context *context
+);
+
 static void lepusa_windows_execute_script_bytes(
   LepusaWindowsWindowSlot *slot,
   moonbit_bytes_t script
@@ -1762,6 +1766,7 @@ static HRESULT STDMETHODCALLTYPE lepusa_windows_web_message_invoke(
   lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
   lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
   lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
+  lepusa_windows_process_bridge_drain_requests(context);
   return S_OK;
 }
 
@@ -2209,6 +2214,61 @@ static void lepusa_windows_apply_navigation_from_handoff_packet(
     }
     slot->webview->lpVtbl->Navigate(slot->webview, url);
     free(url);
+  }
+}
+
+static moonbit_bytes_t lepusa_windows_bridge_drain_request_message(
+  const char *window_label
+) {
+  const char *prefix = "lepusa-drain-v1\n";
+  size_t prefix_len = strlen(prefix);
+  size_t label_len = window_label == NULL ? 0 : strlen(window_label);
+  moonbit_bytes_t bytes = moonbit_make_bytes(
+    (int32_t)(prefix_len + label_len),
+    0
+  );
+  memcpy(bytes, prefix, prefix_len);
+  if (label_len > 0) {
+    memcpy(bytes + prefix_len, window_label, label_len);
+  }
+  return bytes;
+}
+
+static void lepusa_windows_process_bridge_drain_requests(
+  LepusaWindowsWebView2Context *context
+) {
+  if (context == NULL ||
+      context->call_dispatch == NULL ||
+      context->dispatch == NULL ||
+      context->drain_request_count <= 0) {
+    return;
+  }
+  LepusaWindowsBridgeDrainRequest requests[32];
+  int request_count = context->drain_request_count;
+  if (request_count > 32) {
+    request_count = 32;
+  }
+  for (int i = 0; i < request_count; i++) {
+    requests[i] = context->drain_requests[i];
+  }
+  context->drain_request_count = 0;
+  for (int i = 0; i < request_count; i++) {
+    moonbit_bytes_t request = lepusa_windows_bridge_drain_request_message(
+      requests[i].window_label
+    );
+    moonbit_bytes_t packet = context->call_dispatch(context->dispatch, request);
+    moonbit_bytes_t script =
+      lepusa_windows_immediate_script_from_handoff_packet(packet);
+    LepusaWindowsWindowSlot *slot = lepusa_windows_find_window_slot(
+      context,
+      requests[i].window_label,
+      (int32_t)strlen(requests[i].window_label)
+    );
+    lepusa_windows_execute_script_bytes(slot, script);
+    lepusa_windows_apply_evaluate_scripts_from_handoff_packet(context, packet);
+    lepusa_windows_apply_open_windows_from_handoff_packet(context, packet);
+    lepusa_windows_apply_navigation_from_handoff_packet(context, packet);
+    lepusa_windows_apply_close_windows_from_handoff_packet(context, packet);
   }
 }
 
