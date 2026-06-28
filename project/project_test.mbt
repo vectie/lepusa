@@ -222,6 +222,7 @@ test "project config parses plugin lifecycle hooks" {
 }
 
 ///|
+#cfg(target="native")
 async test "project config loads file relative resources" {
   let root = "/tmp/lepusa-project-load-\{@async.now().to_int()}"
   @fs.mkdir(root + "/dist", recursive=true, permission=0o755)
