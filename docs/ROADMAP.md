@@ -14,7 +14,7 @@
 
 ## Milestone 1: Rabbita-Style Desktop App
 
-- Add `cell_with_dispatch`, `new`, `with_startup`, `window`, validation, and
+- Add `cell_with_emit`, `new`, `with_startup`, `window`, validation, and
   `launch_plan` APIs with syntax close to Rabbita.
 - Add `@lepusa/ui` HTML node and attribute helpers plus `UiProgram`
   model/update/view state flow for compact MoonBit-authored desktop views.

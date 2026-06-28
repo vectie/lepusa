@@ -25,7 +25,7 @@ MoonBit app code
 
 The first implementation slice already owns the public MoonBit foundation:
 
-- Rabbita-style `cell_with_dispatch` and `new(cell)` app construction
+- Rabbita-style `cell_with_emit` and `new(cell)` app construction
 - `@lepusa/ui` HTML helpers plus `UiProgram` model/update/view state flow for
   compact MoonBit-authored desktop views
 - `WindowConfig`, `Source`, `Plugin`, `Capability`, `Cmd`, `Event`, and typed
@@ -54,14 +54,13 @@ The common authoring path is intentionally small:
 ```moonbit nocheck
 ///|
 fn main {
-  let (dispatch, cell) = @lepusa.cell_with_dispatch(
-    model=init_model(),
-    update~,
-    view=(dispatch, model) => render_app(dispatch, model),
-  )
+  let (emit, cell) = @lepusa.cell_with_emit(model=init_model(), update~, view=(
+    emit,
+    model,
+  ) => render_app(emit, model))
   let app = @lepusa.new(cell)
-    .with_startup(load_initial_state(dispatch))
-    .on_shutdown(persist_state(dispatch))
+    .with_startup(load_initial_state(emit))
+    .on_shutdown(persist_state(emit))
     .window(title="Hello Lepusa", width=1000, height=720)
   match app.launch_plan() {
     Ok(plan) => boot_native_runtime(plan)
@@ -75,7 +74,7 @@ returning root `@lepusa.Html` values:
 
 ```moonbit nocheck
 ///|
-fn render_app(dispatch, model) {
+fn render_app(emit, model) {
   @ui.main_([
     @ui.h1([@ui.text("Counter")]),
     @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),

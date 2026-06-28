@@ -1,5 +1,5 @@
 ///|
-pub type Dispatch[Msg] = (Msg) -> Cmd
+pub type Emit[Msg] = (Msg) -> Cmd
 
 ///|
 pub struct Cell {
@@ -31,17 +31,17 @@ pub fn Cell::html(self : Cell) -> Html {
 }
 
 ///|
-pub fn[Model, Msg] cell_with_dispatch(
+pub fn[Model, Msg] cell_with_emit(
   model~ : Model,
   update~ : (Msg, Model) -> (Model, Cmd),
-  view~ : (Dispatch[Msg], Model) -> Html,
-) -> (Dispatch[Msg], Cell) {
-  let dispatch : Dispatch[Msg] = fn(msg) {
+  view~ : (Emit[Msg], Model) -> Html,
+) -> (Emit[Msg], Cell) {
+  let emit : Emit[Msg] = fn(msg) {
     let (_, command) = update(msg, model)
     command
   }
-  let html = view(dispatch, model)
-  (dispatch, Cell::new(html~))
+  let html = view(emit, model)
+  (emit, Cell::new(html~))
 }
 
 ///|

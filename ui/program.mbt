@@ -1,11 +1,11 @@
 ///|
-pub type ViewDispatch[Msg] = (Msg) -> Attr
+pub type ViewEmit[Msg] = (Msg) -> Attr
 
 ///|
 pub type UiUpdate[Model, Msg] = (Msg, Model) -> (Model, @lepusa.Cmd)
 
 ///|
-pub type UiView[Model, Msg] = (ViewDispatch[Msg], Model) -> @lepusa.Html
+pub type UiView[Model, Msg] = (ViewEmit[Msg], Model) -> @lepusa.Html
 
 ///|
 pub type UiEncode[Msg] = (Msg) -> String

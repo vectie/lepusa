@@ -249,13 +249,13 @@ fn project_main_mbt() -> String {
     #|}
     #|
     #|///|
-    #|fn view(dispatch : @ui.ViewDispatch[Msg], model : Model) -> @lepusa.Html {
+    #|fn view(emit : @ui.ViewEmit[Msg], model : Model) -> @lepusa.Html {
     #|  @ui.main_([
     #|    @ui.h1([@ui.text("Lepusa App")]),
     #|    @ui.p([@ui.text("Count: \{model.count}")], attrs=[@ui.class_name("metric")]),
     #|    @ui.p([@ui.text("Starting")], attrs=[@ui.id("status")]),
-    #|    @ui.button("Increment", attrs=[dispatch(Increment)]),
-    #|    @ui.button("Reset", attrs=[dispatch(Reset)]),
+    #|    @ui.button("Increment", attrs=[emit(Increment)]),
+    #|    @ui.button("Reset", attrs=[emit(Reset)]),
     #|    @ui.text_listener("ready", "#status"),
     #|  ])
     #|}

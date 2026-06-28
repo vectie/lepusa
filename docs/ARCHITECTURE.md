@@ -42,14 +42,14 @@ shared native utility packages
 Lepusa should mirror Rabbita's application style for MoonBit UI:
 
 ```moonbit nocheck
-let (dispatch, cell) = @lepusa.cell_with_dispatch(
+let (emit, cell) = @lepusa.cell_with_emit(
   model=init_model(),
   update~,
-  view=(dispatch, model) => render_app(dispatch, model),
+  view=(emit, model) => render_app(emit, model),
 )
 let app = @lepusa.new(cell)
-  .with_startup(load_initial_state(dispatch))
-  .on_window_close_requested("main", persist_state(dispatch))
+  .with_startup(load_initial_state(emit))
+  .on_window_close_requested("main", persist_state(emit))
   .window(
     title="Example",
     width=1000,
@@ -133,9 +133,9 @@ pub type BundleConfig
 pub type BundlePlan
 pub type ProjectManifest
 pub type Html
-pub type Dispatch
+pub type Emit
 
-pub fn cell_with_dispatch(...) -> (Dispatch[Msg], Cell)
+pub fn cell_with_emit(...) -> (Emit[Msg], Cell)
 pub fn new(root : Cell) -> App
 pub fn App::with_startup(self : App, cmd : Cmd) -> App
 pub fn App::window(self : App, ...) -> App

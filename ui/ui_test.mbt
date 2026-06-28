@@ -91,14 +91,14 @@ fn update_counter(
 
 ///|
 fn view_counter(
-  dispatch : ViewDispatch[TestCounterMessage],
+  emit : ViewEmit[TestCounterMessage],
   count : Int,
 ) -> @lepusa.Html {
   main_([
     h1([text("Counter")]),
     p([text("Count: \{count}")], attrs=[id("count")]),
-    button("Increment", attrs=[dispatch(TestIncrement)]),
-    button("Decrement", attrs=[dispatch(TestDecrement)]),
+    button("Increment", attrs=[emit(TestIncrement)]),
+    button("Decrement", attrs=[emit(TestDecrement)]),
   ])
 }
 

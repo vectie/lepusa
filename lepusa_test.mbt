@@ -1,15 +1,15 @@
 ///|
-test "cell_with_dispatch keeps rabbita style authoring surface" {
-  let (dispatch, cell) = @lepusa.cell_with_dispatch(
+test "cell_with_emit keeps rabbita style authoring surface" {
+  let (emit, cell) = @lepusa.cell_with_emit(
     model=1,
     update=fn(message : String, model : Int) {
       (model + 1, @lepusa.Cmd::effect(message))
     },
-    view=fn(_dispatch, model) { @lepusa.Html::text("model \{model}") },
+    view=fn(_emit, model) { @lepusa.Html::text("model \{model}") },
   )
   assert_eq(cell.id(), "lepusa-root")
   assert_eq(cell.html().content(), "model 1")
-  assert_true(dispatch("load") is Effect("load"))
+  assert_true(emit("load") is Effect("load"))
 }
 
 ///|

@@ -45,11 +45,11 @@ test "compose a model update view program" {
         Increment => (count + 1, @lepusa.none)
       }
     },
-    view=fn(dispatch, count) {
+    view=fn(emit, count) {
       main_([
         h1([text("Counter")]),
         p([text("Count: \{count}")]),
-        button("Increment", attrs=[dispatch(Increment)]),
+        button("Increment", attrs=[emit(Increment)]),
       ])
     },
     encode=fn(message) {

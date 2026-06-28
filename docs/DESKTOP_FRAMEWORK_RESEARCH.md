@@ -17,26 +17,26 @@ The existing substantial MoonBit UI surfaces in the local sibling projects are
 Rabbita-based. The repeated pattern is:
 
 ```moonbit nocheck
-let (dispatch, cell) = @rabbita.cell_with_dispatch(
+let (emit, cell) = @rabbita.cell_with_emit(
   model=init_model(),
   update~,
-  view=(dispatch, model) => render_app(dispatch, model),
+  view=(emit, model) => render_app(emit, model),
 )
 let app = @rabbita.new(cell)
-app.with_init(load_initial_state(dispatch))
+app.with_init(load_initial_state(emit))
 app.mount("app")
 ```
 
 Lepusa should feel familiar to that style:
 
 ```moonbit nocheck
-let (dispatch, cell) = @lepusa.cell_with_dispatch(
+let (emit, cell) = @lepusa.cell_with_emit(
   model=init_model(),
   update~,
-  view=(dispatch, model) => render_app(dispatch, model),
+  view=(emit, model) => render_app(emit, model),
 )
 let app = @lepusa.new(cell)
-app.with_startup(load_initial_state(dispatch))
+app.with_startup(load_initial_state(emit))
 app.window(
   title="Example",
   width=1000,

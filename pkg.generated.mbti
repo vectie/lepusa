@@ -8,7 +8,7 @@ import {
 // Values
 pub fn capabilities_with_file_system_scopes(capabilities~ : Array[Capability], scopes~ : Array[FileSystemScope]) -> Array[Capability]
 
-pub fn[Model, Msg] cell_with_dispatch(model~ : Model, update~ : (Msg, Model) -> (Model, Cmd), view~ : ((Msg) -> Cmd, Model) -> Html) -> ((Msg) -> Cmd, Cell)
+pub fn[Model, Msg] cell_with_emit(model~ : Model, update~ : (Msg, Model) -> (Model, Cmd), view~ : ((Msg) -> Cmd, Model) -> Html) -> ((Msg) -> Cmd, Cell)
 
 pub fn new(Cell) -> App
 
@@ -1967,10 +1967,11 @@ pub type AsyncCommandHandler = async (String) -> Result[String, String]
 
 pub type CommandHandler = (String) -> Result[String, String]
 
-pub type Dispatch[Msg] = (Msg) -> Cmd
+pub type Emit[Msg] = (Msg) -> Cmd
 
 pub type OperationScopeResolver = (InvokeRequest) -> Result[OperationScope, String]
 
 pub type StreamCommandHandler = (String, StreamSink) -> Result[Unit, String]
 
 // Traits
+
