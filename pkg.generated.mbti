@@ -3,12 +3,27 @@ package "vectie/lepusa"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
 pub fn capabilities_with_file_system_scopes(capabilities~ : Array[Capability], scopes~ : Array[FileSystemScope]) -> Array[Capability]
 
 pub fn[Model, Msg] cell_with_emit(model~ : Model, update~ : (Msg, Model) -> (Model, Cmd), view~ : ((Msg) -> Cmd, Model) -> Html) -> ((Msg) -> Cmd, Cell)
+
+pub fn moonsuite_product_home() -> LepusaMoonSuiteProductHome
+
+pub fn moonsuite_product_id() -> String
+
+pub fn moonsuite_product_runtime_path() -> String
+
+pub fn moonsuite_product_service_path() -> String
+
+pub fn moonsuite_product_state_path() -> String
+
+pub fn moonsuite_product_tmp_path() -> String
+
+pub fn moonsuite_product_update_metadata_path() -> String
 
 pub fn new(Cell) -> App
 
@@ -860,6 +875,15 @@ pub fn LaunchPlan::plugins(Self) -> Array[Plugin]
 pub fn LaunchPlan::startup(Self) -> Cmd
 pub fn LaunchPlan::window_count(Self) -> Int
 pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
+
+pub(all) struct LepusaMoonSuiteProductHome {
+  product_id : String
+  state_path : String
+  service_path : String
+  runtime_path : String
+  update_metadata_path : String
+  tmp_path : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum LifecycleEvent {
   AppStarted
