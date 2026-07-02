@@ -156,8 +156,15 @@ test "auto launch native registry reports status without mutating host" {
     ),
     capabilities=[grant],
   )
-  assert_true(status.payload().unwrap_or("").contains("\"enabled\":"))
-  assert_true(status.payload().unwrap_or("").contains("\"native\":true"))
+  if native_available() {
+    assert_true(status.payload().unwrap_or("").contains("\"enabled\":"))
+    assert_true(status.payload().unwrap_or("").contains("\"native\":true"))
+  } else {
+    assert_eq(
+      status.error_message().unwrap_or(""),
+      "native auto launch is unavailable on this platform",
+    )
+  }
 }
 
 ///|

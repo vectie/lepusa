@@ -13,17 +13,29 @@ pub fn[Model, Msg] cell_with_emit(model~ : Model, update~ : (Msg, Model) -> (Mod
 
 pub fn moonsuite_product_home() -> LepusaMoonSuiteProductHome
 
+pub fn moonsuite_product_home_for_workspace_root(String) -> LepusaMoonSuiteProductHome
+
 pub fn moonsuite_product_id() -> String
 
 pub fn moonsuite_product_runtime_path() -> String
 
+pub fn moonsuite_product_runtime_path_for_workspace_root(String) -> String
+
 pub fn moonsuite_product_service_path() -> String
+
+pub fn moonsuite_product_service_path_for_workspace_root(String) -> String
 
 pub fn moonsuite_product_state_path() -> String
 
+pub fn moonsuite_product_state_path_for_workspace_root(String) -> String
+
 pub fn moonsuite_product_tmp_path() -> String
 
+pub fn moonsuite_product_tmp_path_for_workspace_root(String) -> String
+
 pub fn moonsuite_product_update_metadata_path() -> String
+
+pub fn moonsuite_product_update_metadata_path_for_workspace_root(String) -> String
 
 pub fn new(Cell) -> App
 

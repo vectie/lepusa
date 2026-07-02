@@ -1,6 +1,7 @@
 // Root Lepusa package configuration.
 
 import {
+  "vectie/moonlib/moonsuite",
   "moonbitlang/core/json",
 }
 
