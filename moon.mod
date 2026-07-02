@@ -8,7 +8,7 @@
 import {
   "moonbitlang/async@0.19.4",
   "moonbitlang/x@0.4.45",
-  "vectie/moonlib@0.1.6",
+  "vectie/moonlib@0.1.7",
 }
 
 name = "vectie/lepusa"
