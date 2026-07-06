@@ -8,6 +8,7 @@ are references to learn from, not runtime layers that app authors must carry.
 
 Start with:
 
+- [Documentation Guide](docs/README.md)
 - [Research Decision](docs/DESKTOP_FRAMEWORK_RESEARCH.md)
 - [Architecture Plan](docs/ARCHITECTURE.md)
 - [Roadmap](docs/ROADMAP.md)
