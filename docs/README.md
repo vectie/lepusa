@@ -19,7 +19,7 @@ Lepusa owns:
 
 Consumer products own product behavior, domain routes, schemas, state, service
 APIs, and user-facing workflows. Lepusa should not know what Moondesk,
-MoonStat, MoonRobo, or any other product means; it should know how to host and
+MoonGate, MoonRobo, or any other product means; it should know how to host and
 package them.
 
 ## Reading Order
