@@ -838,6 +838,7 @@ async test "macos bridge dispatch reports missing window" {
     Err(_) => abort("unexpected invalid macOS native runtime")
   }
 }
+
 ///|
 test "macOS bridge replies target the originating visible frame" {
   assert_true(frame_targeted_bridge_replies())

@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/core/json",
+  "vectie/lepusa",
+}
+
+options(
+  "native-stub": [ "browser_host_backend.c" ],
+)

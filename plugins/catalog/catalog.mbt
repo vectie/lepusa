@@ -125,8 +125,9 @@ pub fn plugin_names() -> Array[String] {
 ///|
 pub fn sync_plugin_names() -> Array[String] {
   [
-    "app", "autoLaunch", "clipboard", "deepLink", "localhost", "log", "menu", "notification",
-    "opener", "serviceDiscovery", "singleInstance", "store", "tray", "window", "windowState",
+    "app", "autoLaunch", "browserHost", "clipboard", "deepLink", "localhost", "log",
+    "menu", "notification", "opener", "serviceDiscovery", "singleInstance", "store",
+    "tray", "window", "windowState",
   ]
 }
 
@@ -135,6 +136,7 @@ fn catalog_plugins() -> Array[CatalogPlugin] {
   [
     { name: "app", load: fn() { @app.plugin() } },
     { name: "autoLaunch", load: fn() { @auto_launch.plugin() } },
+    { name: "browserHost", load: fn() { @browser_host.plugin() } },
     { name: "clipboard", load: fn() { @clipboard.plugin() } },
     { name: "deepLink", load: fn() { @deep_link.plugin() } },
     { name: "dialog", load: fn() { @dialog.plugin() } },
@@ -172,6 +174,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
     {
       name: "autoLaunch",
       register: fn(registry, _) { @auto_launch.register(registry) },
+    },
+    {
+      name: "browserHost",
+      register: fn(registry, _) { @browser_host.register(registry) },
     },
     {
       name: "fs",
