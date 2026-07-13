@@ -64,11 +64,20 @@ typedef const char *(*LepusaMsgSendCString)(void *, void *);
 typedef void (*LepusaMsgSendVoid)(void *, void *);
 typedef void (*LepusaMsgSendVoidId)(void *, void *, void *);
 typedef void (*LepusaMsgSendVoidIdId)(void *, void *, void *, void *);
+typedef void (*LepusaMsgSendVoidIdIdIdId)(
+  void *,
+  void *,
+  void *,
+  void *,
+  void *,
+  void *
+);
 typedef void (*LepusaMsgSendVoidInt)(void *, void *, int);
 typedef void (*LepusaMsgSendVoidPoint)(void *, void *, LepusaPoint);
 typedef void (*LepusaMsgSendVoidSize)(void *, void *, LepusaSize);
 typedef void (*LepusaMsgSendVoidULong)(void *, void *, unsigned long);
 typedef int (*LepusaMsgSendInt)(void *, void *);
+typedef int (*LepusaMsgSendIntId)(void *, void *, void *);
 typedef int (*LepusaMsgSendIntInt)(void *, void *, int);
 typedef unsigned long (*LepusaMsgSendULong)(void *, void *);
 typedef void *(*LepusaObjcGetClass)(const char *);
@@ -2968,15 +2977,42 @@ static void lepusa_script_message_handler(
   if (script != NULL &&
       target_webview != NULL &&
       Moonbit_array_length(script) > 0) {
-    lepusa_msg_void_id_id(
-      target_webview,
-      "evaluateJavaScript:completionHandler:",
-      lepusa_ns_string_from_range(
-        (const char *)script,
-        Moonbit_array_length(script)
-      ),
-      NULL
+    void *source_frame = message == NULL ? NULL : lepusa_msg_id(message, "frameInfo");
+    void *content_world_class = lepusa_cls("WKContentWorld");
+    void *page_world = content_world_class == NULL
+      ? NULL
+      : lepusa_msg_id(content_world_class, "pageWorld");
+    void *frame_selector = lepusa_sel(
+      "evaluateJavaScript:inFrame:inContentWorld:completionHandler:"
     );
+    int can_reply_in_source_frame = source_frame != NULL &&
+      page_world != NULL &&
+      ((LepusaMsgSendIntId)lepusa_objc_msg_send)(
+        target_webview,
+        lepusa_sel("respondsToSelector:"),
+        frame_selector
+      );
+    void *script_string = lepusa_ns_string_from_range(
+      (const char *)script,
+      Moonbit_array_length(script)
+    );
+    if (can_reply_in_source_frame) {
+      ((LepusaMsgSendVoidIdIdIdId)lepusa_objc_msg_send)(
+        target_webview,
+        frame_selector,
+        script_string,
+        source_frame,
+        page_world,
+        NULL
+      );
+    } else {
+      lepusa_msg_void_id_id(
+        target_webview,
+        "evaluateJavaScript:completionHandler:",
+        script_string,
+        NULL
+      );
+    }
   }
   lepusa_apply_operations_from_handoff_packet(context, packet);
   lepusa_process_bridge_drain_requests(context);

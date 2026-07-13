@@ -68,6 +68,7 @@ fn macos_webview_plan_from_spec(
     initialization_script=macos_initialization_script(
       spec.native_hook(),
       spec.initialization_scripts(),
+      spec.allowed_routes(),
     ),
   )
 }
@@ -111,6 +112,7 @@ fn macos_webview_plan_from_bundled(
     initialization_script=macos_initialization_script(
       webview.native_hook(),
       webview.initialization_scripts(),
+      webview.allowed_routes(),
     ),
   )
 }
@@ -416,8 +418,11 @@ fn run_plan(
 fn macos_initialization_script(
   native_hook : String,
   initialization_scripts : Array[String],
+  allowed_routes : Array[String],
 ) -> String {
-  let scripts : Array[String] = [macos_native_hook_script(native_hook)]
+  let scripts : Array[String] = [
+    macos_native_hook_script(native_hook, allowed_routes~),
+  ]
   for script in initialization_scripts {
     scripts.push(script)
   }
@@ -425,8 +430,18 @@ fn macos_initialization_script(
 }
 
 ///|
-fn macos_native_hook_script(hook : String) -> String {
-  @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS")
+fn macos_native_hook_script(
+  hook : String,
+  allowed_routes? : Array[String] = [],
+) -> String {
+  let browser_host_route_available = allowed_routes.contains(
+      "browserHost.execute",
+    ) &&
+    allowed_routes.contains("browserHost.complete") &&
+    allowed_routes.contains("browserHost.captureScreenshot")
+  let capabilities = "\nObject.defineProperty(globalThis,\"__lepusaCapabilities\",{value:Object.freeze({protocol:\"lepusa-native-capabilities-v1\",frameTargetedBridgeReplies:true,browserHostRouteAvailable:\{browser_host_route_available}}),configurable:false,writable:false});"
+  @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS") +
+  capabilities
 }
 
 ///|

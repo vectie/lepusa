@@ -1,9 +1,10 @@
 ///|
 test "catalog exposes official plugin declarations" {
   let names = plugin_names()
-  assert_eq(names.length(), 21)
+  assert_eq(names.length(), 22)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
+  assert_true(names.contains("browserHost"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
   assert_true(names.contains("dialog"))
@@ -26,6 +27,12 @@ test "catalog exposes official plugin declarations" {
   assert_true(plugin("app").unwrap().command_routes().contains("app.info"))
   assert_true(
     plugin("autoLaunch").unwrap().command_routes().contains("autoLaunch.status"),
+  )
+  assert_true(
+    plugin("browserHost")
+    .unwrap()
+    .command_routes()
+    .contains("browserHost.execute"),
   )
   assert_true(
     plugin("clipboard").unwrap().command_routes().contains("clipboard.readText"),
@@ -182,6 +189,7 @@ test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
   let registry = register(registry, "app")
   let registry = register(registry, "autoLaunch")
+  let registry = register(registry, "browserHost")
   let registry = register(registry, "clipboard")
   let registry = register(registry, "deepLink")
   let registry = register(registry, "dialog")
@@ -205,6 +213,7 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("app.setTheme"))
   assert_true(registry.contains("autoLaunch.status"))
   assert_true(registry.contains("autoLaunch.setEnabled"))
+  assert_true(registry.contains("browserHost.execute"))
   assert_true(registry.contains("clipboard.readText"))
   assert_true(registry.contains("deepLink.openUrl"))
   assert_true(registry.contains("dialog.message"))
@@ -232,9 +241,10 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
   let names = registered_plugin_names()
-  assert_eq(names.length(), 21)
+  assert_eq(names.length(), 22)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
+  assert_true(names.contains("browserHost"))
   assert_true(names.contains("clipboard"))
   assert_true(names.contains("deepLink"))
   assert_true(names.contains("dialog"))
