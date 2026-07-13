@@ -426,7 +426,9 @@ fn macos_initialization_script(
 
 ///|
 fn macos_native_hook_script(hook : String) -> String {
-  @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS")
+  let capabilities =
+    #|\nObject.defineProperty(globalThis,"__lepusaCapabilities",{value:Object.freeze({protocol:"lepusa-native-capabilities-v1",frameTargetedBridgeReplies:true}),configurable:false,writable:false});
+  @runtime.native_webkit_bridge_hook_script(hook, platform_name="macOS") + capabilities
 }
 
 ///|

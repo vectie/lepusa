@@ -126,3 +126,9 @@ fn wb_bundled_macos_manifest() -> String {
     #|}
   )
 }
+///|
+test "macOS injected bridge advertises frame-targeted replies" {
+  let script = macos_native_hook_script("__lepusaInvoke")
+  assert_true(script.contains("lepusa-native-capabilities-v1"))
+  assert_true(script.contains("frameTargetedBridgeReplies:true"))
+}

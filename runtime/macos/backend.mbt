@@ -18,6 +18,11 @@ pub fn available() -> Bool {
 }
 
 ///|
+pub fn frame_targeted_bridge_replies() -> Bool {
+  true
+}
+
+///|
 pub fn detect() -> Result[@runtime.NativeBackend, String] {
   if available() {
     Ok(backend())
