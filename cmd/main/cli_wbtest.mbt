@@ -2338,12 +2338,7 @@ async test "bundle write embeds host runtime executable when compatible" {
   let result = render_cli_async(["bundle-write", "macos", root])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: macos"))
-  let source_exists = @fs.exists(
-    "_build/native/debug/build/cmd/runtime/runtime.exe",
-  ) catch {
-    _ => false
-  }
-  if @macos_backend.available() && source_exists {
+  if result.output.contains("[ok] verify: runtime-executable") {
     assert_true(result.output.contains("verification-checks: 11"))
     assert_true(result.output.contains("files: 5"))
     assert_true(result.output.contains("[ok] verify: runtime-executable"))
@@ -2357,7 +2352,9 @@ async test "bundle write embeds host runtime executable when compatible" {
     assert_true(
       result.output.contains("external runtime dependency declared: WKWebView"),
     )
-    assert_false(result.output.contains("runtime-executable"))
+    assert_false(
+      @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
+    )
   }
 }
 

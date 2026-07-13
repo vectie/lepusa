@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "vectie/lepusa/plugins/browser_host"
+
+import {
+  "vectie/lepusa",
+}
+
+// Values
+pub fn capability(name? : String) -> @lepusa.Capability
+
+pub fn capability_for_window(String, name? : String) -> @lepusa.Capability
+
+pub fn plugin() -> @lepusa.Plugin
+
+pub fn register(@lepusa.CommandRegistry, state? : BrowserHostState) -> @lepusa.CommandRegistry
+
+pub fn registry(state? : BrowserHostState) -> @lepusa.CommandRegistry
+
+// Errors
+
+// Types and methods
+pub struct BrowserHostState {
+  pending : Map[String, String]
+  terminal : Map[String, String]
+}
+pub fn BrowserHostState::new() -> Self
+
+// Type aliases
+
+// Traits
+
