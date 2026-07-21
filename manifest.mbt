@@ -9,6 +9,7 @@ pub struct ProjectManifest {
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
@@ -24,6 +25,7 @@ pub fn ProjectManifest::new(
   lifecycle_hooks? : Array[LifecycleHook] = [],
   runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
   icon_path? : String,
+  resource_sources? : Array[BundleResourceSource] = [],
   runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
   signing? : SigningConfig = SigningConfig::new(),
 ) -> ProjectManifest {
@@ -37,6 +39,7 @@ pub fn ProjectManifest::new(
     lifecycle_hooks,
     runtime,
     icon_path,
+    resource_sources,
     runtime_dependency_sources,
     signing,
   }
@@ -86,6 +89,13 @@ pub fn ProjectManifest::runtime_dependency_sources(
   self : ProjectManifest,
 ) -> Array[BundleRuntimeDependencySource] {
   self.runtime_dependency_sources.copy()
+}
+
+///|
+pub fn ProjectManifest::resource_sources(
+  self : ProjectManifest,
+) -> Array[BundleResourceSource] {
+  self.resource_sources.copy()
 }
 
 ///|
@@ -194,6 +204,16 @@ pub fn ProjectManifest::with_runtime_dependency_source(
 }
 
 ///|
+pub fn ProjectManifest::with_resource_source(
+  self : ProjectManifest,
+  source : BundleResourceSource,
+) -> ProjectManifest {
+  let resource_sources = self.resource_sources.copy()
+  resource_sources.push(source)
+  { ..self, resource_sources, }
+}
+
+///|
 pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
   let problems = self.metadata.validate()
   for problem in self.runtime.validate() {
@@ -245,6 +265,7 @@ pub fn ProjectManifest::validate(self : ProjectManifest) -> Array[String] {
     Some("") => problems.push("app icon path must not be empty")
     _ => ()
   }
+  validate_bundle_resource_sources(self.resource_sources, problems)
   validate_runtime_dependency_sources(self.runtime_dependency_sources, problems)
   for problem in self.signing.validate() {
     problems.push(problem)
@@ -323,6 +344,7 @@ pub fn ProjectManifest::bundle_plan(
             self.metadata,
             target~,
             icon_path~,
+            resource_sources=self.resource_sources,
             runtime_dependency_sources=self.runtime_dependency_sources,
             signing=self.signing,
           )
@@ -330,6 +352,7 @@ pub fn ProjectManifest::bundle_plan(
           BundleConfig::new(
             self.metadata,
             target~,
+            resource_sources=self.resource_sources,
             runtime_dependency_sources=self.runtime_dependency_sources,
             signing=self.signing,
           )

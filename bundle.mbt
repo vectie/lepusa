@@ -61,6 +61,7 @@ pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
@@ -70,20 +71,86 @@ pub fn BundleConfig::new(
   metadata : AppMetadata,
   target? : BundleTarget = MacOS,
   icon_path? : String,
+  resource_sources? : Array[BundleResourceSource] = [],
   runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
   signing? : SigningConfig = SigningConfig::new(),
 ) -> BundleConfig {
-  { metadata, target, icon_path, runtime_dependency_sources, signing }
+  {
+    metadata,
+    target,
+    icon_path,
+    resource_sources,
+    runtime_dependency_sources,
+    signing,
+  }
 }
 
 ///|
 pub fn BundleConfig::validate(self : BundleConfig) -> Array[String] {
   let problems = self.metadata.validate()
+  validate_bundle_resource_sources(self.resource_sources, problems)
   validate_runtime_dependency_sources(self.runtime_dependency_sources, problems)
   for problem in self.signing.validate() {
     problems.push(problem)
   }
   problems
+}
+
+///|
+pub struct BundleResourceSource {
+  source_path : String
+  path : String
+  executable : Bool
+} derive(Debug, Eq)
+
+///|
+pub fn BundleResourceSource::new(
+  source_path~ : String,
+  path~ : String,
+  executable? : Bool = false,
+) -> BundleResourceSource {
+  { source_path, path, executable }
+}
+
+///|
+pub fn BundleResourceSource::source_path(self : BundleResourceSource) -> String {
+  self.source_path
+}
+
+///|
+pub fn BundleResourceSource::path(self : BundleResourceSource) -> String {
+  self.path
+}
+
+///|
+pub fn BundleResourceSource::executable(self : BundleResourceSource) -> Bool {
+  self.executable
+}
+
+///|
+fn validate_bundle_resource_sources(
+  sources : Array[BundleResourceSource],
+  problems : Array[String],
+) -> Unit {
+  let paths : Array[String] = []
+  for source in sources {
+    if source.source_path().trim().is_empty() {
+      problems.push("bundle resource source path must not be empty")
+    }
+    let path = source.path().trim().to_owned()
+    if path.is_empty() {
+      problems.push("bundle resource path must not be empty")
+    } else if path.has_prefix("/") ||
+      path.has_prefix("\\") ||
+      path.split("/").contains("..") ||
+      path.split("\\").contains("..") {
+      problems.push("bundle resource path must stay inside the bundle: \{path}")
+    } else if paths.contains(path) {
+      problems.push("bundle resource path must be unique: \{path}")
+    } else {
+      paths.push(path)
+    }
+  }
 }
 
 ///|
@@ -145,6 +212,7 @@ pub struct BundlePlan {
   executable_name : String
   bundle_name : String
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Debug, Eq)
@@ -153,6 +221,7 @@ pub struct BundlePlan {
 pub(all) enum BundleResourceKind {
   IconResource
   AssetResource
+  ExecutableResource
 } derive(Debug, Eq)
 
 ///|
@@ -207,6 +276,7 @@ pub fn BundleResourceKind::name(self : BundleResourceKind) -> String {
   match self {
     IconResource => "icon"
     AssetResource => "asset"
+    ExecutableResource => "executable"
   }
 }
 
@@ -302,7 +372,10 @@ pub fn BundlePlan::runtime_dependency_sources(
 
 ///|
 pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
-  let resources = self.asset_resources()
+  let resources = self.configured_resources()
+  for resource in self.asset_resources() {
+    resources.push(resource)
+  }
   match self.icon_path {
     Some(source_path) =>
       resources.push(
@@ -315,6 +388,37 @@ pub fn BundlePlan::resources(self : BundlePlan) -> Array[BundleResource] {
     None => ()
   }
   resources
+}
+
+///|
+fn BundlePlan::configured_resources(self : BundlePlan) -> Array[BundleResource] {
+  self.resource_sources.map(source => {
+    let kind = if source.executable() {
+      ExecutableResource
+    } else {
+      AssetResource
+    }
+    BundleResource::new(
+      kind~,
+      source_path=source.source_path(),
+      path=if source.executable() {
+        self.executable_resource_path(source.path())
+      } else {
+        self.shared_path(source.path())
+      },
+    )
+  })
+}
+
+///|
+fn BundlePlan::executable_resource_path(
+  self : BundlePlan,
+  path : String,
+) -> String {
+  match self.target {
+    MacOS => "\{self.bundle_name}/Contents/MacOS/\{path}"
+    Windows | Linux => "\{self.executable_name}/\{path}"
+  }
 }
 
 ///|
@@ -507,6 +611,7 @@ pub fn BundleConfig::plan(
       executable_name,
       bundle_name: executable_name + extension,
       icon_path: self.icon_path,
+      resource_sources: self.resource_sources.copy(),
       runtime_dependency_sources: self.runtime_dependency_sources.copy(),
       signing: self.signing,
     })

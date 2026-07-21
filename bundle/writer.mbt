@@ -741,6 +741,7 @@ async fn verify_resource(
 ) -> BundleWriteCheck {
   let ok = match resource.kind() {
     AssetResource => @fs.exists(path) catch { _ => false }
+    ExecutableResource => @xfs.is_file(path) catch { _ => false }
     _ => @xfs.is_file(path) catch { _ => false }
   }
   BundleWriteCheck::new(
@@ -759,6 +760,18 @@ async fn copy_bundle_resource(
 ) -> Unit {
   if resource.kind() is AssetResource {
     copy_bundle_asset_directory(resource.source_path(), destination, problems)
+    return
+  }
+  if resource.kind() is ExecutableResource {
+    copy_bundle_file(resource.source_path(), destination, problems)
+    if problems.is_empty() {
+      @fs.chmod(destination, 0o755) catch {
+        error =>
+          problems.push(
+            "could not mark bundle executable \{destination}: \{error}",
+          )
+      }
+    }
     return
   }
   let content = @fs.read_file(resource.source_path()) catch {

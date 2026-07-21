@@ -508,12 +508,20 @@ static int lepusa_try_http_ready(
     }
     if (connected) {
       char request[1024];
+      char authority[320];
+      snprintf(
+        authority,
+        sizeof(authority),
+        strchr(host, ':') == NULL ? "%s:%s" : "[%s]:%s",
+        host,
+        port
+      );
       snprintf(
         request,
         sizeof(request),
         "GET %s HTTP/1.0\r\nHost: %s\r\nConnection: close\r\n\r\n",
         path,
-        host
+        authority
       );
       (void)send(fd, request, strlen(request), 0);
       char response[64];

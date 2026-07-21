@@ -27,6 +27,50 @@ fn project_runtime_dependency_sources_from_object(
 }
 
 ///|
+fn project_bundle_resource_sources_from_object(
+  object : Map[String, Json],
+  base_dir~ : String,
+  problems : Array[String],
+) -> Array[@lepusa.BundleResourceSource] {
+  let sources : Array[@lepusa.BundleResourceSource] = []
+  match optional_config_array(object, "bundleResources") {
+    Some(items) =>
+      for item in items {
+        match item {
+          Object(resource) => {
+            let source_path = match optional_config_string(resource, "source") {
+              Some(path) => config_path(base_dir, path)
+              None => {
+                problems.push("project bundle resource source is required")
+                ""
+              }
+            }
+            let path = match optional_config_string(resource, "path") {
+              Some(path) => path
+              None => {
+                problems.push("project bundle resource path is required")
+                ""
+              }
+            }
+            sources.push(
+              @lepusa.BundleResourceSource::new(
+                source_path~,
+                path~,
+                executable=optional_config_bool(resource, "executable").unwrap_or(
+                  false,
+                ),
+              ),
+            )
+          }
+          _ => problems.push("project bundleResources entries must be objects")
+        }
+      }
+    None => ()
+  }
+  sources
+}
+
+///|
 fn runtime_dependency_source_from_object(
   object : Map[String, Json],
   base_dir~ : String,

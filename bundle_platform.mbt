@@ -9,7 +9,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
         ),
         BundleFile::new(
           path="\{self.bundle_name}/Contents/MacOS/\{self.executable_name}",
-          content=macos_launcher(),
+          content=self.macos_launcher(),
           executable=true,
         ),
       ]
@@ -25,7 +25,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
         ),
         BundleFile::new(
           path="\{self.executable_name}/\{self.executable_name}.cmd",
-          content=windows_launcher(),
+          content=self.windows_launcher(),
         ),
       ]
     Linux =>
@@ -36,7 +36,7 @@ fn BundlePlan::platform_files(self : BundlePlan) -> Array[BundleFile] {
         ),
         BundleFile::new(
           path="\{self.executable_name}/\{self.executable_name}",
-          content=linux_launcher(),
+          content=self.linux_launcher(),
           executable=true,
         ),
       ]
@@ -97,7 +97,8 @@ fn BundlePlan::desktop_entry(self : BundlePlan) -> String {
 }
 
 ///|
-fn macos_launcher() -> String {
+fn BundlePlan::macos_launcher(self : BundlePlan) -> String {
+  let identifier = self.identifier().shell_double_quote_escape()
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -105,6 +106,12 @@ fn macos_launcher() -> String {
     #|if [ ! -x "$RUNTIME" ]; then
     #|  RUNTIME=lepusa-runtime
     #|fi
+    #|export LEPUSA_APP_DIR="$APP_DIR"
+    #|export LEPUSA_RESOURCE_DIR="$APP_DIR/Resources"
+    #|export LEPUSA_APP_DATA_DIR="${HOME}/Library/Application Support/__LEPUSA_IDENTIFIER__"
+    #|export PATH="$APP_DIR/MacOS:$PATH"
+    #|mkdir -p "$LEPUSA_APP_DATA_DIR" || exit 1
+    #|cd "$LEPUSA_RESOURCE_DIR" || exit 1
     #|cleanup() {
     #|  trap - INT TERM HUP
     #|  if [ -n "${RUNTIME_PID:-}" ]; then
@@ -120,19 +127,26 @@ fn macos_launcher() -> String {
     #|trap - INT TERM HUP
     #|exit "$STATUS"
     #|
-  )
+  ).replace_all(old="__LEPUSA_IDENTIFIER__", new=identifier)
 }
 
 ///|
-fn windows_launcher() -> String {
+fn BundlePlan::windows_launcher(self : BundlePlan) -> String {
+  let identifier = self.identifier().replace_all(old="%", new="%%")
   (
     #|@echo off
     #|set "APP_DIR=%~dp0"
     #|set "RUNTIME=%APP_DIR%lepusa-runtime.exe"
     #|if not exist "%RUNTIME%" set "RUNTIME=lepusa-runtime.exe"
+    #|set "LEPUSA_APP_DIR=%APP_DIR%"
+    #|set "LEPUSA_RESOURCE_DIR=%APP_DIR%"
+    #|set "LEPUSA_APP_DATA_DIR=%LOCALAPPDATA%\__LEPUSA_IDENTIFIER__"
+    #|set "PATH=%APP_DIR%;%PATH%"
+    #|if not exist "%LEPUSA_APP_DATA_DIR%" mkdir "%LEPUSA_APP_DATA_DIR%"
+    #|cd /d "%LEPUSA_RESOURCE_DIR%"
     #|"%RUNTIME%" launch --manifest "%APP_DIR%lepusa\runtime.json" %*
     #|
-  )
+  ).replace_all(old="__LEPUSA_IDENTIFIER__", new=identifier)
 }
 
 ///|
@@ -248,7 +262,8 @@ fn BundlePlan::windows_native_launcher_source(self : BundlePlan) -> String {
 }
 
 ///|
-fn linux_launcher() -> String {
+fn BundlePlan::linux_launcher(self : BundlePlan) -> String {
+  let identifier = self.identifier().shell_double_quote_escape()
   (
     #|#!/bin/sh
     #|APP_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -256,6 +271,12 @@ fn linux_launcher() -> String {
     #|if [ ! -x "$RUNTIME" ]; then
     #|  RUNTIME=lepusa-runtime
     #|fi
+    #|export LEPUSA_APP_DIR="$APP_DIR"
+    #|export LEPUSA_RESOURCE_DIR="$APP_DIR"
+    #|export LEPUSA_APP_DATA_DIR="${XDG_DATA_HOME:-${HOME}/.local/share}/__LEPUSA_IDENTIFIER__"
+    #|export PATH="$APP_DIR:$PATH"
+    #|mkdir -p "$LEPUSA_APP_DATA_DIR" || exit 1
+    #|cd "$LEPUSA_RESOURCE_DIR" || exit 1
     #|cleanup() {
     #|  trap - INT TERM HUP
     #|  if [ -n "${RUNTIME_PID:-}" ]; then
@@ -271,7 +292,7 @@ fn linux_launcher() -> String {
     #|trap - INT TERM HUP
     #|exit "$STATUS"
     #|
-  )
+  ).replace_all(old="__LEPUSA_IDENTIFIER__", new=identifier)
 }
 
 ///|
@@ -291,4 +312,13 @@ fn String::c_string_escape(self : String) -> String {
   .replace_all(old="\"", new="\\\"")
   .replace_all(old="\n", new="\\n")
   .replace_all(old="\r", new="\\r")
+}
+
+///|
+fn String::shell_double_quote_escape(self : String) -> String {
+  self
+  .replace_all(old="\\", new="\\\\")
+  .replace_all(old="\"", new="\\\"")
+  .replace_all(old="$", new="\\$")
+  .replace_all(old="`", new="\\`")
 }
