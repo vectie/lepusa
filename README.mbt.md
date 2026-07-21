@@ -363,6 +363,54 @@ under `resources`, and `@lepusa/bundle.write_plan` copies them as file data
 next to generated bundle files without re-reading project configuration.
 `lepusa bundle-write` is a thin CLI wrapper over that package.
 
+Projects can also declare portable runtime assets and sidecar executables in
+`lepusa.json`. Non-executable entries are placed in the target's shared
+resource directory; executable entries are placed beside `lepusa-runtime`,
+retain executable permissions, and are available to local-service commands on
+`PATH`:
+
+```json
+{
+  "bundleResources": [
+    { "source": "public", "path": "public" },
+    {
+      "source": "_build/native/release/build/cmd/server/server.exe",
+      "path": "local-server",
+      "executable": true
+    }
+  ]
+}
+```
+
+Generated launchers expose `LEPUSA_APP_DIR`, `LEPUSA_RESOURCE_DIR`, and
+`LEPUSA_APP_DATA_DIR`, prepend the bundled executable directory to `PATH`, and
+launch from the shared resource directory. This keeps application resources
+read-only while giving sidecars a stable per-user data location.
+
+Projects can also declare portable runtime assets and sidecar executables in
+`lepusa.json`. Non-executable entries are placed in the target's shared
+resource directory; executable entries are placed beside `lepusa-runtime`,
+retain executable permissions, and are available to local-service commands on
+`PATH`:
+
+```json
+{
+  "bundleResources": [
+    { "source": "public", "path": "public" },
+    {
+      "source": "_build/native/release/build/cmd/server/server.exe",
+      "path": "local-server",
+      "executable": true
+    }
+  ]
+}
+```
+
+Generated launchers expose `LEPUSA_APP_DIR`, `LEPUSA_RESOURCE_DIR`, and
+`LEPUSA_APP_DATA_DIR`, prepend the bundled executable directory to `PATH`, and
+launch from the shared resource directory. This keeps application resources
+read-only while giving sidecars a stable per-user data location.
+
 `@lepusa/plugins/log` is the first official plugin package. It declares
 `log.write`, provides scoped capability helpers, and can register a command
 handler backed by an in-memory `LogBuffer`:

@@ -1819,6 +1819,55 @@ test "project config parses bundle icon resources" {
 }
 
 ///|
+test "project config plans portable resources and sidecar executables" {
+  let config =
+    #|{
+    #|  "identifier": "dev.local.sidecar",
+    #|  "productName": "Sidecar App",
+    #|  "version": "0.1.0",
+    #|  "bundleResources": [
+    #|    { "source": "public", "path": "public" },
+    #|    { "source": "bin/server", "path": "sidecar-server", "executable": true }
+    #|  ],
+    #|  "window": { "label": "main", "title": "Sidecar App" }
+    #|}
+    #|
+  match @project.ProjectConfig::parse(config, base_dir="/project") {
+    Ok(project) =>
+      match project.manifest().bundle_plan(project.root(), target=MacOS) {
+        Ok(plan) => {
+          let resources = plan.resources()
+          assert_eq(resources.length(), 2)
+          assert_true(resources[0].kind() is AssetResource)
+          assert_eq(resources[0].source_path(), "/project/public")
+          assert_eq(
+            resources[0].path(),
+            "sidecar-app.app/Contents/Resources/public",
+          )
+          assert_true(resources[1].kind() is ExecutableResource)
+          assert_eq(resources[1].source_path(), "/project/bin/server")
+          assert_eq(
+            resources[1].path(),
+            "sidecar-app.app/Contents/MacOS/sidecar-server",
+          )
+          match plan.files() {
+            Ok(files) => {
+              let launcher = files[1].content()
+              assert_true(launcher.contains("LEPUSA_RESOURCE_DIR"))
+              assert_true(launcher.contains("LEPUSA_APP_DATA_DIR"))
+              assert_true(launcher.contains("export PATH="))
+              assert_true(launcher.contains("cd \"$LEPUSA_RESOURCE_DIR\""))
+            }
+            Err(_) => abort("unexpected invalid bundle files")
+          }
+        }
+        Err(_) => abort("unexpected invalid bundle plan")
+      }
+    Err(_) => abort("unexpected invalid project config")
+  }
+}
+
+///|
 test "project config expands official plugin declarations" {
   let config =
     #|{

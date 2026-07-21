@@ -231,10 +231,11 @@ pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Eq, @debug.Debug)
-pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : String, runtime_dependency_sources? : Array[BundleRuntimeDependencySource], signing? : SigningConfig) -> Self
+pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : String, resource_sources? : Array[BundleResourceSource], runtime_dependency_sources? : Array[BundleRuntimeDependencySource], signing? : SigningConfig) -> Self
 pub fn BundleConfig::plan(Self, RuntimePlan, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn BundleConfig::validate(Self) -> Array[String]
 
@@ -256,6 +257,7 @@ pub struct BundlePlan {
   executable_name : String
   bundle_name : String
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Eq, @debug.Debug)
@@ -296,8 +298,19 @@ pub fn BundleResource::to_json(Self) -> String
 pub(all) enum BundleResourceKind {
   IconResource
   AssetResource
+  ExecutableResource
 } derive(Eq, @debug.Debug)
 pub fn BundleResourceKind::name(Self) -> String
+
+pub struct BundleResourceSource {
+  source_path : String
+  path : String
+  executable : Bool
+} derive(Eq, @debug.Debug)
+pub fn BundleResourceSource::executable(Self) -> Bool
+pub fn BundleResourceSource::new(source_path~ : String, path~ : String, executable? : Bool) -> Self
+pub fn BundleResourceSource::path(Self) -> String
+pub fn BundleResourceSource::source_path(Self) -> String
 
 pub struct BundleRuntimeDependency {
   kind : BundleRuntimeDependencyKind
@@ -1189,6 +1202,7 @@ pub struct ProjectManifest {
   lifecycle_hooks : Array[LifecycleHook]
   runtime : RuntimeConfig
   icon_path : String?
+  resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
 } derive(Eq, @debug.Debug)
@@ -1200,8 +1214,9 @@ pub fn ProjectManifest::icon_path(Self) -> String?
 pub fn ProjectManifest::launch_plan(Self, Cell) -> Result[LaunchPlan, Array[String]]
 pub fn ProjectManifest::lifecycle_hooks(Self) -> Array[LifecycleHook]
 pub fn ProjectManifest::metadata(Self) -> AppMetadata
-pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], filesystem_scopes? : Array[FileSystemScope], startup? : Cmd, lifecycle_hooks? : Array[LifecycleHook], runtime? : RuntimeConfig, icon_path? : String, runtime_dependency_sources? : Array[BundleRuntimeDependencySource], signing? : SigningConfig) -> Self
+pub fn ProjectManifest::new(AppMetadata, windows? : Array[WindowConfig], plugins? : Array[Plugin], capabilities? : Array[Capability], filesystem_scopes? : Array[FileSystemScope], startup? : Cmd, lifecycle_hooks? : Array[LifecycleHook], runtime? : RuntimeConfig, icon_path? : String, resource_sources? : Array[BundleResourceSource], runtime_dependency_sources? : Array[BundleRuntimeDependencySource], signing? : SigningConfig) -> Self
 pub fn ProjectManifest::plugins(Self) -> Array[Plugin]
+pub fn ProjectManifest::resource_sources(Self) -> Array[BundleResourceSource]
 pub fn ProjectManifest::runtime(Self) -> RuntimeConfig
 pub fn ProjectManifest::runtime_dependency_sources(Self) -> Array[BundleRuntimeDependencySource]
 pub fn ProjectManifest::runtime_plan(Self, Cell) -> Result[RuntimePlan, Array[String]]
@@ -1213,6 +1228,7 @@ pub fn ProjectManifest::with_file_system_scope(Self, FileSystemScope) -> Self
 pub fn ProjectManifest::with_icon_path(Self, String) -> Self
 pub fn ProjectManifest::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 pub fn ProjectManifest::with_plugin(Self, Plugin) -> Self
+pub fn ProjectManifest::with_resource_source(Self, BundleResourceSource) -> Self
 pub fn ProjectManifest::with_runtime(Self, RuntimeConfig) -> Self
 pub fn ProjectManifest::with_runtime_dependency_source(Self, BundleRuntimeDependencySource) -> Self
 pub fn ProjectManifest::with_signing(Self, SigningConfig) -> Self

@@ -1344,12 +1344,20 @@ static int lepusa_windows_try_http_ready(
     lepusa_windows_ioctlsocket(sock, FIONBIO, &mode);
     if (connected) {
       char request[1024];
+      char authority[320];
+      snprintf(
+        authority,
+        sizeof(authority),
+        strchr(host, ':') == NULL ? "%s:%s" : "[%s]:%s",
+        host,
+        port
+      );
       snprintf(
         request,
         sizeof(request),
         "GET %s HTTP/1.0\r\nHost: %s\r\nConnection: close\r\n\r\n",
         path,
-        host
+        authority
       );
       (void)lepusa_windows_send(sock, request, (int)strlen(request), 0);
       char response[64];
