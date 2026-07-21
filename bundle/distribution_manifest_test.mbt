@@ -310,6 +310,56 @@ test "macOS package plan includes drag-to-Applications shortcut" {
 }
 
 ///|
+test "macOS package plan signs the exact staged app before creating the disk image" {
+  match
+    BundleDistributionManifest::parse(
+      "/tmp/lepusa-macos-bundle/demo.app/Contents/Resources/lepusa/distribution.json",
+      (
+        #|{
+        #|  "identifier": "dev.local.demo",
+        #|  "productName": "Demo",
+        #|  "version": "1.2.3",
+        #|  "target": "macos",
+        #|  "executable": "demo",
+        #|  "bundle": "demo.app",
+        #|  "runtimeExecutable": "demo.app/Contents/MacOS/lepusa-runtime",
+        #|  "artifacts": [
+        #|    { "kind": "app-bundle", "name": "demo.app", "path": "demo.app" },
+        #|    { "kind": "disk-image", "name": "demo-1.2.3.dmg", "path": "demo-1.2.3.dmg" }
+        #|  ],
+        #|  "resources": [],
+        #|  "runtimeDependencies": [
+        #|    { "kind": "system-webview-runtime", "name": "WKWebView", "required": true }
+        #|  ],
+        #|  "signing": { "identity": "-" },
+        #|  "signingPrerequisites": [],
+        #|  "signingSteps": [
+        #|    {
+        #|      "name": "codesign-app",
+        #|      "tool": "codesign",
+        #|      "arguments": ["--force", "--deep", "--sign", "-", "demo.app"],
+        #|      "description": "Sign app"
+        #|    }
+        #|  ]
+        #|}
+      ),
+    ) {
+    Ok(manifest) => {
+      let commands = manifest.package_plan().commands()
+      assert_eq(commands.length(), 7)
+      assert_eq(commands[3].name(), "codesign-app")
+      assert_eq(commands[3].tool(), "codesign")
+      assert_true(
+        commands[3].arguments().contains(".lepusa-demo-dmg-root/demo.app"),
+      )
+      assert_eq(commands[4].name(), "add Applications shortcut")
+      assert_eq(commands[5].name(), "create disk image")
+    }
+    Err(problem) => abort("unexpected invalid distribution: \{problem}")
+  }
+}
+
+///|
 test "package plan emits windows package scripts" {
   match
     BundleDistributionManifest::parse(

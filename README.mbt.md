@@ -900,6 +900,10 @@ contract into target-aware package commands, expected outputs, and blockers.
 `package.ps1`); Windows also receives an `installer.nsi` script for the setup
 artifact. `lepusa bundle-package-plan` and `lepusa bundle-package-write` are the
 CLI wrappers.
+On macOS, the package script signs the staged app before creating the disk
+image. With a Developer ID and notarization profile configured, it also signs,
+notarizes, and staples the disk image. The ad-hoc identity `-` is supported for
+local integrity testing but does not replace Apple notarization.
 `BundleDistributionManifest::install_smoke_plan()` adds the post-install gate:
 installed runtime manifest path, required installed files, runtime dependency
 files when applicable, and `lepusa-runtime` commands for manifest inspection,

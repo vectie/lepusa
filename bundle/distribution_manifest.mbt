@@ -290,6 +290,38 @@ pub fn BundleDistributionEntry::json(self : BundleDistributionEntry) -> String {
 }
 
 ///|
+pub fn BundleDistributionEntry::command_tool(
+  self : BundleDistributionEntry,
+) -> String? {
+  let json = @json.parse(self.json) catch { _ => return None }
+  match json {
+    Object(object) => distribution_entry_string(object, "tool")
+    _ => None
+  }
+}
+
+///|
+pub fn BundleDistributionEntry::command_arguments(
+  self : BundleDistributionEntry,
+) -> Array[String] {
+  let json = @json.parse(self.json) catch { _ => return [] }
+  match json {
+    Object(object) =>
+      match object.get("arguments") {
+        Some(Array(values)) =>
+          values.filter_map(fn(value) {
+            match value {
+              String(argument) => Some(argument)
+              _ => None
+            }
+          })
+        _ => []
+      }
+    _ => []
+  }
+}
+
+///|
 pub fn BundleDistributionEntry::to_json(
   self : BundleDistributionEntry,
 ) -> String {

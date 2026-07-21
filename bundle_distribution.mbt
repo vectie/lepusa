@@ -568,6 +568,9 @@ fn BundlePlan::macos_signing_steps(self : BundlePlan) -> Array[SigningStep] {
       let arguments = [
         "--force", "--deep", "--options", "runtime", "--sign", identity,
       ]
+      if identity != "-" {
+        arguments.insert(4, "--timestamp")
+      }
       match self.signing.entitlements_path() {
         Some(path) => {
           arguments.push("--entitlements")
@@ -584,6 +587,22 @@ fn BundlePlan::macos_signing_steps(self : BundlePlan) -> Array[SigningStep] {
           description="Apply a hardened-runtime signature to the macOS app bundle",
         ),
       )
+      if identity != "-" {
+        steps.push(
+          SigningStep::new(
+            name="codesign-disk-image",
+            tool="codesign",
+            arguments=[
+              "--force",
+              "--timestamp",
+              "--sign",
+              identity,
+              "\{self.executable_name()}-\{self.metadata.version()}.dmg",
+            ],
+            description="Sign the macOS disk image containing the application bundle",
+          ),
+        )
+      }
     }
     None => ()
   }
@@ -591,20 +610,34 @@ fn BundlePlan::macos_signing_steps(self : BundlePlan) -> Array[SigningStep] {
     Some(profile) =>
       steps.push(
         SigningStep::new(
-          name="notarize-app",
+          name="notarize-disk-image",
           tool="xcrun",
           arguments=[
             "notarytool",
             "submit",
-            self.bundle_name(),
+            "\{self.executable_name()}-\{self.metadata.version()}.dmg",
             "--keychain-profile",
             profile,
             "--wait",
           ],
-          description="Submit the signed macOS app bundle for notarization",
+          description="Submit the signed macOS disk image for notarization",
         ),
       )
     None => ()
+  }
+  if self.signing.notarization_profile() is Some(_) {
+    steps.push(
+      SigningStep::new(
+        name="staple-disk-image",
+        tool="xcrun",
+        arguments=[
+          "stapler",
+          "staple",
+          "\{self.executable_name()}-\{self.metadata.version()}.dmg",
+        ],
+        description="Staple the Apple notarization ticket to the macOS disk image",
+      ),
+    )
   }
   steps
 }

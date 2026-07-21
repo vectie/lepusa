@@ -320,6 +320,14 @@ fn macos_package_commands(
         description="Copy the application bundle into the disk image",
       ),
     )
+    append_macos_signing_commands(
+      commands,
+      manifest,
+      app,
+      "\{staging}/\{manifest.bundle()}",
+      before_disk_image=true,
+      blockers,
+    )
     commands.push(
       BundlePackageCommand::new(
         name="add Applications shortcut",
@@ -346,6 +354,14 @@ fn macos_package_commands(
         description="Create a distributable drag-to-Applications macOS disk image",
       ),
     )
+    append_macos_signing_commands(
+      commands,
+      manifest,
+      app,
+      "\{staging}/\{manifest.bundle()}",
+      before_disk_image=false,
+      blockers,
+    )
     commands.push(
       BundlePackageCommand::new(
         name="clean disk image staging",
@@ -356,6 +372,46 @@ fn macos_package_commands(
     )
   }
   commands
+}
+
+///|
+fn append_macos_signing_commands(
+  commands : Array[BundlePackageCommand],
+  manifest : BundleDistributionManifest,
+  app : String,
+  staged_app : String,
+  before_disk_image~ : Bool,
+  blockers : Array[String],
+) -> Unit {
+  for step in manifest.signing_step_entries() {
+    let is_app_signing = step.name() == "codesign-app"
+    if is_app_signing != before_disk_image {
+      continue
+    }
+    match step.command_tool() {
+      Some(tool) => {
+        let arguments = step
+          .command_arguments()
+          .map(fn(argument) {
+            if argument == app || argument == manifest.bundle() {
+              staged_app
+            } else {
+              argument
+            }
+          })
+        commands.push(
+          BundlePackageCommand::new(
+            name=step.name(),
+            tool~,
+            arguments~,
+            description=step.description(),
+          ),
+        )
+      }
+      None =>
+        blockers.push("macOS signing step is missing a tool: \{step.name()}")
+    }
+  }
 }
 
 ///|
