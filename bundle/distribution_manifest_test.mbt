@@ -254,6 +254,62 @@ test "package plan reports missing target package artifacts" {
 }
 
 ///|
+test "macOS package plan includes drag-to-Applications shortcut" {
+  match
+    BundleDistributionManifest::parse(
+      "/tmp/lepusa-macos-bundle/demo.app/Contents/Resources/lepusa/distribution.json",
+      (
+        #|{
+        #|  "identifier": "dev.local.demo",
+        #|  "productName": "Demo",
+        #|  "version": "1.2.3",
+        #|  "target": "macos",
+        #|  "executable": "demo",
+        #|  "bundle": "demo.app",
+        #|  "runtimeExecutable": "demo.app/Contents/MacOS/lepusa-runtime",
+        #|  "artifacts": [
+        #|    { "kind": "app-bundle", "name": "demo.app", "path": "demo.app" },
+        #|    { "kind": "disk-image", "name": "demo-1.2.3.dmg", "path": "demo-1.2.3.dmg" }
+        #|  ],
+        #|  "resources": [],
+        #|  "runtimeDependencies": [
+        #|    { "kind": "system-webview-runtime", "name": "WKWebView", "required": true }
+        #|  ],
+        #|  "signing": {},
+        #|  "signingPrerequisites": [],
+        #|  "signingSteps": []
+        #|}
+      ),
+    ) {
+    Ok(manifest) => {
+      let package_plan = manifest.package_plan()
+      assert_true(package_plan.ready())
+      assert_eq(package_plan.package_kind(), "macos-app-dmg")
+      assert_eq(package_plan.commands().length(), 6)
+      assert_eq(package_plan.commands()[2].tool(), "ditto")
+      assert_eq(package_plan.commands()[3].tool(), "ln")
+      assert_true(
+        package_plan.commands()[3].arguments() ==
+        ["-s", "/Applications", ".lepusa-demo-dmg-root/Applications"],
+      )
+      assert_eq(package_plan.commands()[4].tool(), "hdiutil")
+      assert_true(
+        package_plan.commands()[4].arguments().contains(".lepusa-demo-dmg-root"),
+      )
+      let script = package_plan.package_script()
+      assert_true(
+        script.contains(
+          "'ln' '-s' '/Applications' '.lepusa-demo-dmg-root/Applications'",
+        ),
+      )
+      assert_true(script.contains("'hdiutil' 'create' '-ov' '-format' 'UDZO'"))
+      assert_true(script.contains("'rm' '-rf' '.lepusa-demo-dmg-root'"))
+    }
+    Err(problem) => abort("unexpected invalid distribution: \{problem}")
+  }
+}
+
+///|
 test "package plan emits windows package scripts" {
   match
     BundleDistributionManifest::parse(

@@ -217,6 +217,9 @@ moon run cmd/main --target native -- build macos _build/lepusa-build --project _
 moon run cmd/main --target native -- bundle windows _build/lepusa-bundle-win
 ```
 
+macOS disk-image packaging stages the application with an `Applications`
+shortcut, giving users the familiar drag-to-Applications installation flow.
+
 These commands exercise the public planning contracts and give the native
 runtime and bundler work concrete outputs to consume.
 

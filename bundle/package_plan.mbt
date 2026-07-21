@@ -295,19 +295,63 @@ fn macos_package_commands(
   let app = required_artifact_path(manifest, "app-bundle", blockers)
   let dmg = required_artifact_path(manifest, "disk-image", blockers)
   if app != "" && dmg != "" {
+    let staging = ".lepusa-\{manifest.executable()}-dmg-root"
+    commands.push(
+      BundlePackageCommand::new(
+        name="reset disk image staging",
+        tool="rm",
+        arguments=["-rf", staging],
+        description="Remove a stale macOS disk image staging directory",
+      ),
+    )
+    commands.push(
+      BundlePackageCommand::new(
+        name="create disk image staging",
+        tool="mkdir",
+        arguments=["-p", staging],
+        description="Create the macOS disk image staging directory",
+      ),
+    )
+    commands.push(
+      BundlePackageCommand::new(
+        name="stage app bundle",
+        tool="ditto",
+        arguments=[app, "\{staging}/\{manifest.bundle()}"],
+        description="Copy the application bundle into the disk image",
+      ),
+    )
+    commands.push(
+      BundlePackageCommand::new(
+        name="add Applications shortcut",
+        tool="ln",
+        arguments=["-s", "/Applications", "\{staging}/Applications"],
+        description="Add the standard drag-to-Applications installation shortcut",
+      ),
+    )
     commands.push(
       BundlePackageCommand::new(
         name="create disk image",
         tool="hdiutil",
         arguments=[
           "create",
+          "-ov",
+          "-format",
+          "UDZO",
           "-volname",
           manifest.product_name(),
           "-srcfolder",
-          app,
+          staging,
           dmg,
         ],
-        description="Create a distributable macOS disk image from the app bundle",
+        description="Create a distributable drag-to-Applications macOS disk image",
+      ),
+    )
+    commands.push(
+      BundlePackageCommand::new(
+        name="clean disk image staging",
+        tool="rm",
+        arguments=["-rf", staging],
+        description="Remove the macOS disk image staging directory",
       ),
     )
   }
