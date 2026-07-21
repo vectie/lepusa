@@ -2382,29 +2382,31 @@ async test "bundle write materializes planned files" {
 }
 
 ///|
+async fn ensure_cli_test_runtime_executable() -> Unit {
+  let path = "/tmp/lepusa-cli-test-runtime.exe"
+  @fs.write_file(
+    path,
+    "test runtime",
+    create_mode=CreateOrTruncate,
+    permission=0o755,
+  )
+  @sys.set_env_var("LEPUSA_RUNTIME_EXECUTABLE", path)
+}
+
+///|
 async test "bundle write embeds host runtime executable when compatible" {
+  ensure_cli_test_runtime_executable()
   let root = "/tmp/lepusa-runtime-executable-\{@async.now().to_int()}"
   let result = render_cli_async(["bundle-write", "macos", root])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("target: macos"))
-  if result.output.contains("[ok] verify: runtime-executable") {
-    assert_true(result.output.contains("verification-checks: 11"))
-    assert_true(result.output.contains("files: 5"))
-    assert_true(result.output.contains("[ok] verify: runtime-executable"))
-    assert_true(result.output.contains("runtime executable is bundled"))
-    assert_true(
-      @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
-    )
-  } else {
-    assert_true(result.output.contains("verification-checks: 10"))
-    assert_true(result.output.contains("[ok] verify: runtime-dependency"))
-    assert_true(
-      result.output.contains("external runtime dependency declared: WKWebView"),
-    )
-    assert_false(
-      @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
-    )
-  }
+  assert_true(result.output.contains("verification-checks: 11"))
+  assert_true(result.output.contains("files: 5"))
+  assert_true(result.output.contains("[ok] verify: runtime-executable"))
+  assert_true(result.output.contains("runtime executable is bundled"))
+  assert_true(
+    @fs.exists(root + "/lepusa-example.app/Contents/MacOS/lepusa-runtime"),
+  )
 }
 
 ///|
@@ -2670,6 +2672,7 @@ async test "bundle write materializes packaged asset directories" {
 
 ///|
 async test "build and bundle aliases materialize planned files" {
+  ensure_cli_test_runtime_executable()
   let build_root = "/tmp/lepusa-build-\{@async.now().to_int()}"
   let build = render_cli_async(["build", "macos", build_root])
   assert_eq(build.exit_code, 0)

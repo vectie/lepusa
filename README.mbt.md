@@ -904,6 +904,9 @@ On macOS, the package script signs the staged app before creating the disk
 image. With a Developer ID and notarization profile configured, it also signs,
 notarizes, and staples the disk image. The ad-hoc identity `-` is supported for
 local integrity testing but does not replace Apple notarization.
+The bundler prefers a release-mode `lepusa-runtime`, falls back to the debug
+runtime, and accepts an explicit `LEPUSA_RUNTIME_EXECUTABLE`. Packaging now
+fails instead of producing an unlaunchable app when no runtime is available.
 `BundleDistributionManifest::install_smoke_plan()` adds the post-install gate:
 installed runtime manifest path, required installed files, runtime dependency
 files when applicable, and `lepusa-runtime` commands for manifest inspection,

@@ -560,10 +560,21 @@ async fn copy_bundle_runtime_executable(
 ) -> String? {
   match bundled_runtime_destination_path(plan) {
     Some(destination) => {
-      let source = bundled_runtime_source_path()
-      let source_exists = @xfs.is_file(source) catch { _ => false }
-      if !source_exists {
-        return None
+      let mut source : String? = None
+      for candidate in bundled_runtime_source_paths() {
+        let exists = @xfs.is_file(candidate) catch { _ => false }
+        if source is None && exists {
+          source = Some(candidate)
+        }
+      }
+      let source = match source {
+        Some(path) => path
+        None => {
+          problems.push(
+            "could not bundle Lepusa runtime; build cmd/runtime or set LEPUSA_RUNTIME_EXECUTABLE",
+          )
+          return None
+        }
       }
       let path = join_path(root, destination)
       copy_bundle_file(source, path, problems)
@@ -618,8 +629,15 @@ fn bundled_runtime_destination_path(plan : @lepusa.BundlePlan) -> String? {
 }
 
 ///|
-fn bundled_runtime_source_path() -> String {
-  "_build/native/debug/build/cmd/runtime/runtime.exe"
+fn bundled_runtime_source_paths() -> Array[String] {
+  let paths : Array[String] = []
+  match @sys.get_env_var("LEPUSA_RUNTIME_EXECUTABLE") {
+    Some(path) if path != "" => paths.push(path)
+    _ => ()
+  }
+  paths.push("_build/native/release/build/cmd/runtime/runtime.exe")
+  paths.push("_build/native/debug/build/cmd/runtime/runtime.exe")
+  paths
 }
 
 ///|
