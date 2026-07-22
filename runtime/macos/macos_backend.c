@@ -382,13 +382,13 @@ static void lepusa_cleanup_services_at_exit(void) {
 }
 
 static void lepusa_cleanup_services_on_signal(int signo) {
-  lepusa_terminate_tracked_services(0);
-  struct sigaction reset_action;
-  memset(&reset_action, 0, sizeof(reset_action));
-  reset_action.sa_handler = SIG_DFL;
-  sigemptyset(&reset_action.sa_mask);
-  sigaction(signo, &reset_action, NULL);
-  raise(signo);
+  for (int i = 0; i < 64; i++) {
+    pid_t pid = lepusa_service_processes[i].pid;
+    if (pid > 0) {
+      (void)kill(pid, SIGTERM);
+    }
+  }
+  _exit(128 + signo);
 }
 
 static void lepusa_install_service_signal_action(void) {
@@ -3128,6 +3128,68 @@ static void *lepusa_window_delegate_class(void) {
   return delegate_class;
 }
 
+static signed char lepusa_application_should_terminate_after_last_window_closed(
+  void *self,
+  void *selector,
+  void *application
+) {
+  (void)self;
+  (void)selector;
+  (void)application;
+  return 1;
+}
+
+static void lepusa_application_will_terminate(
+  void *self,
+  void *selector,
+  void *notification
+) {
+  (void)self;
+  (void)selector;
+  (void)notification;
+  lepusa_terminate_tracked_services(1);
+}
+
+static void *lepusa_application_delegate_class(void) {
+  static void *delegate_class = NULL;
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  delegate_class = lepusa_objc_get_class("LepusaApplicationDelegate");
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  delegate_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaApplicationDelegate",
+    0
+  );
+  if (delegate_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    delegate_class,
+    lepusa_sel("applicationShouldTerminateAfterLastWindowClosed:"),
+    (void *)lepusa_application_should_terminate_after_last_window_closed,
+    "c@:@"
+  );
+  lepusa_class_add_method(
+    delegate_class,
+    lepusa_sel("applicationWillTerminate:"),
+    (void *)lepusa_application_will_terminate,
+    "v@:@"
+  );
+  lepusa_objc_register_class_pair(delegate_class);
+  return delegate_class;
+}
+
 static void *lepusa_macos_menu_item_target_class(void) {
   static void *target_class = NULL;
   if (target_class != NULL) {
@@ -3396,6 +3458,13 @@ static int32_t lepusa_macos_run_webview_impl(
     lepusa_sel("setActivationPolicy:"),
     LEPUSA_NS_APPLICATION_ACTIVATION_POLICY_REGULAR
   );
+  void *app_delegate_class = lepusa_application_delegate_class();
+  void *app_delegate = app_delegate_class == NULL ?
+    NULL :
+    lepusa_msg_id(app_delegate_class, "new");
+  if (app_delegate != NULL) {
+    lepusa_msg_void_id(app, "setDelegate:", app_delegate);
+  }
 
   LepusaRect frame = {
     { 0.0, 0.0 },

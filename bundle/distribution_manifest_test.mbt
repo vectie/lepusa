@@ -140,7 +140,10 @@ test "distribution manifest parser exposes installer-facing bundle data" {
               assert_eq(smoke.commands().length(), 5)
               assert_eq(smoke.checks().length(), 4)
               assert_eq(smoke.script_name(), "install-smoke.sh")
-              assert_eq(smoke.commands()[0].tool(), "lepusa-runtime")
+              assert_eq(
+                smoke.commands()[0].tool(),
+                "/opt/distribution-app/distribution-app/lepusa-runtime",
+              )
               assert_true(
                 smoke.commands()[2].arguments().contains("--async-bridge"),
               )

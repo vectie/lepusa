@@ -142,6 +142,7 @@ pub fn BundleDistributionManifest::install_smoke_plan(
   let root = clean_install_root(install_root)
   let blockers : Array[String] = []
   let runtime_manifest_path = installed_runtime_manifest_path(self, root)
+  let runtime_executable_path = join_path(root, self.runtime_executable())
   if runtime_manifest_path == "" {
     blockers.push("unsupported install smoke target: \{self.target()}")
   }
@@ -149,7 +150,9 @@ pub fn BundleDistributionManifest::install_smoke_plan(
     manifest: self,
     install_root: root,
     runtime_manifest_path,
-    commands: install_smoke_commands(runtime_manifest_path),
+    commands: install_smoke_commands(
+      runtime_executable_path, runtime_manifest_path,
+    ),
     checks: install_smoke_checks(self, root, runtime_manifest_path),
     blockers,
   }
@@ -293,27 +296,28 @@ fn installed_runtime_manifest_path(
 
 ///|
 fn install_smoke_commands(
+  runtime_executable_path : String,
   runtime_manifest_path : String,
 ) -> Array[BundleInstallSmokeCommand] {
-  if runtime_manifest_path == "" {
+  if runtime_executable_path == "" || runtime_manifest_path == "" {
     return []
   }
   [
     BundleInstallSmokeCommand::new(
       name="inspect runtime manifest",
-      tool="lepusa-runtime",
+      tool=runtime_executable_path,
       arguments=["--manifest", runtime_manifest_path],
       description="Parse installed runtime manifest and print target diagnostics",
     ),
     BundleInstallSmokeCommand::new(
       name="dry-run native runtime",
-      tool="lepusa-runtime",
+      tool=runtime_executable_path,
       arguments=["run", "--manifest", runtime_manifest_path],
       description="Prepare packaged native runtime launch data without opening windows",
     ),
     BundleInstallSmokeCommand::new(
       name="check async bridge session",
-      tool="lepusa-runtime",
+      tool=runtime_executable_path,
       arguments=[
         "launch-session", "--async-bridge", "--manifest", runtime_manifest_path,
       ],
@@ -321,7 +325,7 @@ fn install_smoke_commands(
     ),
     BundleInstallSmokeCommand::new(
       name="resolve bridge asset",
-      tool="lepusa-runtime",
+      tool=runtime_executable_path,
       arguments=[
         "asset", "lepusa://runtime/bridge.js", "--manifest", runtime_manifest_path,
       ],
@@ -329,7 +333,7 @@ fn install_smoke_commands(
     ),
     BundleInstallSmokeCommand::new(
       name="launch installed app",
-      tool="lepusa-runtime",
+      tool=runtime_executable_path,
       arguments=["launch", "--manifest", runtime_manifest_path],
       required=false,
       description="Open the installed app when the host has GUI access and platform WebView dependencies",
