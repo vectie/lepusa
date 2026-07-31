@@ -164,10 +164,10 @@ fn has_scope(scopes : Array[@lepusa.FileSystemScope], name : String) -> Bool {
 ///|
 pub fn plugin() -> @lepusa.Plugin {
   @lepusa.Plugin::new("fileDialog")
-  .command_async("openFile", permission=FileDialog, affinity=MainThread)
-  .command_async("openFiles", permission=FileDialog, affinity=MainThread)
-  .command_async("openDirectory", permission=FileDialog, affinity=MainThread)
-  .command_async("saveFile", permission=FileDialog, affinity=MainThread)
+  .command_sync("openFile", permission=FileDialog, affinity=MainThread)
+  .command_sync("openFiles", permission=FileDialog, affinity=MainThread)
+  .command_sync("openDirectory", permission=FileDialog, affinity=MainThread)
+  .command_sync("saveFile", permission=FileDialog, affinity=MainThread)
 }
 
 ///|
@@ -225,7 +225,7 @@ pub fn register(
   scopes? : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
     handle_picker(
       policy,
       scopes,
@@ -236,7 +236,7 @@ pub fn register(
       save=false,
     )
   })
-  .register_async_fn("fileDialog.openFiles", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openFiles", permission=FileDialog, handler=payload => {
     handle_picker(
       policy,
       scopes,
@@ -247,7 +247,7 @@ pub fn register(
       save=false,
     )
   })
-  .register_async_fn("fileDialog.openDirectory", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openDirectory", permission=FileDialog, handler=payload => {
     handle_picker(
       policy,
       scopes,
@@ -258,7 +258,7 @@ pub fn register(
       save=false,
     )
   })
-  .register_async_fn("fileDialog.saveFile", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.saveFile", permission=FileDialog, handler=payload => {
     handle_picker(
       policy,
       scopes,
@@ -278,22 +278,22 @@ pub fn register_native(
   scopes? : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   registry
-  .register_async_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
     handle_native_picker(policy, scopes, payload, action="openFile")
   })
-  .register_async_fn("fileDialog.openFiles", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openFiles", permission=FileDialog, handler=payload => {
     handle_native_picker(policy, scopes, payload, action="openFiles")
   })
-  .register_async_fn("fileDialog.openDirectory", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.openDirectory", permission=FileDialog, handler=payload => {
     handle_native_picker(policy, scopes, payload, action="openDirectory")
   })
-  .register_async_fn("fileDialog.saveFile", permission=FileDialog, handler=payload => {
+  .register_fn("fileDialog.saveFile", permission=FileDialog, handler=payload => {
     handle_native_picker(policy, scopes, payload, action="saveFile")
   })
 }
 
 ///|
-async fn handle_picker(
+fn handle_picker(
   policy : FileDialogPolicy,
   scopes : Array[@lepusa.FileSystemScope],
   payload : String,
@@ -302,7 +302,6 @@ async fn handle_picker(
   directory~ : Bool,
   save~ : Bool,
 ) -> Result[String, String] {
-  @async.sleep(0)
   let request = match
     decode_request_payload(payload, context="file dialog \{action}") {
     Ok(request) => request
@@ -327,13 +326,12 @@ async fn handle_picker(
 }
 
 ///|
-async fn handle_native_picker(
+fn handle_native_picker(
   policy : FileDialogPolicy,
   scopes : Array[@lepusa.FileSystemScope],
   payload : String,
   action~ : String,
 ) -> Result[String, String] {
-  @async.sleep(0)
   let request = match
     decode_request_payload(payload, context="file dialog \{action}") {
     Ok(request) => request

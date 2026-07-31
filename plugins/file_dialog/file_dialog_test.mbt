@@ -1,5 +1,5 @@
 ///|
-test "file dialog plugin declares async dialog commands" {
+test "file dialog plugin declares modal main-thread commands as synchronous" {
   let declared = plugin()
   assert_eq(declared.name(), "fileDialog")
   assert_eq(declared.command_routes().length(), 4)
@@ -8,7 +8,10 @@ test "file dialog plugin declares async dialog commands" {
   assert_true(declared.command_routes().contains("fileDialog.openDirectory"))
   assert_true(declared.command_routes().contains("fileDialog.saveFile"))
   let commands = declared.commands()
-  assert_true(commands[0].mode() is Async)
+  for command in commands {
+    assert_true(command.mode() is Sync)
+    assert_true(command.affinity() is MainThread)
+  }
   assert_true(commands[0].permission() is FileDialog)
 }
 
@@ -70,7 +73,7 @@ test "file dialog policy rejects duplicate and unsafe defaults" {
 }
 
 ///|
-async test "file dialog registry validates scoped picker contracts" {
+test "file dialog registry validates scoped picker contracts" {
   let policy = FileDialogPolicy::new().default_directory(
     FileDialogDefaultDirectory::new(
       name="documents",
@@ -86,7 +89,8 @@ async test "file dialog registry validates scoped picker contracts" {
   assert_true(registry.contains("fileDialog.openFiles"))
   assert_true(registry.contains("fileDialog.openDirectory"))
   assert_true(registry.contains("fileDialog.saveFile"))
-  assert_eq(registry.async_routes().length(), 4)
+  assert_eq(registry.sync_routes().length(), 4)
+  assert_eq(registry.async_routes().length(), 0)
   let open_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -94,7 +98,7 @@ async test "file dialog registry validates scoped picker contracts" {
     command="openFile",
     payload="{\"defaultDirectory\":\"documents\",\"path\":\"draft.txt\"}",
   )
-  let opened = registry.dispatch_async(open_request, capabilities=[grant])
+  let opened = registry.dispatch(open_request, capabilities=[grant])
   assert_true(
     opened.payload().unwrap_or("").contains("\"status\":\"delegated\""),
   )
@@ -112,7 +116,7 @@ async test "file dialog registry validates scoped picker contracts" {
     command="saveFile",
     payload="{\"defaultDirectory\":\"documents\",\"suggestedName\":\"report.txt\"}",
   )
-  let saved = registry.dispatch_async(save_request, capabilities=[grant])
+  let saved = registry.dispatch(save_request, capabilities=[grant])
   assert_true(saved.payload().unwrap_or("").contains("\"save\":true"))
   assert_true(
     saved.payload().unwrap_or("").contains("\"suggestedName\":\"report.txt\""),
@@ -124,9 +128,7 @@ async test "file dialog registry validates scoped picker contracts" {
     command="openFile",
     payload="{\"path\":\"../escape\"}",
   )
-  let unsafe_result = registry.dispatch_async(unsafe_request, capabilities=[
-    grant,
-  ])
+  let unsafe_result = registry.dispatch(unsafe_request, capabilities=[grant])
   assert_eq(unsafe_result.id(), "3")
   assert_eq(
     unsafe_result.error_message().unwrap_or(""),
@@ -141,6 +143,7 @@ test "file dialog native registry exposes picker handlers" {
   assert_true(registry.contains("fileDialog.openFiles"))
   assert_true(registry.contains("fileDialog.openDirectory"))
   assert_true(registry.contains("fileDialog.saveFile"))
-  assert_eq(registry.async_routes().length(), 4)
+  assert_eq(registry.sync_routes().length(), 4)
+  assert_eq(registry.async_routes().length(), 0)
   ignore(native_available())
 }

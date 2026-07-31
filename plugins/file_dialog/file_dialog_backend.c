@@ -8,6 +8,10 @@
 #include <unistd.h>
 #endif
 
+#if defined(__APPLE__)
+#include <dlfcn.h>
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #include <io.h>
@@ -280,97 +284,149 @@ static char *lepusa_file_dialog_read_command(
 #endif
 
 #if defined(__APPLE__)
-static char *lepusa_file_dialog_applescript_quote(const char *text) {
-  size_t len = 2;
-  for (const char *p = text == NULL ? "" : text; *p != '\0'; p++) {
-    len += (*p == '"' || *p == '\\') ? 2 : 1;
+typedef void *(*LepusaFileDialogGetClass)(const char *);
+typedef void *(*LepusaFileDialogGetSelector)(const char *);
+typedef void *(*LepusaFileDialogMsgId)(void *, void *);
+typedef void *(*LepusaFileDialogMsgIdId)(void *, void *, void *);
+typedef void *(*LepusaFileDialogMsgIdCString)(void *, void *, const char *);
+typedef void *(*LepusaFileDialogMsgIdULong)(void *, void *, unsigned long);
+typedef void (*LepusaFileDialogMsgVoid)(void *, void *);
+typedef void (*LepusaFileDialogMsgVoidBool)(void *, void *, signed char);
+typedef void (*LepusaFileDialogMsgVoidId)(void *, void *, void *);
+typedef long (*LepusaFileDialogMsgLong)(void *, void *);
+typedef unsigned long (*LepusaFileDialogMsgULong)(void *, void *);
+typedef const char *(*LepusaFileDialogMsgCString)(void *, void *);
+
+typedef struct {
+  LepusaFileDialogGetClass get_class;
+  LepusaFileDialogGetSelector get_selector;
+  void *send;
+} LepusaFileDialogMacosRuntime;
+
+static int lepusa_file_dialog_macos_runtime(
+  LepusaFileDialogMacosRuntime *runtime
+) {
+  static void *objc = NULL;
+  static void *cocoa = NULL;
+  if (objc == NULL) {
+    objc = dlopen("/usr/lib/libobjc.A.dylib", RTLD_LAZY | RTLD_LOCAL);
   }
-  char *out = (char *)malloc(len + 1);
-  if (out == NULL) {
-    return NULL;
+  if (cocoa == NULL) {
+    cocoa = dlopen(
+      "/System/Library/Frameworks/Cocoa.framework/Cocoa",
+      RTLD_LAZY | RTLD_LOCAL
+    );
   }
-  size_t offset = 0;
-  out[offset++] = '"';
-  for (const char *p = text == NULL ? "" : text; *p != '\0'; p++) {
-    if (*p == '"' || *p == '\\') {
-      out[offset++] = '\\';
-    }
-    out[offset++] = *p;
+  if (objc == NULL || cocoa == NULL) {
+    return 0;
   }
-  out[offset++] = '"';
-  out[offset] = '\0';
-  return out;
+  runtime->get_class =
+    (LepusaFileDialogGetClass)dlsym(objc, "objc_getClass");
+  runtime->get_selector =
+    (LepusaFileDialogGetSelector)dlsym(objc, "sel_registerName");
+  runtime->send = dlsym(objc, "objc_msgSend");
+  return runtime->get_class != NULL &&
+    runtime->get_selector != NULL &&
+    runtime->send != NULL;
 }
 
-static char *lepusa_file_dialog_macos_script(
-  const char *action,
-  const char *initial_path,
-  const char *suggested_name
+static void *lepusa_file_dialog_macos_selector(
+  LepusaFileDialogMacosRuntime *runtime,
+  const char *name
 ) {
-  char *path = lepusa_file_dialog_applescript_quote(initial_path);
-  char *name = lepusa_file_dialog_applescript_quote(suggested_name);
-  if (path == NULL || name == NULL) {
-    free(path);
-    free(name);
+  return runtime->get_selector(name);
+}
+
+static void *lepusa_file_dialog_macos_string(
+  LepusaFileDialogMacosRuntime *runtime,
+  const char *text
+) {
+  return ((LepusaFileDialogMsgIdCString)runtime->send)(
+    runtime->get_class("NSString"),
+    lepusa_file_dialog_macos_selector(runtime, "stringWithUTF8String:"),
+    text == NULL ? "" : text
+  );
+}
+
+static char *lepusa_file_dialog_macos_url_path(
+  LepusaFileDialogMacosRuntime *runtime,
+  void *url
+) {
+  if (url == NULL) {
     return NULL;
   }
-  const char *default_location =
-    initial_path != NULL && initial_path[0] != '\0'
-      ? " default location POSIX file %s"
-      : "%s";
-  const char *template_text = NULL;
-  if (strcmp(action, "openFiles") == 0) {
-    template_text =
-      "set chosen to choose file with multiple selections allowed%s\n"
-      "set out to \"\"\n"
-      "repeat with itemRef in chosen\n"
-      "set out to out & POSIX path of itemRef & linefeed\n"
-      "end repeat\n"
-      "return out\n";
-  } else if (strcmp(action, "openDirectory") == 0) {
-    template_text = "return POSIX path of (choose folder%s)\n";
-  } else if (strcmp(action, "saveFile") == 0) {
-    template_text =
-      "return POSIX path of (choose file name default name %s%s)\n";
-  } else {
-    template_text = "return POSIX path of (choose file%s)\n";
-  }
-  int needed = 0;
-  char *location = NULL;
-  if (initial_path != NULL && initial_path[0] != '\0') {
-    needed = snprintf(NULL, 0, default_location, path);
-    location = (char *)malloc((size_t)needed + 1);
-    if (location != NULL) {
-      snprintf(location, (size_t)needed + 1, default_location, path);
-    }
-  } else {
-    location = (char *)malloc(1);
-    if (location != NULL) {
-      location[0] = '\0';
-    }
-  }
-  if (location == NULL) {
-    free(path);
-    free(name);
+  void *path = ((LepusaFileDialogMsgId)runtime->send)(
+    url,
+    lepusa_file_dialog_macos_selector(runtime, "path")
+  );
+  const char *utf8 = path == NULL
+    ? NULL
+    : ((LepusaFileDialogMsgCString)runtime->send)(
+        path,
+        lepusa_file_dialog_macos_selector(runtime, "UTF8String")
+      );
+  if (utf8 == NULL) {
     return NULL;
   }
-  if (strcmp(action, "saveFile") == 0) {
-    needed = snprintf(NULL, 0, template_text, name, location);
-  } else {
-    needed = snprintf(NULL, 0, template_text, location);
+  size_t len = strlen(utf8);
+  char *copy = (char *)malloc(len + 1);
+  if (copy != NULL) {
+    memcpy(copy, utf8, len + 1);
   }
-  char *script = needed < 0 ? NULL : (char *)malloc((size_t)needed + 1);
-  if (script != NULL) {
-    if (strcmp(action, "saveFile") == 0) {
-      snprintf(script, (size_t)needed + 1, template_text, name, location);
-    } else {
-      snprintf(script, (size_t)needed + 1, template_text, location);
+  return copy;
+}
+
+static char *lepusa_file_dialog_macos_urls(
+  LepusaFileDialogMacosRuntime *runtime,
+  void *urls
+) {
+  unsigned long count = urls == NULL
+    ? 0
+    : ((LepusaFileDialogMsgULong)runtime->send)(
+        urls,
+        lepusa_file_dialog_macos_selector(runtime, "count")
+      );
+  size_t capacity = 64;
+  size_t len = 0;
+  char *paths = (char *)malloc(capacity);
+  if (paths == NULL) {
+    return NULL;
+  }
+  paths[0] = '\0';
+  for (unsigned long index = 0; index < count; index++) {
+    void *url = ((LepusaFileDialogMsgIdULong)runtime->send)(
+      urls,
+      lepusa_file_dialog_macos_selector(runtime, "objectAtIndex:"),
+      index
+    );
+    char *path = lepusa_file_dialog_macos_url_path(runtime, url);
+    if (path == NULL) {
+      free(paths);
+      return NULL;
     }
+    size_t path_len = strlen(path);
+    size_t needed = len + path_len + (len == 0 ? 1 : 2);
+    if (needed > capacity) {
+      while (capacity < needed) {
+        capacity *= 2;
+      }
+      char *grown = (char *)realloc(paths, capacity);
+      if (grown == NULL) {
+        free(path);
+        free(paths);
+        return NULL;
+      }
+      paths = grown;
+    }
+    if (len > 0) {
+      paths[len++] = '\n';
+    }
+    memcpy(paths + len, path, path_len);
+    len += path_len;
+    paths[len] = '\0';
+    free(path);
   }
-  free(location);
-  free(path);
-  free(name);
-  return script;
+  return paths;
 }
 
 static char *lepusa_file_dialog_macos_pick(
@@ -379,60 +435,140 @@ static char *lepusa_file_dialog_macos_pick(
   const char *suggested_name,
   int *exit_code_out
 ) {
-  char template_path[] = "/tmp/lepusa-file-dialog-XXXXXX";
-  int fd = mkstemp(template_path);
-  if (fd < 0) {
+  LepusaFileDialogMacosRuntime runtime = {0};
+  if (!lepusa_file_dialog_macos_runtime(&runtime)) {
     if (exit_code_out != NULL) {
       *exit_code_out = 1;
     }
     return NULL;
   }
-  char *script = lepusa_file_dialog_macos_script(
-    action,
-    initial_path,
-    suggested_name
+  void *pool = ((LepusaFileDialogMsgId)runtime.send)(
+    runtime.get_class("NSAutoreleasePool"),
+    lepusa_file_dialog_macos_selector(&runtime, "new")
   );
-  if (script == NULL) {
-    close(fd);
-    unlink(template_path);
+  int save = strcmp(action, "saveFile") == 0;
+  int multiple = strcmp(action, "openFiles") == 0;
+  int directory = strcmp(action, "openDirectory") == 0;
+  void *panel = ((LepusaFileDialogMsgId)runtime.send)(
+    runtime.get_class(save ? "NSSavePanel" : "NSOpenPanel"),
+    lepusa_file_dialog_macos_selector(
+      &runtime,
+      save ? "savePanel" : "openPanel"
+    )
+  );
+  if (panel == NULL) {
+    if (pool != NULL) {
+      ((LepusaFileDialogMsgVoid)runtime.send)(
+        pool,
+        lepusa_file_dialog_macos_selector(&runtime, "drain")
+      );
+    }
     if (exit_code_out != NULL) {
       *exit_code_out = 1;
     }
     return NULL;
   }
-  FILE *file = fdopen(fd, "w");
-  if (file == NULL) {
-    close(fd);
-    unlink(template_path);
-    free(script);
-    if (exit_code_out != NULL) {
-      *exit_code_out = 1;
+  if (!save) {
+    ((LepusaFileDialogMsgVoidBool)runtime.send)(
+      panel,
+      lepusa_file_dialog_macos_selector(&runtime, "setCanChooseFiles:"),
+      directory ? 0 : 1
+    );
+    ((LepusaFileDialogMsgVoidBool)runtime.send)(
+      panel,
+      lepusa_file_dialog_macos_selector(&runtime, "setCanChooseDirectories:"),
+      directory ? 1 : 0
+    );
+    ((LepusaFileDialogMsgVoidBool)runtime.send)(
+      panel,
+      lepusa_file_dialog_macos_selector(
+        &runtime,
+        "setAllowsMultipleSelection:"
+      ),
+      multiple ? 1 : 0
+    );
+  }
+  ((LepusaFileDialogMsgVoidBool)runtime.send)(
+    panel,
+    lepusa_file_dialog_macos_selector(&runtime, "setCanCreateDirectories:"),
+    1
+  );
+  if (initial_path != NULL && initial_path[0] != '\0') {
+    void *path = lepusa_file_dialog_macos_string(&runtime, initial_path);
+    void *url = path == NULL
+      ? NULL
+      : ((LepusaFileDialogMsgIdId)runtime.send)(
+          runtime.get_class("NSURL"),
+          lepusa_file_dialog_macos_selector(&runtime, "fileURLWithPath:"),
+          path
+        );
+    if (url != NULL) {
+      ((LepusaFileDialogMsgVoidId)runtime.send)(
+        panel,
+        lepusa_file_dialog_macos_selector(&runtime, "setDirectoryURL:"),
+        url
+      );
     }
-    return NULL;
   }
-  fputs(script, file);
-  fclose(file);
-  free(script);
-  char *quoted_path = lepusa_file_dialog_shell_quote(template_path);
-  if (quoted_path == NULL) {
-    unlink(template_path);
-    if (exit_code_out != NULL) {
-      *exit_code_out = 1;
+  if (save && suggested_name != NULL && suggested_name[0] != '\0') {
+    void *name = lepusa_file_dialog_macos_string(&runtime, suggested_name);
+    if (name != NULL) {
+      ((LepusaFileDialogMsgVoidId)runtime.send)(
+        panel,
+        lepusa_file_dialog_macos_selector(
+          &runtime,
+          "setNameFieldStringValue:"
+        ),
+        name
+      );
     }
-    return NULL;
   }
-  int needed = snprintf(NULL, 0, "/usr/bin/osascript %s", quoted_path);
-  char *command = needed < 0 ? NULL : (char *)malloc((size_t)needed + 1);
-  if (command != NULL) {
-    snprintf(command, (size_t)needed + 1, "/usr/bin/osascript %s", quoted_path);
+  void *application = ((LepusaFileDialogMsgId)runtime.send)(
+    runtime.get_class("NSApplication"),
+    lepusa_file_dialog_macos_selector(&runtime, "sharedApplication")
+  );
+  if (application != NULL) {
+    ((LepusaFileDialogMsgVoidBool)runtime.send)(
+      application,
+      lepusa_file_dialog_macos_selector(
+        &runtime,
+        "activateIgnoringOtherApps:"
+      ),
+      1
+    );
   }
-  free(quoted_path);
-  char *out = command == NULL
-    ? NULL
-    : lepusa_file_dialog_read_command(command, exit_code_out);
-  free(command);
-  unlink(template_path);
-  return out;
+  long response = ((LepusaFileDialogMsgLong)runtime.send)(
+    panel,
+    lepusa_file_dialog_macos_selector(&runtime, "runModal")
+  );
+  char *selection = NULL;
+  if (response == 1) {
+    if (multiple) {
+      void *urls = ((LepusaFileDialogMsgId)runtime.send)(
+        panel,
+        lepusa_file_dialog_macos_selector(&runtime, "URLs")
+      );
+      selection = lepusa_file_dialog_macos_urls(&runtime, urls);
+    } else {
+      void *url = ((LepusaFileDialogMsgId)runtime.send)(
+        panel,
+        lepusa_file_dialog_macos_selector(&runtime, "URL")
+      );
+      selection = lepusa_file_dialog_macos_url_path(&runtime, url);
+    }
+    if (exit_code_out != NULL) {
+      *exit_code_out = selection == NULL ? 1 : 0;
+    }
+  } else if (exit_code_out != NULL) {
+    *exit_code_out = 10;
+  }
+  if (pool != NULL) {
+    ((LepusaFileDialogMsgVoid)runtime.send)(
+      pool,
+      lepusa_file_dialog_macos_selector(&runtime, "drain")
+    );
+  }
+  return selection;
 }
 #endif
 
@@ -686,7 +822,8 @@ static char *lepusa_file_dialog_windows_pick(
 MOONBIT_FFI_EXPORT
 int32_t lepusa_file_dialog_available(void) {
 #if defined(__APPLE__)
-  return access("/usr/bin/osascript", X_OK) == 0;
+  LepusaFileDialogMacosRuntime runtime = {0};
+  return lepusa_file_dialog_macos_runtime(&runtime) ? 1 : 0;
 #elif defined(__linux__)
   return system("command -v zenity >/dev/null 2>&1") == 0;
 #elif defined(_WIN32)
