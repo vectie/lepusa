@@ -1,6 +1,6 @@
 ///|
 async fn main {
-  let result = render_runtime_cli_async(drop_program(@sys.get_cli_args()))
+  let result = render_runtime_cli_async(drop_program(@env.args()))
   println(result.output)
   if result.exit_code != 0 {
     @sys.exit(result.exit_code)
