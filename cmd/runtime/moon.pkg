@@ -13,9 +13,10 @@ import {
 
 supported_targets = "+native"
 
+pkgtype(kind: "executable")
+
 options(
   "bin-name": "lepusa-runtime",
   "bin-target": "native",
-  "is-main": true,
   targets: { "main.mbt": [ "native" ] },
 )
