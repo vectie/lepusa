@@ -88,6 +88,16 @@ typedef int (*LepusaClassAddMethod)(void *, void *, void *, const char *);
 typedef void *LepusaObjcMsgSend;
 typedef moonbit_bytes_t (*LepusaBytesCallback)(void *, moonbit_bytes_t);
 
+/* Objective-C block ABI: WebKit's open-panel completion is invoked on the
+ * same main-thread call, before the delegate method returns. */
+typedef struct {
+  void *isa;
+  int flags;
+  int reserved;
+  void (*invoke)(void *, void *);
+  void *descriptor;
+} LepusaFileSelectionBlock;
+
 typedef struct {
   char label[128];
   void *window;
@@ -1153,6 +1163,7 @@ static void lepusa_load_webview_url_range(
 static void *lepusa_bridge_handler_class(void);
 static void *lepusa_window_delegate_class(void);
 static void *lepusa_url_scheme_handler_class(void);
+static void lepusa_install_webview_ui_delegate(void *webview);
 
 static void lepusa_apply_window_controls_from_handoff_packet(
   LepusaBridgeContext *context,
@@ -2713,6 +2724,7 @@ static void lepusa_open_window_from_record(
   if (webview == NULL) {
     return;
   }
+  lepusa_install_webview_ui_delegate(webview);
   lepusa_msg_void_id(
     window,
     "setTitle:",
@@ -3126,6 +3138,97 @@ static void *lepusa_window_delegate_class(void) {
   );
   lepusa_objc_register_class_pair(delegate_class);
   return delegate_class;
+}
+
+static void lepusa_webview_run_open_panel(
+  void *self,
+  void *selector,
+  void *webview,
+  void *parameters,
+  void *frame,
+  void *completion_handler
+) {
+  (void)self;
+  (void)selector;
+  (void)webview;
+  (void)frame;
+  void *selected_urls = NULL;
+  void *panel = lepusa_msg_id(lepusa_cls("NSOpenPanel"), "openPanel");
+  if (panel != NULL) {
+    int multiple = parameters == NULL ? 0 :
+      ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+        parameters,
+        lepusa_sel("allowsMultipleSelection")
+      );
+    int directories = parameters == NULL ? 0 :
+      ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+        parameters,
+        lepusa_sel("allowsDirectories")
+      );
+    lepusa_msg_void_int(panel, "setAllowsMultipleSelection:", multiple != 0);
+    lepusa_msg_void_int(panel, "setCanChooseDirectories:", directories != 0);
+    lepusa_msg_void_int(panel, "setCanChooseFiles:", 1);
+    if (((LepusaMsgSendInt)lepusa_objc_msg_send)(
+          panel,
+          lepusa_sel("runModal")
+        ) == 1) {
+      selected_urls = lepusa_msg_id(panel, "URLs");
+    }
+  }
+  if (completion_handler != NULL) {
+    LepusaFileSelectionBlock *completion =
+      (LepusaFileSelectionBlock *)completion_handler;
+    if (completion->invoke != NULL) {
+      completion->invoke(completion_handler, selected_urls);
+    }
+  }
+}
+
+static void *lepusa_webview_ui_delegate_class(void) {
+  static void *delegate_class = NULL;
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  delegate_class = lepusa_objc_get_class("LepusaWebViewUIDelegate");
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  delegate_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaWebViewUIDelegate",
+    0
+  );
+  if (delegate_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    delegate_class,
+    lepusa_sel(
+      "webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:"
+    ),
+    (void *)lepusa_webview_run_open_panel,
+    "v@:@@@@"
+  );
+  lepusa_objc_register_class_pair(delegate_class);
+  return delegate_class;
+}
+
+static void lepusa_install_webview_ui_delegate(void *webview) {
+  void *delegate_class = lepusa_webview_ui_delegate_class();
+  void *delegate = delegate_class == NULL ? NULL :
+    lepusa_msg_id(delegate_class, "new");
+  if (delegate != NULL) {
+    /* WKWebView keeps a weak UI delegate, so retain this instance for the
+     * lifetime of the native window. */
+    lepusa_msg_void_id(webview, "setUIDelegate:", delegate);
+  }
 }
 
 static signed char lepusa_application_should_terminate_after_last_window_closed(
@@ -3571,6 +3674,7 @@ static int32_t lepusa_macos_run_webview_impl(
   if (webview == NULL) {
     return 6;
   }
+  lepusa_install_webview_ui_delegate(webview);
   bridge_context.window = window;
   bridge_context.webview = webview;
   lepusa_register_window_slot(
