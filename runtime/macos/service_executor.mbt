@@ -1,14 +1,19 @@
 ///|
-#borrow(name, command_packet)
-extern "c" fn native_start_service(name : Bytes, command_packet : Bytes) -> Int = "lepusa_macos_start_service"
+#borrow(name, command_packet, readiness_url)
+extern "c" fn native_start_service(
+  name : Bytes,
+  command_packet : Bytes,
+  readiness_url : Bytes,
+) -> Int = "lepusa_macos_start_service"
 
 ///|
 #borrow(name)
 extern "c" fn native_stop_service(name : Bytes) -> Int = "lepusa_macos_stop_service"
 
 ///|
-#borrow(readiness_url)
+#borrow(name, readiness_url)
 extern "c" fn native_wait_until_ready(
+  name : Bytes,
   readiness_url : Bytes,
   timeout_ms : Int,
 ) -> Int = "lepusa_macos_wait_until_ready"
@@ -51,8 +56,13 @@ fn macos_start_service(
     native_start_service(
       @utf8.encode(service.name()),
       @runtime.native_service_command_packet(service.command()),
+      @utf8.encode(service.readiness_url()),
     ) {
     0 => NativeServiceActionStarted
+    4 =>
+      NativeServiceActionFailed(
+        "macOS service start refused for \{service.name()}: readiness endpoint is already active; close the other app instance",
+      )
     code =>
       NativeServiceActionFailed(
         "macOS service start failed for \{service.name()}: code \{code}",
@@ -64,8 +74,17 @@ fn macos_start_service(
 fn macos_wait_until_ready(
   service : @lepusa.LocalService,
 ) -> @runtime.NativeServiceActionStatus {
-  match native_wait_until_ready(@utf8.encode(service.readiness_url()), 5000) {
+  match
+    native_wait_until_ready(
+      @utf8.encode(service.name()),
+      @utf8.encode(service.readiness_url()),
+      5000,
+    ) {
     0 => NativeServiceActionReady
+    3 =>
+      NativeServiceActionFailed(
+        "macOS service readiness failed for \{service.name()}: launched service process exited",
+      )
     code =>
       NativeServiceActionFailed(
         "macOS service readiness failed for \{service.name()}: code \{code}",

@@ -371,6 +371,19 @@ static pid_t lepusa_untrack_service(const char *name) {
   return -1;
 }
 
+static pid_t lepusa_tracked_service_pid(const char *name) {
+  if (name == NULL) {
+    return -1;
+  }
+  for (int i = 0; i < 64; i++) {
+    if (lepusa_service_processes[i].name != NULL &&
+        strcmp(lepusa_service_processes[i].name, name) == 0) {
+      return lepusa_service_processes[i].pid;
+    }
+  }
+  return -1;
+}
+
 static void lepusa_terminate_tracked_services(int clear_entries) {
   for (int i = 0; i < 64; i++) {
     pid_t pid = lepusa_service_processes[i].pid;
@@ -3457,16 +3470,31 @@ moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
 MOONBIT_FFI_EXPORT
 int32_t lepusa_macos_start_service(
   moonbit_bytes_t name,
-  moonbit_bytes_t command_packet
+  moonbit_bytes_t command_packet,
+  moonbit_bytes_t readiness_url
 ) {
   char *service_name = lepusa_cstr_from_bytes(name);
+  char *url = lepusa_cstr_from_bytes(readiness_url);
   char **argv = NULL;
   int argc = 0;
   if (service_name == NULL ||
       !lepusa_parse_command_packet(command_packet, &argv, &argc)) {
     free(service_name);
+    free(url);
     return 1;
   }
+  char host[256];
+  char port[16];
+  char path[512];
+  if (url != NULL &&
+      lepusa_parse_http_url(url, host, sizeof(host), port, sizeof(port), path, sizeof(path)) &&
+      lepusa_try_http_ready(host, port, path)) {
+    lepusa_free_argv(argv, argc);
+    free(service_name);
+    free(url);
+    return 4;
+  }
+  free(url);
   pid_t pid = 0;
   int spawn_error = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
   lepusa_free_argv(argv, argc);
@@ -3504,9 +3532,16 @@ int32_t lepusa_macos_stop_service(moonbit_bytes_t name) {
 
 MOONBIT_FFI_EXPORT
 int32_t lepusa_macos_wait_until_ready(
+  moonbit_bytes_t name,
   moonbit_bytes_t readiness_url,
   int32_t timeout_ms
 ) {
+  char *service_name = lepusa_cstr_from_bytes(name);
+  pid_t service_pid = lepusa_tracked_service_pid(service_name);
+  free(service_name);
+  if (service_pid <= 0) {
+    return 3;
+  }
   char *url = lepusa_cstr_from_bytes(readiness_url);
   char host[256];
   char port[16];
@@ -3519,7 +3554,15 @@ int32_t lepusa_macos_wait_until_ready(
   free(url);
   long deadline = lepusa_now_ms() + (timeout_ms <= 0 ? 1 : timeout_ms);
   do {
+    int status = 0;
+    if (waitpid(service_pid, &status, WNOHANG) != 0) {
+      return 3;
+    }
     if (lepusa_try_http_ready(host, port, path)) {
+      usleep(100000);
+      if (waitpid(service_pid, &status, WNOHANG) != 0) {
+        return 3;
+      }
       return 0;
     }
     usleep(100000);
@@ -3792,10 +3835,12 @@ moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
 
 int32_t lepusa_macos_start_service(
   moonbit_bytes_t name,
-  moonbit_bytes_t command_packet
+  moonbit_bytes_t command_packet,
+  moonbit_bytes_t readiness_url
 ) {
   (void)name;
   (void)command_packet;
+  (void)readiness_url;
   return 2;
 }
 
@@ -3805,9 +3850,11 @@ int32_t lepusa_macos_stop_service(moonbit_bytes_t name) {
 }
 
 int32_t lepusa_macos_wait_until_ready(
+  moonbit_bytes_t name,
   moonbit_bytes_t readiness_url,
   int32_t timeout_ms
 ) {
+  (void)name;
   (void)readiness_url;
   (void)timeout_ms;
   return 2;
