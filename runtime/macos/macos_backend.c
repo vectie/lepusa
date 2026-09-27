@@ -88,6 +88,16 @@ typedef int (*LepusaClassAddMethod)(void *, void *, void *, const char *);
 typedef void *LepusaObjcMsgSend;
 typedef moonbit_bytes_t (*LepusaBytesCallback)(void *, moonbit_bytes_t);
 
+/* Objective-C block ABI: WebKit's open-panel completion is invoked on the
+ * same main-thread call, before the delegate method returns. */
+typedef struct {
+  void *isa;
+  int flags;
+  int reserved;
+  void (*invoke)(void *, void *);
+  void *descriptor;
+} LepusaFileSelectionBlock;
+
 typedef struct {
   char label[128];
   void *window;
@@ -356,6 +366,19 @@ static pid_t lepusa_untrack_service(const char *name) {
       lepusa_service_processes[i].name = NULL;
       lepusa_service_processes[i].pid = 0;
       return pid;
+    }
+  }
+  return -1;
+}
+
+static pid_t lepusa_tracked_service_pid(const char *name) {
+  if (name == NULL) {
+    return -1;
+  }
+  for (int i = 0; i < 64; i++) {
+    if (lepusa_service_processes[i].name != NULL &&
+        strcmp(lepusa_service_processes[i].name, name) == 0) {
+      return lepusa_service_processes[i].pid;
     }
   }
   return -1;
@@ -1153,6 +1176,7 @@ static void lepusa_load_webview_url_range(
 static void *lepusa_bridge_handler_class(void);
 static void *lepusa_window_delegate_class(void);
 static void *lepusa_url_scheme_handler_class(void);
+static void lepusa_install_webview_ui_delegate(void *webview);
 
 static void lepusa_apply_window_controls_from_handoff_packet(
   LepusaBridgeContext *context,
@@ -2713,6 +2737,7 @@ static void lepusa_open_window_from_record(
   if (webview == NULL) {
     return;
   }
+  lepusa_install_webview_ui_delegate(webview);
   lepusa_msg_void_id(
     window,
     "setTitle:",
@@ -3128,6 +3153,97 @@ static void *lepusa_window_delegate_class(void) {
   return delegate_class;
 }
 
+static void lepusa_webview_run_open_panel(
+  void *self,
+  void *selector,
+  void *webview,
+  void *parameters,
+  void *frame,
+  void *completion_handler
+) {
+  (void)self;
+  (void)selector;
+  (void)webview;
+  (void)frame;
+  void *selected_urls = NULL;
+  void *panel = lepusa_msg_id(lepusa_cls("NSOpenPanel"), "openPanel");
+  if (panel != NULL) {
+    int multiple = parameters == NULL ? 0 :
+      ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+        parameters,
+        lepusa_sel("allowsMultipleSelection")
+      );
+    int directories = parameters == NULL ? 0 :
+      ((LepusaMsgSendInt)lepusa_objc_msg_send)(
+        parameters,
+        lepusa_sel("allowsDirectories")
+      );
+    lepusa_msg_void_int(panel, "setAllowsMultipleSelection:", multiple != 0);
+    lepusa_msg_void_int(panel, "setCanChooseDirectories:", directories != 0);
+    lepusa_msg_void_int(panel, "setCanChooseFiles:", 1);
+    if (((LepusaMsgSendInt)lepusa_objc_msg_send)(
+          panel,
+          lepusa_sel("runModal")
+        ) == 1) {
+      selected_urls = lepusa_msg_id(panel, "URLs");
+    }
+  }
+  if (completion_handler != NULL) {
+    LepusaFileSelectionBlock *completion =
+      (LepusaFileSelectionBlock *)completion_handler;
+    if (completion->invoke != NULL) {
+      completion->invoke(completion_handler, selected_urls);
+    }
+  }
+}
+
+static void *lepusa_webview_ui_delegate_class(void) {
+  static void *delegate_class = NULL;
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  delegate_class = lepusa_objc_get_class("LepusaWebViewUIDelegate");
+  if (delegate_class != NULL) {
+    return delegate_class;
+  }
+  void *superclass = lepusa_cls("NSObject");
+  if (superclass == NULL ||
+      lepusa_objc_allocate_class_pair == NULL ||
+      lepusa_objc_register_class_pair == NULL ||
+      lepusa_class_add_method == NULL) {
+    return NULL;
+  }
+  delegate_class = lepusa_objc_allocate_class_pair(
+    superclass,
+    "LepusaWebViewUIDelegate",
+    0
+  );
+  if (delegate_class == NULL) {
+    return NULL;
+  }
+  lepusa_class_add_method(
+    delegate_class,
+    lepusa_sel(
+      "webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:"
+    ),
+    (void *)lepusa_webview_run_open_panel,
+    "v@:@@@@"
+  );
+  lepusa_objc_register_class_pair(delegate_class);
+  return delegate_class;
+}
+
+static void lepusa_install_webview_ui_delegate(void *webview) {
+  void *delegate_class = lepusa_webview_ui_delegate_class();
+  void *delegate = delegate_class == NULL ? NULL :
+    lepusa_msg_id(delegate_class, "new");
+  if (delegate != NULL) {
+    /* WKWebView keeps a weak UI delegate, so retain this instance for the
+     * lifetime of the native window. */
+    lepusa_msg_void_id(webview, "setUIDelegate:", delegate);
+  }
+}
+
 static signed char lepusa_application_should_terminate_after_last_window_closed(
   void *self,
   void *selector,
@@ -3354,16 +3470,31 @@ moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
 MOONBIT_FFI_EXPORT
 int32_t lepusa_macos_start_service(
   moonbit_bytes_t name,
-  moonbit_bytes_t command_packet
+  moonbit_bytes_t command_packet,
+  moonbit_bytes_t readiness_url
 ) {
   char *service_name = lepusa_cstr_from_bytes(name);
+  char *url = lepusa_cstr_from_bytes(readiness_url);
   char **argv = NULL;
   int argc = 0;
   if (service_name == NULL ||
       !lepusa_parse_command_packet(command_packet, &argv, &argc)) {
     free(service_name);
+    free(url);
     return 1;
   }
+  char host[256];
+  char port[16];
+  char path[512];
+  if (url != NULL &&
+      lepusa_parse_http_url(url, host, sizeof(host), port, sizeof(port), path, sizeof(path)) &&
+      lepusa_try_http_ready(host, port, path)) {
+    lepusa_free_argv(argv, argc);
+    free(service_name);
+    free(url);
+    return 4;
+  }
+  free(url);
   pid_t pid = 0;
   int spawn_error = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
   lepusa_free_argv(argv, argc);
@@ -3401,9 +3532,16 @@ int32_t lepusa_macos_stop_service(moonbit_bytes_t name) {
 
 MOONBIT_FFI_EXPORT
 int32_t lepusa_macos_wait_until_ready(
+  moonbit_bytes_t name,
   moonbit_bytes_t readiness_url,
   int32_t timeout_ms
 ) {
+  char *service_name = lepusa_cstr_from_bytes(name);
+  pid_t service_pid = lepusa_tracked_service_pid(service_name);
+  free(service_name);
+  if (service_pid <= 0) {
+    return 3;
+  }
   char *url = lepusa_cstr_from_bytes(readiness_url);
   char host[256];
   char port[16];
@@ -3416,7 +3554,15 @@ int32_t lepusa_macos_wait_until_ready(
   free(url);
   long deadline = lepusa_now_ms() + (timeout_ms <= 0 ? 1 : timeout_ms);
   do {
+    int status = 0;
+    if (waitpid(service_pid, &status, WNOHANG) != 0) {
+      return 3;
+    }
     if (lepusa_try_http_ready(host, port, path)) {
+      usleep(100000);
+      if (waitpid(service_pid, &status, WNOHANG) != 0) {
+        return 3;
+      }
       return 0;
     }
     usleep(100000);
@@ -3571,6 +3717,7 @@ static int32_t lepusa_macos_run_webview_impl(
   if (webview == NULL) {
     return 6;
   }
+  lepusa_install_webview_ui_delegate(webview);
   bridge_context.window = window;
   bridge_context.webview = webview;
   lepusa_register_window_slot(
@@ -3688,10 +3835,12 @@ moonbit_bytes_t lepusa_macos_backend_engine_name(void) {
 
 int32_t lepusa_macos_start_service(
   moonbit_bytes_t name,
-  moonbit_bytes_t command_packet
+  moonbit_bytes_t command_packet,
+  moonbit_bytes_t readiness_url
 ) {
   (void)name;
   (void)command_packet;
+  (void)readiness_url;
   return 2;
 }
 
@@ -3701,9 +3850,11 @@ int32_t lepusa_macos_stop_service(moonbit_bytes_t name) {
 }
 
 int32_t lepusa_macos_wait_until_ready(
+  moonbit_bytes_t name,
   moonbit_bytes_t readiness_url,
   int32_t timeout_ms
 ) {
+  (void)name;
   (void)readiness_url;
   (void)timeout_ms;
   return 2;

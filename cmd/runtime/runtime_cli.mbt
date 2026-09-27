@@ -134,10 +134,12 @@ fn render_macos_runtime_run(
   match result {
     Err(problems) =>
       runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
-    Ok(result) =>
-      runtime_ok(
+    Ok(result) => {
+      let report = macos_runtime_run_report(result, services)
+      runtime_run_result(
+        report.status(),
         render_runtime_run_report(
-          macos_runtime_run_report(result, services),
+          report,
           launch~,
           include_title=true,
           include_load_url=true,
@@ -145,6 +147,7 @@ fn render_macos_runtime_run(
           include_bridge_routes=true,
         ),
       )
+    }
   }
 }
 
@@ -162,7 +165,10 @@ fn render_linux_runtime_run(
     Err(problems) =>
       runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
     Ok(result) =>
-      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+      runtime_run_result(
+        result.report().status(),
+        render_bundled_runtime_run_report(result.report(), launch~),
+      )
   }
 }
 
@@ -180,7 +186,10 @@ fn render_windows_runtime_run(
     Err(problems) =>
       runtime_fail(render_runtime_run_problems("Lepusa runtime run", problems))
     Ok(result) =>
-      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+      runtime_run_result(
+        result.report().status(),
+        render_bundled_runtime_run_report(result.report(), launch~),
+      )
   }
 }
 
@@ -196,7 +205,10 @@ fn render_portable_runtime_run(
   }
   match manifest.run(mode~) {
     Ok(result) =>
-      runtime_ok(render_bundled_runtime_run_report(result.report(), launch~))
+      runtime_run_result(
+        result.report().status(),
+        render_bundled_runtime_run_report(result.report(), launch~),
+      )
     Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
   }
 }
@@ -419,12 +431,23 @@ fn runtime_bridge_mode_from_args(
 
 ///|
 fn runtime_ok(output : String) -> RuntimeCliResult {
-  { exit_code: 0, output }
+  { exit_code: 0, output, }
+}
+
+///|
+fn runtime_run_result(
+  status : @lepusa.RunStatus,
+  output : String,
+) -> RuntimeCliResult {
+  match status {
+    RunPrepared | RunLaunched => runtime_ok(output)
+    RunFailed(_) | RunUnsupported(_) => runtime_fail(output)
+  }
 }
 
 ///|
 fn runtime_fail(output : String) -> RuntimeCliResult {
-  { exit_code: 1, output }
+  { exit_code: 1, output, }
 }
 
 ///|

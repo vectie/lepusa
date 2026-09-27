@@ -372,7 +372,7 @@ test "runtime cli dry-runs bundled linux manifest by target" {
     manifest,
     launch=true,
   )
-  assert_eq(launch.exit_code, 0)
+  assert_eq(launch.exit_code, 1)
   assert_true(launch.output.contains("mode: launch"))
   assert_true(launch.output.contains("status: failed"))
   assert_true(launch.output.contains("Linux bundled service startup"))
@@ -418,7 +418,7 @@ test "runtime cli dry-runs bundled windows manifest by target" {
     manifest,
     launch=true,
   )
-  assert_eq(launch.exit_code, 0)
+  assert_eq(launch.exit_code, 1)
   assert_true(launch.output.contains("mode: launch"))
   assert_true(launch.output.contains("status: unsupported"))
   assert_true(launch.output.contains("target-can-launch: false"))
@@ -886,4 +886,18 @@ async test "runtime cli invoke ignores manifest flag when payload is omitted" {
   ])
   assert_eq(result.exit_code, 0)
   assert_true(result.output.contains("\\\"keys\\\":[]"))
+}
+
+///|
+test "runtime cli exit code follows reported launch status" {
+  assert_eq(runtime_run_result(RunPrepared, "prepared").exit_code, 0)
+  assert_eq(runtime_run_result(RunLaunched, "launched").exit_code, 0)
+  assert_eq(
+    runtime_run_result(RunFailed("service exited"), "failed").exit_code,
+    1,
+  )
+  assert_eq(
+    runtime_run_result(RunUnsupported("backend missing"), "unsupported").exit_code,
+    1,
+  )
 }
