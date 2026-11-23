@@ -3,6 +3,8 @@ import {
   "moonbitlang/async/fs",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
+  "vectie/moonlib/os",
   "moonbitlang/x/sys",
   "vectie/lepusa",
   "vectie/lepusa/runtime" @runtime_core,
