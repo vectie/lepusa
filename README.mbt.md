@@ -972,7 +972,11 @@ not strand supervised local services. The Windows bundle also emits a native C
 launcher source that starts `lepusa-runtime.exe`, waits for completion, and
 returns the runtime exit code. The macOS and Linux runtimes track all native
 windows and stop tracked local services only after the last WKWebView or
-WebKitGTK window closes. The Linux package owns WebKitGTK source and
+WebKitGTK window closes. On macOS the native web view uses an open panel for
+HTML file inputs. On macOS 11.3 and later, HTML download links (including blob
+URLs) and HTTP attachment responses save to the user's Downloads directory.
+Repeated filenames get a numeric suffix. HTTP and HTTPS links requesting a
+new window open in the system browser. The Linux package owns WebKitGTK source and
 packaged-window loops when GTK3 and WebKit2GTK are available, including a
 package-owned `lepusa://` URI scheme callback for MoonBit-resolved runtime,
 virtual, local, and packaged assets.

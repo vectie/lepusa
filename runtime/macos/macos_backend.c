@@ -54,6 +54,7 @@ typedef void *(*LepusaMsgSendIdIdIdId)(void *, void *, void *, void *, void *);
 typedef void *(*LepusaMsgSendIdCStr)(void *, void *, const char *);
 typedef void *(*LepusaMsgSendIdDouble)(void *, void *, double);
 typedef void *(*LepusaMsgSendIdULong)(void *, void *, unsigned long);
+typedef void *(*LepusaMsgSendIdULongULong)(void *, void *, unsigned long, unsigned long);
 typedef void *(*LepusaMsgSendIdRect)(void *, void *, LepusaRect);
 typedef void *(*LepusaMsgSendIdRectId)(void *, void *, LepusaRect, void *);
 typedef void *(*LepusaMsgSendIdRectStyle)(void *, void *, LepusaRect, unsigned long, unsigned long, int);
@@ -97,6 +98,14 @@ typedef struct {
   void (*invoke)(void *, void *);
   void *descriptor;
 } LepusaFileSelectionBlock;
+
+typedef struct {
+  void *isa;
+  int flags;
+  int reserved;
+  void (*invoke)(void *, long);
+  void *descriptor;
+} LepusaNavigationPolicyBlock;
 
 typedef struct {
   char label[128];
@@ -3197,6 +3206,132 @@ static void lepusa_webview_run_open_panel(
   }
 }
 
+/* WebKit delivers navigation and download delegate methods on the main thread. */
+static void *lepusa_obj_arg(void *target, const char *selector, void *arg) {
+  return ((LepusaMsgSendIdId)lepusa_objc_msg_send)(target, lepusa_sel(selector), arg);
+}
+
+static int lepusa_bool_arg(void *target, const char *selector, void *arg) {
+  return ((LepusaMsgSendIntId)lepusa_objc_msg_send)(target, lepusa_sel(selector), arg);
+}
+
+static void *lepusa_literal(const char *s) {
+  return ((LepusaMsgSendIdCStr)lepusa_objc_msg_send)(
+    lepusa_cls("NSString"), lepusa_sel("stringWithUTF8String:"), s
+  );
+}
+
+static void lepusa_webview_decide_action(
+  void *self, void *selector, void *webview, void *action, LepusaNavigationPolicyBlock *decision
+) {
+  (void)self; (void)selector; (void)webview;
+  int download = lepusa_bool_arg(action, "respondsToSelector:", lepusa_sel("shouldPerformDownload")) &&
+    ((LepusaMsgSendInt)lepusa_objc_msg_send)(action, lepusa_sel("shouldPerformDownload"));
+  decision->invoke(decision, download ? 2 : 1); /* WKNavigationActionPolicyDownload / Allow */
+}
+
+static void lepusa_webview_decide_response(
+  void *self, void *selector, void *webview, void *navigation, LepusaNavigationPolicyBlock *decision
+) {
+  (void)self; (void)selector; (void)webview;
+  void *response = lepusa_msg_id(navigation, "response");
+  int attachment = 0;
+  if (lepusa_bool_arg(response, "respondsToSelector:", lepusa_sel("valueForHTTPHeaderField:"))) {
+    void *disposition = lepusa_obj_arg(response, "valueForHTTPHeaderField:", lepusa_literal("Content-Disposition"));
+    void *parts = lepusa_obj_arg(disposition, "componentsSeparatedByString:", lepusa_literal(";"));
+    void *kind = lepusa_msg_id(lepusa_msg_id(parts, "firstObject"), "lowercaseString");
+    attachment = lepusa_bool_arg(kind, "isEqualToString:", lepusa_literal("attachment"));
+  }
+  int show = ((LepusaMsgSendInt)lepusa_objc_msg_send)(navigation, lepusa_sel("canShowMIMEType"));
+  int download = lepusa_cls("WKDownload") != NULL && (attachment || !show);
+  decision->invoke(decision, download ? 2 : 1); /* WKNavigationResponsePolicyDownload / Allow */
+}
+
+static void lepusa_webview_became_download(
+  void *self, void *selector, void *webview, void *navigation, void *download
+) {
+  (void)selector; (void)webview; (void)navigation;
+  lepusa_msg_void_id(download, "setDelegate:", self);
+}
+
+/* Reserve active paths as well as those already on disk. WebKit itself requires
+ * a non-existent destination and fails the download if another writer wins. */
+static void *lepusa_download_paths = NULL;
+
+static void *lepusa_download_key(void *download) {
+  return lepusa_obj_arg(lepusa_cls("NSValue"), "valueWithNonretainedObject:", download);
+}
+
+static void lepusa_download_destination(
+  void *self, void *selector, void *download, void *response, void *suggested, LepusaFileSelectionBlock *decision
+) {
+  (void)self; (void)selector; (void)response;
+  void *manager = lepusa_msg_id(lepusa_cls("NSFileManager"), "defaultManager");
+  void *folders = ((LepusaMsgSendIdULongULong)lepusa_objc_msg_send)(
+    manager, lepusa_sel("URLsForDirectory:inDomains:"), 15, 1 /* NSDownloadsDirectory, NSUserDomainMask */
+  );
+  void *directory = lepusa_msg_id(folders, "firstObject");
+  void *name = lepusa_msg_id(suggested, "lastPathComponent");
+  if (name == NULL || lepusa_bool_arg(name, "isEqualToString:", lepusa_literal("")) ||
+      lepusa_bool_arg(name, "hasPrefix:", lepusa_literal(".")) ||
+      lepusa_bool_arg(name, "isEqualToString:", lepusa_literal("/"))) {
+    name = lepusa_literal("download");
+  }
+  if (lepusa_download_paths == NULL) {
+    lepusa_download_paths = lepusa_msg_id(lepusa_cls("NSMutableDictionary"), "new");
+  }
+  void *ext = lepusa_msg_id(name, "pathExtension");
+  void *base = lepusa_msg_id(name, "stringByDeletingPathExtension");
+  void *active = lepusa_msg_id(lepusa_download_paths, "allValues");
+  void *destination = NULL;
+  for (unsigned n = 1; directory != NULL && n <= 10000; n++) {
+    void *candidate = name;
+    if (n > 1) {
+      char suffix[24];
+      snprintf(suffix, sizeof(suffix), " (%u)", n);
+      candidate = lepusa_obj_arg(base, "stringByAppendingString:", lepusa_literal(suffix));
+      if (!lepusa_bool_arg(ext, "isEqualToString:", lepusa_literal(""))) {
+        candidate = lepusa_obj_arg(candidate, "stringByAppendingPathExtension:", ext);
+      }
+    }
+    void *url = lepusa_obj_arg(directory, "URLByAppendingPathComponent:", candidate);
+    void *path = lepusa_msg_id(url, "path");
+    if (url != NULL && !lepusa_bool_arg(manager, "fileExistsAtPath:", path) &&
+        !lepusa_bool_arg(active, "containsObject:", path)) {
+      lepusa_msg_void_id_id(lepusa_download_paths, "setObject:forKey:", path, lepusa_download_key(download));
+      destination = url;
+      break;
+    }
+  }
+  decision->invoke(decision, destination);
+}
+
+static void lepusa_download_finished(void *self, void *selector, void *download) {
+  (void)self; (void)selector;
+  lepusa_msg_void_id(lepusa_download_paths, "removeObjectForKey:", lepusa_download_key(download));
+}
+
+static void lepusa_download_failed(void *self, void *selector, void *download, void *error, void *resume_data) {
+  (void)resume_data;
+  lepusa_download_finished(self, selector, download);
+  void *alert = lepusa_obj_arg(lepusa_cls("NSAlert"), "alertWithError:", error);
+  ((LepusaMsgSendULong)lepusa_objc_msg_send)(alert, lepusa_sel("runModal"));
+}
+
+static void *lepusa_webview_open_link(
+  void *self, void *selector, void *webview, void *configuration, void *action, void *features
+) {
+  (void)self; (void)selector; (void)webview; (void)configuration; (void)features;
+  void *url = lepusa_msg_id(lepusa_msg_id(action, "request"), "URL");
+  void *scheme = lepusa_msg_id(lepusa_msg_id(url, "scheme"), "lowercaseString");
+  if (lepusa_bool_arg(scheme, "isEqualToString:", lepusa_literal("https")) ||
+      lepusa_bool_arg(scheme, "isEqualToString:", lepusa_literal("http"))) {
+    void *workspace = lepusa_msg_id(lepusa_cls("NSWorkspace"), "sharedWorkspace");
+    lepusa_bool_arg(workspace, "openURL:", url);
+  }
+  return NULL;
+}
+
 static void *lepusa_webview_ui_delegate_class(void) {
   static void *delegate_class = NULL;
   if (delegate_class != NULL) {
@@ -3229,6 +3364,22 @@ static void *lepusa_webview_ui_delegate_class(void) {
     (void *)lepusa_webview_run_open_panel,
     "v@:@@@@"
   );
+  lepusa_class_add_method(delegate_class, lepusa_sel("webView:decidePolicyForNavigationAction:decisionHandler:"),
+    (void *)lepusa_webview_decide_action, "v@:@@@?");
+  lepusa_class_add_method(delegate_class, lepusa_sel("webView:decidePolicyForNavigationResponse:decisionHandler:"),
+    (void *)lepusa_webview_decide_response, "v@:@@@?");
+  lepusa_class_add_method(delegate_class, lepusa_sel("webView:navigationAction:didBecomeDownload:"),
+    (void *)lepusa_webview_became_download, "v@:@@@");
+  lepusa_class_add_method(delegate_class, lepusa_sel("webView:navigationResponse:didBecomeDownload:"),
+    (void *)lepusa_webview_became_download, "v@:@@@");
+  lepusa_class_add_method(delegate_class, lepusa_sel("download:decideDestinationUsingResponse:suggestedFilename:completionHandler:"),
+    (void *)lepusa_download_destination, "v@:@@@@?");
+  lepusa_class_add_method(delegate_class, lepusa_sel("downloadDidFinish:"),
+    (void *)lepusa_download_finished, "v@:@");
+  lepusa_class_add_method(delegate_class, lepusa_sel("download:didFailWithError:resumeData:"),
+    (void *)lepusa_download_failed, "v@:@@@");
+  lepusa_class_add_method(delegate_class, lepusa_sel("webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:"),
+    (void *)lepusa_webview_open_link, "@@:@@@@");
   lepusa_objc_register_class_pair(delegate_class);
   return delegate_class;
 }
@@ -3241,6 +3392,11 @@ static void lepusa_install_webview_ui_delegate(void *webview) {
     /* WKWebView keeps a weak UI delegate, so retain this instance for the
      * lifetime of the native window. */
     lepusa_msg_void_id(webview, "setUIDelegate:", delegate);
+    lepusa_msg_void_id(webview, "setNavigationDelegate:", delegate);
+    /* User gestures can open links in the system browser; unsolicited
+     * JavaScript popups cannot open external applications. */
+    void *preferences = lepusa_msg_id(lepusa_msg_id(webview, "configuration"), "preferences");
+    lepusa_msg_void_int(preferences, "setJavaScriptCanOpenWindowsAutomatically:", 0);
   }
 }
 
