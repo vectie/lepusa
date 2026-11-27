@@ -1,24 +1,27 @@
 ///|
+#derive(Debug, Eq)
 pub struct EventListener {
   id : String
   name : String
   target : EventTarget
   once : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct EventDelivery {
   listener_id : String
   target : EventTarget
   event : Event
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct EventBus {
-  mut next_listener_sequence : Int
+  mut next_listener_sequence : Int32
   listeners : Map[String, EventListener]
   order : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn EventTarget::kind(self : EventTarget) -> String {
@@ -114,15 +117,15 @@ pub fn EventDelivery::to_json(self : EventDelivery) -> String {
 
 ///|
 pub fn EventBus::new() -> EventBus {
-  { next_listener_sequence: 1, listeners: {}, order: [] }
+  { next_listener_sequence: 1, listeners: {}, order: [], }
 }
 
 ///|
 pub fn EventBus::listen(
   self : EventBus,
   name : String,
-  target? : EventTarget = AppTarget,
-  once? : Bool = false,
+  target~ : EventTarget = AppTarget,
+  once~ : Bool = false,
 ) -> Result[EventListener, Array[String]] {
   let problems = event_listener_problems(name, target)
   if !problems.is_empty() {
@@ -131,7 +134,7 @@ pub fn EventBus::listen(
   let sequence = self.next_listener_sequence
   self.next_listener_sequence += 1
   let id = "listener-\{sequence}"
-  let listener = { id, name, target, once }
+  let listener = { id, name, target, once, }
   self.listeners[id] = listener
   self.order.push(id)
   Ok(listener)
@@ -141,7 +144,7 @@ pub fn EventBus::listen(
 pub fn EventBus::once(
   self : EventBus,
   name : String,
-  target? : EventTarget = AppTarget,
+  target~ : EventTarget = AppTarget,
 ) -> Result[EventListener, Array[String]] {
   self.listen(name, target~, once=true)
 }
@@ -164,7 +167,7 @@ pub fn EventBus::listeners(self : EventBus) -> Array[EventListener] {
 }
 
 ///|
-pub fn EventBus::listener_count(self : EventBus) -> Int {
+pub fn EventBus::listener_count(self : EventBus) -> Int32 {
   self.listeners.length()
 }
 
@@ -172,7 +175,7 @@ pub fn EventBus::listener_count(self : EventBus) -> Int {
 pub fn EventBus::listeners_for(
   self : EventBus,
   name : String,
-  target? : EventTarget = AppTarget,
+  target~ : EventTarget = AppTarget,
 ) -> Array[EventListener] {
   self
   .listeners()
@@ -185,7 +188,7 @@ pub fn EventBus::listeners_for(
 pub fn EventBus::emit(
   self : EventBus,
   event : Event,
-  target? : EventTarget = AppTarget,
+  target~ : EventTarget = AppTarget,
 ) -> Result[Array[EventDelivery], Array[String]] {
   let problems = event.validate()
   for problem in target.validate() {
@@ -199,7 +202,7 @@ pub fn EventBus::emit(
   for listener in self.listeners() {
     if listener.name() == event.name() &&
       event_target_accepts(listener.target(), target) {
-      deliveries.push({ listener_id: listener.id(), target, event })
+      deliveries.push({ listener_id: listener.id(), target, event, })
       if listener.once() {
         once_ids.push(listener.id())
       }

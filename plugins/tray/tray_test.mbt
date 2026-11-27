@@ -1,6 +1,6 @@
 ///|
 test "tray plugin declares status icon commands" {
-  let declared = plugin()
+  let declared = @tray.plugin()
   assert_eq(declared.name(), "tray")
   assert_eq(declared.command_routes().length(), 7)
   assert_true(declared.command_routes().contains("tray.setIcon"))
@@ -18,7 +18,7 @@ test "tray plugin declares status icon commands" {
 
 ///|
 test "tray capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @tray.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Tray))
   assert_false(grant.allows(window_label="settings", permission=Tray))
   assert_false(grant.allows(window_label="main", permission=SingleInstance))
@@ -26,10 +26,15 @@ test "tray capabilities grant permission by window" {
 
 ///|
 test "tray policy validates menu metadata" {
-  let policy = TrayPolicy::new(icon_path="assets/tray.png", tooltip="Lepusa")
-    .item(TrayMenuItem::action(id="open", label="Open"))
-    .item(TrayMenuItem::separator())
-    .item(TrayMenuItem::check(id="launch_at_login", label="Launch at login"))
+  let policy = @tray.TrayPolicy::new(
+      icon_path="assets/tray.png",
+      tooltip="Lepusa",
+    )
+    .item(@tray.TrayMenuItem::action(id="open", label="Open"))
+    .item(@tray.TrayMenuItem::separator())
+    .item(
+      @tray.TrayMenuItem::check(id="launch_at_login", label="Launch at login"),
+    )
   assert_eq(policy.validate().length(), 0)
   assert_eq(policy.menu().length(), 3)
   assert_true(policy.menu()[2].kind() is Check)
@@ -37,11 +42,11 @@ test "tray policy validates menu metadata" {
 
 ///|
 test "tray policy rejects invalid menu metadata" {
-  let policy = TrayPolicy::new(icon_path="assets\\tray.png", tooltip="")
-    .item(TrayMenuItem::action(id="", label="Open"))
-    .item(TrayMenuItem::action(id="open/item", label="Open"))
-    .item(TrayMenuItem::action(id="open", label="Open"))
-    .item(TrayMenuItem::action(id="open", label="Again"))
+  let policy = @tray.TrayPolicy::new(icon_path="assets\\tray.png", tooltip="")
+    .item(@tray.TrayMenuItem::action(id="", label="Open"))
+    .item(@tray.TrayMenuItem::action(id="open/item", label="Open"))
+    .item(@tray.TrayMenuItem::action(id="open", label="Open"))
+    .item(@tray.TrayMenuItem::action(id="open", label="Again"))
   let problems = policy.validate()
   assert_true(problems.contains("tray icon path must use forward slashes"))
   assert_true(problems.contains("tray tooltip is required"))
@@ -52,9 +57,9 @@ test "tray policy rejects invalid menu metadata" {
 
 ///|
 test "tray registry tracks delegated tray state" {
-  let state = TrayState::new()
-  let registry = registry(state~)
-  let grant = capability_for_window("main")
+  let state = @tray.TrayState::new()
+  let registry = @tray.registry(state~)
+  let grant = @tray.capability_for_window("main")
   let icon_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -113,8 +118,8 @@ test "tray registry tracks delegated tray state" {
 
 ///|
 test "tray registry rejects invalid delegated state" {
-  let registry = registry()
-  let grant = capability_for_window("main")
+  let registry = @tray.registry()
+  let grant = @tray.capability_for_window("main")
   let bad_icon_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",

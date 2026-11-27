@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeLaunchManifest {
   backend : String
   platform : String
@@ -18,15 +19,16 @@ pub struct RuntimeLaunchManifest {
   declared_routes : Array[String]
   command_routes : Array[String]
   registered_routes : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeWebViewBoot {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   devtools : Bool
@@ -36,24 +38,27 @@ pub struct RuntimeWebViewBoot {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeProtocolBinding {
   window_label : String
   scheme : String
   root : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeVirtualAsset {
   window_label : String
   path : String
   mime_type : String
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeCapabilityGrant {
   name : String
   windows : Array[String]
@@ -61,34 +66,37 @@ pub struct RuntimeCapabilityGrant {
   platforms : Array[String]
   permissions : Array[String]
   operation_scopes : Array[OperationScope]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeLaunchAssetBody {
   LaunchVirtualContent(String)
   LaunchLocalFile(String)
   LaunchPackagedFile(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeLaunchAsset {
   url : String
   mime_type : String
   body : RuntimeLaunchAssetBody
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 struct ParsedLaunchAssetUrl {
   scheme : String
   authority : String
   path : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimePlan::launch_manifest(
   self : RuntimePlan,
-  registered_routes? : Array[String] = [],
-  restrict_registered? : Bool = false,
+  registered_routes~ : Array[String] = [],
+  restrict_registered~ : Bool = false,
 ) -> Result[RuntimeLaunchManifest, Array[String]] {
   let webviews : Array[RuntimeWebViewBoot] = []
   let protocol_mappings : Array[RuntimeProtocolBinding] = []
@@ -233,7 +241,7 @@ fn RuntimeProtocolBinding::from_mapping(
   window_label : String,
   mapping : ProtocolMapping,
 ) -> RuntimeProtocolBinding {
-  { window_label, scheme: mapping.scheme(), root: mapping.root() }
+  { window_label, scheme: mapping.scheme(), root: mapping.root(), }
 }
 
 ///|
@@ -437,12 +445,12 @@ pub fn RuntimeWebViewBoot::url(self : RuntimeWebViewBoot) -> String {
 }
 
 ///|
-pub fn RuntimeWebViewBoot::width(self : RuntimeWebViewBoot) -> Int {
+pub fn RuntimeWebViewBoot::width(self : RuntimeWebViewBoot) -> Int32 {
   self.width
 }
 
 ///|
-pub fn RuntimeWebViewBoot::height(self : RuntimeWebViewBoot) -> Int {
+pub fn RuntimeWebViewBoot::height(self : RuntimeWebViewBoot) -> Int32 {
   self.height
 }
 
@@ -712,7 +720,7 @@ fn parse_launch_asset_url(url : String) -> Result[ParsedLaunchAssetUrl, String] 
       let scheme = url[:index].to_owned()
       let rest = url[index + 3:].to_owned()
       match rest.find("/") {
-        None => Ok({ scheme, authority: rest, path: "" })
+        None => Ok({ scheme, authority: rest, path: "", })
         Some(path_index) =>
           Ok({
             scheme,

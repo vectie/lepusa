@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct InvokeRequest {
   id : String
   window_label : String
@@ -8,7 +9,7 @@ pub struct InvokeRequest {
   origin : String
   callback_id : String
   error_id : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn InvokeRequest::new(
@@ -16,12 +17,12 @@ pub fn InvokeRequest::new(
   window_label~ : String,
   plugin~ : String,
   command~ : String,
-  payload? : String = "",
-  origin? : String = "",
-  callback_id? : String = "",
-  error_id? : String = "",
+  payload~ : String = "",
+  origin~ : String = "",
+  callback_id~ : String = "",
+  error_id~ : String = "",
 ) -> InvokeRequest {
-  { id, window_label, plugin, command, payload, origin, callback_id, error_id }
+  { id, window_label, plugin, command, payload, origin, callback_id, error_id, }
 }
 
 ///|
@@ -93,6 +94,7 @@ pub fn InvokeRequest::validate(self : InvokeRequest) -> Array[String] {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum InvokeErrorKind {
   InvalidRequest
   UnknownCommand
@@ -102,20 +104,22 @@ pub(all) enum InvokeErrorKind {
   TransportError
   Timeout
   Cancelled
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct InvokeFailure {
   kind : InvokeErrorKind
   message : String
   route : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum InvokeResponse {
   InvokeOk(String, String)
   InvokeError(String, InvokeFailure)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn InvokeErrorKind::name(self : InvokeErrorKind) -> String {
@@ -135,9 +139,9 @@ pub fn InvokeErrorKind::name(self : InvokeErrorKind) -> String {
 pub fn InvokeFailure::new(
   kind~ : InvokeErrorKind,
   message~ : String,
-  route? : String = "",
+  route~ : String = "",
 ) -> InvokeFailure {
-  { kind, message, route }
+  { kind, message, route, }
 }
 
 ///|
@@ -175,7 +179,7 @@ pub fn InvokeFailure::async_required(route : String) -> InvokeFailure {
 ///|
 pub fn InvokeFailure::handler_error(
   message : String,
-  route? : String = "",
+  route~ : String = "",
 ) -> InvokeFailure {
   InvokeFailure::new(kind=HandlerError, message~, route~)
 }
@@ -187,16 +191,16 @@ pub fn InvokeFailure::transport_error(message : String) -> InvokeFailure {
 
 ///|
 pub fn InvokeFailure::timeout(
-  message? : String = "invoke timed out",
-  route? : String = "",
+  message~ : String = "invoke timed out",
+  route~ : String = "",
 ) -> InvokeFailure {
   InvokeFailure::new(kind=Timeout, message~, route~)
 }
 
 ///|
 pub fn InvokeFailure::cancelled(
-  message? : String = "invoke cancelled",
-  route? : String = "",
+  message~ : String = "invoke cancelled",
+  route~ : String = "",
 ) -> InvokeFailure {
   InvokeFailure::new(kind=Cancelled, message~, route~)
 }
@@ -293,7 +297,7 @@ pub fn InvokeResponse::async_required(
 pub fn InvokeResponse::handler_error(
   id : String,
   message : String,
-  route? : String = "",
+  route~ : String = "",
 ) -> InvokeResponse {
   InvokeResponse::failure(id, InvokeFailure::handler_error(message, route~))
 }

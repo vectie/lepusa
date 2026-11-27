@@ -1,49 +1,57 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeEvaluationScript {
   window_label : String
   script : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeNavigation {
   window_label : String
   url : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeDrain {
   window_label : String
   callback : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeWindowControl {
   window_label : String
   action : String
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeDesktopShellOperation {
   domain : String
   target : String
   window_label : String
   action : String
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeWindowClose {
   window_label : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String
   operations : Array[NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
   NativeExecutableOpenWindow(RuntimeWindowOpenPlan)
@@ -54,14 +62,14 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableNavigate(NativeNavigation)
   NativeExecutableWindowControl(NativeWindowControl)
   NativeExecutableDesktopShell(NativeDesktopShellOperation)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeEvaluationScript::new(
   window_label~ : String,
   script~ : String,
 ) -> NativeEvaluationScript {
-  { window_label, script }
+  { window_label, script, }
 }
 
 ///|
@@ -69,7 +77,7 @@ pub fn NativeNavigation::new(
   window_label~ : String,
   url~ : String,
 ) -> NativeNavigation {
-  { window_label, url }
+  { window_label, url, }
 }
 
 ///|
@@ -77,27 +85,27 @@ pub fn NativeBridgeDrain::new(
   window_label~ : String,
   callback~ : String,
 ) -> NativeBridgeDrain {
-  { window_label, callback }
+  { window_label, callback, }
 }
 
 ///|
 pub fn NativeWindowControl::new(
   window_label~ : String,
   action~ : String,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> NativeWindowControl {
-  { window_label, action, payload }
+  { window_label, action, payload, }
 }
 
 ///|
 pub fn NativeDesktopShellOperation::new(
   domain~ : String,
   action~ : String,
-  target? : String = "",
-  window_label? : String = "",
-  payload? : String = "",
+  target~ : String = "",
+  window_label~ : String = "",
+  payload~ : String = "",
 ) -> NativeDesktopShellOperation {
-  { domain, target, window_label, action, payload }
+  { domain, target, window_label, action, payload, }
 }
 
 ///|
@@ -110,7 +118,7 @@ pub fn NativeBridgeLoopEvaluationPlan::new(
   window_label~ : String,
   operations~ : Array[NativeExecutableOperation],
 ) -> NativeBridgeLoopEvaluationPlan {
-  { window_label, operations }
+  { window_label, operations, }
 }
 
 ///|
@@ -620,7 +628,7 @@ pub fn native_executable_operations_packet(
 pub fn native_initial_webview_open_handoff_packet(
   webviews : Array[NativeWebViewPlan],
   bridge_sources~ : Array[String],
-  start_index? : Int = 1,
+  start_index~ : Int32 = 1,
 ) -> String {
   let first = if start_index < 0 { 0 } else { start_index }
   if webviews.length() <= first {

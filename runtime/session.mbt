@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend
   platform : String
@@ -17,33 +18,36 @@ pub struct RuntimeSession {
   registered_routes : Array[String]
   event_bus : @lepusa.EventBus
   bridge_source : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeWindow {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
   event_dispatch_hook : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeProtocolMapping {
   window_label : String
   scheme : String
   root : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeVirtualFile {
   window_label : String
   path : String
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn RuntimeSession::from_plan(
@@ -154,7 +158,7 @@ fn RuntimeProtocolMapping::from_mapping(
   window_label : String,
   mapping : @lepusa.ProtocolMapping,
 ) -> RuntimeProtocolMapping {
-  { window_label, scheme: mapping.scheme(), root: mapping.root() }
+  { window_label, scheme: mapping.scheme(), root: mapping.root(), }
 }
 
 ///|
@@ -162,7 +166,7 @@ fn RuntimeVirtualFile::from_file(
   window_label : String,
   file : @lepusa.VirtualFile,
 ) -> RuntimeVirtualFile {
-  { window_label, path: file.path(), content: file.content() }
+  { window_label, path: file.path(), content: file.content(), }
 }
 
 ///|
@@ -262,7 +266,7 @@ pub fn RuntimeSession::event_listeners(
 }
 
 ///|
-pub fn RuntimeSession::event_listener_count(self : RuntimeSession) -> Int {
+pub fn RuntimeSession::event_listener_count(self : RuntimeSession) -> Int32 {
   self.event_bus.listener_count()
 }
 
@@ -270,8 +274,8 @@ pub fn RuntimeSession::event_listener_count(self : RuntimeSession) -> Int {
 pub fn RuntimeSession::listen_event(
   self : RuntimeSession,
   name : String,
-  target? : @lepusa.EventTarget = AppTarget,
-  once? : Bool = false,
+  target~ : @lepusa.EventTarget = AppTarget,
+  once~ : Bool = false,
 ) -> Result[@lepusa.EventListener, Array[String]] {
   self.event_bus.listen(name, target~, once~)
 }
@@ -280,7 +284,7 @@ pub fn RuntimeSession::listen_event(
 pub fn RuntimeSession::once_event(
   self : RuntimeSession,
   name : String,
-  target? : @lepusa.EventTarget = AppTarget,
+  target~ : @lepusa.EventTarget = AppTarget,
 ) -> Result[@lepusa.EventListener, Array[String]] {
   self.event_bus.once(name, target~)
 }
@@ -305,7 +309,7 @@ pub fn RuntimeSession::remove_event_target(
 pub fn RuntimeSession::event_deliveries(
   self : RuntimeSession,
   event : @lepusa.Event,
-  target? : @lepusa.EventTarget = AppTarget,
+  target~ : @lepusa.EventTarget = AppTarget,
 ) -> Result[Array[@lepusa.EventDelivery], Array[String]] {
   self.event_bus.emit(event, target~)
 }
@@ -357,12 +361,12 @@ pub fn RuntimeWindow::url(self : RuntimeWindow) -> String {
 }
 
 ///|
-pub fn RuntimeWindow::width(self : RuntimeWindow) -> Int {
+pub fn RuntimeWindow::width(self : RuntimeWindow) -> Int32 {
   self.width
 }
 
 ///|
-pub fn RuntimeWindow::height(self : RuntimeWindow) -> Int {
+pub fn RuntimeWindow::height(self : RuntimeWindow) -> Int32 {
   self.height
 }
 

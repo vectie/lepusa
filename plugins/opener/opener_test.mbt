@@ -1,6 +1,6 @@
 ///|
 test "opener plugin declares sync opener commands" {
-  let declared = plugin()
+  let declared = @opener.plugin()
   assert_eq(declared.name(), "opener")
   assert_eq(declared.command_routes().length(), 3)
   assert_true(declared.command_routes().contains("opener.openUrl"))
@@ -14,7 +14,7 @@ test "opener plugin declares sync opener commands" {
 
 ///|
 test "opener capabilities grant opener permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @opener.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Opener))
   assert_false(grant.allows(window_label="settings", permission=Opener))
   assert_false(grant.allows(window_label="main", permission=Shell))
@@ -22,8 +22,8 @@ test "opener capabilities grant opener permission by window" {
 
 ///|
 test "opener plugin registers native handlers and validates payloads" {
-  let registry = register(@lepusa.CommandRegistry::new())
-  let capabilities = [capability_for_window("main")]
+  let registry = @opener.register(@lepusa.CommandRegistry::new())
+  let capabilities = [@opener.capability_for_window("main")]
   assert_true(registry.contains("opener.openUrl"))
   assert_true(registry.contains("opener.openPath"))
   assert_true(registry.contains("opener.revealPath"))

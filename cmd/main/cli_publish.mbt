@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq)
 struct PublishCommand {
   name : String
   command : String
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 struct PublishPlan {
   target : @lepusa.BundleTarget
   project : String
@@ -27,7 +29,7 @@ struct PublishPlan {
   install_smoke_script : String
   install_smoke_blockers : Array[String]
   commands : Array[PublishCommand]
-} derive(Debug, Eq)
+}
 
 ///|
 async fn render_publish_plan_async(args : Array[String]) -> CliResult {
@@ -202,10 +204,10 @@ fn publish_command_arg(value : String) -> String {
 fn PublishCommand::new(
   name~ : String,
   command~ : String,
-  required? : Bool = true,
+  required~ : Bool = true,
   description~ : String,
 ) -> PublishCommand {
-  { name, command, required, description }
+  { name, command, required, description, }
 }
 
 ///|

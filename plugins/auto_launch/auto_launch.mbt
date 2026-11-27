@@ -1,25 +1,27 @@
 ///|
+#derive(Debug, Eq)
 pub struct AutoLaunchPolicy {
   name : String
   executable : String?
   arguments : Array[String]
   open_hidden : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct AutoLaunchState {
   mut enabled : Bool
   mut last_action : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn AutoLaunchPolicy::new(
   name~ : String,
   executable? : String,
-  arguments? : Array[String] = [],
-  open_hidden? : Bool = false,
+  arguments~ : Array[String] = [],
+  open_hidden~ : Bool = false,
 ) -> AutoLaunchPolicy {
-  { name, executable, arguments, open_hidden }
+  { name, executable, arguments, open_hidden, }
 }
 
 ///|
@@ -78,12 +80,12 @@ pub fn AutoLaunchPolicy::validate(self : AutoLaunchPolicy) -> Array[String] {
 
 ///|
 #cfg(target="native")
-extern "c" fn native_available_code() -> Int = "lepusa_auto_launch_available"
+extern "c" fn native_available_code() -> Int32 = "lepusa_auto_launch_available"
 
 ///|
 #cfg(target="native")
 #borrow(name)
-extern "c" fn native_status_code(name : Bytes) -> Int = "lepusa_auto_launch_status"
+extern "c" fn native_status_code(name : Bytes) -> Int32 = "lepusa_auto_launch_status"
 
 ///|
 #cfg(target="native")
@@ -92,19 +94,19 @@ extern "c" fn native_set_code(
   name : Bytes,
   executable : Bytes,
   arguments : Bytes,
-  open_hidden : Int,
-  enabled : Int,
-) -> Int = "lepusa_auto_launch_set"
+  open_hidden : Int32,
+  enabled : Int32,
+) -> Int32 = "lepusa_auto_launch_set"
 
 ///|
 #cfg(not(target="native"))
-fn native_available_code() -> Int {
+fn native_available_code() -> Int32 {
   0
 }
 
 ///|
 #cfg(not(target="native"))
-fn native_status_code(_name : Bytes) -> Int {
+fn native_status_code(_name : Bytes) -> Int32 {
   2
 }
 
@@ -114,9 +116,9 @@ fn native_set_code(
   _name : Bytes,
   _executable : Bytes,
   _arguments : Bytes,
-  _open_hidden : Int,
-  _enabled : Int,
-) -> Int {
+  _open_hidden : Int32,
+  _enabled : Int32,
+) -> Int32 {
   2
 }
 
@@ -126,8 +128,8 @@ pub fn native_available() -> Bool {
 }
 
 ///|
-pub fn AutoLaunchState::new(enabled? : Bool = false) -> AutoLaunchState {
-  { enabled, last_action: "status" }
+pub fn AutoLaunchState::new(enabled~ : Bool = false) -> AutoLaunchState {
+  { enabled, last_action: "status", }
 }
 
 ///|
@@ -150,29 +152,29 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "auto-launch") -> @lepusa.Capability {
+pub fn capability(name~ : String = "auto-launch") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(AutoLaunch)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "auto-launch",
+  name~ : String = "auto-launch",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
-  state? : AutoLaunchState = AutoLaunchState::new(),
+  policy~ : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+  state~ : AutoLaunchState = AutoLaunchState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state~)
 }
 
 ///|
 pub fn native_registry(
-  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+  policy~ : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
 ) -> @lepusa.CommandRegistry {
   register_native(@lepusa.CommandRegistry::new(), policy~)
 }
@@ -180,8 +182,8 @@ pub fn native_registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
-  state? : AutoLaunchState = AutoLaunchState::new(),
+  policy~ : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+  state~ : AutoLaunchState = AutoLaunchState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("autoLaunch.status", permission=AutoLaunch, handler=_ => {
@@ -201,7 +203,7 @@ pub fn register(
 ///|
 pub fn register_native(
   registry : @lepusa.CommandRegistry,
-  policy? : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
+  policy~ : AutoLaunchPolicy = AutoLaunchPolicy::new(name="lepusa"),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("autoLaunch.status", permission=AutoLaunch, handler=_ => {
@@ -321,7 +323,7 @@ fn handle_native_set(
               Ok(
                 auto_launch_json(
                   policy,
-                  { enabled, last_action: action },
+                  { enabled, last_action: action, },
                   status="native",
                   native=true,
                 ).stringify(),
@@ -350,7 +352,7 @@ fn auto_launch_json(
   policy : AutoLaunchPolicy,
   state : AutoLaunchState,
   status~ : String,
-  native? : Bool = false,
+  native~ : Bool = false,
 ) -> Json {
   Json::object({
     "status": Json::string(status),

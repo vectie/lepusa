@@ -1,18 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeRunnerPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
   lifecycle_steps : Array[RuntimeRunnerStep]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeRunnerStep {
   event : @lepusa.LifecycleEvent
   session : RuntimeSession
   operations : Array[RuntimeOperation]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeHost::runner_plan(
@@ -206,7 +208,7 @@ pub fn RuntimeRunnerPlan::lifecycle_step(
         session: self.session,
         operations: self.startup_operations.copy(),
       }
-    _ => { event, session: self.session, operations: [] }
+    _ => { event, session: self.session, operations: [], }
   }
 }
 

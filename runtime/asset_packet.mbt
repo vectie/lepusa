@@ -169,7 +169,7 @@ pub fn native_asset_protocol_packet_from_json(json : String) -> Bytes {
 
 ///|
 fn native_asset_data_url(mime_type : String, content : String) -> String {
-  "data:\{mime_type};base64,\{@base64.encode(@utf8.encode(content).view())}"
+  "data:\{mime_type};base64,\{@base64.encode(@utf8.encode(content).exact_view())}"
 }
 
 ///|

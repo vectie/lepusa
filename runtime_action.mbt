@@ -1,15 +1,17 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeAction {
   RuntimeEffect(String)
   RuntimeEmit(EventTarget, Event)
   RuntimeNavigate(String, ResolvedSource)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeLifecycleHook {
   event : LifecycleEvent
   actions : Array[RuntimeAction]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimePlan::startup_actions(
@@ -148,7 +150,7 @@ pub fn RuntimeLifecycleHook::new(
   event : LifecycleEvent,
   actions : Array[RuntimeAction],
 ) -> RuntimeLifecycleHook {
-  { event, actions }
+  { event, actions, }
 }
 
 ///|

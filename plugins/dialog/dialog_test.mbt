@@ -1,6 +1,6 @@
 ///|
 test "dialog plugin declares async dialog commands" {
-  let declared = plugin()
+  let declared = @dialog.plugin()
   assert_eq(declared.name(), "dialog")
   assert_eq(declared.command_routes().length(), 3)
   assert_true(declared.command_routes().contains("dialog.message"))
@@ -14,7 +14,7 @@ test "dialog plugin declares async dialog commands" {
 
 ///|
 test "dialog capabilities grant dialog permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @dialog.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Dialog))
   assert_false(grant.allows(window_label="settings", permission=Dialog))
   assert_false(grant.allows(window_label="main", permission=Clipboard))
@@ -22,12 +22,14 @@ test "dialog capabilities grant dialog permission by window" {
 
 ///|
 async test "dialog registry returns deterministic responses" {
-  let registry = registry(policy=DialogPolicy::new(confirm_default=true))
+  let registry = @dialog.registry(
+    policy=@dialog.DialogPolicy::new(confirm_default=true),
+  )
   assert_true(registry.contains("dialog.message"))
   assert_true(registry.contains("dialog.confirm"))
   assert_true(registry.contains("dialog.prompt"))
   assert_eq(registry.async_routes().length(), 3)
-  let grant = capability_for_window("main")
+  let grant = @dialog.capability_for_window("main")
   let message_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",

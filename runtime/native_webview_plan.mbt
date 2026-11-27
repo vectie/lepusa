@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeWebViewPlan {
   label : String
   title : String
@@ -7,10 +8,10 @@ pub struct NativeWebViewPlan {
   initialization_script : String
   native_hook : String
   asset_protocol : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeWebViewPlan::new(
@@ -21,8 +22,8 @@ pub fn NativeWebViewPlan::new(
   initialization_script~ : String,
   native_hook~ : String,
   asset_protocol~ : String,
-  width~ : Int,
-  height~ : Int,
+  width~ : Int32,
+  height~ : Int32,
   resizable~ : Bool,
 ) -> NativeWebViewPlan {
   {
@@ -118,12 +119,12 @@ pub fn NativeWebViewPlan::asset_protocol(self : NativeWebViewPlan) -> String {
 }
 
 ///|
-pub fn NativeWebViewPlan::width(self : NativeWebViewPlan) -> Int {
+pub fn NativeWebViewPlan::width(self : NativeWebViewPlan) -> Int32 {
   self.width
 }
 
 ///|
-pub fn NativeWebViewPlan::height(self : NativeWebViewPlan) -> Int {
+pub fn NativeWebViewPlan::height(self : NativeWebViewPlan) -> Int32 {
   self.height
 }
 

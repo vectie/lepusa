@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum LifecycleEvent {
   AppStarted
   AppWillExit
@@ -7,20 +8,21 @@ pub(all) enum LifecycleEvent {
   PluginWillExit(String)
   WindowCloseRequested(String)
   WindowClosed(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct LifecycleHook {
   event : LifecycleEvent
   command : Cmd
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LifecycleHook::new(
   event : LifecycleEvent,
   command : Cmd,
 ) -> LifecycleHook {
-  { event, command }
+  { event, command, }
 }
 
 ///|
@@ -72,7 +74,7 @@ pub fn LifecycleEvent::window_closed(label : String) -> LifecycleEvent {
 fn LifecycleEvent::validate(
   self : LifecycleEvent,
   windows : Array[WindowConfig],
-  plugins? : Array[Plugin] = [],
+  plugins~ : Array[Plugin] = [],
 ) -> Array[String] {
   let problems : Array[String] = []
   match self {

@@ -6,7 +6,7 @@ test "native operation executor runs executable operation batches" {
   let navigations : Array[String] = []
   let window_controls : Array[String] = []
   let shell_operations : Array[String] = []
-  let executor = NativeOperationExecutor::new(
+  let executor = @runtime.NativeOperationExecutor::new(
     start_service=fn(service) {
       started.push(service.name())
       NativeOperationExecuted
@@ -39,29 +39,35 @@ test "native operation executor runs executable operation batches" {
     readiness_url="http://127.0.0.1:4317/ready",
   )
   let operations = [
-    NativeExecutableOperation::start_service(service),
-    NativeExecutableOperation::evaluate_script(
-      NativeEvaluationScript::new(window_label="main", script="render()"),
+    @runtime.NativeExecutableOperation::start_service(service),
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
+        window_label="main",
+        script="render()",
+      ),
     ),
-    NativeExecutableOperation::drain_bridge(
-      NativeBridgeDrain::new(
+    @runtime.NativeExecutableOperation::drain_bridge(
+      @runtime.NativeBridgeDrain::new(
         window_label="main",
         callback="bridge_loop_adapter().callbacks(main).drain_window_packet",
       ),
     ),
-    NativeExecutableOperation::run_effect("boot"),
-    NativeExecutableOperation::navigate(
-      NativeNavigation::new(window_label="main", url="lepusa://inline/main"),
+    @runtime.NativeExecutableOperation::run_effect("boot"),
+    @runtime.NativeExecutableOperation::navigate(
+      @runtime.NativeNavigation::new(
+        window_label="main",
+        url="lepusa://inline/main",
+      ),
     ),
-    NativeExecutableOperation::window_control(
-      NativeWindowControl::new(
+    @runtime.NativeExecutableOperation::window_control(
+      @runtime.NativeWindowControl::new(
         window_label="main",
         action="setTitle",
         payload="{\"title\":\"Ready\"}",
       ),
     ),
-    NativeExecutableOperation::desktop_shell(
-      NativeDesktopShellOperation::new(
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
         domain="menu",
         target="app",
         window_label="main",
@@ -96,9 +102,9 @@ test "native operation executor runs executable operation batches" {
   assert_true(json.contains("\"kind\":\"navigate-window\""))
   assert_true(json.contains("\"kind\":\"window-control\""))
   assert_true(json.contains("\"kind\":\"desktop-shell\""))
-  let packet = native_executable_operations_packet([
-    NativeExecutableOperation::evaluate_script(
-      NativeEvaluationScript::new(
+  let packet = @runtime.native_executable_operations_packet([
+    @runtime.NativeExecutableOperation::evaluate_script(
+      @runtime.NativeEvaluationScript::new(
         window_label="main",
         script="globalThis.done = true",
       ),
@@ -106,9 +112,9 @@ test "native operation executor runs executable operation batches" {
   ])
   assert_true(packet.contains("evaluate-script"))
   assert_true(packet.contains("globalThis.done = true"))
-  let drain_packet = native_executable_operations_packet([
-    NativeExecutableOperation::drain_bridge(
-      NativeBridgeDrain::new(
+  let drain_packet = @runtime.native_executable_operations_packet([
+    @runtime.NativeExecutableOperation::drain_bridge(
+      @runtime.NativeBridgeDrain::new(
         window_label="main",
         callback="bridge_loop_adapter().callbacks(main).drain_window_packet",
       ),
@@ -120,9 +126,9 @@ test "native operation executor runs executable operation batches" {
       "bridge_loop_adapter().callbacks(main).drain_window_packet",
     ),
   )
-  let shell_packet = native_executable_operations_packet([
-    NativeExecutableOperation::desktop_shell(
-      NativeDesktopShellOperation::new(
+  let shell_packet = @runtime.native_executable_operations_packet([
+    @runtime.NativeExecutableOperation::desktop_shell(
+      @runtime.NativeDesktopShellOperation::new(
         domain="tray",
         action="setVisible",
         window_label="main",
@@ -137,31 +143,35 @@ test "native operation executor runs executable operation batches" {
 
 ///|
 test "native desktop shell platform status is honest about renderer coverage" {
-  let app_exit = NativeDesktopShellOperation::new(
+  let app_exit = @runtime.NativeDesktopShellOperation::new(
     domain="app",
     action="app.exit",
     window_label="main",
   )
   assert_true(app_exit.native_app_window_action())
   assert_true(
-    native_desktop_shell_platform_status(app_exit, platform_name="Test")
+    @runtime.native_desktop_shell_platform_status(
+      app_exit,
+      platform_name="Test",
+    )
     is NativeOperationExecuted,
   )
-  let menu = NativeDesktopShellOperation::new(
+  let menu = @runtime.NativeDesktopShellOperation::new(
     domain="menu",
     action="setAppMenu",
     target="app",
     window_label="main",
   )
   assert_false(menu.native_app_window_action())
-  match native_desktop_shell_platform_status(menu, platform_name="Test") {
+  match
+    @runtime.native_desktop_shell_platform_status(menu, platform_name="Test") {
     NativeOperationSkipped(message) => {
       assert_true(message.contains("desktop shell renderer is not registered"))
       assert_true(message.contains("menu.setAppMenu"))
     }
     _ => abort("expected menu renderer to be skipped")
   }
-  let app_theme = NativeDesktopShellOperation::new(
+  let app_theme = @runtime.NativeDesktopShellOperation::new(
     domain="app",
     action="app.setTheme",
     window_label="main",
@@ -169,16 +179,23 @@ test "native desktop shell platform status is honest about renderer coverage" {
   )
   assert_true(app_theme.native_app_window_action())
   assert_true(
-    native_desktop_shell_platform_status(app_theme, platform_name="Test")
+    @runtime.native_desktop_shell_platform_status(
+      app_theme,
+      platform_name="Test",
+    )
     is NativeOperationExecuted,
   )
-  let app_dock = NativeDesktopShellOperation::new(
+  let app_dock = @runtime.NativeDesktopShellOperation::new(
     domain="app",
     action="setDockVisibility",
     window_label="main",
   )
   assert_false(app_dock.native_app_window_action())
-  match native_desktop_shell_platform_status(app_dock, platform_name="Test") {
+  match
+    @runtime.native_desktop_shell_platform_status(
+      app_dock,
+      platform_name="Test",
+    ) {
     NativeOperationSkipped(message) =>
       assert_true(message.contains("app.setDockVisibility"))
     _ => abort("expected unsupported app dock action to be skipped")
@@ -194,7 +211,7 @@ test "native operation executor runs dynamic window operations" {
   )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).snapshot() {
+      match @runtime.RuntimeHost::new(plan).snapshot() {
         Ok(session) => {
           let window = @lepusa.WindowConfig::new(
             label="tools",
@@ -207,7 +224,7 @@ test "native operation executor runs dynamic window operations" {
                 RuntimeOpenWindow(open_plan) => {
                   let opened : Array[String] = []
                   let closed : Array[String] = []
-                  let executor = NativeOperationExecutor::new(
+                  let executor = @runtime.NativeOperationExecutor::new(
                     open_window=fn(plan) {
                       opened.push(plan.label())
                       NativeOperationExecuted
@@ -218,9 +235,9 @@ test "native operation executor runs dynamic window operations" {
                     },
                   )
                   let report = executor.execute_all([
-                    NativeExecutableOperation::open_window(open_plan),
-                    NativeExecutableOperation::close_window(
-                      NativeWindowClose::new(window_label="tools"),
+                    @runtime.NativeExecutableOperation::open_window(open_plan),
+                    @runtime.NativeExecutableOperation::close_window(
+                      @runtime.NativeWindowClose::new(window_label="tools"),
                     ),
                   ])
                   assert_true(report.ok())
@@ -249,7 +266,9 @@ test "native operation executor runs dynamic window operations" {
 ///|
 test "native operation executor runs bridge drain deliveries" {
   let scripts : Array[String] = []
-  let executor = NativeOperationExecutor::new(evaluate_script=fn(script) {
+  let executor = @runtime.NativeOperationExecutor::new(evaluate_script=fn(
+    script,
+  ) {
     scripts.push(script.script())
     if script.script().contains("fail") {
       NativeOperationFailed("evaluate failed for \{script.window_label()}")
@@ -257,9 +276,10 @@ test "native operation executor runs bridge drain deliveries" {
       NativeOperationExecuted
     }
   })
-  let plan = NativeBridgeLoopEvaluationPlan::from_scripts(window_label="main", scripts=[
-    "resolve(1)", "fail()",
-  ])
+  let plan = @runtime.NativeBridgeLoopEvaluationPlan::from_scripts(
+    window_label="main",
+    scripts=["resolve(1)", "fail()"],
+  )
   let report = executor.execute_plan(plan)
   assert_false(report.ok())
   assert_eq(report.operation_count(), 2)
@@ -268,9 +288,9 @@ test "native operation executor runs bridge drain deliveries" {
   assert_eq(report.first_failure_message().unwrap(), "evaluate failed for main")
   assert_eq(scripts[0], "resolve(1)")
   assert_eq(scripts[1], "fail()")
-  let delivery = NativeBridgeLoopDelivery::from_result(
+  let delivery = @runtime.NativeBridgeLoopDelivery::from_result(
     window_label="main",
-    result=NativeBridgeLoopResult::new(immediate_script="resolve(2)"),
+    result=@runtime.NativeBridgeLoopResult::new(immediate_script="resolve(2)"),
   )
   let delivery_report = executor.execute_delivery(delivery)
   assert_true(delivery_report.ok())
@@ -280,14 +300,14 @@ test "native operation executor runs bridge drain deliveries" {
 ///|
 test "native operation executor runs app-will-exit lifecycle operations" {
   let effects : Array[String] = []
-  let executor = NativeOperationExecutor::new(run_effect=fn(name) {
+  let executor = @runtime.NativeOperationExecutor::new(run_effect=fn(name) {
     effects.push(name)
     NativeOperationExecuted
   })
-  let execution = NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[
-    NativeExecutionStep::new(
+  let execution = @runtime.NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[
+    @runtime.NativeExecutionStep::new(
       event_json=@lepusa.LifecycleEvent::app_will_exit().to_json(),
-      operations=[NativeExecutableOperation::run_effect("flush")],
+      operations=[@runtime.NativeExecutableOperation::run_effect("flush")],
     ),
   ])
   match execution.app_will_exit_step() {
@@ -303,8 +323,10 @@ test "native operation executor runs app-will-exit lifecycle operations" {
 
 ///|
 test "native operation executor treats missing app-will-exit as empty" {
-  let execution = NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[])
-  let report = NativeOperationExecutor::new().execute_app_will_exit(execution)
+  let execution = @runtime.NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[])
+  let report = @runtime.NativeOperationExecutor::new().execute_app_will_exit(
+    execution,
+  )
   assert_true(report.ok())
   assert_eq(report.operation_count(), 0)
   assert_true(execution.app_will_exit_step() is None)

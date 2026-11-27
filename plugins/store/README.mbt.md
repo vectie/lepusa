@@ -6,9 +6,9 @@ MoonBit `Store`.
 ```mbt check
 ///|
 test "store plugin usage" {
-  let store = Store::new()
-  let registry = registry(store~)
-  let grant = capability_for_window("main")
+  let store = @store.Store::new()
+  let registry = @store.registry(store~)
+  let grant = @store.capability_for_window("main")
   let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",

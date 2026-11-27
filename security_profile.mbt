@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct SecurityProfile {
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
@@ -8,13 +9,13 @@ pub struct SecurityProfile {
   registered_routes : Array[String]
   check_handlers : Bool
   platform : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn SecurityProfile::from_plan(
   plan : RuntimePlan,
-  registered_routes? : Array[String] = [],
-  check_handlers? : Bool = false,
+  registered_routes~ : Array[String] = [],
+  check_handlers~ : Bool = false,
 ) -> SecurityProfile {
   let registered_routes = security_profile_sorted_unique(registered_routes)
   let command_manifest = plan.command_manifest()
@@ -43,8 +44,8 @@ pub fn SecurityProfile::from_plan(
 ///|
 pub fn RuntimePlan::security_profile(
   self : RuntimePlan,
-  registered_routes? : Array[String] = [],
-  check_handlers? : Bool = false,
+  registered_routes~ : Array[String] = [],
+  check_handlers~ : Bool = false,
 ) -> SecurityProfile {
   SecurityProfile::from_plan(self, registered_routes~, check_handlers~)
 }
@@ -115,17 +116,17 @@ pub fn SecurityProfile::ok(self : SecurityProfile) -> Bool {
 }
 
 ///|
-pub fn SecurityProfile::error_count(self : SecurityProfile) -> Int {
+pub fn SecurityProfile::error_count(self : SecurityProfile) -> Int32 {
   self.capability_report.error_count() + self.runtime_audit.error_count()
 }
 
 ///|
-pub fn SecurityProfile::warning_count(self : SecurityProfile) -> Int {
+pub fn SecurityProfile::warning_count(self : SecurityProfile) -> Int32 {
   self.capability_report.warning_count() + self.runtime_audit.warning_count()
 }
 
 ///|
-pub fn SecurityProfile::info_count(self : SecurityProfile) -> Int {
+pub fn SecurityProfile::info_count(self : SecurityProfile) -> Int32 {
   self.runtime_audit.info_count()
 }
 
@@ -176,7 +177,7 @@ pub fn SecurityProfile::allows(
   self : SecurityProfile,
   window_label~ : String,
   permission~ : Permission,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> Bool {
   self.capability_policy.allows(
     window_label~,
@@ -191,7 +192,7 @@ pub fn SecurityProfile::evaluate(
   self : SecurityProfile,
   window_label~ : String,
   permission~ : Permission,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> CapabilityDecision {
   self.capability_policy.evaluate(
     window_label~,
@@ -207,7 +208,7 @@ pub fn SecurityProfile::allows_operation(
   window_label~ : String,
   permission~ : Permission,
   scope~ : OperationScope,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> Bool {
   self.capability_policy.allows_operation(
     window_label~,
@@ -224,7 +225,7 @@ pub fn SecurityProfile::evaluate_operation(
   window_label~ : String,
   permission~ : Permission,
   scope~ : OperationScope,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> CapabilityDecision {
   self.capability_policy.evaluate_operation(
     window_label~,

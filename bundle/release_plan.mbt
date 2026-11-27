@@ -1,34 +1,37 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleReleaseStepKind {
   ValidateRuntimeDependencies
   StageResources
   ValidateSigningPrerequisites
   RunSigningSteps
   CollectArtifacts
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleReleaseStep {
   kind : BundleReleaseStepKind
   name : String
   required : Bool
   items : Array[BundleDistributionEntry]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleReleasePlan {
   manifest : BundleDistributionManifest
   steps : Array[BundleReleaseStep]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleReleaseStep::new(
   kind~ : BundleReleaseStepKind,
   name~ : String,
-  required? : Bool = true,
-  items? : Array[BundleDistributionEntry] = [],
+  required~ : Bool = true,
+  items~ : Array[BundleDistributionEntry] = [],
 ) -> BundleReleaseStep {
-  { kind, name, required, items }
+  { kind, name, required, items, }
 }
 
 ///|
@@ -67,7 +70,7 @@ pub fn BundleReleaseStep::items(
 }
 
 ///|
-pub fn BundleReleaseStep::item_count(self : BundleReleaseStep) -> Int {
+pub fn BundleReleaseStep::item_count(self : BundleReleaseStep) -> Int32 {
   self.items.length()
 }
 
@@ -163,17 +166,23 @@ pub fn BundleReleasePlan::optional_steps(
 }
 
 ///|
-pub fn BundleReleasePlan::required_step_count(self : BundleReleasePlan) -> Int {
+pub fn BundleReleasePlan::required_step_count(
+  self : BundleReleasePlan,
+) -> Int32 {
   self.required_steps().length()
 }
 
 ///|
-pub fn BundleReleasePlan::optional_step_count(self : BundleReleasePlan) -> Int {
+pub fn BundleReleasePlan::optional_step_count(
+  self : BundleReleasePlan,
+) -> Int32 {
   self.optional_steps().length()
 }
 
 ///|
-pub fn BundleReleasePlan::required_item_count(self : BundleReleasePlan) -> Int {
+pub fn BundleReleasePlan::required_item_count(
+  self : BundleReleasePlan,
+) -> Int32 {
   let mut count = 0
   for step in self.steps {
     if step.required() {
@@ -184,7 +193,9 @@ pub fn BundleReleasePlan::required_item_count(self : BundleReleasePlan) -> Int {
 }
 
 ///|
-pub fn BundleReleasePlan::optional_item_count(self : BundleReleasePlan) -> Int {
+pub fn BundleReleasePlan::optional_item_count(
+  self : BundleReleasePlan,
+) -> Int32 {
   let mut count = 0
   for step in self.steps {
     if !step.required() {

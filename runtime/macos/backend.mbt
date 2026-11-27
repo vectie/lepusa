@@ -1,5 +1,5 @@
 ///|
-extern "c" fn backend_available() -> Int = "lepusa_macos_backend_available"
+extern "c" fn backend_available() -> Int32 = "lepusa_macos_backend_available"
 
 ///|
 extern "c" fn backend_engine_name() -> Bytes = "lepusa_macos_backend_engine_name"

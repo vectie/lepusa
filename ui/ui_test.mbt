@@ -1,9 +1,9 @@
 ///|
 test "ui text and attributes are escaped" {
-  let html = div([text("<hello & bye>")], attrs=[
-    id("root"),
-    class_name("panel \"active\""),
-    data("state", "ready & safe"),
+  let html = @ui.div([@ui.text("<hello & bye>")], attrs=[
+    @ui.id("root"),
+    @ui.class_name("panel \"active\""),
+    @ui.data("state", "ready & safe"),
   ])
   assert_eq(
     html.content(),
@@ -13,10 +13,10 @@ test "ui text and attributes are escaped" {
 
 ///|
 test "ui helpers compose rabbita style views" {
-  let view = main_([
-    h1([text("Counter")]),
-    p([text("Count: 3")], attrs=[class_name("metric")]),
-    button("Increment", attrs=[on_click("counter.increment")]),
+  let view = @ui.main_([
+    @ui.h1([@ui.text("Counter")]),
+    @ui.p([@ui.text("Count: 3")], attrs=[@ui.class_name("metric")]),
+    @ui.button("Increment", attrs=[@ui.on_click("counter.increment")]),
   ])
   assert_true(view.content().contains("<main>"))
   assert_true(view.content().contains("<h1>Counter</h1>"))
@@ -26,19 +26,19 @@ test "ui helpers compose rabbita style views" {
 
 ///|
 test "ui listeners bridge native emitted events" {
-  let listener = text_listener("ready", "#status")
+  let listener = @ui.text_listener("ready", "#status")
   assert_true(listener.content().contains("<script>"))
   assert_true(listener.content().contains("api.listen(\"ready\""))
   assert_true(
     listener.content().contains("document.querySelector(\"#status\")"),
   )
-  let custom = listen("saved", "    console.log(payload, event);")
+  let custom = @ui.listen("saved", "    console.log(payload, event);")
   assert_true(custom.content().contains("console.log(payload, event);"))
 }
 
 ///|
 test "ui html can back a lepusa cell" {
-  let cell = @lepusa.simple_cell(section([text("Ready")]))
+  let cell = @lepusa.simple_cell(@ui.section([@ui.text("Ready")]))
   let app = @lepusa.new(cell).window(title="UI App")
   match app.launch_plan() {
     Ok(plan) => {
@@ -54,10 +54,11 @@ test "ui html can back a lepusa cell" {
 }
 
 ///|
+#derive(Debug, Eq)
 enum TestCounterMessage {
   TestIncrement
   TestDecrement
-} derive(Debug, Eq)
+}
 
 ///|
 fn encode_counter_message(message : TestCounterMessage) -> String {
@@ -81,8 +82,8 @@ fn decode_counter_message(
 ///|
 fn update_counter(
   message : TestCounterMessage,
-  count : Int,
-) -> (Int, @lepusa.Cmd) {
+  count : Int32,
+) -> (Int32, @lepusa.Cmd) {
   match message {
     TestIncrement => (count + 1, @lepusa.Cmd::effect("counter.changed"))
     TestDecrement => (count - 1, @lepusa.none)
@@ -91,20 +92,20 @@ fn update_counter(
 
 ///|
 fn view_counter(
-  emit : ViewEmit[TestCounterMessage],
-  count : Int,
+  emit : @ui.ViewEmit[TestCounterMessage],
+  count : Int32,
 ) -> @lepusa.Html {
-  main_([
-    h1([text("Counter")]),
-    p([text("Count: \{count}")], attrs=[id("count")]),
-    button("Increment", attrs=[emit(TestIncrement)]),
-    button("Decrement", attrs=[emit(TestDecrement)]),
+  @ui.main_([
+    @ui.h1([@ui.text("Counter")]),
+    @ui.p([@ui.text("Count: \{count}")], attrs=[@ui.id("count")]),
+    @ui.button("Increment", attrs=[emit(TestIncrement)]),
+    @ui.button("Decrement", attrs=[emit(TestDecrement)]),
   ])
 }
 
 ///|
-fn counter_program(count : Int) -> UiProgram[Int, TestCounterMessage] {
-  UiProgram::new(
+fn counter_program(count : Int32) -> @ui.UiProgram[Int32, TestCounterMessage] {
+  @ui.UiProgram::new(
     model=count,
     update=update_counter,
     view=view_counter,
@@ -135,7 +136,7 @@ test "ui program renders model update view cell" {
 
 ///|
 test "ui program validates route shape" {
-  let invalid = UiProgram::new(
+  let invalid = @ui.UiProgram::new(
     model=0,
     update=update_counter,
     view=view_counter,

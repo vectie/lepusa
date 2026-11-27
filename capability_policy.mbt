@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct CapabilityDecision {
   allowed : Bool
   window_label : String
@@ -7,7 +8,7 @@ pub struct CapabilityDecision {
   permission : Permission
   capability : String
   reason : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn CapabilityDecision::allow(
@@ -103,15 +104,16 @@ pub fn CapabilityDecision::to_json(self : CapabilityDecision) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct CapabilityPolicy {
   capabilities : Array[Capability]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CapabilityPolicy::new(
-  capabilities? : Array[Capability] = [],
+  capabilities~ : Array[Capability] = [],
 ) -> CapabilityPolicy {
-  { capabilities: capabilities.copy() }
+  { capabilities: capabilities.copy(), }
 }
 
 ///|
@@ -126,8 +128,8 @@ pub fn CapabilityPolicy::allows(
   self : CapabilityPolicy,
   window_label~ : String,
   permission~ : Permission,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> Bool {
   self.evaluate(window_label~, permission~, origin~, platform~).allowed()
 }
@@ -137,7 +139,7 @@ pub fn CapabilityPolicy::allows_window(
   self : CapabilityPolicy,
   window_label~ : String,
   permission~ : Permission,
-  platform? : String = "",
+  platform~ : String = "",
 ) -> Bool {
   for capability in self.capabilities {
     let window_allowed = capability.windows().is_empty() ||
@@ -158,8 +160,8 @@ pub fn CapabilityPolicy::evaluate(
   self : CapabilityPolicy,
   window_label~ : String,
   permission~ : Permission,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> CapabilityDecision {
   for capability in self.capabilities {
     if capability.allows(window_label~, permission~, origin~, platform~) {
@@ -187,8 +189,8 @@ pub fn CapabilityPolicy::allows_operation(
   window_label~ : String,
   permission~ : Permission,
   scope~ : OperationScope,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> Bool {
   self
   .evaluate_operation(window_label~, permission~, scope~, origin~, platform~)
@@ -201,8 +203,8 @@ pub fn CapabilityPolicy::evaluate_operation(
   window_label~ : String,
   permission~ : Permission,
   scope~ : OperationScope,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> CapabilityDecision {
   let mut grant_allowed = false
   for capability in self.capabilities {
@@ -246,7 +248,7 @@ pub fn CapabilityPolicy::allowed_origins(
   self : CapabilityPolicy,
   window_label~ : String,
   permission~ : Permission,
-  platform? : String = "",
+  platform~ : String = "",
 ) -> Array[String] {
   let origins : Array[String] = []
   for capability in self.capabilities {

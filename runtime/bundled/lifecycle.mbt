@@ -1,24 +1,26 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundledLifecycleEvent {
   kind : String
   label : String
   plugin : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledLifecyclePlan {
   event : BundledLifecycleEvent
   action_jsons : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundledLifecycleEvent::app_started() -> BundledLifecycleEvent {
-  { kind: "app-started", label: "", plugin: "" }
+  { kind: "app-started", label: "", plugin: "", }
 }
 
 ///|
 pub fn BundledLifecycleEvent::app_will_exit() -> BundledLifecycleEvent {
-  { kind: "app-will-exit", label: "", plugin: "" }
+  { kind: "app-will-exit", label: "", plugin: "", }
 }
 
 ///|
@@ -49,7 +51,7 @@ pub fn BundledLifecycleEvent::window_close_requested(
   if label == "" {
     Err("lifecycle window is required")
   } else {
-    Ok({ kind: "window-close-requested", label, plugin: "" })
+    Ok({ kind: "window-close-requested", label, plugin: "", })
   }
 }
 
@@ -60,7 +62,7 @@ pub fn BundledLifecycleEvent::window_closed(
   if label == "" {
     Err("lifecycle window is required")
   } else {
-    Ok({ kind: "window-closed", label, plugin: "" })
+    Ok({ kind: "window-closed", label, plugin: "", })
   }
 }
 
@@ -265,6 +267,6 @@ fn bundled_plugin_lifecycle_event(
   if plugin == "" {
     Err("lifecycle plugin is required")
   } else {
-    Ok({ kind, label: "", plugin })
+    Ok({ kind, label: "", plugin, })
   }
 }

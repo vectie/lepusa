@@ -24,7 +24,7 @@ async fn render_runtime_launch_session(
 fn render_runtime_launch_session_text(
   path : String,
   text : String,
-  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> RuntimeCliResult {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) =>
@@ -82,7 +82,7 @@ fn runtime_bridge_mode_for_target(
 ///|
 fn render_macos_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
-  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
   requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @macos.run_bundled(manifest) {
@@ -105,7 +105,7 @@ fn render_macos_launch_session(
 ///|
 fn render_linux_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
-  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
   requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @linux.run_bundled(manifest) {
@@ -129,7 +129,7 @@ fn render_linux_launch_session(
 ///|
 fn render_windows_launch_session(
   manifest : @bundled.BundledRuntimeManifest,
-  bridge_mode? : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
   requested_bridge_mode~ : @runtime_core.NativeBridgeSchedulerMode,
 ) -> RuntimeCliResult {
   match @windows.run_bundled(manifest) {

@@ -1,19 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct BridgeConfig {
   global_name : String
   native_hook : String
   event_dispatch_hook : String
   window_label : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BridgeConfig::new(
-  global_name? : String = "lepusa",
-  native_hook? : String = "__lepusaInvoke",
-  event_dispatch_hook? : String = "__lepusaDispatchEvent",
-  window_label? : String = "main",
+  global_name~ : String = "lepusa",
+  native_hook~ : String = "__lepusaInvoke",
+  event_dispatch_hook~ : String = "__lepusaDispatchEvent",
+  window_label~ : String = "main",
 ) -> BridgeConfig {
-  { global_name, native_hook, event_dispatch_hook, window_label }
+  { global_name, native_hook, event_dispatch_hook, window_label, }
 }
 
 ///|
@@ -35,6 +36,7 @@ pub fn BridgeConfig::validate(self : BridgeConfig) -> Array[String] {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BridgeScript {
   global_name : String
   native_hook : String
@@ -42,7 +44,7 @@ pub struct BridgeScript {
   window_label : String
   routes : Array[String]
   source : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BridgeScript::global_name(self : BridgeScript) -> String {
@@ -77,7 +79,7 @@ pub fn BridgeScript::source(self : BridgeScript) -> String {
 ///|
 pub fn RuntimePlan::bridge_script(
   self : RuntimePlan,
-  config? : BridgeConfig = BridgeConfig::new(),
+  config~ : BridgeConfig = BridgeConfig::new(),
 ) -> Result[BridgeScript, Array[String]] {
   self.bridge_script_with_registered_routes(config~, registered_routes=[])
 }
@@ -85,9 +87,9 @@ pub fn RuntimePlan::bridge_script(
 ///|
 fn RuntimePlan::bridge_script_with_registered_routes(
   self : RuntimePlan,
-  config? : BridgeConfig = BridgeConfig::new(),
+  config~ : BridgeConfig = BridgeConfig::new(),
   registered_routes~ : Array[String],
-  restrict_registered? : Bool = false,
+  restrict_registered~ : Bool = false,
 ) -> Result[BridgeScript, Array[String]] {
   let problems = config.validate()
   let routes = self.bridge_routes(

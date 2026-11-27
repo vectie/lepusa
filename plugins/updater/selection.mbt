@@ -1,26 +1,28 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum UpdaterDecisionKind {
   UpdateSelected
   NoUpdate
   UpdateRejected
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct UpdaterDecision {
   kind : UpdaterDecisionKind
   current_version : String
   candidate_version : String?
   target : @lepusa.BundleTarget
-  artifact_count : Int
+  artifact_count : Int32
   trust : @lepusa.UpdateTrustReport
   reason : String
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct ParsedUpdateVersion {
-  major : Int
-  minor : Int
-  patch : Int
+  major : Int32
+  minor : Int32
+  patch : Int32
   prerelease : String?
 }
 
@@ -135,7 +137,7 @@ pub fn UpdaterDecision::new(
   current_version~ : String,
   candidate_version? : String,
   target~ : @lepusa.BundleTarget,
-  artifact_count~ : Int,
+  artifact_count~ : Int32,
   trust~ : @lepusa.UpdateTrustReport,
   reason~ : String,
 ) -> UpdaterDecision {
@@ -185,7 +187,7 @@ pub fn UpdaterDecision::target(self : UpdaterDecision) -> @lepusa.BundleTarget {
 }
 
 ///|
-pub fn UpdaterDecision::artifact_count(self : UpdaterDecision) -> Int {
+pub fn UpdaterDecision::artifact_count(self : UpdaterDecision) -> Int32 {
   self.artifact_count
 }
 
@@ -218,7 +220,7 @@ pub fn UpdaterDecision::to_json(self : UpdaterDecision) -> String {
 }
 
 ///|
-fn update_version_compare(candidate : String, current : String) -> Int? {
+fn update_version_compare(candidate : String, current : String) -> Int32? {
   match (update_version_parse(candidate), update_version_parse(current)) {
     (Some(candidate), Some(current)) =>
       Some(compare_update_versions(candidate, current))
@@ -230,7 +232,7 @@ fn update_version_compare(candidate : String, current : String) -> Int? {
 fn compare_update_versions(
   candidate : ParsedUpdateVersion,
   current : ParsedUpdateVersion,
-) -> Int {
+) -> Int32 {
   if candidate.major != current.major {
     candidate.major - current.major
   } else if candidate.minor != current.minor {
@@ -264,7 +266,7 @@ fn update_version_parse(value : String) -> ParsedUpdateVersion? {
       update_version_segment(segments[2]),
     ) {
     (Some(major), Some(minor), Some(patch)) =>
-      Some({ major, minor, patch, prerelease })
+      Some({ major, minor, patch, prerelease, })
     _ => None
   }
 }
@@ -287,7 +289,7 @@ fn update_version_prerelease(value : String) -> Bool {
 }
 
 ///|
-fn update_version_segment(value : String) -> Int? {
+fn update_version_segment(value : String) -> Int32? {
   if value == "" {
     return None
   }
@@ -302,7 +304,7 @@ fn update_version_segment(value : String) -> Int? {
 }
 
 ///|
-fn update_version_digit(digit : Char) -> Int? {
+fn update_version_digit(digit : Char) -> Int32? {
   match digit {
     '0' => Some(0)
     '1' => Some(1)

@@ -1,18 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct FileDialogDefaultDirectory {
   name : String
   scope_name : String
   path : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct FileDialogPolicy {
   default_directories : Array[FileDialogDefaultDirectory]
-} derive(Debug, Eq)
+}
 
 ///|
 #cfg(target="native")
-extern "c" fn native_available_code() -> Int = "lepusa_file_dialog_available"
+extern "c" fn native_available_code() -> Int32 = "lepusa_file_dialog_available"
 
 ///|
 #cfg(target="native")
@@ -25,7 +27,7 @@ extern "c" fn native_pick_packet(
 
 ///|
 #cfg(not(target="native"))
-fn native_available_code() -> Int {
+fn native_available_code() -> Int32 {
   0
 }
 
@@ -48,9 +50,9 @@ pub fn native_available() -> Bool {
 pub fn FileDialogDefaultDirectory::new(
   name~ : String,
   scope_name~ : String,
-  path? : String = ".",
+  path~ : String = ".",
 ) -> FileDialogDefaultDirectory {
-  { name, scope_name, path }
+  { name, scope_name, path, }
 }
 
 ///|
@@ -94,7 +96,7 @@ pub fn FileDialogDefaultDirectory::validate(
 
 ///|
 pub fn FileDialogPolicy::new(
-  default_directories? : Array[FileDialogDefaultDirectory] = [],
+  default_directories~ : Array[FileDialogDefaultDirectory] = [],
 ) -> FileDialogPolicy {
   { default_directories, }
 }
@@ -106,7 +108,7 @@ pub fn FileDialogPolicy::default_directory(
 ) -> FileDialogPolicy {
   let directories = self.default_directories.copy()
   directories.push(directory)
-  { default_directories: directories }
+  { default_directories: directories, }
 }
 
 ///|
@@ -171,14 +173,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "file-dialog") -> @lepusa.Capability {
+pub fn capability(name~ : String = "file-dialog") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(FileDialog)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "file-dialog",
+  name~ : String = "file-dialog",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -192,24 +194,24 @@ priv struct FileDialogRequest {
 
 ///|
 pub fn registry(
-  policy? : FileDialogPolicy = FileDialogPolicy::new(),
-  scopes? : Array[@lepusa.FileSystemScope] = [],
+  policy~ : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes~ : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, scopes~)
 }
 
 ///|
 pub fn native_registry(
-  policy? : FileDialogPolicy = FileDialogPolicy::new(),
-  scopes? : Array[@lepusa.FileSystemScope] = [],
+  policy~ : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes~ : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   register_native(@lepusa.CommandRegistry::new(), policy~, scopes~)
 }
 
 ///|
 pub fn auto_registry(
-  policy? : FileDialogPolicy = FileDialogPolicy::new(),
-  scopes? : Array[@lepusa.FileSystemScope] = [],
+  policy~ : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes~ : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   if native_available() {
     native_registry(policy~, scopes~)
@@ -221,8 +223,8 @@ pub fn auto_registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : FileDialogPolicy = FileDialogPolicy::new(),
-  scopes? : Array[@lepusa.FileSystemScope] = [],
+  policy~ : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes~ : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
@@ -274,8 +276,8 @@ pub fn register(
 ///|
 pub fn register_native(
   registry : @lepusa.CommandRegistry,
-  policy? : FileDialogPolicy = FileDialogPolicy::new(),
-  scopes? : Array[@lepusa.FileSystemScope] = [],
+  policy~ : FileDialogPolicy = FileDialogPolicy::new(),
+  scopes~ : Array[@lepusa.FileSystemScope] = [],
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("fileDialog.openFile", permission=FileDialog, handler=payload => {
@@ -397,14 +399,14 @@ fn decode_request_payload(
   context~ : String,
 ) -> Result[FileDialogRequest, String] {
   if payload == "" {
-    return Ok({ default_directory: "", path: "", suggested_name: "" })
+    return Ok({ default_directory: "", path: "", suggested_name: "", })
   }
   let json = @json.parse(payload) catch {
     error => return Err("invalid \{context} payload: \{error}")
   }
   match json {
     String(default_directory) =>
-      Ok({ default_directory, path: "", suggested_name: "" })
+      Ok({ default_directory, path: "", suggested_name: "", })
     Object(object) => {
       let default_directory = string_field(object, "defaultDirectory").unwrap_or(
         string_field(object, "directory").unwrap_or(""),
@@ -423,7 +425,7 @@ fn decode_request_payload(
               field="suggestedName",
             ) {
             Some(problem) => Err(problem)
-            None => Ok({ default_directory, path, suggested_name })
+            None => Ok({ default_directory, path, suggested_name, })
           }
       }
     }

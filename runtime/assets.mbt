@@ -1,23 +1,26 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeAssetBody {
   VirtualContent(String)
   LocalFile(String)
   PackagedFile(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeAssetResponse {
   url : String
   mime_type : String
   body : RuntimeAssetBody
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 struct ParsedAssetUrl {
   scheme : String
   authority : String
   path : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeAssetResponse::url(self : RuntimeAssetResponse) -> String {
@@ -323,7 +326,7 @@ fn parse_asset_url(url : String) -> Result[ParsedAssetUrl, String] {
       let scheme = url[:index].to_owned()
       let rest = url[index + 3:].to_owned()
       match rest.find("/") {
-        None => Ok({ scheme, authority: rest, path: "" })
+        None => Ok({ scheme, authority: rest, path: "", })
         Some(path_index) =>
           Ok({
             scheme,

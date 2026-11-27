@@ -1,20 +1,22 @@
 ///|
+#derive(Debug, Eq)
 pub struct DeepLinkScheme {
   scheme : String
   hosts : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct DeepLinkPolicy {
   schemes : Array[DeepLinkScheme]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn DeepLinkScheme::new(
   scheme~ : String,
-  hosts? : Array[String] = [],
+  hosts~ : Array[String] = [],
 ) -> DeepLinkScheme {
-  { scheme, hosts }
+  { scheme, hosts, }
 }
 
 ///|
@@ -47,7 +49,7 @@ pub fn DeepLinkScheme::validate(self : DeepLinkScheme) -> Array[String] {
 
 ///|
 pub fn DeepLinkPolicy::new(
-  schemes? : Array[DeepLinkScheme] = [],
+  schemes~ : Array[DeepLinkScheme] = [],
 ) -> DeepLinkPolicy {
   { schemes, }
 }
@@ -105,14 +107,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "deep-link") -> @lepusa.Capability {
+pub fn capability(name~ : String = "deep-link") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(DeepLink)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "deep-link",
+  name~ : String = "deep-link",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -125,8 +127,12 @@ pub struct DeepLinkState {
 }
 
 ///|
-pub fn DeepLinkState::new(initial_urls? : Array[String] = []) -> DeepLinkState {
-  { initial_urls: initial_urls.copy(), opened_urls: [], registered_schemes: [] }
+pub fn DeepLinkState::new(initial_urls~ : Array[String] = []) -> DeepLinkState {
+  {
+    initial_urls: initial_urls.copy(),
+    opened_urls: [],
+    registered_schemes: [],
+  }
 }
 
 ///|
@@ -154,8 +160,8 @@ pub fn DeepLinkState::push_initial_url(
 
 ///|
 pub fn registry(
-  policy? : DeepLinkPolicy = DeepLinkPolicy::new(),
-  state? : DeepLinkState = DeepLinkState::new(),
+  policy~ : DeepLinkPolicy = DeepLinkPolicy::new(),
+  state~ : DeepLinkState = DeepLinkState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state~)
 }
@@ -163,8 +169,8 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : DeepLinkPolicy = DeepLinkPolicy::new(),
-  state? : DeepLinkState = DeepLinkState::new(),
+  policy~ : DeepLinkPolicy = DeepLinkPolicy::new(),
+  state~ : DeepLinkState = DeepLinkState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("deepLink.getInitialUrls", permission=DeepLink, handler=_ => {
@@ -383,7 +389,7 @@ fn parse_deep_link_url(url : String) -> Result[(String, String?), String] {
 }
 
 ///|
-fn first_url_delimiter(value : StringView) -> Int {
+fn first_url_delimiter(value : StringView) -> Int32 {
   let slash = value.find("/").unwrap_or(value.length())
   let query = value.find("?").unwrap_or(value.length())
   let fragment = value.find("#").unwrap_or(value.length())

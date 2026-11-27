@@ -7,14 +7,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "dialog") -> @lepusa.Capability {
+pub fn capability(name~ : String = "dialog") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Dialog)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "dialog",
+  name~ : String = "dialog",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -27,10 +27,10 @@ pub struct DialogPolicy {
 
 ///|
 pub fn DialogPolicy::new(
-  confirm_default? : Bool = false,
-  prompt_default? : String = "",
+  confirm_default~ : Bool = false,
+  prompt_default~ : String = "",
 ) -> DialogPolicy {
-  { confirm_default, prompt_default }
+  { confirm_default, prompt_default, }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn DialogPolicy::prompt_default(self : DialogPolicy) -> String {
 
 ///|
 pub fn registry(
-  policy? : DialogPolicy = DialogPolicy::new(),
+  policy~ : DialogPolicy = DialogPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~)
 }
@@ -53,7 +53,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : DialogPolicy = DialogPolicy::new(),
+  policy~ : DialogPolicy = DialogPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_async_fn("dialog.message", permission=Dialog, handler=payload => {

@@ -17,7 +17,7 @@ fn event_session_plan() -> @lepusa.RuntimePlan {
 
 ///|
 test "runtime session owns native event listeners" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   match host.snapshot() {
     Ok(session) => {
       assert_eq(session.event_listener_count(), 0)
@@ -51,7 +51,7 @@ test "runtime session owns native event listeners" {
 
 ///|
 test "runtime session supports once unlisten and target cleanup" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   match host.snapshot() {
     Ok(session) => {
       ignore(session.listen_event("ready", target=WindowTarget("main")))
@@ -85,7 +85,7 @@ test "runtime session supports once unlisten and target cleanup" {
 
 ///|
 test "runtime session listener validation is surfaced" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   match host.snapshot() {
     Ok(session) =>
       match session.listen_event("", target=WebviewTarget("")) {
@@ -102,7 +102,7 @@ test "runtime session listener validation is surfaced" {
 
 ///|
 test "frontend bridge event emit becomes native dispatch operations" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   let message = "{\"id\":\"evt-1\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\",\\\"label\\\":\\\"main\\\"},\\\"name\\\":\\\"ready\\\",\\\"payload\\\":\\\"{\\\\\\\"ok\\\\\\\":true}\\\"}\"}"
   match host.dispatch_bridge_message_sync(message) {
     Ok(dispatch) => {
@@ -123,7 +123,7 @@ test "frontend bridge event emit becomes native dispatch operations" {
 
 ///|
 test "frontend bridge event emit denies cross-window targets" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   let message = "{\"id\":\"evt-cross\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\",\\\"label\\\":\\\"settings\\\"},\\\"name\\\":\\\"ready\\\"}\"}"
   match host.dispatch_bridge_message_sync(message) {
     Ok(dispatch) => {
@@ -138,7 +138,7 @@ test "frontend bridge event emit denies cross-window targets" {
 
 ///|
 test "frontend bridge event emit validates targets before dispatch" {
-  let host = RuntimeHost::new(event_session_plan())
+  let host = @runtime.RuntimeHost::new(event_session_plan())
   let message = "{\"id\":\"evt-2\",\"window_label\":\"main\",\"plugin\":\"__lepusa\",\"command\":\"event.emit\",\"payload\":\"{\\\"target\\\":{\\\"kind\\\":\\\"window\\\"},\\\"name\\\":\\\"ready\\\"}\"}"
   match host.dispatch_bridge_message_sync(message) {
     Ok(dispatch) => {

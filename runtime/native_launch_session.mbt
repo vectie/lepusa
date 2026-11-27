@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeLaunchSession {
   webviews : Array[NativeWebViewPlan]
   execution : NativeExecutionPlan
   bridge_scheduler : NativeBridgeScheduler
   service_supervisor : NativeServiceSupervisorPlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeLaunchSession::new(
@@ -13,7 +14,12 @@ pub fn NativeLaunchSession::new(
   bridge_scheduler~ : NativeBridgeScheduler,
   service_supervisor~ : NativeServiceSupervisorPlan,
 ) -> NativeLaunchSession {
-  { webviews: webviews.copy(), execution, bridge_scheduler, service_supervisor }
+  {
+    webviews: webviews.copy(),
+    execution,
+    bridge_scheduler,
+    service_supervisor,
+  }
 }
 
 ///|
@@ -98,7 +104,7 @@ pub fn NativeLaunchSession::to_json(self : NativeLaunchSession) -> String {
 ///|
 pub fn NativePreparedRunPlan::launch_session(
   self : NativePreparedRunPlan,
-  bridge_mode? : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> NativeLaunchSession {
   NativeLaunchSession::new(
     webviews=self.webviews(),

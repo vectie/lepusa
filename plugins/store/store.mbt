@@ -5,7 +5,7 @@ pub struct Store {
 
 ///|
 pub fn Store::new() -> Store {
-  { values: {} }
+  { values: {}, }
 }
 
 ///|
@@ -26,7 +26,7 @@ pub fn Store::delete(self : Store, key : String) -> Bool {
 }
 
 ///|
-pub fn Store::clear(self : Store) -> Int {
+pub fn Store::clear(self : Store) -> Int32 {
   let count = self.values.length()
   self.values.clear()
   count
@@ -51,7 +51,7 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "store") -> @lepusa.Capability {
+pub fn capability(name~ : String = "store") -> @lepusa.Capability {
   @lepusa.Capability::new(name)
   .command("store.get")
   .command("store.set")
@@ -63,20 +63,20 @@ pub fn capability(name? : String = "store") -> @lepusa.Capability {
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "store",
+  name~ : String = "store",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
-pub fn registry(store? : Store = Store::new()) -> @lepusa.CommandRegistry {
+pub fn registry(store~ : Store = Store::new()) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), store~)
 }
 
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  store? : Store = Store::new(),
+  store~ : Store = Store::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("store.get", handler=fn(payload) { handle_get(store, payload) })

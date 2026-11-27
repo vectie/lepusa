@@ -7,21 +7,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "clipboard") -> @lepusa.Capability {
+pub fn capability(name~ : String = "clipboard") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Clipboard)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "clipboard",
+  name~ : String = "clipboard",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 #cfg(target="native")
-extern "c" fn native_available_code() -> Int = "lepusa_clipboard_available"
+extern "c" fn native_available_code() -> Int32 = "lepusa_clipboard_available"
 
 ///|
 #cfg(target="native")
@@ -30,15 +30,15 @@ extern "c" fn native_read_text_packet() -> Bytes = "lepusa_clipboard_read_text"
 ///|
 #cfg(target="native")
 #borrow(text)
-extern "c" fn native_write_text_code(text : Bytes) -> Int = "lepusa_clipboard_write_text"
+extern "c" fn native_write_text_code(text : Bytes) -> Int32 = "lepusa_clipboard_write_text"
 
 ///|
 #cfg(target="native")
-extern "c" fn native_clear_code() -> Int = "lepusa_clipboard_clear"
+extern "c" fn native_clear_code() -> Int32 = "lepusa_clipboard_clear"
 
 ///|
 #cfg(not(target="native"))
-fn native_available_code() -> Int {
+fn native_available_code() -> Int32 {
   0
 }
 
@@ -50,13 +50,13 @@ fn native_read_text_packet() -> Bytes {
 
 ///|
 #cfg(not(target="native"))
-fn native_write_text_code(_text : Bytes) -> Int {
+fn native_write_text_code(_text : Bytes) -> Int32 {
   2
 }
 
 ///|
 #cfg(not(target="native"))
-fn native_clear_code() -> Int {
+fn native_clear_code() -> Int32 {
   2
 }
 
@@ -72,7 +72,7 @@ pub struct ClipboardStore {
 
 ///|
 pub fn ClipboardStore::new() -> ClipboardStore {
-  { values: {} }
+  { values: {}, }
 }
 
 ///|
@@ -94,7 +94,7 @@ pub fn ClipboardStore::clear(self : ClipboardStore) -> Bool {
 
 ///|
 pub fn registry(
-  store? : ClipboardStore = ClipboardStore::new(),
+  store~ : ClipboardStore = ClipboardStore::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), store~)
 }
@@ -107,7 +107,7 @@ pub fn native_registry() -> @lepusa.CommandRegistry {
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  store? : ClipboardStore = ClipboardStore::new(),
+  store~ : ClipboardStore = ClipboardStore::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("clipboard.readText", permission=Clipboard, handler=_ => {

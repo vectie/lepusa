@@ -1,8 +1,8 @@
 ///|
 fn updater_manifest(
-  version? : String = "2.0.0",
-  channel? : String = "stable",
-  target? : @lepusa.BundleTarget = Linux,
+  version~ : String = "2.0.0",
+  channel~ : String = "stable",
+  target~ : @lepusa.BundleTarget = Linux,
 ) -> @lepusa.UpdateManifest {
   @lepusa.UpdateManifest::new(
     identifier="dev.vectie.updater-selection",
@@ -25,10 +25,10 @@ fn updater_manifest(
 
 ///|
 fn updater_policy(
-  channel? : String = "stable",
-  allow_prerelease? : Bool = false,
-) -> UpdaterPolicy {
-  UpdaterPolicy::new(
+  channel~ : String = "stable",
+  allow_prerelease~ : Bool = false,
+) -> @updater.UpdaterPolicy {
+  @updater.UpdaterPolicy::new(
     feed_url="https://updates.example.com/app.json",
     channel~,
     public_key="ed25519:selection-key",

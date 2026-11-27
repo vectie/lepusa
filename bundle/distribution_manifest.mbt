@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundleDistributionManifest {
   path : String
   identifier : String
@@ -14,9 +15,10 @@ pub struct BundleDistributionManifest {
   signing : String
   signing_prerequisites : Array[String]
   signing_steps : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleDistributionEntry {
   kind : String
   name : String
@@ -25,7 +27,7 @@ pub struct BundleDistributionEntry {
   required : Bool
   description : String
   json : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleDistributionManifest::parse(

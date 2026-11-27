@@ -11,43 +11,47 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct DeploymentExecutionReport {
   plan : DeploymentPlan
   dry_run : Bool
   committed : Bool
   rolled_back : Bool
   outcomes : Array[DeploymentStepOutcome]
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentExecutionReport::committed(Self) -> Bool
-pub fn DeploymentExecutionReport::completed_count(Self) -> Int
+pub fn DeploymentExecutionReport::completed_count(Self) -> Int32
 pub fn DeploymentExecutionReport::dry_run(Self) -> Bool
-pub fn DeploymentExecutionReport::failed_count(Self) -> Int
+pub fn DeploymentExecutionReport::failed_count(Self) -> Int32
 pub fn DeploymentExecutionReport::first_failure_message(Self) -> String?
 pub fn DeploymentExecutionReport::ok(Self) -> Bool
 pub fn DeploymentExecutionReport::outcomes(Self) -> Array[DeploymentStepOutcome]
 pub fn DeploymentExecutionReport::plan(Self) -> DeploymentPlan
 pub fn DeploymentExecutionReport::rolled_back(Self) -> Bool
-pub fn DeploymentExecutionReport::rolled_back_count(Self) -> Int
-pub fn DeploymentExecutionReport::skipped_count(Self) -> Int
+pub fn DeploymentExecutionReport::rolled_back_count(Self) -> Int32
+pub fn DeploymentExecutionReport::skipped_count(Self) -> Int32
 pub fn DeploymentExecutionReport::summary(Self) -> String
 pub fn DeploymentExecutionReport::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DeploymentExecutionStatus {
   DeploymentStepCompleted(String)
   DeploymentStepSkipped(String)
   DeploymentStepFailed(String)
   DeploymentStepRolledBack(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentExecutionStatus::message(Self) -> String
 pub fn DeploymentExecutionStatus::name(Self) -> String
 pub fn DeploymentExecutionStatus::ok(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DeploymentMode {
   FreshInstall
   UpdateInstall
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentMode::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct DeploymentPlan {
   target : @lepusa.BundleTarget
   mode : DeploymentMode
@@ -59,7 +63,7 @@ pub struct DeploymentPlan {
   staging_root : String
   trust : @lepusa.UpdateTrustReport
   steps : Array[DeploymentStep]
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentPlan::channel(Self) -> String
 pub fn DeploymentPlan::dry_run(Self, fail_at? : DeploymentStepKind, allow_restart? : Bool) -> DeploymentExecutionReport
 pub fn DeploymentPlan::from_update_manifest(@lepusa.UpdateManifest, target~ : @lepusa.BundleTarget, install_root~ : String, staging_root~ : String, current_version? : String, require_signature? : Bool) -> Result[Self, Array[String]]
@@ -79,6 +83,7 @@ pub fn DeploymentPlan::to_json(Self) -> String
 pub fn DeploymentPlan::trust(Self) -> @lepusa.UpdateTrustReport
 pub fn DeploymentPlan::version(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct DeploymentStep {
   kind : DeploymentStepKind
   artifact_path : String?
@@ -86,7 +91,7 @@ pub struct DeploymentStep {
   destination : String?
   required : Bool
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentStep::artifact_path(Self) -> String?
 pub fn DeploymentStep::description(Self) -> String
 pub fn DeploymentStep::destination(Self) -> String?
@@ -96,6 +101,7 @@ pub fn DeploymentStep::required(Self) -> Bool
 pub fn DeploymentStep::source(Self) -> String?
 pub fn DeploymentStep::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DeploymentStepKind {
   ValidateUpdateManifest
   DownloadUpdateArtifact
@@ -106,13 +112,14 @@ pub(all) enum DeploymentStepKind {
   InstallUpdateArtifact
   RollbackUpdateArtifact
   RestartApplication
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentStepKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct DeploymentStepOutcome {
   step : DeploymentStep
   status : DeploymentExecutionStatus
-} derive(Eq, @debug.Debug)
+}
 pub fn DeploymentStepOutcome::new(step~ : DeploymentStep, status~ : DeploymentExecutionStatus) -> Self
 pub fn DeploymentStepOutcome::status(Self) -> DeploymentExecutionStatus
 pub fn DeploymentStepOutcome::step(Self) -> DeploymentStep
@@ -121,4 +128,3 @@ pub fn DeploymentStepOutcome::to_json(Self) -> String
 // Type aliases
 
 // Traits
-

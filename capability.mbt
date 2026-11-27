@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum Permission {
   App
   FileSystemRead
@@ -24,7 +25,7 @@ pub(all) enum Permission {
   ProcessEnvironment
   ProcessControl
   Custom(String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Permission::command(route : String) -> Permission {
@@ -102,6 +103,7 @@ pub fn Permission::name(self : Permission) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct Capability {
   name : String
   windows : Array[String]
@@ -109,7 +111,7 @@ pub struct Capability {
   platforms : Array[String]
   permissions : Array[Permission]
   operation_scopes : Array[OperationScope]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Capability::new(name : String) -> Capability {
@@ -173,7 +175,7 @@ pub fn Capability::operation_scope(
 pub fn Capability::path_scope(
   self : Capability,
   root~ : String,
-  writable? : Bool = false,
+  writable~ : Bool = false,
 ) -> Capability {
   self.operation_scope(OperationScope::path(root~, writable~))
 }
@@ -196,8 +198,8 @@ pub fn Capability::allows(
   self : Capability,
   window_label~ : String,
   permission~ : Permission,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> Bool {
   let window_allowed = self.windows.is_empty() ||
     self.windows.contains(window_label)
@@ -216,8 +218,8 @@ pub fn Capability::allows_operation(
   window_label~ : String,
   permission~ : Permission,
   scope~ : OperationScope,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> Bool {
   self.allows(window_label~, permission~, origin~, platform~) &&
   self.operation_scopes.any(fn(allowed) { allowed.allows(scope) })

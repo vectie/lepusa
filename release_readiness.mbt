@@ -1,21 +1,22 @@
 ///|
+#derive(Debug, Eq)
 pub struct ReleaseReadinessReport {
   target : BundleTarget
-  files : Int
-  resources : Int
-  artifacts : Int
-  runtime_dependencies : Int
-  required_runtime_dependencies : Int
+  files : Int32
+  resources : Int32
+  artifacts : Int32
+  runtime_dependencies : Int32
+  required_runtime_dependencies : Int32
   signing_configured : Bool
-  signing_prerequisites : Int
-  signing_steps : Int
-  runtime_webviews : Int
-  command_routes : Int
-  registered_routes : Int
+  signing_prerequisites : Int32
+  signing_steps : Int32
+  runtime_webviews : Int32
+  command_routes : Int32
+  registered_routes : Int32
   native_launch_session_ready : Bool
   native_launch_session_issue : String
   issues : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundlePlan::release_readiness(
@@ -101,31 +102,35 @@ pub fn ReleaseReadinessReport::target(
 }
 
 ///|
-pub fn ReleaseReadinessReport::files(self : ReleaseReadinessReport) -> Int {
+pub fn ReleaseReadinessReport::files(self : ReleaseReadinessReport) -> Int32 {
   self.files
 }
 
 ///|
-pub fn ReleaseReadinessReport::resources(self : ReleaseReadinessReport) -> Int {
+pub fn ReleaseReadinessReport::resources(
+  self : ReleaseReadinessReport,
+) -> Int32 {
   self.resources
 }
 
 ///|
-pub fn ReleaseReadinessReport::artifacts(self : ReleaseReadinessReport) -> Int {
+pub fn ReleaseReadinessReport::artifacts(
+  self : ReleaseReadinessReport,
+) -> Int32 {
   self.artifacts
 }
 
 ///|
 pub fn ReleaseReadinessReport::runtime_dependencies(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.runtime_dependencies
 }
 
 ///|
 pub fn ReleaseReadinessReport::required_runtime_dependencies(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.required_runtime_dependencies
 }
 
@@ -139,35 +144,35 @@ pub fn ReleaseReadinessReport::signing_configured(
 ///|
 pub fn ReleaseReadinessReport::signing_prerequisites(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.signing_prerequisites
 }
 
 ///|
 pub fn ReleaseReadinessReport::signing_steps(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.signing_steps
 }
 
 ///|
 pub fn ReleaseReadinessReport::runtime_webviews(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.runtime_webviews
 }
 
 ///|
 pub fn ReleaseReadinessReport::command_routes(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.command_routes
 }
 
 ///|
 pub fn ReleaseReadinessReport::registered_routes(
   self : ReleaseReadinessReport,
-) -> Int {
+) -> Int32 {
   self.registered_routes
 }
 

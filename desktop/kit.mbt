@@ -24,8 +24,8 @@ pub fn DesktopKit::new() -> DesktopKit {
 pub fn DesktopKit::with_plugin(
   self : DesktopKit,
   name : String,
-  window_label? : String = "main",
-  capability_name? : String = "",
+  window_label~ : String = "main",
+  capability_name~ : String = "",
 ) -> DesktopKit {
   match @catalog.plugin(name) {
     None => self.with_problem("unknown official plugin: \{name}")
@@ -41,7 +41,7 @@ pub fn DesktopKit::with_plugin(
 pub fn DesktopKit::with_plugins(
   self : DesktopKit,
   names : Array[String],
-  window_label? : String = "main",
+  window_label~ : String = "main",
 ) -> DesktopKit {
   let mut kit = self
   for name in names {
@@ -53,7 +53,7 @@ pub fn DesktopKit::with_plugins(
 ///|
 pub fn DesktopKit::with_sync_plugins(
   self : DesktopKit,
-  window_label? : String = "main",
+  window_label~ : String = "main",
 ) -> DesktopKit {
   self.with_plugins(sync_plugin_names(), window_label~)
 }
@@ -98,7 +98,7 @@ pub fn DesktopKit::with_filesystem_scope(
 ) -> DesktopKit {
   let scopes = self.filesystem_scopes.copy()
   scopes.push(scope)
-  { ..self, filesystem_scopes: scopes }
+  { ..self, filesystem_scopes: scopes, }
 }
 
 ///|
@@ -108,7 +108,7 @@ pub fn DesktopKit::with_local_service(
 ) -> DesktopKit {
   let services = self.local_services.copy()
   services.push(service)
-  { ..self, local_services: services }
+  { ..self, local_services: services, }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub fn DesktopKit::with_registry(
   self : DesktopKit,
   registry : @lepusa.CommandRegistry,
 ) -> DesktopKit {
-  { ..self, registry: self.registry.merge(registry) }
+  { ..self, registry: self.registry.merge(registry), }
 }
 
 ///|

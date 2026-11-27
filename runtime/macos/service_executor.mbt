@@ -4,19 +4,19 @@ extern "c" fn native_start_service(
   name : Bytes,
   command_packet : Bytes,
   readiness_url : Bytes,
-) -> Int = "lepusa_macos_start_service"
+) -> Int32 = "lepusa_macos_start_service"
 
 ///|
 #borrow(name)
-extern "c" fn native_stop_service(name : Bytes) -> Int = "lepusa_macos_stop_service"
+extern "c" fn native_stop_service(name : Bytes) -> Int32 = "lepusa_macos_stop_service"
 
 ///|
 #borrow(name, readiness_url)
 extern "c" fn native_wait_until_ready(
   name : Bytes,
   readiness_url : Bytes,
-  timeout_ms : Int,
-) -> Int = "lepusa_macos_wait_until_ready"
+  timeout_ms : Int32,
+) -> Int32 = "lepusa_macos_wait_until_ready"
 
 ///|
 pub fn service_executor() -> @runtime.NativeServiceExecutor {

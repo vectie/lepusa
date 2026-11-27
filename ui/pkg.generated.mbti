@@ -58,10 +58,11 @@ pub fn void_element(String, attrs? : Array[Attr]) -> @lepusa.Html
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct Attr {
   name : String
   value : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Attr::name(Self) -> String
 pub fn Attr::new(String, String) -> Self
 pub fn Attr::render(Self) -> String
@@ -118,4 +119,3 @@ pub type UiView[Model, Msg] = ((Msg) -> Attr, Model) -> @lepusa.Html
 pub type ViewEmit[Msg] = (Msg) -> Attr
 
 // Traits
-

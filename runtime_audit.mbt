@@ -1,27 +1,31 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeAuditSeverity {
   RuntimeAuditInfo
   RuntimeAuditWarning
   RuntimeAuditError
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeAuditKind {
   RuntimeAuditDeniedCommand
   RuntimeAuditMissingHandler
   RuntimeAuditUndeclaredHandler
   RuntimeAuditOpenOrigin
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeAuditFinding {
   severity : RuntimeAuditSeverity
   kind : RuntimeAuditKind
   route : String
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeRouteExposure {
   route : String
   mode : CommandMode
@@ -29,16 +33,17 @@ pub struct RuntimeRouteExposure {
   exposed : Bool
   windows : Array[String]
   reasons : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeAudit {
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
   registered_routes : Array[String]
   route_exposures : Array[RuntimeRouteExposure]
   findings : Array[RuntimeAuditFinding]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeAuditSeverity::name(self : RuntimeAuditSeverity) -> String {
@@ -66,7 +71,7 @@ pub fn RuntimeAuditFinding::new(
   route~ : String,
   message~ : String,
 ) -> RuntimeAuditFinding {
-  { severity, kind, route, message }
+  { severity, kind, route, message, }
 }
 
 ///|
@@ -351,17 +356,17 @@ pub fn RuntimeAudit::infos(self : RuntimeAudit) -> Array[RuntimeAuditFinding] {
 }
 
 ///|
-pub fn RuntimeAudit::error_count(self : RuntimeAudit) -> Int {
+pub fn RuntimeAudit::error_count(self : RuntimeAudit) -> Int32 {
   self.errors().length()
 }
 
 ///|
-pub fn RuntimeAudit::warning_count(self : RuntimeAudit) -> Int {
+pub fn RuntimeAudit::warning_count(self : RuntimeAudit) -> Int32 {
   self.warnings().length()
 }
 
 ///|
-pub fn RuntimeAudit::info_count(self : RuntimeAudit) -> Int {
+pub fn RuntimeAudit::info_count(self : RuntimeAudit) -> Int32 {
   self.infos().length()
 }
 

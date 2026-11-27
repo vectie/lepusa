@@ -42,7 +42,7 @@ fn frontend_test_plan() -> @lepusa.RuntimePlan {
 
 ///|
 test "frontend api bundle generates javascript from runtime command manifest" {
-  match FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
+  match @frontend.FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
     Ok(bundle) => {
       assert_eq(bundle.config().global_name(), "lepusa")
       assert_eq(bundle.command_manifest().entries().length(), 4)
@@ -73,7 +73,7 @@ test "frontend api bundle generates javascript from runtime command manifest" {
 
 ///|
 test "frontend api bundle generates typescript declarations" {
-  match FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
+  match @frontend.FrontendApiBundle::from_runtime_plan(frontend_test_plan()) {
     Ok(bundle) => {
       let dts = bundle.typescript()
       assert_true(dts.contains("export type LepusaRoute = "))
@@ -154,9 +154,9 @@ test "frontend api bundle can use launch manifests and validates config" {
   match plan.launch_manifest(registered_routes=plan.command_routes()) {
     Ok(manifest) =>
       match
-        FrontendApiBundle::from_launch_manifest(
+        @frontend.FrontendApiBundle::from_launch_manifest(
           manifest,
-          config=FrontendApiConfig::new(global_name="lepusaNative"),
+          config=@frontend.FrontendApiConfig::new(global_name="lepusaNative"),
         ) {
         Ok(bundle) => {
           assert_true(
@@ -169,9 +169,9 @@ test "frontend api bundle can use launch manifests and validates config" {
     Err(_) => abort("unexpected launch manifest error")
   }
   match
-    FrontendApiBundle::from_runtime_plan(
+    @frontend.FrontendApiBundle::from_runtime_plan(
       plan,
-      config=FrontendApiConfig::new(global_name="", module_name=""),
+      config=@frontend.FrontendApiConfig::new(global_name="", module_name=""),
     ) {
     Ok(_) => abort("unexpected valid config")
     Err(problems) => {
@@ -197,10 +197,10 @@ test "frontend api bundle filters through live invoke contracts" {
     ),
   )
   match
-    FrontendApiBundle::from_invoke_contract_report(
+    @frontend.FrontendApiBundle::from_invoke_contract_report(
       plan.command_manifest(),
       report,
-      config=FrontendApiConfig::new(module_name="contract-api"),
+      config=@frontend.FrontendApiConfig::new(module_name="contract-api"),
     ) {
     Ok(bundle) => {
       assert_true(bundle.invoke_contract_report() is Some(_))
@@ -250,7 +250,7 @@ test "frontend api bundle filters denied event and unregistered routes" {
     Ok(plan) => plan
     Err(_) => abort("unexpected invalid frontend filter plan")
   }
-  match FrontendApiBundle::from_runtime_plan(plan) {
+  match @frontend.FrontendApiBundle::from_runtime_plan(plan) {
     Ok(bundle) => {
       let js = bundle.javascript()
       assert_true(js.contains("\"route\":\"core.read\""))
@@ -262,7 +262,7 @@ test "frontend api bundle filters denied event and unregistered routes" {
   }
   match plan.launch_manifest(registered_routes=["core.read"]) {
     Ok(open_manifest) =>
-      match FrontendApiBundle::from_launch_manifest(open_manifest) {
+      match @frontend.FrontendApiBundle::from_launch_manifest(open_manifest) {
         Ok(bundle) => assert_eq(bundle.command_manifest().entries().length(), 1)
         Err(_) => abort("unexpected registered launch frontend bundle error")
       }
@@ -270,7 +270,8 @@ test "frontend api bundle filters denied event and unregistered routes" {
   }
   match plan.launch_manifest(registered_routes=[]) {
     Ok(registered_manifest) =>
-      match FrontendApiBundle::from_launch_manifest(registered_manifest) {
+      match
+        @frontend.FrontendApiBundle::from_launch_manifest(registered_manifest) {
         Ok(bundle) => {
           assert_eq(bundle.command_manifest().entries().length(), 0)
           assert_true(bundle.typescript().contains("Record<string, never>"))

@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum WindowControlAction {
   Close
   Focus
@@ -11,19 +12,21 @@ pub(all) enum WindowControlAction {
   SetTitle
   Show
   Unmaximize
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowControlOperation {
   window_label : String
   action : WindowControlAction
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowControlPolicy {
   allowed_windows : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub struct WindowControlState {
@@ -32,9 +35,9 @@ pub struct WindowControlState {
 
 ///|
 pub fn WindowControlPolicy::new(
-  allowed_windows? : Array[String] = [],
+  allowed_windows~ : Array[String] = [],
 ) -> WindowControlPolicy {
-  { allowed_windows: allowed_windows.copy() }
+  { allowed_windows: allowed_windows.copy(), }
 }
 
 ///|
@@ -84,7 +87,7 @@ pub fn WindowControlPolicy::allows(
 
 ///|
 pub fn WindowControlState::new() -> WindowControlState {
-  { operations: [] }
+  { operations: [], }
 }
 
 ///|
@@ -113,9 +116,9 @@ pub fn WindowControlState::last(
 pub fn WindowControlOperation::new(
   window_label~ : String,
   action~ : WindowControlAction,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> WindowControlOperation {
-  { window_label, action, payload }
+  { window_label, action, payload, }
 }
 
 ///|
@@ -180,22 +183,22 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "window") -> @lepusa.Capability {
+pub fn capability(name~ : String = "window") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Window)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "window",
+  name~ : String = "window",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : WindowControlPolicy = WindowControlPolicy::new(),
-  state? : WindowControlState = WindowControlState::new(),
+  policy~ : WindowControlPolicy = WindowControlPolicy::new(),
+  state~ : WindowControlState = WindowControlState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state~)
 }
@@ -203,8 +206,8 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : WindowControlPolicy = WindowControlPolicy::new(),
-  state? : WindowControlState = WindowControlState::new(),
+  policy~ : WindowControlPolicy = WindowControlPolicy::new(),
+  state~ : WindowControlState = WindowControlState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("window.close", permission=Window, handler=payload => {

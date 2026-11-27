@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
   RuntimeOpenWindow(RuntimeWindowOpenPlan)
@@ -6,13 +7,14 @@ pub(all) enum RuntimeOperation {
   RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeStep {
   session : RuntimeSession
   operations : Array[RuntimeOperation]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeStep::session(self : RuntimeStep) -> RuntimeSession {
@@ -129,7 +131,7 @@ pub fn RuntimeSession::apply_actions(
     }
   }
   if problems.is_empty() {
-    Ok({ session, operations })
+    Ok({ session, operations, })
   } else {
     Err(problems)
   }
@@ -230,7 +232,7 @@ fn RuntimeSession::navigate_window(
   for window in self.windows {
     if window.label() == window_label {
       found = true
-      windows.push({ ..window, url: source.url() })
+      windows.push({ ..window, url: source.url(), })
     } else {
       windows.push(window)
     }
@@ -253,7 +255,7 @@ fn RuntimeSession::navigate_window(
     local_services.push(service)
   }
   operations.push(RuntimeNavigateWindow(window_label, source.url()))
-  Ok({ ..self, windows, protocol_mappings, virtual_files, local_services })
+  Ok({ ..self, windows, protocol_mappings, virtual_files, local_services, })
 }
 
 ///|

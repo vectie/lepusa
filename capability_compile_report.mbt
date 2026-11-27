@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum CapabilityIssueSeverity {
   CapabilityWarning
   CapabilityError
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CapabilityIssueSeverity::name(self : CapabilityIssueSeverity) -> String {
@@ -20,6 +21,7 @@ pub fn CapabilityIssueSeverity::is_error(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct CapabilityCompileIssue {
   severity : CapabilityIssueSeverity
   code : String
@@ -29,18 +31,18 @@ pub struct CapabilityCompileIssue {
   permission : String
   capability : String
   window_label : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn CapabilityCompileIssue::new(
   severity~ : CapabilityIssueSeverity,
   code~ : String,
   message~ : String,
-  plugin? : String = "",
-  route? : String = "",
-  permission? : String = "",
-  capability? : String = "",
-  window_label? : String = "",
+  plugin~ : String = "",
+  route~ : String = "",
+  permission~ : String = "",
+  capability~ : String = "",
+  window_label~ : String = "",
 ) -> CapabilityCompileIssue {
   {
     severity,
@@ -119,12 +121,13 @@ pub fn CapabilityCompileIssue::to_json(self : CapabilityCompileIssue) -> String 
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct CapabilityCompileReport {
   plugin_contracts : Array[PluginContract]
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
   issues : Array[CapabilityCompileIssue]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CapabilityCompileReport::from_plugins(
@@ -149,7 +152,7 @@ pub fn CapabilityCompileReport::from_plugins(
     capabilities~,
     windows~,
   )
-  { plugin_contracts, command_manifest, permission_manifest, issues }
+  { plugin_contracts, command_manifest, permission_manifest, issues, }
 }
 
 ///|
@@ -213,14 +216,14 @@ pub fn CapabilityCompileReport::ok(self : CapabilityCompileReport) -> Bool {
 ///|
 pub fn CapabilityCompileReport::error_count(
   self : CapabilityCompileReport,
-) -> Int {
+) -> Int32 {
   self.errors().length()
 }
 
 ///|
 pub fn CapabilityCompileReport::warning_count(
   self : CapabilityCompileReport,
-) -> Int {
+) -> Int32 {
   self.warnings().length()
 }
 

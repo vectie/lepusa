@@ -38,7 +38,7 @@ fn signed_manifest() -> @lepusa.UpdateManifest {
 ///|
 test "deployment plan turns a trusted update manifest into a rollback transaction" {
   match
-    DeploymentPlan::from_update_manifest(
+    @deployment.DeploymentPlan::from_update_manifest(
       signed_manifest(),
       target=Linux,
       install_root="/opt/deploy-app",
@@ -105,7 +105,7 @@ test "deployment plan rejects unsigned manifests by default" {
     ],
   )
   match
-    DeploymentPlan::from_update_manifest(
+    @deployment.DeploymentPlan::from_update_manifest(
       manifest,
       target=Linux,
       install_root="/opt/unsigned",
@@ -124,7 +124,7 @@ test "deployment plan rejects unsigned manifests by default" {
 ///|
 test "deployment plan validates target selection and roots" {
   match
-    DeploymentPlan::from_update_manifest(
+    @deployment.DeploymentPlan::from_update_manifest(
       signed_manifest(),
       target=Windows,
       install_root="/same",

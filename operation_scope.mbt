@@ -1,9 +1,10 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum OperationScopeKind {
   PathOperation
   ShellOperation
   UrlOperation
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn OperationScopeKind::name(self : OperationScopeKind) -> String {
@@ -15,28 +16,29 @@ pub fn OperationScopeKind::name(self : OperationScopeKind) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct OperationScope {
   kind : OperationScopeKind
   value : String
   writable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn OperationScope::path(
   root~ : String,
-  writable? : Bool = false,
+  writable~ : Bool = false,
 ) -> OperationScope {
-  { kind: PathOperation, value: root, writable }
+  { kind: PathOperation, value: root, writable, }
 }
 
 ///|
 pub fn OperationScope::shell(command : String) -> OperationScope {
-  { kind: ShellOperation, value: command, writable: false }
+  { kind: ShellOperation, value: command, writable: false, }
 }
 
 ///|
 pub fn OperationScope::url(origin : String) -> OperationScope {
-  { kind: UrlOperation, value: origin, writable: false }
+  { kind: UrlOperation, value: origin, writable: false, }
 }
 
 ///|

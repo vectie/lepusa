@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct InvokeContract {
   route : String
   plugin : String
@@ -18,15 +19,16 @@ pub struct InvokeContract {
   operation_scope_configured : Bool
   operation_scope_required : Bool
   problems : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct InvokeContractReport {
   contracts : Array[InvokeContract]
   undeclared_routes : Array[String]
   duplicate_routes : Array[String]
   problems : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CommandRegistry::invoke_contracts(

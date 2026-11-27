@@ -1,9 +1,10 @@
 ///|
+#derive(Debug, Eq)
 pub struct LocalService {
   name : String
   command : Array[String]
   readiness_url : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LocalService::new(
@@ -11,7 +12,7 @@ pub fn LocalService::new(
   command~ : Array[String],
   readiness_url~ : String,
 ) -> LocalService {
-  { name, command: command.copy(), readiness_url }
+  { name, command: command.copy(), readiness_url, }
 }
 
 ///|

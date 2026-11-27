@@ -28,31 +28,36 @@ pub struct RegisteredCommand {
 ///|
 pub fn RegisteredCommand::new(
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : CommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, operation_scope, handler: SyncCommandHandler(handler) }
+  { route, permission, operation_scope, handler: SyncCommandHandler(handler), }
 }
 
 ///|
 pub fn RegisteredCommand::new_async(
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : AsyncCommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, operation_scope, handler: AsyncCommandHandler(handler) }
+  { route, permission, operation_scope, handler: AsyncCommandHandler(handler), }
 }
 
 ///|
 pub fn RegisteredCommand::new_stream(
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : StreamCommandHandler,
 ) -> RegisteredCommand {
-  { route, permission, operation_scope, handler: StreamCommandHandler(handler) }
+  {
+    route,
+    permission,
+    operation_scope,
+    handler: StreamCommandHandler(handler),
+  }
 }
 
 ///|
@@ -104,7 +109,7 @@ pub struct CommandRegistry {
 
 ///|
 pub fn CommandRegistry::new() -> CommandRegistry {
-  { commands: {}, duplicate_routes: [] }
+  { commands: {}, duplicate_routes: [], }
 }
 
 ///|
@@ -122,14 +127,14 @@ pub fn CommandRegistry::register(
   } else {
     commands[route] = command
   }
-  { commands, duplicate_routes }
+  { commands, duplicate_routes, }
 }
 
 ///|
 pub fn CommandRegistry::register_fn(
   self : CommandRegistry,
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : CommandHandler,
 ) -> CommandRegistry {
@@ -142,7 +147,7 @@ pub fn CommandRegistry::register_fn(
 pub fn CommandRegistry::register_async_fn(
   self : CommandRegistry,
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : AsyncCommandHandler,
 ) -> CommandRegistry {
@@ -155,7 +160,7 @@ pub fn CommandRegistry::register_async_fn(
 pub fn CommandRegistry::register_stream_fn(
   self : CommandRegistry,
   route : String,
-  permission? : Permission = Permission::command(route),
+  permission~ : Permission = Permission::command(route),
   operation_scope? : OperationScopeResolver,
   handler~ : StreamCommandHandler,
 ) -> CommandRegistry {
@@ -247,7 +252,7 @@ pub fn CommandRegistry::validate(self : CommandRegistry) -> Array[String] {
 pub fn CommandRegistry::dispatch(
   self : CommandRegistry,
   request : InvokeRequest,
-  capabilities? : Array[Capability] = [],
+  capabilities~ : Array[Capability] = [],
 ) -> InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {
@@ -271,7 +276,7 @@ pub fn CommandRegistry::dispatch_with_permission(
   self : CommandRegistry,
   request : InvokeRequest,
   permission~ : Permission,
-  capabilities? : Array[Capability] = [],
+  capabilities~ : Array[Capability] = [],
 ) -> InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {
@@ -336,7 +341,7 @@ fn CommandRegistry::dispatch_with_profile_channels(
 pub async fn CommandRegistry::dispatch_async(
   self : CommandRegistry,
   request : InvokeRequest,
-  capabilities? : Array[Capability] = [],
+  capabilities~ : Array[Capability] = [],
 ) -> InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {
@@ -360,7 +365,7 @@ pub async fn CommandRegistry::dispatch_with_permission_async(
   self : CommandRegistry,
   request : InvokeRequest,
   permission~ : Permission,
-  capabilities? : Array[Capability] = [],
+  capabilities~ : Array[Capability] = [],
 ) -> InvokeResponse {
   let request_problems = request.validate()
   if !request_problems.is_empty() {

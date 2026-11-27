@@ -1,6 +1,6 @@
 ///|
 test "notification plugin declares sync notification commands" {
-  let declared = plugin()
+  let declared = @notification.plugin()
   assert_eq(declared.name(), "notification")
   assert_eq(declared.command_routes().length(), 3)
   assert_true(declared.command_routes().contains("notification.show"))
@@ -18,7 +18,7 @@ test "notification plugin declares sync notification commands" {
 
 ///|
 test "notification capabilities grant notification permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @notification.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Notification))
   assert_false(grant.allows(window_label="settings", permission=Notification))
   assert_false(grant.allows(window_label="main", permission=Clipboard))
@@ -26,13 +26,13 @@ test "notification capabilities grant notification permission by window" {
 
 ///|
 test "notification registry tracks permission and delivered titles" {
-  let center = NotificationCenter::new()
-  let registry = registry(center~)
+  let center = @notification.NotificationCenter::new()
+  let registry = @notification.registry(center~)
   assert_true(registry.contains("notification.show"))
   assert_true(registry.contains("notification.permissionState"))
   assert_true(registry.contains("notification.requestPermission"))
   assert_eq(registry.sync_routes().length(), 3)
-  let grant = capability_for_window("main")
+  let grant = @notification.capability_for_window("main")
   let initial_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -67,11 +67,11 @@ test "notification registry tracks permission and delivered titles" {
 
 ///|
 test "notification native registry reports host permission state" {
-  let registry = native_registry()
+  let registry = @notification.native_registry()
   assert_true(registry.contains("notification.show"))
   assert_true(registry.contains("notification.permissionState"))
   assert_true(registry.contains("notification.requestPermission"))
-  let grant = capability_for_window("main")
+  let grant = @notification.capability_for_window("main")
   let state = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="native-state",
@@ -87,7 +87,7 @@ test "notification native registry reports host permission state" {
 
 ///|
 test "notification auto registry exposes sync handlers" {
-  let registry = auto_registry()
+  let registry = @notification.auto_registry()
   assert_true(registry.contains("notification.show"))
   assert_true(registry.contains("notification.permissionState"))
   assert_true(registry.contains("notification.requestPermission"))

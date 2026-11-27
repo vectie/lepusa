@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct CommandManifestEntry {
   plugin : String
   command : String
@@ -11,7 +12,7 @@ pub struct CommandManifestEntry {
   allowed_windows : Array[String]
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 fn CommandManifestEntry::new(
@@ -154,15 +155,16 @@ pub fn CommandManifestEntry::to_json(self : CommandManifestEntry) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct CommandManifest {
   entries : Array[CommandManifestEntry]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CommandManifest::new(
-  entries? : Array[CommandManifestEntry] = [],
+  entries~ : Array[CommandManifestEntry] = [],
 ) -> CommandManifest {
-  { entries: entries.copy() }
+  { entries: entries.copy(), }
 }
 
 ///|
@@ -170,7 +172,7 @@ pub fn CommandManifest::from_plugins(
   plugins~ : Array[Plugin],
   capabilities~ : Array[Capability],
   windows~ : Array[ResolvedWindow],
-  platform? : String = "",
+  platform~ : String = "",
 ) -> CommandManifest {
   let entries : Array[CommandManifestEntry] = []
   let policy = CapabilityPolicy::new(capabilities~)
@@ -353,8 +355,8 @@ pub fn CommandManifest::allows(
   self : CommandManifest,
   route : String,
   window_label~ : String,
-  origin? : String = "",
-  platform? : String = "",
+  origin~ : String = "",
+  platform~ : String = "",
 ) -> Bool {
   match self.entry(route) {
     Some(entry) =>

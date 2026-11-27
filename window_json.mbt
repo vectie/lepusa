@@ -98,7 +98,7 @@ fn window_json_string(object : Map[String, Json], key : String) -> String? {
 }
 
 ///|
-fn window_json_int(object : Map[String, Json], key : String) -> Int? {
+fn window_json_int(object : Map[String, Json], key : String) -> Int32? {
   match object.get(key) {
     Some(Number(value, ..)) => Some(value.to_int())
     _ => None

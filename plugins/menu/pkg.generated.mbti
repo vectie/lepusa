@@ -20,14 +20,16 @@ pub fn registry(state? : MenuState) -> @lepusa.CommandRegistry
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct MenuBar {
   items : Array[MenuItem]
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuBar::item(Self, MenuItem) -> Self
 pub fn MenuBar::items(Self) -> Array[MenuItem]
 pub fn MenuBar::new(items? : Array[MenuItem]) -> Self
 pub fn MenuBar::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MenuControlAction {
   SetAppMenu
   SetWindowMenu
@@ -36,9 +38,10 @@ pub(all) enum MenuControlAction {
   SetItemEnabled
   SetItemChecked
   ActivateItem
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuControlAction::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct MenuItem {
   id : String
   label : String
@@ -47,7 +50,7 @@ pub struct MenuItem {
   enabled : Bool
   checked : Bool
   items : Array[MenuItem]
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuItem::accelerator(Self) -> String?
 pub fn MenuItem::action(id~ : String, label~ : String, accelerator? : String, enabled? : Bool) -> Self
 pub fn MenuItem::check(id~ : String, label~ : String, checked? : Bool, accelerator? : String, enabled? : Bool) -> Self
@@ -61,19 +64,21 @@ pub fn MenuItem::separator() -> Self
 pub fn MenuItem::submenu(id~ : String, label~ : String, items? : Array[Self], enabled? : Bool) -> Self
 pub fn MenuItem::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MenuItemKind {
   Action
   Separator
   Check
   Submenu
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuItemKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct MenuOperation {
   target : MenuTarget
   action : MenuControlAction
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuOperation::action(Self) -> MenuControlAction
 pub fn MenuOperation::new(target~ : MenuTarget, action~ : MenuControlAction, payload? : String) -> Self
 pub fn MenuOperation::payload(Self) -> String
@@ -93,14 +98,14 @@ pub fn MenuState::new(app_menu? : MenuBar) -> Self
 pub fn MenuState::operations(Self) -> Array[MenuOperation]
 pub fn MenuState::window_menu(Self, String) -> MenuBar?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MenuTarget {
   AppMenu
   WindowMenu(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn MenuTarget::name(Self) -> String
 pub fn MenuTarget::window_label(Self) -> String?
 
 // Type aliases
 
 // Traits
-

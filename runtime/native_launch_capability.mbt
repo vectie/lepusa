@@ -1,23 +1,24 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeLaunchCapability {
   webview_creation : Bool
   sync_bridge_evaluate : Bool
   async_bridge_drain : Bool
-  max_webviews : Int
+  max_webviews : Int32
   webview_creation_message : String
   sync_bridge_evaluate_message : String
   async_bridge_drain_message : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeLaunchCapability::new(
   webview_creation~ : Bool,
-  sync_bridge_evaluate? : Bool = webview_creation,
+  sync_bridge_evaluate~ : Bool = webview_creation,
   async_bridge_drain~ : Bool,
-  max_webviews? : Int = 1,
-  webview_creation_message? : String = "native WebView creation loop is unavailable",
-  sync_bridge_evaluate_message? : String = "native sync bridge response evaluation is unavailable",
-  async_bridge_drain_message? : String = "native async bridge drain/evaluate support is unavailable",
+  max_webviews~ : Int32 = 1,
+  webview_creation_message~ : String = "native WebView creation loop is unavailable",
+  sync_bridge_evaluate_message~ : String = "native sync bridge response evaluation is unavailable",
+  async_bridge_drain_message~ : String = "native async bridge drain/evaluate support is unavailable",
 ) -> NativeLaunchCapability {
   {
     webview_creation,
@@ -54,7 +55,7 @@ pub fn NativeLaunchCapability::sync_bridge_evaluate(
 ///|
 pub fn NativeLaunchCapability::max_webviews(
   self : NativeLaunchCapability,
-) -> Int {
+) -> Int32 {
   self.max_webviews
 }
 
@@ -135,7 +136,7 @@ pub fn NativeLaunchCapability::can_launch(
 pub fn NativeLaunchCapability::webview_count_blocker(
   self : NativeLaunchCapability,
   platform_name : String,
-  webview_count : Int,
+  webview_count : Int32,
 ) -> String? {
   if self.max_webviews <= 0 || webview_count <= self.max_webviews {
     None

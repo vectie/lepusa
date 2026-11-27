@@ -1,6 +1,6 @@
 ///|
 test "updater plugin declares update lifecycle commands" {
-  let declared = plugin()
+  let declared = @updater.plugin()
   assert_eq(declared.name(), "updater")
   assert_eq(declared.command_routes().length(), 6)
   assert_true(declared.command_routes().contains("updater.check"))
@@ -17,7 +17,7 @@ test "updater plugin declares update lifecycle commands" {
 
 ///|
 test "updater capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @updater.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Updater))
   assert_false(grant.allows(window_label="settings", permission=Updater))
   assert_false(grant.allows(window_label="main", permission=WindowState))
@@ -25,7 +25,7 @@ test "updater capabilities grant permission by window" {
 
 ///|
 test "updater policy validates feed metadata" {
-  let policy = UpdaterPolicy::new(
+  let policy = @updater.UpdaterPolicy::new(
     feed_url="https://updates.example.com/lepusa.json",
     channel="stable",
     public_key="ed25519:abc",
@@ -39,7 +39,7 @@ test "updater policy validates feed metadata" {
 
 ///|
 test "updater policy rejects invalid metadata" {
-  let policy = UpdaterPolicy::new(
+  let policy = @updater.UpdaterPolicy::new(
     feed_url="http://updates.example.com/lepusa.json",
     channel="bad channel",
     public_key="",
@@ -52,14 +52,14 @@ test "updater policy rejects invalid metadata" {
 
 ///|
 async test "updater registry tracks delegated lifecycle state" {
-  let policy = UpdaterPolicy::new(
+  let policy = @updater.UpdaterPolicy::new(
     feed_url="https://updates.example.com/lepusa.json",
     channel="stable",
     public_key="ed25519:abc",
   )
-  let state = UpdaterState::new()
-  let registry = registry(policy~, state~)
-  let grant = capability_for_window("main")
+  let state = @updater.UpdaterState::new()
+  let registry = @updater.registry(policy~, state~)
+  let grant = @updater.capability_for_window("main")
   assert_true(registry.contains("updater.check"))
   assert_true(registry.contains("updater.download"))
   assert_true(registry.contains("updater.install"))
@@ -117,14 +117,14 @@ async test "updater registry tracks delegated lifecycle state" {
 
 ///|
 async test "updater registry supports combined delegated download and install" {
-  let policy = UpdaterPolicy::new(
+  let policy = @updater.UpdaterPolicy::new(
     feed_url="https://updates.example.com/lepusa.json",
     channel="beta",
     allow_prerelease=true,
   )
-  let state = UpdaterState::new()
-  let registry = registry(policy~, state~)
-  let grant = capability_for_window("main")
+  let state = @updater.UpdaterState::new()
+  let registry = @updater.registry(policy~, state~)
+  let grant = @updater.capability_for_window("main")
   let request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -145,11 +145,11 @@ async test "updater registry supports combined delegated download and install" {
 
 ///|
 async test "updater registry validates policy and payloads" {
-  let bad_policy = UpdaterPolicy::new(
+  let bad_policy = @updater.UpdaterPolicy::new(
     feed_url="http://updates.example.com/app.json",
   )
-  let bad_registry = registry(policy=bad_policy)
-  let grant = capability_for_window("main")
+  let bad_registry = @updater.registry(policy=bad_policy)
+  let grant = @updater.capability_for_window("main")
   let check_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -161,8 +161,10 @@ async test "updater registry validates policy and payloads" {
     checked.error_message().unwrap_or(""),
     "updater feed url must use https",
   )
-  let valid = registry(
-    policy=UpdaterPolicy::new(feed_url="https://updates.example.com/app.json"),
+  let valid = @updater.registry(
+    policy=@updater.UpdaterPolicy::new(
+      feed_url="https://updates.example.com/app.json",
+    ),
   )
   let download_request = @lepusa.InvokeRequest::new(
     id="2",

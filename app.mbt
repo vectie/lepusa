@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct LaunchPlan {
   root : Cell
   windows : Array[WindowConfig]
@@ -6,10 +7,10 @@ pub struct LaunchPlan {
   capabilities : Array[Capability]
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Debug, Eq)
+}
 
 ///|
-pub fn LaunchPlan::window_count(self : LaunchPlan) -> Int {
+pub fn LaunchPlan::window_count(self : LaunchPlan) -> Int32 {
   self.windows.length()
 }
 
@@ -19,7 +20,7 @@ pub fn LaunchPlan::windows(self : LaunchPlan) -> Array[WindowConfig] {
 }
 
 ///|
-pub fn LaunchPlan::plugin_count(self : LaunchPlan) -> Int {
+pub fn LaunchPlan::plugin_count(self : LaunchPlan) -> Int32 {
   self.plugins.length()
 }
 
@@ -29,7 +30,7 @@ pub fn LaunchPlan::plugins(self : LaunchPlan) -> Array[Plugin] {
 }
 
 ///|
-pub fn LaunchPlan::capability_count(self : LaunchPlan) -> Int {
+pub fn LaunchPlan::capability_count(self : LaunchPlan) -> Int32 {
   self.capabilities.length()
 }
 
@@ -60,6 +61,7 @@ pub fn LaunchPlan::lifecycle_hooks(self : LaunchPlan) -> Array[LifecycleHook] {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct App {
   root : Cell
   windows : Array[WindowConfig]
@@ -67,7 +69,7 @@ pub struct App {
   capabilities : Array[Capability]
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn new(root : Cell) -> App {
@@ -91,12 +93,12 @@ pub fn App::with_window(self : App, window : WindowConfig) -> App {
 ///|
 pub fn App::window(
   self : App,
-  label? : String = "main",
-  title? : String = "Lepusa",
-  width? : Int = 1000,
-  height? : Int = 720,
-  resizable? : Bool = true,
-  title_bar? : TitleBarStyle = Native,
+  label~ : String = "main",
+  title~ : String = "Lepusa",
+  width~ : Int32 = 1000,
+  height~ : Int32 = 720,
+  resizable~ : Bool = true,
+  title_bar~ : TitleBarStyle = Native,
   source? : Source,
 ) -> App {
   self.with_window(

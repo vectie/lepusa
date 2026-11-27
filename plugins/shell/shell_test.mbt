@@ -1,6 +1,6 @@
 ///|
 test "shell plugin declares async shell commands" {
-  let declared = plugin()
+  let declared = @shell.plugin()
   assert_eq(declared.name(), "shell")
   assert_eq(declared.command_routes().length(), 4)
   assert_true(declared.command_routes().contains("shell.execute"))
@@ -15,7 +15,7 @@ test "shell plugin declares async shell commands" {
 
 ///|
 test "shell capabilities grant shell permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @shell.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Shell))
   assert_false(grant.allows(window_label="settings", permission=Shell))
   assert_false(grant.allows(window_label="main", permission=Clipboard))
@@ -23,12 +23,12 @@ test "shell capabilities grant shell permission by window" {
 
 ///|
 async test "shell registry records delegated process lifecycle" {
-  let table = ShellProcessTable::new()
-  let registry = registry(
-    policy=ShellPolicy::new(allowed_commands=["moon"]),
+  let table = @shell.ShellProcessTable::new()
+  let registry = @shell.registry(
+    policy=@shell.ShellPolicy::new(allowed_commands=["moon"]),
     table~,
   )
-  let grant = capability_for_window("main")
+  let grant = @shell.capability_for_window("main")
   assert_true(registry.contains("shell.execute"))
   assert_true(registry.contains("shell.spawn"))
   assert_true(registry.contains("shell.kill"))
@@ -97,16 +97,16 @@ async test "shell registry records delegated process lifecycle" {
 
 ///|
 async test "shell manager dispatch enforces compiled operation scopes" {
-  let table = ShellProcessTable::new()
-  let registry = registry(
-    policy=ShellPolicy::new(allowed_commands=["moon", "rm"]),
+  let table = @shell.ShellProcessTable::new()
+  let registry = @shell.registry(
+    policy=@shell.ShellPolicy::new(allowed_commands=["moon", "rm"]),
     table~,
   )
   let app = @lepusa.new(
       @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
     )
     .window(label="main", source=@lepusa.Source::html("<main></main>"))
-    .with_plugin(plugin())
+    .with_plugin(@shell.plugin())
     .with_capability(
       @lepusa.Capability::new("main-shell")
       .window("main")

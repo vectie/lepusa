@@ -1,20 +1,23 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeOperationExecutionStatus {
   NativeOperationExecuted
   NativeOperationSkipped(String)
   NativeOperationFailed(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeOperationExecutionOutcome {
   operation : NativeExecutableOperation
   status : NativeOperationExecutionStatus
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeOperationExecutionReport {
   outcomes : Array[NativeOperationExecutionOutcome]
-} derive(Debug, Eq)
+}
 
 ///|
 pub struct NativeOperationExecutor {
@@ -31,47 +34,47 @@ pub struct NativeOperationExecutor {
 
 ///|
 pub fn NativeOperationExecutor::new(
-  start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus = fn(
+  start_service~ : (@lepusa.LocalService) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped(
       "native service startup is handled by NativeServiceExecutor",
     )
   },
-  open_window? : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus = fn(
+  open_window~ : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native dynamic window open handler is unavailable")
   },
-  close_window? : (NativeWindowClose) -> NativeOperationExecutionStatus = fn(
+  close_window~ : (NativeWindowClose) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native dynamic window close handler is unavailable")
   },
-  evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus = fn(
+  evaluate_script~ : (NativeEvaluationScript) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native script evaluation handler is unavailable")
   },
-  drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus = fn(
+  drain_bridge~ : (NativeBridgeDrain) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native bridge drain handler is unavailable")
   },
-  run_effect? : (String) -> NativeOperationExecutionStatus = fn(_) {
+  run_effect~ : (String) -> NativeOperationExecutionStatus = fn(_) {
     NativeOperationSkipped("native effect handler is unavailable")
   },
-  navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus = fn(
+  navigate_window~ : (NativeNavigation) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native window navigation handler is unavailable")
   },
-  control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus = fn(
+  control_window~ : (NativeWindowControl) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native window control handler is unavailable")
   },
-  desktop_shell? : (NativeDesktopShellOperation) -> NativeOperationExecutionStatus = fn(
+  desktop_shell~ : (NativeDesktopShellOperation) -> NativeOperationExecutionStatus = fn(
     _,
   ) {
     NativeOperationSkipped("native desktop shell handler is unavailable")
@@ -106,7 +109,7 @@ pub fn NativeOperationExecutor::execute(
     NativeExecutableWindowControl(control) => (self.control_window)(control)
     NativeExecutableDesktopShell(operation) => (self.desktop_shell)(operation)
   }
-  { operation, status }
+  { operation, status, }
 }
 
 ///|
@@ -114,7 +117,7 @@ pub fn NativeOperationExecutor::execute_all(
   self : NativeOperationExecutor,
   operations : Array[NativeExecutableOperation],
 ) -> NativeOperationExecutionReport {
-  { outcomes: operations.map(fn(operation) { self.execute(operation) }) }
+  { outcomes: operations.map(fn(operation) { self.execute(operation) }), }
 }
 
 ///|
@@ -293,28 +296,28 @@ pub fn NativeOperationExecutionReport::outcomes(
 ///|
 pub fn NativeOperationExecutionReport::operation_count(
   self : NativeOperationExecutionReport,
-) -> Int {
+) -> Int32 {
   self.outcomes.length()
 }
 
 ///|
 pub fn NativeOperationExecutionReport::executed_count(
   self : NativeOperationExecutionReport,
-) -> Int {
+) -> Int32 {
   self.count_status("executed")
 }
 
 ///|
 pub fn NativeOperationExecutionReport::skipped_count(
   self : NativeOperationExecutionReport,
-) -> Int {
+) -> Int32 {
   self.count_status("skipped")
 }
 
 ///|
 pub fn NativeOperationExecutionReport::failed_count(
   self : NativeOperationExecutionReport,
-) -> Int {
+) -> Int32 {
   self.count_status("failed")
 }
 
@@ -358,7 +361,7 @@ pub fn NativeOperationExecutionReport::to_json(
 fn NativeOperationExecutionReport::count_status(
   self : NativeOperationExecutionReport,
   name : String,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for outcome in self.outcomes {
     if outcome.status().name() == name {

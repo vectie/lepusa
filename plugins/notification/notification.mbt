@@ -11,36 +11,36 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "notification") -> @lepusa.Capability {
+pub fn capability(name~ : String = "notification") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Notification)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "notification",
+  name~ : String = "notification",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 #cfg(target="native")
-extern "c" fn native_available_code() -> Int = "lepusa_notification_available"
+extern "c" fn native_available_code() -> Int32 = "lepusa_notification_available"
 
 ///|
 #cfg(target="native")
 #borrow(title, body)
-extern "c" fn native_show_code(title : Bytes, body : Bytes) -> Int = "lepusa_notification_show"
+extern "c" fn native_show_code(title : Bytes, body : Bytes) -> Int32 = "lepusa_notification_show"
 
 ///|
 #cfg(not(target="native"))
-fn native_available_code() -> Int {
+fn native_available_code() -> Int32 {
   0
 }
 
 ///|
 #cfg(not(target="native"))
-fn native_show_code(_title : Bytes, _body : Bytes) -> Int {
+fn native_show_code(_title : Bytes, _body : Bytes) -> Int32 {
   2
 }
 
@@ -50,11 +50,12 @@ pub fn native_available() -> Bool {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NotificationPermissionState {
   Default
   Granted
   Denied
-} derive(Debug, Eq)
+}
 
 ///|
 pub struct NotificationCenter {
@@ -64,9 +65,9 @@ pub struct NotificationCenter {
 
 ///|
 pub fn NotificationCenter::new(
-  permission? : NotificationPermissionState = Default,
+  permission~ : NotificationPermissionState = Default,
 ) -> NotificationCenter {
-  { permission, delivered: [] }
+  { permission, delivered: [], }
 }
 
 ///|
@@ -93,7 +94,7 @@ pub fn NotificationCenter::delivered(
 
 ///|
 pub fn registry(
-  center? : NotificationCenter = NotificationCenter::new(),
+  center~ : NotificationCenter = NotificationCenter::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), center~)
 }
@@ -105,7 +106,7 @@ pub fn native_registry() -> @lepusa.CommandRegistry {
 
 ///|
 pub fn auto_registry(
-  center? : NotificationCenter = NotificationCenter::new(),
+  center~ : NotificationCenter = NotificationCenter::new(),
 ) -> @lepusa.CommandRegistry {
   if native_available() {
     native_registry()
@@ -117,7 +118,7 @@ pub fn auto_registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  center? : NotificationCenter = NotificationCenter::new(),
+  center~ : NotificationCenter = NotificationCenter::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("notification.show", permission=Notification, handler=payload => {

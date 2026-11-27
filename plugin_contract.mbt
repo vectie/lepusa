@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct PluginCommandContract {
   plugin : String
   name : String
@@ -8,7 +9,7 @@ pub struct PluginCommandContract {
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PluginCommandContract::from_command(
@@ -93,16 +94,17 @@ pub fn PluginCommandContract::to_json(self : PluginCommandContract) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct PluginLifecycleContract {
   event : LifecycleEvent
   command_empty : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PluginLifecycleContract::from_hook(
   hook : LifecycleHook,
 ) -> PluginLifecycleContract {
-  { event: hook.event(), command_empty: hook.command().is_empty() }
+  { event: hook.event(), command_empty: hook.command().is_empty(), }
 }
 
 ///|
@@ -132,13 +134,14 @@ pub fn PluginLifecycleContract::to_json(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct PluginContract {
   name : String
   commands : Array[PluginCommandContract]
   lifecycle_hooks : Array[PluginLifecycleContract]
   permissions : Array[String]
   problems : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Plugin::contract(self : Plugin) -> PluginContract {
@@ -198,47 +201,47 @@ pub fn PluginContract::command_routes(self : PluginContract) -> Array[String] {
 }
 
 ///|
-pub fn PluginContract::command_count(self : PluginContract) -> Int {
+pub fn PluginContract::command_count(self : PluginContract) -> Int32 {
   self.commands.length()
 }
 
 ///|
-pub fn PluginContract::lifecycle_count(self : PluginContract) -> Int {
+pub fn PluginContract::lifecycle_count(self : PluginContract) -> Int32 {
   self.lifecycle_hooks.length()
 }
 
 ///|
-pub fn PluginContract::sync_count(self : PluginContract) -> Int {
+pub fn PluginContract::sync_count(self : PluginContract) -> Int32 {
   self.command_count_by_mode(Sync)
 }
 
 ///|
-pub fn PluginContract::async_count(self : PluginContract) -> Int {
+pub fn PluginContract::async_count(self : PluginContract) -> Int32 {
   self.command_count_by_mode(Async)
 }
 
 ///|
-pub fn PluginContract::stream_count(self : PluginContract) -> Int {
+pub fn PluginContract::stream_count(self : PluginContract) -> Int32 {
   self.command_count_by_mode(Stream)
 }
 
 ///|
-pub fn PluginContract::event_count(self : PluginContract) -> Int {
+pub fn PluginContract::event_count(self : PluginContract) -> Int32 {
   self.command_count_by_mode(Event)
 }
 
 ///|
-pub fn PluginContract::main_thread_count(self : PluginContract) -> Int {
+pub fn PluginContract::main_thread_count(self : PluginContract) -> Int32 {
   self.command_count_by_affinity(MainThread)
 }
 
 ///|
-pub fn PluginContract::worker_thread_count(self : PluginContract) -> Int {
+pub fn PluginContract::worker_thread_count(self : PluginContract) -> Int32 {
   self.command_count_by_affinity(WorkerThread)
 }
 
 ///|
-pub fn PluginContract::any_thread_count(self : PluginContract) -> Int {
+pub fn PluginContract::any_thread_count(self : PluginContract) -> Int32 {
   self.command_count_by_affinity(AnyThread)
 }
 
@@ -246,7 +249,7 @@ pub fn PluginContract::any_thread_count(self : PluginContract) -> Int {
 pub fn PluginContract::command_count_by_mode(
   self : PluginContract,
   mode : CommandMode,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for command in self.commands {
     if command.mode() == mode {
@@ -260,7 +263,7 @@ pub fn PluginContract::command_count_by_mode(
 pub fn PluginContract::command_count_by_affinity(
   self : PluginContract,
   affinity : CommandExecutionAffinity,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for command in self.commands {
     if command.affinity() == affinity {

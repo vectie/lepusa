@@ -11,7 +11,7 @@ pub fn NativeRuntime::new(
   host : RuntimeHost,
 ) -> Result[NativeRuntime, Array[String]] {
   match backend.runner_plan(host) {
-    Ok(runner) => Ok({ backend, host, runner })
+    Ok(runner) => Ok({ backend, host, runner, })
     Err(problems) => Err(problems)
   }
 }

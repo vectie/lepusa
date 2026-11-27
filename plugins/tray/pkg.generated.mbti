@@ -20,13 +20,14 @@ pub fn registry(policy? : TrayPolicy, state? : TrayState) -> @lepusa.CommandRegi
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct TrayMenuItem {
   id : String
   label : String
   kind : TrayMenuItemKind
   enabled : Bool
   checked : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn TrayMenuItem::action(id~ : String, label~ : String, enabled? : Bool) -> Self
 pub fn TrayMenuItem::check(id~ : String, label~ : String, checked? : Bool, enabled? : Bool) -> Self
 pub fn TrayMenuItem::checked(Self) -> Bool
@@ -37,17 +38,19 @@ pub fn TrayMenuItem::label(Self) -> String
 pub fn TrayMenuItem::separator() -> Self
 pub fn TrayMenuItem::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TrayMenuItemKind {
   Action
   Separator
   Check
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub struct TrayPolicy {
   icon_path : String?
   tooltip : String?
   menu : Array[TrayMenuItem]
-} derive(Eq, @debug.Debug)
+}
 pub fn TrayPolicy::icon_path(Self) -> String?
 pub fn TrayPolicy::item(Self, TrayMenuItem) -> Self
 pub fn TrayPolicy::menu(Self) -> Array[TrayMenuItem]
@@ -55,13 +58,14 @@ pub fn TrayPolicy::new(icon_path? : String, tooltip? : String, menu? : Array[Tra
 pub fn TrayPolicy::tooltip(Self) -> String?
 pub fn TrayPolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct TrayState {
   mut icon_path : String?
   mut tooltip : String?
   mut menu : Array[TrayMenuItem]
   mut visible : Bool
   mut destroyed : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn TrayState::destroyed(Self) -> Bool
 pub fn TrayState::icon_path(Self) -> String?
 pub fn TrayState::menu(Self) -> Array[TrayMenuItem]

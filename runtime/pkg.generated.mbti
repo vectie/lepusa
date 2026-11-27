@@ -29,7 +29,7 @@ pub fn native_direct_load_url(String) -> Bool
 
 pub fn native_executable_operations_packet(Array[NativeExecutableOperation]) -> String
 
-pub fn native_initial_webview_open_handoff_packet(Array[NativeWebViewPlan], bridge_sources~ : Array[String], start_index? : Int) -> String
+pub fn native_initial_webview_open_handoff_packet(Array[NativeWebViewPlan], bridge_sources~ : Array[String], start_index? : Int32) -> String
 
 pub fn native_protocol_load_url(String, String) -> Bool
 
@@ -44,10 +44,11 @@ pub fn native_window_control_from_bridge_response(String, String) -> NativeWindo
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct NativeBackend {
   name : String
   webview_engine : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBackend::contract(Self, RuntimeHost, capability~ : NativeLaunchCapability, platform_name? : String) -> Result[NativeBackendContract, Array[String]]
 pub fn NativeBackend::name(Self) -> String
 pub fn NativeBackend::new(name~ : String, webview_engine~ : String) -> Self
@@ -56,6 +57,7 @@ pub fn NativeBackend::runner_plan(Self, RuntimeHost) -> Result[NativeRunnerPlan,
 pub fn NativeBackend::service_executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeBackend::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBackendContract {
   backend_name : String
   webview_engine : String
@@ -65,10 +67,10 @@ pub struct NativeBackendContract {
   async_executor : NativeBridgeAsyncExecutor
   bridge_loop : NativeBridgeLoopContract
   invoke_contract_report : @lepusa.InvokeContractReport
-  webview_count : Int
+  webview_count : Int32
   launch_blocker : String?
   problems : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBackendContract::async_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeBackendContract::backend_name(Self) -> String
 pub fn NativeBackendContract::bridge_loop(Self) -> NativeBridgeLoopContract
@@ -81,9 +83,10 @@ pub fn NativeBackendContract::ok(Self) -> Bool
 pub fn NativeBackendContract::platform_name(Self) -> String
 pub fn NativeBackendContract::problems(Self) -> Array[String]
 pub fn NativeBackendContract::to_json(Self) -> String
-pub fn NativeBackendContract::webview_count(Self) -> Int
+pub fn NativeBackendContract::webview_count(Self) -> Int32
 pub fn NativeBackendContract::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBackendPreflight {
   platform : String
   webview_engine : String
@@ -96,7 +99,7 @@ pub struct NativeBackendPreflight {
   webview_creation_message : String
   sync_bridge_evaluate_message : String
   async_bridge_drain_message : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBackendPreflight::async_bridge_drain(Self) -> Bool
 pub fn NativeBackendPreflight::async_bridge_drain_problem(Self) -> String?
 pub fn NativeBackendPreflight::can_launch(Self) -> Bool
@@ -115,13 +118,14 @@ pub fn NativeBackendPreflight::webview_creation_loop(Self) -> Bool
 pub fn NativeBackendPreflight::webview_creation_problem(Self) -> String?
 pub fn NativeBackendPreflight::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeAsyncExecutor {
   required : Bool
   available : Bool
   callback : String
   input_encoding : String
   output_encoding : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeAsyncExecutor::available(Self) -> Bool
 pub fn NativeBridgeAsyncExecutor::callback(Self) -> String
 pub fn NativeBridgeAsyncExecutor::input_encoding(Self) -> String
@@ -130,16 +134,18 @@ pub fn NativeBridgeAsyncExecutor::output_encoding(Self) -> String
 pub fn NativeBridgeAsyncExecutor::required(Self) -> Bool
 pub fn NativeBridgeAsyncExecutor::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeCompletion {
   task : NativeBridgeDispatchTask
   dispatch : NativeBridgeDispatch
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeCompletion::dispatch(Self) -> NativeBridgeDispatch
 pub fn NativeBridgeCompletion::evaluation_script(Self) -> String
 pub fn NativeBridgeCompletion::operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeBridgeCompletion::task(Self) -> NativeBridgeDispatchTask
 pub fn NativeBridgeCompletion::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeDispatch {
   window_label : String
   response_hook : String
@@ -147,7 +153,7 @@ pub struct NativeBridgeDispatch {
   response_json : String
   evaluation_script : String
   extra_operations : Array[NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeDispatch::evaluation_script(Self) -> String
 pub fn NativeBridgeDispatch::message(Self) -> String
 pub fn NativeBridgeDispatch::native_desktop_shell_operation(Self) -> NativeDesktopShellOperation?
@@ -158,17 +164,19 @@ pub fn NativeBridgeDispatch::response_json(Self) -> String
 pub fn NativeBridgeDispatch::to_json(Self) -> String
 pub fn NativeBridgeDispatch::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeBridgeDispatchMode {
   NativeBridgeDispatchSync
   NativeBridgeDispatchAsync
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeDispatchMode::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeDispatchTask {
   message : NativeBridgeMessage
   route : String
   mode : NativeBridgeDispatchMode
-} derive(Eq, @debug.Debug)
+}
 pub async fn NativeBridgeDispatchTask::complete(Self, NativeRuntime) -> NativeBridgeCompletion
 pub async fn NativeBridgeDispatchTask::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
 pub fn NativeBridgeDispatchTask::message(Self) -> NativeBridgeMessage
@@ -179,43 +187,47 @@ pub fn NativeBridgeDispatchTask::route(Self) -> String
 pub fn NativeBridgeDispatchTask::to_json(Self) -> String
 pub fn NativeBridgeDispatchTask::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeDrain {
   window_label : String
   callback : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeDrain::callback(Self) -> String
 pub fn NativeBridgeDrain::new(window_label~ : String, callback~ : String) -> Self
 pub fn NativeBridgeDrain::to_json(Self) -> String
 pub fn NativeBridgeDrain::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeDrainResult {
-  pending_before : Int
-  pending_after : Int
+  pending_before : Int32
+  pending_after : Int32
   completions : Array[NativeBridgeCompletion]
   evaluation_scripts : Array[String]
   operations : Array[NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
-pub fn NativeBridgeDrainResult::completed_count(Self) -> Int
+}
+pub fn NativeBridgeDrainResult::completed_count(Self) -> Int32
 pub fn NativeBridgeDrainResult::completed_routes(Self) -> Array[String]
 pub fn NativeBridgeDrainResult::completions(Self) -> Array[NativeBridgeCompletion]
 pub fn NativeBridgeDrainResult::evaluation_scripts(Self) -> Array[String]
 pub fn NativeBridgeDrainResult::is_empty(Self) -> Bool
-pub fn NativeBridgeDrainResult::new(pending_before~ : Int, pending_after~ : Int, completions~ : Array[NativeBridgeCompletion]) -> Self
+pub fn NativeBridgeDrainResult::new(pending_before~ : Int32, pending_after~ : Int32, completions~ : Array[NativeBridgeCompletion]) -> Self
 pub fn NativeBridgeDrainResult::operations(Self) -> Array[NativeExecutableOperation]
-pub fn NativeBridgeDrainResult::pending_after(Self) -> Int
-pub fn NativeBridgeDrainResult::pending_before(Self) -> Int
+pub fn NativeBridgeDrainResult::pending_after(Self) -> Int32
+pub fn NativeBridgeDrainResult::pending_before(Self) -> Int32
 pub fn NativeBridgeDrainResult::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeBridgeDrainStrategy {
   NativeBridgeDrainUnavailable
   NativeBridgeDrainEventLoop
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeDrainStrategy::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeHandoff {
   task : NativeBridgeDispatchTask
   immediate_dispatch : NativeBridgeDispatch?
-} derive(Eq, @debug.Debug)
+}
 pub async fn NativeBridgeHandoff::complete_deferred(Self, NativeRuntime) -> Result[NativeBridgeCompletion, String]
 pub fn NativeBridgeHandoff::immediate_dispatch(Self) -> NativeBridgeDispatch?
 pub fn NativeBridgeHandoff::immediate_script(Self) -> String?
@@ -240,7 +252,7 @@ pub fn NativeBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Byte
 pub fn NativeBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn NativeBridgeLoopAdapter::is_empty(Self) -> Bool
 pub fn NativeBridgeLoopAdapter::new(NativeRuntime, policy? : @lepusa.BackpressurePolicy) -> Self
-pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int
+pub fn NativeBridgeLoopAdapter::pending_count(Self) -> Int32
 pub fn NativeBridgeLoopAdapter::queue(Self) -> NativeBridgeWorkQueue
 pub async fn NativeBridgeLoopAdapter::receive_message(Self, Bytes) -> NativeBridgeLoopResult
 pub async fn NativeBridgeLoopAdapter::receive_window_message(Self, window_label~ : String, Bytes) -> NativeBridgeLoopDelivery
@@ -263,6 +275,7 @@ pub fn NativeBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> By
 pub fn NativeBridgeLoopCallbacks::to_json(Self) -> String
 pub fn NativeBridgeLoopCallbacks::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeLoopContract {
   required : Bool
   available : Bool
@@ -280,7 +293,7 @@ pub struct NativeBridgeLoopContract {
   delivery_type : String
   input_encoding : String
   output_encoding : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeLoopContract::adapter(Self) -> String
 pub fn NativeBridgeLoopContract::available(Self) -> Bool
 pub fn NativeBridgeLoopContract::delivery_type(Self) -> String
@@ -300,11 +313,12 @@ pub fn NativeBridgeLoopContract::required(Self) -> Bool
 pub fn NativeBridgeLoopContract::result_type(Self) -> String
 pub fn NativeBridgeLoopContract::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeLoopDelivery {
   window_label : String
   result : NativeBridgeLoopResult
   evaluation_plan : NativeBridgeLoopEvaluationPlan
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeLoopDelivery::evaluation_plan(Self) -> NativeBridgeLoopEvaluationPlan
 pub fn NativeBridgeLoopDelivery::from_result(window_label~ : String, result~ : NativeBridgeLoopResult) -> Self
 pub fn NativeBridgeLoopDelivery::is_empty(Self) -> Bool
@@ -313,10 +327,11 @@ pub fn NativeBridgeLoopDelivery::result(Self) -> NativeBridgeLoopResult
 pub fn NativeBridgeLoopDelivery::to_json(Self) -> String
 pub fn NativeBridgeLoopDelivery::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeLoopEvaluationPlan {
   window_label : String
   operations : Array[NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeLoopEvaluationPlan::evaluation_scripts(Self) -> Array[NativeEvaluationScript]
 pub fn NativeBridgeLoopEvaluationPlan::from_scripts(window_label~ : String, scripts~ : Array[String]) -> Self
 pub fn NativeBridgeLoopEvaluationPlan::is_empty(Self) -> Bool
@@ -325,10 +340,11 @@ pub fn NativeBridgeLoopEvaluationPlan::operations(Self) -> Array[NativeExecutabl
 pub fn NativeBridgeLoopEvaluationPlan::to_json(Self) -> String
 pub fn NativeBridgeLoopEvaluationPlan::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeLoopResult::completions(Self) -> Array[NativeBridgeCompletion]
 pub fn NativeBridgeLoopResult::evaluation_plan(Self, window_label~ : String) -> NativeBridgeLoopEvaluationPlan
 pub fn NativeBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
@@ -338,22 +354,24 @@ pub fn NativeBridgeLoopResult::new(immediate_script? : String, completions? : Ar
 pub fn NativeBridgeLoopResult::operations(Self, window_label~ : String) -> Array[NativeExecutableOperation]
 pub fn NativeBridgeLoopResult::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeMessage {
   window_label : String
   response_hook : String
   message : String
-} derive(Eq, @debug.Debug)
+}
 pub async fn NativeBridgeMessage::dispatch(Self, NativeRuntime) -> NativeBridgeDispatch
 pub fn NativeBridgeMessage::dispatch_sync(Self, NativeRuntime) -> NativeBridgeDispatch
 pub fn NativeBridgeMessage::message(Self) -> String
 pub fn NativeBridgeMessage::response_hook(Self) -> String
 pub fn NativeBridgeMessage::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeScheduler {
   sync_routes : Array[String]
   async_routes : Array[String]
   mode : NativeBridgeSchedulerMode
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeScheduler::async_bridge_launch_message(Self, String) -> String
 pub fn NativeBridgeScheduler::async_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeBridgeScheduler::async_routes(Self) -> Array[String]
@@ -368,41 +386,44 @@ pub fn NativeBridgeScheduler::supports_async_dispatch(Self) -> Bool
 pub fn NativeBridgeScheduler::sync_routes(Self) -> Array[String]
 pub fn NativeBridgeScheduler::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeBridgeSchedulerMode {
   NativeBridgeSyncOnly
   NativeBridgeAsyncCapable
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeBridgeSchedulerMode::drain_strategy(Self) -> NativeBridgeDrainStrategy
 pub fn NativeBridgeSchedulerMode::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
   policy : @lepusa.BackpressurePolicy
-  mut dropped_count : Int
-} derive(Eq, @debug.Debug)
+  mut dropped_count : Int32
+}
 pub async fn NativeBridgeWorkQueue::drain(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
 pub async fn NativeBridgeWorkQueue::drain_result(Self, NativeRuntime) -> NativeBridgeDrainResult
 pub fn NativeBridgeWorkQueue::drain_result_sync(Self, NativeRuntime) -> NativeBridgeDrainResult
 pub fn NativeBridgeWorkQueue::drain_sync(Self, NativeRuntime) -> Array[NativeBridgeCompletion]
-pub fn NativeBridgeWorkQueue::dropped_count(Self) -> Int
-pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int, String]
-pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int, String]
+pub fn NativeBridgeWorkQueue::dropped_count(Self) -> Int32
+pub fn NativeBridgeWorkQueue::enqueue_handoff(Self, NativeBridgeHandoff) -> Result[Int32, String]
+pub fn NativeBridgeWorkQueue::enqueue_task(Self, NativeBridgeDispatchTask) -> Result[Int32, String]
 pub fn NativeBridgeWorkQueue::handoff_callback(Self, NativeRuntime) -> (Bytes) -> Bytes
 pub fn NativeBridgeWorkQueue::handoff_script_bytes(Self, NativeRuntime, Bytes) -> Bytes
 pub fn NativeBridgeWorkQueue::is_empty(Self) -> Bool
 pub fn NativeBridgeWorkQueue::new(policy? : @lepusa.BackpressurePolicy) -> Self
-pub fn NativeBridgeWorkQueue::pending_count(Self) -> Int
+pub fn NativeBridgeWorkQueue::pending_count(Self) -> Int32
 pub fn NativeBridgeWorkQueue::policy(Self) -> @lepusa.BackpressurePolicy
 pub fn NativeBridgeWorkQueue::tasks(Self) -> Array[NativeBridgeDispatchTask]
 pub fn NativeBridgeWorkQueue::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeDesktopShellOperation {
   domain : String
   target : String
   window_label : String
   action : String
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeDesktopShellOperation::action(Self) -> String
 pub fn NativeDesktopShellOperation::domain(Self) -> String
 pub fn NativeDesktopShellOperation::native_app_window_action(Self) -> Bool
@@ -412,15 +433,17 @@ pub fn NativeDesktopShellOperation::target(Self) -> String
 pub fn NativeDesktopShellOperation::to_json(Self) -> String
 pub fn NativeDesktopShellOperation::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeEvaluationScript {
   window_label : String
   script : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeEvaluationScript::new(window_label~ : String, script~ : String) -> Self
 pub fn NativeEvaluationScript::script(Self) -> String
 pub fn NativeEvaluationScript::to_json(Self) -> String
 pub fn NativeEvaluationScript::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeExecutableOperation {
   NativeExecutableStartService(@lepusa.LocalService)
   NativeExecutableOpenWindow(RuntimeWindowOpenPlan)
@@ -431,7 +454,7 @@ pub(all) enum NativeExecutableOperation {
   NativeExecutableNavigate(NativeNavigation)
   NativeExecutableWindowControl(NativeWindowControl)
   NativeExecutableDesktopShell(NativeDesktopShellOperation)
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeExecutableOperation::bridge_drain(Self) -> NativeBridgeDrain?
 pub fn NativeExecutableOperation::close_window(NativeWindowClose) -> Self
 pub fn NativeExecutableOperation::close_window_operation(Self) -> NativeWindowClose?
@@ -454,10 +477,11 @@ pub fn NativeExecutableOperation::window_control(NativeWindowControl) -> Self
 pub fn NativeExecutableOperation::window_control_operation(Self) -> NativeWindowControl?
 pub fn NativeExecutableOperation::window_label(Self) -> String?
 
+#derive(Eq, @debug.Debug)
 pub struct NativeExecutionPlan {
   startup_operations : Array[NativeExecutableOperation]
   lifecycle_steps : Array[NativeExecutionStep]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeExecutionPlan::app_will_exit_step(Self) -> NativeExecutionStep?
 pub fn NativeExecutionPlan::lifecycle_step_by_event_json(Self, String) -> NativeExecutionStep?
 pub fn NativeExecutionPlan::lifecycle_steps(Self) -> Array[NativeExecutionStep]
@@ -469,25 +493,27 @@ pub fn NativeExecutionPlan::startup_operation_jsons(Self) -> Array[String]
 pub fn NativeExecutionPlan::startup_operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeExecutionPlan::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeExecutionStep {
   event_json : String
   operations : Array[NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeExecutionStep::event_json(Self) -> String
 pub fn NativeExecutionStep::new(event_json~ : String, operations~ : Array[NativeExecutableOperation]) -> Self
 pub fn NativeExecutionStep::operation_jsons(Self) -> Array[String]
 pub fn NativeExecutionStep::operations(Self) -> Array[NativeExecutableOperation]
 pub fn NativeExecutionStep::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeLaunchCapability {
   webview_creation : Bool
   sync_bridge_evaluate : Bool
   async_bridge_drain : Bool
-  max_webviews : Int
+  max_webviews : Int32
   webview_creation_message : String
   sync_bridge_evaluate_message : String
   async_bridge_drain_message : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeLaunchCapability::async_bridge_drain(Self) -> Bool
 pub fn NativeLaunchCapability::async_bridge_drain_message(Self) -> String
 pub fn NativeLaunchCapability::async_bridge_drain_strategy(Self) -> NativeBridgeDrainStrategy
@@ -495,26 +521,28 @@ pub fn NativeLaunchCapability::async_bridge_launch_message(Self, String, NativeB
 pub fn NativeLaunchCapability::bridge_mode(Self) -> NativeBridgeSchedulerMode
 pub fn NativeLaunchCapability::can_launch(Self, NativeBridgeScheduler) -> Bool
 pub fn NativeLaunchCapability::launch_blocker(Self, String, NativeBridgeScheduler) -> String?
-pub fn NativeLaunchCapability::max_webviews(Self) -> Int
-pub fn NativeLaunchCapability::new(webview_creation~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, max_webviews? : Int, webview_creation_message? : String, sync_bridge_evaluate_message? : String, async_bridge_drain_message? : String) -> Self
+pub fn NativeLaunchCapability::max_webviews(Self) -> Int32
+pub fn NativeLaunchCapability::new(webview_creation~ : Bool, sync_bridge_evaluate? : Bool, async_bridge_drain~ : Bool, max_webviews? : Int32, webview_creation_message? : String, sync_bridge_evaluate_message? : String, async_bridge_drain_message? : String) -> Self
 pub fn NativeLaunchCapability::sync_bridge_evaluate(Self) -> Bool
 pub fn NativeLaunchCapability::sync_bridge_evaluate_message(Self) -> String
 pub fn NativeLaunchCapability::to_json(Self) -> String
-pub fn NativeLaunchCapability::webview_count_blocker(Self, String, Int) -> String?
+pub fn NativeLaunchCapability::webview_count_blocker(Self, String, Int32) -> String?
 pub fn NativeLaunchCapability::webview_creation(Self) -> Bool
 pub fn NativeLaunchCapability::webview_creation_message(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeLaunchPlan {
   backend_name : String
   webview_engine : String
   manifest : @lepusa.RuntimeLaunchManifest
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeLaunchPlan::backend_name(Self) -> String
 pub fn NativeLaunchPlan::manifest_json(Self) -> String
 pub fn NativeLaunchPlan::runtime_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn NativeLaunchPlan::webview_engine(Self) -> String
 pub fn NativeLaunchPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
 
+#derive(Eq, @debug.Debug)
 pub struct NativeLaunchReadiness {
   target : String
   platform_name : String
@@ -522,7 +550,7 @@ pub struct NativeLaunchReadiness {
   capability : NativeLaunchCapability
   preflight : NativeBackendPreflight
   requested_bridge_mode : NativeBridgeSchedulerMode
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeLaunchReadiness::bridge_mode_granted(Self) -> Bool
 pub fn NativeLaunchReadiness::can_launch(Self) -> Bool
 pub fn NativeLaunchReadiness::capability(Self) -> NativeLaunchCapability
@@ -536,12 +564,13 @@ pub fn NativeLaunchReadiness::session(Self) -> NativeLaunchSession
 pub fn NativeLaunchReadiness::target(Self) -> String
 pub fn NativeLaunchReadiness::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeLaunchSession {
   webviews : Array[NativeWebViewPlan]
   execution : NativeExecutionPlan
   bridge_scheduler : NativeBridgeScheduler
   service_supervisor : NativeServiceSupervisorPlan
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeLaunchSession::async_bridge_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeLaunchSession::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeLaunchSession::bridge_scheduler(Self) -> NativeBridgeScheduler
@@ -557,15 +586,17 @@ pub fn NativeLaunchSession::service_supervisor(Self) -> NativeServiceSupervisorP
 pub fn NativeLaunchSession::to_json(Self) -> String
 pub fn NativeLaunchSession::webviews(Self) -> Array[NativeWebViewPlan]
 
+#derive(Eq, @debug.Debug)
 pub struct NativeNavigation {
   window_label : String
   url : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeNavigation::new(window_label~ : String, url~ : String) -> Self
 pub fn NativeNavigation::to_json(Self) -> String
 pub fn NativeNavigation::url(Self) -> String
 pub fn NativeNavigation::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeOperation {
   NativeStartService(@lepusa.LocalService)
   NativeOpenWindow(RuntimeWindowOpenPlan)
@@ -573,7 +604,7 @@ pub(all) enum NativeOperation {
   NativeDispatchEvent(@lepusa.FrontendEventDispatch)
   NativeRunEffect(String)
   NativeNavigateWindow(String, String)
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeOperation::close_window_operation(Self) -> NativeWindowClose?
 pub fn NativeOperation::effect_name(Self) -> String?
 pub fn NativeOperation::evaluation_script(Self) -> NativeEvaluationScript?
@@ -586,32 +617,35 @@ pub fn NativeOperation::service(Self) -> @lepusa.LocalService?
 pub fn NativeOperation::to_json(Self) -> String
 pub fn NativeOperation::window_label(Self) -> String?
 
+#derive(Eq, @debug.Debug)
 pub struct NativeOperationExecutionOutcome {
   operation : NativeExecutableOperation
   status : NativeOperationExecutionStatus
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeOperationExecutionOutcome::ok(Self) -> Bool
 pub fn NativeOperationExecutionOutcome::operation(Self) -> NativeExecutableOperation
 pub fn NativeOperationExecutionOutcome::status(Self) -> NativeOperationExecutionStatus
 pub fn NativeOperationExecutionOutcome::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeOperationExecutionReport {
   outcomes : Array[NativeOperationExecutionOutcome]
-} derive(Eq, @debug.Debug)
-pub fn NativeOperationExecutionReport::executed_count(Self) -> Int
-pub fn NativeOperationExecutionReport::failed_count(Self) -> Int
+}
+pub fn NativeOperationExecutionReport::executed_count(Self) -> Int32
+pub fn NativeOperationExecutionReport::failed_count(Self) -> Int32
 pub fn NativeOperationExecutionReport::first_failure_message(Self) -> String?
 pub fn NativeOperationExecutionReport::ok(Self) -> Bool
-pub fn NativeOperationExecutionReport::operation_count(Self) -> Int
+pub fn NativeOperationExecutionReport::operation_count(Self) -> Int32
 pub fn NativeOperationExecutionReport::outcomes(Self) -> Array[NativeOperationExecutionOutcome]
-pub fn NativeOperationExecutionReport::skipped_count(Self) -> Int
+pub fn NativeOperationExecutionReport::skipped_count(Self) -> Int32
 pub fn NativeOperationExecutionReport::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeOperationExecutionStatus {
   NativeOperationExecuted
   NativeOperationSkipped(String)
   NativeOperationFailed(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeOperationExecutionStatus::message(Self) -> String
 pub fn NativeOperationExecutionStatus::name(Self) -> String
 pub fn NativeOperationExecutionStatus::ok(Self) -> Bool
@@ -637,10 +671,11 @@ pub fn NativeOperationExecutor::execute_plan(Self, NativeBridgeLoopEvaluationPla
 pub fn NativeOperationExecutor::execute_startup(Self, NativeExecutionPlan) -> NativeOperationExecutionReport
 pub fn NativeOperationExecutor::new(start_service? : (@lepusa.LocalService) -> NativeOperationExecutionStatus, open_window? : (RuntimeWindowOpenPlan) -> NativeOperationExecutionStatus, close_window? : (NativeWindowClose) -> NativeOperationExecutionStatus, evaluate_script? : (NativeEvaluationScript) -> NativeOperationExecutionStatus, drain_bridge? : (NativeBridgeDrain) -> NativeOperationExecutionStatus, run_effect? : (String) -> NativeOperationExecutionStatus, navigate_window? : (NativeNavigation) -> NativeOperationExecutionStatus, control_window? : (NativeWindowControl) -> NativeOperationExecutionStatus, desktop_shell? : (NativeDesktopShellOperation) -> NativeOperationExecutionStatus) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
   webviews : Array[NativeWebViewPlan]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativePreparedRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn NativePreparedRunPlan::backend_contract(Self, capability~ : NativeLaunchCapability, invoke_contract_report~ : @lepusa.InvokeContractReport, platform_name~ : String) -> NativeBackendContract
 pub fn NativePreparedRunPlan::bridge_async_routes(Self) -> Array[String]
@@ -653,16 +688,17 @@ pub fn NativePreparedRunPlan::first_webview_url(Self) -> String
 pub fn NativePreparedRunPlan::launch_blocker_with_capability(Self, String, NativeLaunchCapability) -> String?
 pub fn NativePreparedRunPlan::launch_session(Self, bridge_mode? : NativeBridgeSchedulerMode) -> NativeLaunchSession
 pub fn NativePreparedRunPlan::launch_session_with_capability(Self, NativeLaunchCapability) -> NativeLaunchSession
-pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int
+pub fn NativePreparedRunPlan::lifecycle_step_count(Self) -> Int32
 pub fn NativePreparedRunPlan::requires_async_bridge_dispatch(Self) -> Bool
 pub fn NativePreparedRunPlan::runner(Self) -> NativeRunnerPlan
 pub fn NativePreparedRunPlan::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativePreparedRunPlan::service_supervisor_report(Self) -> NativeServiceSupervisorReport
-pub fn NativePreparedRunPlan::startup_operation_count(Self) -> Int
+pub fn NativePreparedRunPlan::startup_operation_count(Self) -> Int32
 pub fn NativePreparedRunPlan::to_json(Self) -> String
-pub fn NativePreparedRunPlan::webview_count(Self) -> Int
+pub fn NativePreparedRunPlan::webview_count(Self) -> Int32
 pub fn NativePreparedRunPlan::webviews(Self) -> Array[NativeWebViewPlan]
 
+#derive(Eq, @debug.Debug)
 pub struct NativeRunnerPlan {
   backend_name : String
   webview_engine : String
@@ -673,7 +709,7 @@ pub struct NativeRunnerPlan {
   lifecycle_steps : Array[NativeRunnerStep]
   bridge_sync_routes : Array[String]
   bridge_async_routes : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeRunnerPlan::backend_name(Self) -> String
 pub fn NativeRunnerPlan::bootstrap_json(Self) -> String
 pub fn NativeRunnerPlan::bridge_async_routes(Self) -> Array[String]
@@ -696,11 +732,12 @@ pub fn NativeRunnerPlan::webview_engine(Self) -> String
 pub fn NativeRunnerPlan::webview_specs(Self) -> Array[RuntimeWebViewSpec]
 pub fn NativeRunnerPlan::webviews(Self) -> Array[@lepusa.RuntimeWebViewBoot]
 
+#derive(Eq, @debug.Debug)
 pub struct NativeRunnerStep {
   event : @lepusa.LifecycleEvent
   session : RuntimeSession
   operations : Array[NativeOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeRunnerStep::evaluation_scripts(Self) -> Array[NativeEvaluationScript]
 pub fn NativeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
 pub fn NativeRunnerStep::executable_operations(Self) -> Array[NativeExecutableOperation]
@@ -743,16 +780,17 @@ pub fn NativeRuntime::resolve_asset_json(Self, String) -> String
 pub fn NativeRuntime::resolve_asset_protocol_packet_bytes(Self, Bytes) -> Bytes
 pub fn NativeRuntime::resolve_window_asset_json(Self, window_label~ : String, String) -> String
 pub fn NativeRuntime::resolve_window_asset_protocol_packet_bytes(Self, window_label~ : String, Bytes) -> Bytes
-pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, execution_report? : NativeOperationExecutionReport?, bridge_sync_routes? : Int, bridge_async_routes? : Int, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
+pub fn NativeRuntime::run_report(Self, target~ : String, status~ : @lepusa.RunStatus, load_url? : String, execution_report? : NativeOperationExecutionReport?, bridge_sync_routes? : Int32, bridge_async_routes? : Int32, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn NativeRuntime::runner_plan(Self) -> NativeRunnerPlan
 pub fn NativeRuntime::service_supervisor_plan(Self) -> NativeServiceSupervisorPlan
 pub fn NativeRuntime::service_supervisor_report(Self) -> NativeServiceSupervisorReport
 pub fn NativeRuntime::webview_plan(Self, RuntimeWebViewSpec, initialization_script~ : String) -> Result[NativeWebViewPlan, String]
 
+#derive(Eq, @debug.Debug)
 pub struct NativeServiceActionReport {
   action : @lepusa.LocalServiceSupervisorAction
   status : NativeServiceActionStatus
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeServiceActionReport::action(Self) -> @lepusa.LocalServiceSupervisorAction
 pub fn NativeServiceActionReport::action_kind(Self) -> String
 pub fn NativeServiceActionReport::failed(Self) -> Bool
@@ -761,6 +799,7 @@ pub fn NativeServiceActionReport::service_name(Self) -> String
 pub fn NativeServiceActionReport::status(Self) -> NativeServiceActionStatus
 pub fn NativeServiceActionReport::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NativeServiceActionStatus {
   NativeServiceActionPrepared
   NativeServiceActionStarted
@@ -768,7 +807,7 @@ pub(all) enum NativeServiceActionStatus {
   NativeServiceActionStopped
   NativeServiceActionSkipped(String)
   NativeServiceActionFailed(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeServiceActionStatus::message(Self) -> String
 pub fn NativeServiceActionStatus::name(Self) -> String
 pub fn NativeServiceActionStatus::to_json(Self) -> String
@@ -789,11 +828,12 @@ pub fn NativeServiceExecutor::new(backend_name~ : String, webview_engine~ : Stri
 pub fn NativeServiceExecutor::prepared(backend_name~ : String, webview_engine~ : String) -> Self
 pub fn NativeServiceExecutor::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeServiceSupervisorPlan {
   backend_name : String
   webview_engine : String
   plan : @lepusa.LocalServiceSupervisorPlan
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeServiceSupervisorPlan::backend_name(Self) -> String
 pub fn NativeServiceSupervisorPlan::executor(Self, start_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus, wait_until_ready~ : (@lepusa.LocalService) -> NativeServiceActionStatus, stop_service~ : (@lepusa.LocalService) -> NativeServiceActionStatus) -> NativeServiceExecutor
 pub fn NativeServiceSupervisorPlan::new(backend_name~ : String, webview_engine~ : String, plan~ : @lepusa.LocalServiceSupervisorPlan) -> Self
@@ -808,27 +848,29 @@ pub fn NativeServiceSupervisorPlan::to_json(Self) -> String
 pub fn NativeServiceSupervisorPlan::validate(Self) -> Array[String]
 pub fn NativeServiceSupervisorPlan::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeServiceSupervisorReport {
   backend_name : String
   webview_engine : String
   action_reports : Array[NativeServiceActionReport]
-} derive(Eq, @debug.Debug)
-pub fn NativeServiceSupervisorReport::action_count(Self) -> Int
+}
+pub fn NativeServiceSupervisorReport::action_count(Self) -> Int32
 pub fn NativeServiceSupervisorReport::action_reports(Self) -> Array[NativeServiceActionReport]
 pub fn NativeServiceSupervisorReport::backend_name(Self) -> String
-pub fn NativeServiceSupervisorReport::failed_count(Self) -> Int
+pub fn NativeServiceSupervisorReport::failed_count(Self) -> Int32
 pub fn NativeServiceSupervisorReport::first_failure_message(Self, context? : String) -> String?
 pub fn NativeServiceSupervisorReport::new(backend_name~ : String, webview_engine~ : String, action_reports? : Array[NativeServiceActionReport]) -> Self
 pub fn NativeServiceSupervisorReport::ok(Self) -> Bool
 pub fn NativeServiceSupervisorReport::to_json(Self) -> String
 pub fn NativeServiceSupervisorReport::webview_engine(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeWebViewLaunchContext {
   packet : NativeWebViewLaunchPacket
   bridge_scheduler : NativeBridgeScheduler
   async_bridge_executor : NativeBridgeAsyncExecutor
   bridge_loop : NativeBridgeLoopContract
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeWebViewLaunchContext::async_bridge_executor(Self) -> NativeBridgeAsyncExecutor
 pub fn NativeWebViewLaunchContext::bridge_loop_contract(Self) -> NativeBridgeLoopContract
 pub fn NativeWebViewLaunchContext::bridge_scheduler(Self) -> NativeBridgeScheduler
@@ -837,6 +879,7 @@ pub fn NativeWebViewLaunchContext::launch_blocker(Self, String) -> String?
 pub fn NativeWebViewLaunchContext::packet(Self) -> NativeWebViewLaunchPacket
 pub fn NativeWebViewLaunchContext::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeWebViewLaunchPacket {
   label : Bytes
   title : Bytes
@@ -844,13 +887,13 @@ pub struct NativeWebViewLaunchPacket {
   initialization_script : Bytes
   native_hook : Bytes
   asset_protocol : Bytes
-  width : Int
-  height : Int
-  resizable : Int
-} derive(Eq, @debug.Debug)
+  width : Int32
+  height : Int32
+  resizable : Int32
+}
 pub fn NativeWebViewLaunchPacket::asset_protocol(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::asset_protocol_text(Self) -> String
-pub fn NativeWebViewLaunchPacket::height(Self) -> Int
+pub fn NativeWebViewLaunchPacket::height(Self) -> Int32
 pub fn NativeWebViewLaunchPacket::initialization_script(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::initialization_script_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::label(Self) -> Bytes
@@ -859,12 +902,13 @@ pub fn NativeWebViewLaunchPacket::load_url(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::load_url_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::native_hook(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::native_hook_text(Self) -> String
-pub fn NativeWebViewLaunchPacket::resizable(Self) -> Int
+pub fn NativeWebViewLaunchPacket::resizable(Self) -> Int32
 pub fn NativeWebViewLaunchPacket::title(Self) -> Bytes
 pub fn NativeWebViewLaunchPacket::title_text(Self) -> String
 pub fn NativeWebViewLaunchPacket::to_json(Self) -> String
-pub fn NativeWebViewLaunchPacket::width(Self) -> Int
+pub fn NativeWebViewLaunchPacket::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct NativeWebViewPlan {
   label : String
   title : String
@@ -873,58 +917,63 @@ pub struct NativeWebViewPlan {
   initialization_script : String
   native_hook : String
   asset_protocol : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeWebViewPlan::asset_protocol(Self) -> String
-pub fn NativeWebViewPlan::height(Self) -> Int
+pub fn NativeWebViewPlan::height(Self) -> Int32
 pub fn NativeWebViewPlan::initialization_script(Self) -> String
 pub fn NativeWebViewPlan::label(Self) -> String
 pub fn NativeWebViewPlan::launch_context(Self, bridge_scheduler~ : NativeBridgeScheduler) -> NativeWebViewLaunchContext
 pub fn NativeWebViewPlan::launch_packet(Self) -> NativeWebViewLaunchPacket
 pub fn NativeWebViewPlan::load_url(Self) -> String
 pub fn NativeWebViewPlan::native_hook(Self) -> String
-pub fn NativeWebViewPlan::new(label~ : String, title~ : String, url~ : String, load_url~ : String, initialization_script~ : String, native_hook~ : String, asset_protocol~ : String, width~ : Int, height~ : Int, resizable~ : Bool) -> Self
+pub fn NativeWebViewPlan::new(label~ : String, title~ : String, url~ : String, load_url~ : String, initialization_script~ : String, native_hook~ : String, asset_protocol~ : String, width~ : Int32, height~ : Int32, resizable~ : Bool) -> Self
 pub fn NativeWebViewPlan::resizable(Self) -> Bool
 pub fn NativeWebViewPlan::title(Self) -> String
 pub fn NativeWebViewPlan::to_json(Self) -> String
 pub fn NativeWebViewPlan::url(Self) -> String
-pub fn NativeWebViewPlan::width(Self) -> Int
+pub fn NativeWebViewPlan::width(Self) -> Int32
 pub fn NativeWebViewPlan::with_initialization_script_suffix(Self, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct NativeWindowClose {
   window_label : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeWindowClose::new(window_label~ : String) -> Self
 pub fn NativeWindowClose::to_json(Self) -> String
 pub fn NativeWindowClose::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct NativeWindowControl {
   window_label : String
   action : String
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn NativeWindowControl::action(Self) -> String
 pub fn NativeWindowControl::new(window_label~ : String, action~ : String, payload? : String) -> Self
 pub fn NativeWindowControl::payload(Self) -> String
 pub fn NativeWindowControl::to_json(Self) -> String
 pub fn NativeWindowControl::window_label(Self) -> String
 
-type ParsedAssetUrl derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type ParsedAssetUrl
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeAssetBody {
   VirtualContent(String)
   LocalFile(String)
   PackagedFile(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAssetBody::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeAssetResponse {
   url : String
   mime_type : String
   body : RuntimeAssetBody
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAssetResponse::body(Self) -> RuntimeAssetBody
 pub fn RuntimeAssetResponse::mime_type(Self) -> String
 pub fn RuntimeAssetResponse::to_json(Self) -> String
@@ -932,12 +981,13 @@ pub fn RuntimeAssetResponse::to_native_load_url(Self) -> String
 pub fn RuntimeAssetResponse::to_native_protocol_packet(Self) -> Bytes
 pub fn RuntimeAssetResponse::url(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeDevCommand {
   name : String
   purpose : String
   template : String
   target_required : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeDevCommand::name(Self) -> String
 pub fn RuntimeDevCommand::new(name~ : String, purpose~ : String, template~ : String, target_required? : Bool) -> Self
 pub fn RuntimeDevCommand::purpose(Self) -> String
@@ -945,6 +995,7 @@ pub fn RuntimeDevCommand::target_required(Self) -> Bool
 pub fn RuntimeDevCommand::template(Self) -> String
 pub fn RuntimeDevCommand::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeDevPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
@@ -955,7 +1006,7 @@ pub struct RuntimeDevPlan {
   bridge_sync_routes : Array[String]
   bridge_async_routes : Array[String]
   commands : Array[RuntimeDevCommand]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeDevPlan::bridge_async_routes(Self) -> Array[String]
 pub fn RuntimeDevPlan::bridge_sync_routes(Self) -> Array[String]
 pub fn RuntimeDevPlan::commands(Self) -> Array[RuntimeDevCommand]
@@ -968,28 +1019,31 @@ pub fn RuntimeDevPlan::startup_operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeDevPlan::to_json(Self) -> String
 pub fn RuntimeDevPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeDevReloadMode {
   RuntimeDevReloadWindow
   RuntimeDevReloadExternal
   RuntimeDevReloadNone
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeDevReloadMode::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeDevSession {
   webviews : Array[RuntimeDevWebView]
   service_plan : RuntimeServicePlan
   reload_event : String
   proxy_mode : String
-} derive(Eq, @debug.Debug)
-pub fn RuntimeDevSession::external_reload_count(Self) -> Int
+}
+pub fn RuntimeDevSession::external_reload_count(Self) -> Int32
 pub fn RuntimeDevSession::proxy_mode(Self) -> String
 pub fn RuntimeDevSession::reload_event(Self) -> String
 pub fn RuntimeDevSession::requires_supervisor(Self) -> Bool
 pub fn RuntimeDevSession::service_plan(Self) -> RuntimeServicePlan
 pub fn RuntimeDevSession::to_json(Self) -> String
 pub fn RuntimeDevSession::webviews(Self) -> Array[RuntimeDevWebView]
-pub fn RuntimeDevSession::window_reload_count(Self) -> Int
+pub fn RuntimeDevSession::window_reload_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeDevSourceKind {
   RuntimeDevInlineAssets
   RuntimeDevRabbitaAssets
@@ -998,9 +1052,10 @@ pub(all) enum RuntimeDevSourceKind {
   RuntimeDevSupervisedLocalhost
   RuntimeDevExternalUrl
   RuntimeDevCustomUrl
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeDevSourceKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeDevWebView {
   label : String
   url : String
@@ -1010,7 +1065,7 @@ pub struct RuntimeDevWebView {
   native_hook : String
   event_dispatch_hook : String
   local_service : @lepusa.LocalService?
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeDevWebView::asset_protocol(Self) -> String
 pub fn RuntimeDevWebView::event_dispatch_hook(Self) -> String
 pub fn RuntimeDevWebView::label(Self) -> String
@@ -1061,6 +1116,7 @@ pub fn RuntimeHost::startup_step(Self) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeHost::sync_command_routes(Self) -> Array[String]
 pub fn RuntimeHost::webviews(Self) -> Result[Array[RuntimeWebViewSpec], Array[String]]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeOperation {
   RuntimeStartService(@lepusa.LocalService)
   RuntimeOpenWindow(RuntimeWindowOpenPlan)
@@ -1068,25 +1124,27 @@ pub(all) enum RuntimeOperation {
   RuntimeDispatchEvent(@lepusa.FrontendEventDispatch)
   RuntimeRunEffect(String)
   RuntimeNavigateWindow(String, String)
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeOperation::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeProtocolMapping {
   window_label : String
   scheme : String
   root : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeProtocolMapping::root(Self) -> String
 pub fn RuntimeProtocolMapping::scheme(Self) -> String
 pub fn RuntimeProtocolMapping::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeRunnerPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
   webviews : Array[RuntimeWebViewSpec]
   startup_operations : Array[RuntimeOperation]
   lifecycle_steps : Array[RuntimeRunnerStep]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeRunnerPlan::launch_manifest(Self) -> @lepusa.RuntimeLaunchManifest
 pub fn RuntimeRunnerPlan::lifecycle_step(Self, @lepusa.LifecycleEvent) -> RuntimeRunnerStep
 pub fn RuntimeRunnerPlan::lifecycle_steps(Self) -> Array[RuntimeRunnerStep]
@@ -1095,20 +1153,22 @@ pub fn RuntimeRunnerPlan::session(Self) -> RuntimeSession
 pub fn RuntimeRunnerPlan::startup_operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeRunnerPlan::webviews(Self) -> Array[RuntimeWebViewSpec]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeRunnerStep {
   event : @lepusa.LifecycleEvent
   session : RuntimeSession
   operations : Array[RuntimeOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeRunnerStep::event(Self) -> @lepusa.LifecycleEvent
 pub fn RuntimeRunnerStep::operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeRunnerStep::session(Self) -> RuntimeSession
 pub fn RuntimeRunnerStep::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeServicePlan {
   services : Array[@lepusa.LocalService]
   startup_services : Array[@lepusa.LocalService]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeServicePlan::new(services? : Array[@lepusa.LocalService], startup_services? : Array[@lepusa.LocalService]) -> Self
 pub fn RuntimeServicePlan::requires_supervisor(Self) -> Bool
 pub fn RuntimeServicePlan::service_names(Self) -> Array[String]
@@ -1119,6 +1179,7 @@ pub fn RuntimeServicePlan::supervisor_plan(Self) -> @lepusa.LocalServiceSupervis
 pub fn RuntimeServicePlan::to_json(Self) -> String
 pub fn RuntimeServicePlan::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeSession {
   backend : @lepusa.RuntimeBackend
   platform : String
@@ -1137,7 +1198,7 @@ pub struct RuntimeSession {
   registered_routes : Array[String]
   event_bus : @lepusa.EventBus
   bridge_source : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeSession::apply_actions(Self, Array[@lepusa.RuntimeAction]) -> Result[RuntimeStep, Array[String]]
 pub fn RuntimeSession::asset_protocol(Self) -> String
 pub fn RuntimeSession::backend(Self) -> @lepusa.RuntimeBackend
@@ -1148,7 +1209,7 @@ pub fn RuntimeSession::close_window(Self, String) -> Result[RuntimeStep, Array[S
 pub fn RuntimeSession::command_routes(Self) -> Array[String]
 pub fn RuntimeSession::devtools(Self) -> Bool
 pub fn RuntimeSession::event_deliveries(Self, @lepusa.Event, target? : @lepusa.EventTarget) -> Result[Array[@lepusa.EventDelivery], Array[String]]
-pub fn RuntimeSession::event_listener_count(Self) -> Int
+pub fn RuntimeSession::event_listener_count(Self) -> Int32
 pub fn RuntimeSession::event_listeners(Self) -> Array[@lepusa.EventListener]
 pub fn RuntimeSession::file_system_scopes(Self) -> Array[@lepusa.FileSystemScope]
 pub fn RuntimeSession::lifecycle_actions(Self, @lepusa.LifecycleEvent) -> Array[@lepusa.RuntimeAction]
@@ -1174,28 +1235,31 @@ pub fn RuntimeSession::unlisten_event(Self, String) -> Result[@lepusa.EventListe
 pub fn RuntimeSession::virtual_files(Self) -> Array[RuntimeVirtualFile]
 pub fn RuntimeSession::windows(Self) -> Array[RuntimeWindow]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeStep {
   session : RuntimeSession
   operations : Array[RuntimeOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeStep::operations(Self) -> Array[RuntimeOperation]
 pub fn RuntimeStep::session(Self) -> RuntimeSession
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeVirtualFile {
   window_label : String
   path : String
   content : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeVirtualFile::content(Self) -> String
 pub fn RuntimeVirtualFile::path(Self) -> String
 pub fn RuntimeVirtualFile::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeWebViewSpec {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
   devtools : Bool
@@ -1205,13 +1269,13 @@ pub struct RuntimeWebViewSpec {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeWebViewSpec::allowed_routes(Self) -> Array[String]
 pub fn RuntimeWebViewSpec::asset_protocol(Self) -> String
 pub fn RuntimeWebViewSpec::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewSpec::devtools(Self) -> Bool
 pub fn RuntimeWebViewSpec::event_dispatch_hook(Self) -> String
-pub fn RuntimeWebViewSpec::height(Self) -> Int
+pub fn RuntimeWebViewSpec::height(Self) -> Int32
 pub fn RuntimeWebViewSpec::initialization_scripts(Self) -> Array[String]
 pub fn RuntimeWebViewSpec::label(Self) -> String
 pub fn RuntimeWebViewSpec::native_hook(Self) -> String
@@ -1220,27 +1284,29 @@ pub fn RuntimeWebViewSpec::title(Self) -> String
 pub fn RuntimeWebViewSpec::title_bar(Self) -> @lepusa.TitleBarStyle
 pub fn RuntimeWebViewSpec::to_json(Self) -> String
 pub fn RuntimeWebViewSpec::url(Self) -> String
-pub fn RuntimeWebViewSpec::width(Self) -> Int
+pub fn RuntimeWebViewSpec::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeWindow {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
   event_dispatch_hook : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeWindow::event_dispatch_hook(Self) -> String
-pub fn RuntimeWindow::height(Self) -> Int
+pub fn RuntimeWindow::height(Self) -> Int32
 pub fn RuntimeWindow::label(Self) -> String
 pub fn RuntimeWindow::resizable(Self) -> Bool
 pub fn RuntimeWindow::title(Self) -> String
 pub fn RuntimeWindow::title_bar(Self) -> @lepusa.TitleBarStyle
 pub fn RuntimeWindow::url(Self) -> String
-pub fn RuntimeWindow::width(Self) -> Int
+pub fn RuntimeWindow::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeWindowOpenPlan {
   window : RuntimeWindow
   asset_protocol : String
@@ -1249,7 +1315,7 @@ pub struct RuntimeWindowOpenPlan {
   devtools : Bool
   bridge_source : String
   allowed_routes : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeWindowOpenPlan::allowed_routes(Self) -> Array[String]
 pub fn RuntimeWindowOpenPlan::asset_protocol(Self) -> String
 pub fn RuntimeWindowOpenPlan::bridge_global_name(Self) -> String

@@ -1,17 +1,20 @@
 ///|
 #borrow(name, command_packet)
-extern "c" fn native_start_service(name : Bytes, command_packet : Bytes) -> Int = "lepusa_linux_start_service"
+extern "c" fn native_start_service(
+  name : Bytes,
+  command_packet : Bytes,
+) -> Int32 = "lepusa_linux_start_service"
 
 ///|
 #borrow(name)
-extern "c" fn native_stop_service(name : Bytes) -> Int = "lepusa_linux_stop_service"
+extern "c" fn native_stop_service(name : Bytes) -> Int32 = "lepusa_linux_stop_service"
 
 ///|
 #borrow(readiness_url)
 extern "c" fn native_wait_until_ready(
   readiness_url : Bytes,
-  timeout_ms : Int,
-) -> Int = "lepusa_linux_wait_until_ready"
+  timeout_ms : Int32,
+) -> Int32 = "lepusa_linux_wait_until_ready"
 
 ///|
 pub fn service_executor() -> @runtime.NativeServiceExecutor {

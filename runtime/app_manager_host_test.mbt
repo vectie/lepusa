@@ -17,7 +17,7 @@ test "runtime host can be created from app manager boundary" {
     Ok(manager) => manager
     Err(_) => abort("unexpected invalid manager")
   }
-  let host = RuntimeHost::from_manager(manager)
+  let host = @runtime.RuntimeHost::from_manager(manager)
   assert_eq(host.plan().window_count(), 1)
   assert_eq(host.registry().routes()[0], "core.ping")
   let profile = host.security_profile()
@@ -66,7 +66,7 @@ test "runtime host dispatch preserves manager stream resources" {
     Ok(manager) => manager
     Err(problems) => abort(problems.join(", "))
   }
-  let host = RuntimeHost::from_manager(manager)
+  let host = @runtime.RuntimeHost::from_manager(manager)
   let opened = host.dispatch(
     @lepusa.InvokeRequest::new(
       id="stream",

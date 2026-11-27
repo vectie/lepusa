@@ -1,6 +1,6 @@
 ///|
 test "deep link plugin declares URL lifecycle commands" {
-  let declared = plugin()
+  let declared = @deep_link.plugin()
   assert_eq(declared.name(), "deepLink")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("deepLink.getInitialUrls"))
@@ -16,7 +16,7 @@ test "deep link plugin declares URL lifecycle commands" {
 
 ///|
 test "deep link capabilities grant deep link permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @deep_link.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=DeepLink))
   assert_false(grant.allows(window_label="settings", permission=DeepLink))
   assert_false(grant.allows(window_label="main", permission=Opener))
@@ -24,8 +24,8 @@ test "deep link capabilities grant deep link permission by window" {
 
 ///|
 test "deep link policy validates scheme metadata" {
-  let policy = DeepLinkPolicy::new().scheme(
-    DeepLinkScheme::new(scheme="lepusa", hosts=["open", "callback"]),
+  let policy = @deep_link.DeepLinkPolicy::new().scheme(
+    @deep_link.DeepLinkScheme::new(scheme="lepusa", hosts=["open", "callback"]),
   )
   assert_eq(policy.validate().length(), 0)
   assert_eq(policy.scheme_names()[0], "lepusa")
@@ -33,10 +33,12 @@ test "deep link policy validates scheme metadata" {
 
 ///|
 test "deep link policy rejects invalid and duplicate schemes" {
-  let policy = DeepLinkPolicy::new()
-    .scheme(DeepLinkScheme::new(scheme="lepusa"))
-    .scheme(DeepLinkScheme::new(scheme="lepusa"))
-    .scheme(DeepLinkScheme::new(scheme="bad/scheme", hosts=["bad host", ""]))
+  let policy = @deep_link.DeepLinkPolicy::new()
+    .scheme(@deep_link.DeepLinkScheme::new(scheme="lepusa"))
+    .scheme(@deep_link.DeepLinkScheme::new(scheme="lepusa"))
+    .scheme(
+      @deep_link.DeepLinkScheme::new(scheme="bad/scheme", hosts=["bad host", ""]),
+    )
   let problems = policy.validate()
   assert_true(problems.contains("deep link scheme must be unique: lepusa"))
   assert_true(problems.contains("deep link scheme is invalid: bad/scheme"))
@@ -46,14 +48,14 @@ test "deep link policy rejects invalid and duplicate schemes" {
 
 ///|
 test "deep link registry records URL handoff state" {
-  let state = DeepLinkState::new(initial_urls=["lepusa://open/start"])
-  let registry = registry(
-    policy=DeepLinkPolicy::new().scheme(
-      DeepLinkScheme::new(scheme="lepusa", hosts=["open"]),
+  let state = @deep_link.DeepLinkState::new(initial_urls=["lepusa://open/start"])
+  let registry = @deep_link.registry(
+    policy=@deep_link.DeepLinkPolicy::new().scheme(
+      @deep_link.DeepLinkScheme::new(scheme="lepusa", hosts=["open"]),
     ),
     state~,
   )
-  let grant = capability_for_window("main")
+  let grant = @deep_link.capability_for_window("main")
   assert_true(registry.contains("deepLink.getInitialUrls"))
   assert_true(registry.contains("deepLink.register"))
   assert_true(registry.contains("deepLink.unregister"))

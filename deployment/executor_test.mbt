@@ -1,7 +1,7 @@
 ///|
-fn executor_plan() -> DeploymentPlan {
+fn executor_plan() -> @deployment.DeploymentPlan {
   match
-    DeploymentPlan::from_update_manifest(
+    @deployment.DeploymentPlan::from_update_manifest(
       @lepusa.UpdateManifest::new(
         identifier="dev.vectie.executor",
         product_name="Executor App",

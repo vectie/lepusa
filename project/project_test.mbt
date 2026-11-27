@@ -14,7 +14,7 @@ test "project config parses app manifest boundary" {
     #|  }]
     #|}
     #|
-  match ProjectConfig::parse(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
       match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
@@ -50,7 +50,7 @@ test "project config parses runtime and capability platform scopes" {
     #|  }]
     #|}
     #|
-  match ProjectConfig::parse(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
       match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
@@ -94,7 +94,7 @@ test "project config parses capability operation scopes" {
     #|  }]
     #|}
     #|
-  match ProjectConfig::parse(config, base_dir="/app") {
+  match @project.ProjectConfig::parse(config, base_dir="/app") {
     Ok(project) =>
       match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {
@@ -152,7 +152,7 @@ test "project config parses command request and response schemas" {
     #|  }]
     #|}
     #|
-  match ProjectConfig::parse(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
       match project.manifest().runtime_plan(project.root()) {
         Ok(plan) =>
@@ -197,7 +197,7 @@ test "project config parses plugin lifecycle hooks" {
     #|  }]
     #|}
     #|
-  match ProjectConfig::parse(config) {
+  match @project.ProjectConfig::parse(config) {
     Ok(project) =>
       match project.manifest().runtime_plan(project.root()) {
         Ok(plan) => {

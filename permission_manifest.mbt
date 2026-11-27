@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct PermissionManifestCommand {
   plugin : String
   command : String
@@ -8,18 +9,20 @@ pub struct PermissionManifestCommand {
   allowed_windows : Array[String]
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
   platforms : Array[String]
   operation_scopes : Array[OperationScope]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct PermissionManifestPermission {
   name : String
   commands : Array[PermissionManifestCommand]
@@ -28,12 +31,13 @@ pub struct PermissionManifestPermission {
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
   denied_routes : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct PermissionManifest {
   permissions : Array[PermissionManifestPermission]
-} derive(Debug, Eq)
+}
 
 ///|
 fn PermissionManifestCommand::from_entry(
@@ -256,9 +260,9 @@ pub fn PermissionManifestPermission::to_json(
 
 ///|
 pub fn PermissionManifest::new(
-  permissions? : Array[PermissionManifestPermission] = [],
+  permissions~ : Array[PermissionManifestPermission] = [],
 ) -> PermissionManifest {
-  { permissions: permissions.copy() }
+  { permissions: permissions.copy(), }
 }
 
 ///|
@@ -289,7 +293,7 @@ pub fn PermissionManifest::from_plugins(
   plugins~ : Array[Plugin],
   capabilities~ : Array[Capability],
   windows~ : Array[ResolvedWindow],
-  platform? : String = "",
+  platform~ : String = "",
 ) -> PermissionManifest {
   PermissionManifest::from_command_manifest(
     CommandManifest::from_plugins(plugins~, capabilities~, windows~, platform~),

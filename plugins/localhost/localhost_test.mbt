@@ -1,6 +1,6 @@
 ///|
 test "localhost plugin declares service lifecycle commands" {
-  let declared = plugin()
+  let declared = @localhost.plugin()
   assert_eq(declared.name(), "localhost")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("localhost.status"))
@@ -15,7 +15,7 @@ test "localhost plugin declares service lifecycle commands" {
 
 ///|
 test "localhost capabilities grant localhost permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @localhost.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Localhost))
   assert_false(grant.allows(window_label="settings", permission=Localhost))
   assert_false(grant.allows(window_label="main", permission=Shell))
@@ -23,7 +23,7 @@ test "localhost capabilities grant localhost permission by window" {
 
 ///|
 test "localhost policy validates service metadata" {
-  let policy = LocalhostPolicy::new().service(
+  let policy = @localhost.LocalhostPolicy::new().service(
     @lepusa.LocalService::new(
       name="api",
       command=["moon", "run", "cmd/server"],
@@ -36,7 +36,7 @@ test "localhost policy validates service metadata" {
 
 ///|
 test "localhost policy rejects duplicate service names" {
-  let policy = LocalhostPolicy::new()
+  let policy = @localhost.LocalhostPolicy::new()
     .service(
       @lepusa.LocalService::new(
         name="api",
@@ -63,11 +63,11 @@ test "localhost plugin registers service metadata handlers" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/health",
   )
-  let registry = register(
+  let registry = @localhost.register(
     @lepusa.CommandRegistry::new(),
-    policy=LocalhostPolicy::new(services=[service]),
+    policy=@localhost.LocalhostPolicy::new(services=[service]),
   )
-  let capabilities = [capability_for_window("main")]
+  let capabilities = [@localhost.capability_for_window("main")]
   assert_true(registry.contains("localhost.status"))
   assert_eq(registry.sync_routes().length(), 5)
   let status = registry.dispatch(

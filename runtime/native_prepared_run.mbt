@@ -1,14 +1,15 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativePreparedRunPlan {
   runner : NativeRunnerPlan
   webviews : Array[NativeWebViewPlan]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeRuntime::prepare_run_plan(
   self : NativeRuntime,
   prepare_webview~ : (RuntimeWebViewSpec) -> Result[NativeWebViewPlan, String],
-  missing_webview_message? : String = "native run requires at least one webview",
+  missing_webview_message~ : String = "native run requires at least one webview",
 ) -> Result[NativePreparedRunPlan, Array[String]] {
   let runner = self.runner_plan()
   let webviews : Array[NativeWebViewPlan] = []
@@ -74,7 +75,7 @@ pub fn NativePreparedRunPlan::first_webview(
 ///|
 pub fn NativePreparedRunPlan::webview_count(
   self : NativePreparedRunPlan,
-) -> Int {
+) -> Int32 {
   self.webviews.length()
 }
 
@@ -101,7 +102,7 @@ pub fn NativePreparedRunPlan::first_webview_load_url(
 ///|
 pub fn NativePreparedRunPlan::startup_operation_count(
   self : NativePreparedRunPlan,
-) -> Int {
+) -> Int32 {
   self.runner.startup_operations().length()
 }
 
@@ -122,7 +123,7 @@ pub fn NativePreparedRunPlan::service_supervisor_report(
 ///|
 pub fn NativePreparedRunPlan::lifecycle_step_count(
   self : NativePreparedRunPlan,
-) -> Int {
+) -> Int32 {
   self.runner.lifecycle_steps().length()
 }
 

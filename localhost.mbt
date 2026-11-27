@@ -1,19 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct LocalhostSource {
   host : String
-  port : Int
+  port : Int32
   path : String
   readiness_path : String?
   command : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LocalhostSource::new(
-  port~ : Int,
-  host? : String = "127.0.0.1",
-  path? : String = "/",
+  port~ : Int32,
+  host~ : String = "127.0.0.1",
+  path~ : String = "/",
   readiness_path? : String,
-  command? : Array[String] = [],
+  command~ : Array[String] = [],
 ) -> LocalhostSource {
   {
     host,
@@ -30,7 +31,7 @@ pub fn LocalhostSource::host(self : LocalhostSource) -> String {
 }
 
 ///|
-pub fn LocalhostSource::port(self : LocalhostSource) -> Int {
+pub fn LocalhostSource::port(self : LocalhostSource) -> Int32 {
   self.port
 }
 

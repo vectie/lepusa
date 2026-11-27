@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 pub struct BundledRuntimeManifest {
   path : String
   bundle_root : String
   bundle : Map[String, Json]
   runtime : Map[String, Json]
-} derive(Debug)
+}
 
 ///|
 pub fn BundledRuntimeManifest::parse(

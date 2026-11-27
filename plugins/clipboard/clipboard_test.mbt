@@ -1,6 +1,6 @@
 ///|
 test "clipboard plugin declares sync clipboard commands" {
-  let declared = plugin()
+  let declared = @clipboard.plugin()
   assert_eq(declared.name(), "clipboard")
   assert_eq(declared.command_routes().length(), 3)
   assert_true(declared.command_routes().contains("clipboard.readText"))
@@ -14,7 +14,7 @@ test "clipboard plugin declares sync clipboard commands" {
 
 ///|
 test "clipboard capabilities grant clipboard permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @clipboard.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Clipboard))
   assert_false(grant.allows(window_label="settings", permission=Clipboard))
   assert_false(grant.allows(window_label="main", permission=Dialog))
@@ -22,12 +22,12 @@ test "clipboard capabilities grant clipboard permission by window" {
 
 ///|
 test "clipboard registry stores text in process" {
-  let registry = registry()
+  let registry = @clipboard.registry()
   assert_true(registry.contains("clipboard.readText"))
   assert_true(registry.contains("clipboard.writeText"))
   assert_true(registry.contains("clipboard.clear"))
   assert_eq(registry.sync_routes().length(), 3)
-  let grant = capability_for_window("main")
+  let grant = @clipboard.capability_for_window("main")
   let write_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -57,7 +57,7 @@ test "clipboard registry stores text in process" {
 
 ///|
 test "clipboard native registry exposes desktop handlers" {
-  let registry = native_registry()
+  let registry = @clipboard.native_registry()
   assert_true(registry.contains("clipboard.readText"))
   assert_true(registry.contains("clipboard.writeText"))
   assert_true(registry.contains("clipboard.clear"))

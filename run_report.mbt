@@ -1,37 +1,39 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RunStatus {
   RunPrepared
   RunLaunched
   RunFailed(String)
   RunUnsupported(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RunReport {
   target : String
   backend : String
   engine : String
   status : RunStatus
-  webviews : Int
+  webviews : Int32
   first_window_title : String
   first_window_url : String
   load_url : String
   bridge_url : String
-  local_services : Int
+  local_services : Int32
   service_supervisor : Bool
   service_start_order : Array[String]
-  startup_operations : Int
-  lifecycle_steps : Int
-  executable_operations : Int
-  executed_operations : Int
-  skipped_operations : Int
-  failed_operations : Int
+  startup_operations : Int32
+  lifecycle_steps : Int32
+  executable_operations : Int32
+  executed_operations : Int32
+  skipped_operations : Int32
+  failed_operations : Int32
   first_execution_failure : String
-  bridge_sync_routes : Int
-  bridge_async_routes : Int
+  bridge_sync_routes : Int32
+  bridge_async_routes : Int32
   target_can_launch : Bool
   target_launch_blocker : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RunReport::new(
@@ -39,25 +41,25 @@ pub fn RunReport::new(
   backend~ : String,
   engine~ : String,
   status~ : RunStatus,
-  webviews~ : Int,
-  first_window_title? : String = "",
-  first_window_url? : String = "",
-  load_url? : String = "",
-  bridge_url? : String = "",
-  local_services? : Int = 0,
-  service_supervisor? : Bool = false,
-  service_start_order? : Array[String] = [],
-  startup_operations? : Int = 0,
-  lifecycle_steps? : Int = 0,
-  executable_operations? : Int = 0,
-  executed_operations? : Int = 0,
-  skipped_operations? : Int = 0,
-  failed_operations? : Int = 0,
-  first_execution_failure? : String = "",
-  bridge_sync_routes? : Int = 0,
-  bridge_async_routes? : Int = 0,
-  target_can_launch? : Bool = true,
-  target_launch_blocker? : String = "",
+  webviews~ : Int32,
+  first_window_title~ : String = "",
+  first_window_url~ : String = "",
+  load_url~ : String = "",
+  bridge_url~ : String = "",
+  local_services~ : Int32 = 0,
+  service_supervisor~ : Bool = false,
+  service_start_order~ : Array[String] = [],
+  startup_operations~ : Int32 = 0,
+  lifecycle_steps~ : Int32 = 0,
+  executable_operations~ : Int32 = 0,
+  executed_operations~ : Int32 = 0,
+  skipped_operations~ : Int32 = 0,
+  failed_operations~ : Int32 = 0,
+  first_execution_failure~ : String = "",
+  bridge_sync_routes~ : Int32 = 0,
+  bridge_async_routes~ : Int32 = 0,
+  target_can_launch~ : Bool = true,
+  target_launch_blocker~ : String = "",
 ) -> RunReport {
   {
     target,
@@ -135,7 +137,7 @@ pub fn RunReport::status(self : RunReport) -> RunStatus {
 }
 
 ///|
-pub fn RunReport::webviews(self : RunReport) -> Int {
+pub fn RunReport::webviews(self : RunReport) -> Int32 {
   self.webviews
 }
 
@@ -160,7 +162,7 @@ pub fn RunReport::bridge_url(self : RunReport) -> String {
 }
 
 ///|
-pub fn RunReport::local_services(self : RunReport) -> Int {
+pub fn RunReport::local_services(self : RunReport) -> Int32 {
   self.local_services
 }
 
@@ -175,32 +177,32 @@ pub fn RunReport::service_start_order(self : RunReport) -> Array[String] {
 }
 
 ///|
-pub fn RunReport::startup_operations(self : RunReport) -> Int {
+pub fn RunReport::startup_operations(self : RunReport) -> Int32 {
   self.startup_operations
 }
 
 ///|
-pub fn RunReport::lifecycle_steps(self : RunReport) -> Int {
+pub fn RunReport::lifecycle_steps(self : RunReport) -> Int32 {
   self.lifecycle_steps
 }
 
 ///|
-pub fn RunReport::executable_operations(self : RunReport) -> Int {
+pub fn RunReport::executable_operations(self : RunReport) -> Int32 {
   self.executable_operations
 }
 
 ///|
-pub fn RunReport::executed_operations(self : RunReport) -> Int {
+pub fn RunReport::executed_operations(self : RunReport) -> Int32 {
   self.executed_operations
 }
 
 ///|
-pub fn RunReport::skipped_operations(self : RunReport) -> Int {
+pub fn RunReport::skipped_operations(self : RunReport) -> Int32 {
   self.skipped_operations
 }
 
 ///|
-pub fn RunReport::failed_operations(self : RunReport) -> Int {
+pub fn RunReport::failed_operations(self : RunReport) -> Int32 {
   self.failed_operations
 }
 
@@ -210,12 +212,12 @@ pub fn RunReport::first_execution_failure(self : RunReport) -> String {
 }
 
 ///|
-pub fn RunReport::bridge_sync_routes(self : RunReport) -> Int {
+pub fn RunReport::bridge_sync_routes(self : RunReport) -> Int32 {
   self.bridge_sync_routes
 }
 
 ///|
-pub fn RunReport::bridge_async_routes(self : RunReport) -> Int {
+pub fn RunReport::bridge_async_routes(self : RunReport) -> Int32 {
   self.bridge_async_routes
 }
 

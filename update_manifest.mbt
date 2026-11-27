@@ -1,11 +1,13 @@
 ///|
+#derive(Debug, Eq)
 pub struct UpdateArtifactTrust {
   path : String
   sha256 : String
   signature : String?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct UpdateManifestArtifact {
   target : BundleTarget
   kind : BundleArtifactKind
@@ -13,9 +15,10 @@ pub struct UpdateManifestArtifact {
   url : String
   sha256 : String
   signature : String?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct UpdateManifest {
   identifier : String
   product_name : String
@@ -23,16 +26,17 @@ pub struct UpdateManifest {
   channel : String
   public_key : String?
   artifacts : Array[UpdateManifestArtifact]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct UpdateTrustReport {
   trusted : Bool
   signature_required : Bool
-  artifact_count : Int
-  signed_artifacts : Int
+  artifact_count : Int32
+  signed_artifacts : Int32
   problems : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn UpdateArtifactTrust::new(
@@ -40,7 +44,7 @@ pub fn UpdateArtifactTrust::new(
   sha256~ : String,
   signature? : String,
 ) -> UpdateArtifactTrust {
-  { path, sha256, signature }
+  { path, sha256, signature, }
 }
 
 ///|
@@ -86,7 +90,7 @@ pub fn UpdateManifestArtifact::new(
   sha256~ : String,
   signature? : String,
 ) -> UpdateManifestArtifact {
-  { target, kind, path, url, sha256, signature }
+  { target, kind, path, url, sha256, signature, }
 }
 
 ///|
@@ -128,7 +132,7 @@ pub fn UpdateManifestArtifact::signature(
 ///|
 pub fn UpdateManifestArtifact::validate(
   self : UpdateManifestArtifact,
-  signature_required? : Bool = false,
+  signature_required~ : Bool = false,
 ) -> Array[String] {
   let problems : Array[String] = []
   if self.path == "" {
@@ -175,11 +179,11 @@ pub fn UpdateManifest::new(
   identifier~ : String,
   product_name~ : String,
   version~ : String,
-  channel? : String = "stable",
+  channel~ : String = "stable",
   public_key? : String,
   artifacts~ : Array[UpdateManifestArtifact],
 ) -> UpdateManifest {
-  { identifier, product_name, version, channel, public_key, artifacts }
+  { identifier, product_name, version, channel, public_key, artifacts, }
 }
 
 ///|
@@ -292,12 +296,12 @@ pub fn UpdateTrustReport::signature_required(self : UpdateTrustReport) -> Bool {
 }
 
 ///|
-pub fn UpdateTrustReport::artifact_count(self : UpdateTrustReport) -> Int {
+pub fn UpdateTrustReport::artifact_count(self : UpdateTrustReport) -> Int32 {
   self.artifact_count
 }
 
 ///|
-pub fn UpdateTrustReport::signed_artifacts(self : UpdateTrustReport) -> Int {
+pub fn UpdateTrustReport::signed_artifacts(self : UpdateTrustReport) -> Int32 {
   self.signed_artifacts
 }
 
@@ -323,9 +327,9 @@ pub fn UpdateTrustReport::to_json(self : UpdateTrustReport) -> String {
 pub fn BundlePlan::update_manifest(
   self : BundlePlan,
   base_url~ : String,
-  channel? : String = "stable",
+  channel~ : String = "stable",
   public_key? : String,
-  artifact_trust? : Array[UpdateArtifactTrust] = [],
+  artifact_trust~ : Array[UpdateArtifactTrust] = [],
 ) -> Result[UpdateManifest, Array[String]] {
   let problems : Array[String] = []
   if base_url == "" {
@@ -392,9 +396,9 @@ pub fn BundlePlan::update_manifest(
 pub fn BundlePlan::update_manifest_json(
   self : BundlePlan,
   base_url~ : String,
-  channel? : String = "stable",
+  channel~ : String = "stable",
   public_key? : String,
-  artifact_trust? : Array[UpdateArtifactTrust] = [],
+  artifact_trust~ : Array[UpdateArtifactTrust] = [],
 ) -> Result[String, Array[String]] {
   match
     self.update_manifest(base_url~, channel~, public_key?, artifact_trust~) {

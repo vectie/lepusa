@@ -22,7 +22,7 @@ pub fn registry(store? : Store) -> @lepusa.CommandRegistry
 pub struct Store {
   values : Map[String, String]
 }
-pub fn Store::clear(Self) -> Int
+pub fn Store::clear(Self) -> Int32
 pub fn Store::delete(Self, String) -> Bool
 pub fn Store::get(Self, String) -> String?
 pub fn Store::keys(Self) -> Array[String]

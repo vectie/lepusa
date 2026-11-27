@@ -127,7 +127,7 @@ fn update_manifest_artifacts(
 ///|
 fn update_manifest_artifact(
   object : Map[String, Json],
-  index : Int,
+  index : Int32,
   problems : Array[String],
 ) -> UpdateManifestArtifact? {
   let target = update_manifest_target(
@@ -163,7 +163,7 @@ fn update_manifest_artifact(
 ///|
 fn update_manifest_target(
   value : String,
-  index : Int,
+  index : Int32,
   problems : Array[String],
 ) -> BundleTarget? {
   match value {
@@ -181,7 +181,7 @@ fn update_manifest_target(
 ///|
 fn update_manifest_artifact_kind(
   value : String,
-  index : Int,
+  index : Int32,
   problems : Array[String],
 ) -> BundleArtifactKind? {
   match value {

@@ -1,6 +1,6 @@
 ///|
 test "catalog exposes official plugin declarations" {
-  let names = plugin_names()
+  let names = @catalog.plugin_names()
   assert_eq(names.length(), 22)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
@@ -24,87 +24,124 @@ test "catalog exposes official plugin declarations" {
   assert_true(names.contains("updater"))
   assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
-  assert_true(plugin("app").unwrap().command_routes().contains("app.info"))
   assert_true(
-    plugin("autoLaunch").unwrap().command_routes().contains("autoLaunch.status"),
+    @catalog.plugin("app").unwrap().command_routes().contains("app.info"),
   )
   assert_true(
-    plugin("browserHost")
+    @catalog.plugin("autoLaunch")
+    .unwrap()
+    .command_routes()
+    .contains("autoLaunch.status"),
+  )
+  assert_true(
+    @catalog.plugin("browserHost")
     .unwrap()
     .command_routes()
     .contains("browserHost.execute"),
   )
   assert_true(
-    plugin("clipboard").unwrap().command_routes().contains("clipboard.readText"),
+    @catalog.plugin("clipboard")
+    .unwrap()
+    .command_routes()
+    .contains("clipboard.readText"),
   )
   assert_true(
-    plugin("deepLink")
+    @catalog.plugin("deepLink")
     .unwrap()
     .command_routes()
     .contains("deepLink.getInitialUrls"),
   )
   assert_true(
-    plugin("dialog").unwrap().command_routes().contains("dialog.message"),
+    @catalog.plugin("dialog")
+    .unwrap()
+    .command_routes()
+    .contains("dialog.message"),
   )
   assert_true(
-    plugin("fileDialog")
+    @catalog.plugin("fileDialog")
     .unwrap()
     .command_routes()
     .contains("fileDialog.openFile"),
   )
   assert_true(
-    plugin("localhost").unwrap().command_routes().contains("localhost.status"),
+    @catalog.plugin("localhost")
+    .unwrap()
+    .command_routes()
+    .contains("localhost.status"),
   )
-  assert_true(plugin("log").unwrap().command_routes().contains("log.write"))
   assert_true(
-    plugin("menu").unwrap().command_routes().contains("menu.setAppMenu"),
+    @catalog.plugin("log").unwrap().command_routes().contains("log.write"),
   )
   assert_true(
-    plugin("notification")
+    @catalog.plugin("menu")
+    .unwrap()
+    .command_routes()
+    .contains("menu.setAppMenu"),
+  )
+  assert_true(
+    @catalog.plugin("notification")
     .unwrap()
     .command_routes()
     .contains("notification.show"),
   )
   assert_true(
-    plugin("opener").unwrap().command_routes().contains("opener.openUrl"),
+    @catalog.plugin("opener")
+    .unwrap()
+    .command_routes()
+    .contains("opener.openUrl"),
   )
   assert_true(
-    plugin("process").unwrap().command_routes().contains("process.info"),
+    @catalog.plugin("process")
+    .unwrap()
+    .command_routes()
+    .contains("process.info"),
   )
   assert_true(
-    plugin("serviceDiscovery")
+    @catalog.plugin("serviceDiscovery")
     .unwrap()
     .command_routes()
     .contains("serviceDiscovery.list"),
   )
   assert_true(
-    plugin("shell").unwrap().command_routes().contains("shell.execute"),
+    @catalog.plugin("shell").unwrap().command_routes().contains("shell.execute"),
   )
   assert_true(
-    plugin("singleInstance")
+    @catalog.plugin("singleInstance")
     .unwrap()
     .command_routes()
     .contains("singleInstance.acquire"),
   )
-  assert_true(plugin("store").unwrap().command_routes().contains("store.set"))
-  assert_true(plugin("tray").unwrap().command_routes().contains("tray.setMenu"))
   assert_true(
-    plugin("window").unwrap().command_routes().contains("window.close"),
+    @catalog.plugin("store").unwrap().command_routes().contains("store.set"),
   )
   assert_true(
-    plugin("updater").unwrap().command_routes().contains("updater.check"),
+    @catalog.plugin("tray").unwrap().command_routes().contains("tray.setMenu"),
   )
   assert_true(
-    plugin("windowState").unwrap().command_routes().contains("windowState.save"),
+    @catalog.plugin("window").unwrap().command_routes().contains("window.close"),
   )
-  assert_true(plugin("fs").unwrap().command_routes().contains("fs.readText"))
-  assert_true(plugin("missing") is None)
+  assert_true(
+    @catalog.plugin("updater")
+    .unwrap()
+    .command_routes()
+    .contains("updater.check"),
+  )
+  assert_true(
+    @catalog.plugin("windowState")
+    .unwrap()
+    .command_routes()
+    .contains("windowState.save"),
+  )
+  assert_true(
+    @catalog.plugin("fs").unwrap().command_routes().contains("fs.readText"),
+  )
+  assert_true(@catalog.plugin("missing") is None)
 }
 
 ///|
 test "catalog plugin names resolve to plugins" {
-  for name in plugin_names() {
-    match plugin(name) {
+  for name in @catalog.plugin_names() {
+    match @catalog.plugin(name) {
       Some(plugin) => assert_eq(plugin.name(), name)
       None => abort("catalog name did not resolve: \{name}")
     }
@@ -113,15 +150,15 @@ test "catalog plugin names resolve to plugins" {
 
 ///|
 test "catalog exposes official plugin contracts" {
-  let contracts = plugin_contracts()
-  assert_eq(contracts.length(), plugin_names().length())
+  let contracts = @catalog.plugin_contracts()
+  assert_eq(contracts.length(), @catalog.plugin_names().length())
   for contract in contracts {
     assert_true(contract.ok())
-    assert_true(plugin_names().contains(contract.name()))
+    assert_true(@catalog.plugin_names().contains(contract.name()))
     assert_eq(contract.command_count(), contract.command_routes().length())
     assert_true(contract.permissions().length() > 0)
   }
-  match plugin_contract("fs") {
+  match @catalog.plugin_contract("fs") {
     Some(contract) => {
       assert_eq(contract.name(), "fs")
       assert_true(contract.command_routes().contains("fs.readText"))
@@ -131,7 +168,7 @@ test "catalog exposes official plugin contracts" {
     }
     None => abort("fs plugin contract did not resolve")
   }
-  match plugin_contract("tray") {
+  match @catalog.plugin_contract("tray") {
     Some(contract) => {
       assert_true(contract.event_count() > 0)
       assert_true(contract.main_thread_count() > 0)
@@ -139,15 +176,15 @@ test "catalog exposes official plugin contracts" {
     }
     None => abort("tray plugin contract did not resolve")
   }
-  assert_true(plugin_contract("missing") is None)
-  let json = plugin_contracts_json()
+  assert_true(@catalog.plugin_contract("missing") is None)
+  let json = @catalog.plugin_contracts_json()
   assert_true(json.contains("\"name\":\"fs\""))
   assert_true(json.contains("\"commands\":["))
 }
 
 ///|
 test "catalog exposes sync-safe official plugin profile" {
-  let names = sync_plugin_names()
+  let names = @catalog.sync_plugin_names()
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
   assert_true(names.contains("clipboard"))
@@ -171,14 +208,14 @@ test "catalog exposes sync-safe official plugin profile" {
   assert_false(names.contains("updater"))
   let mut registry = @lepusa.CommandRegistry::new()
   for name in names {
-    match plugin(name) {
+    match @catalog.plugin(name) {
       Some(plugin) =>
         for command in plugin.commands() {
           assert_true(command.mode() is Sync || command.mode() is Event)
         }
       None => abort("sync profile plugin did not resolve: \{name}")
     }
-    registry = register(registry, name)
+    registry = @catalog.register(registry, name)
   }
   assert_true(registry.sync_routes().length() > 0)
   assert_eq(registry.async_routes().length(), 0)
@@ -187,28 +224,28 @@ test "catalog exposes sync-safe official plugin profile" {
 ///|
 test "catalog registers pure moonbit handlers" {
   let registry = @lepusa.CommandRegistry::new()
-  let registry = register(registry, "app")
-  let registry = register(registry, "autoLaunch")
-  let registry = register(registry, "browserHost")
-  let registry = register(registry, "clipboard")
-  let registry = register(registry, "deepLink")
-  let registry = register(registry, "dialog")
-  let registry = register(registry, "fileDialog")
-  let registry = register(registry, "log")
-  let registry = register(registry, "store")
-  let registry = register(registry, "fs")
-  let registry = register(registry, "localhost")
-  let registry = register(registry, "menu")
-  let registry = register(registry, "notification")
-  let registry = register(registry, "opener")
-  let registry = register(registry, "process")
-  let registry = register(registry, "serviceDiscovery")
-  let registry = register(registry, "shell")
-  let registry = register(registry, "singleInstance")
-  let registry = register(registry, "window")
-  let registry = register(registry, "windowState")
-  let registry = register(registry, "tray")
-  let registry = register(registry, "updater")
+  let registry = @catalog.register(registry, "app")
+  let registry = @catalog.register(registry, "autoLaunch")
+  let registry = @catalog.register(registry, "browserHost")
+  let registry = @catalog.register(registry, "clipboard")
+  let registry = @catalog.register(registry, "deepLink")
+  let registry = @catalog.register(registry, "dialog")
+  let registry = @catalog.register(registry, "fileDialog")
+  let registry = @catalog.register(registry, "log")
+  let registry = @catalog.register(registry, "store")
+  let registry = @catalog.register(registry, "fs")
+  let registry = @catalog.register(registry, "localhost")
+  let registry = @catalog.register(registry, "menu")
+  let registry = @catalog.register(registry, "notification")
+  let registry = @catalog.register(registry, "opener")
+  let registry = @catalog.register(registry, "process")
+  let registry = @catalog.register(registry, "serviceDiscovery")
+  let registry = @catalog.register(registry, "shell")
+  let registry = @catalog.register(registry, "singleInstance")
+  let registry = @catalog.register(registry, "window")
+  let registry = @catalog.register(registry, "windowState")
+  let registry = @catalog.register(registry, "tray")
+  let registry = @catalog.register(registry, "updater")
   assert_true(registry.contains("app.info"))
   assert_true(registry.contains("app.setTheme"))
   assert_true(registry.contains("autoLaunch.status"))
@@ -240,7 +277,7 @@ test "catalog registers pure moonbit handlers" {
   assert_true(registry.contains("updater.downloadAndInstall"))
   assert_true(registry.contains("windowState.set"))
   assert_true(registry.contains("windowState.restore"))
-  let names = registered_plugin_names()
+  let names = @catalog.registered_plugin_names()
   assert_eq(names.length(), 22)
   assert_true(names.contains("app"))
   assert_true(names.contains("autoLaunch"))
@@ -268,17 +305,20 @@ test "catalog registers pure moonbit handlers" {
 
 ///|
 test "catalog registered plugin names resolve and install handlers" {
-  for name in registered_plugin_names() {
-    assert_true(plugin_names().contains(name))
-    assert_true(plugin(name) is Some(_))
-    let registry = register(@lepusa.CommandRegistry::new(), name)
+  for name in @catalog.registered_plugin_names() {
+    assert_true(@catalog.plugin_names().contains(name))
+    assert_true(@catalog.plugin(name) is Some(_))
+    let registry = @catalog.register(@lepusa.CommandRegistry::new(), name)
     assert_true(registry.routes().length() > 0)
   }
 }
 
 ///|
 test "catalog notification registration dispatches permission state" {
-  let registry = register(@lepusa.CommandRegistry::new(), "notification")
+  let registry = @catalog.register(
+    @lepusa.CommandRegistry::new(),
+    "notification",
+  )
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="notification-state",

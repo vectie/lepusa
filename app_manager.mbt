@@ -1,17 +1,18 @@
 ///|
+#derive(Debug, Eq)
 pub struct AppStateEntry {
   key : String
   kind : String
   value : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn AppStateEntry::new(
   key~ : String,
-  kind? : String = "",
-  value? : String = "",
+  kind~ : String = "",
+  value~ : String = "",
 ) -> AppStateEntry {
-  { key, kind, value }
+  { key, kind, value, }
 }
 
 ///|
@@ -57,7 +58,7 @@ pub struct AppStateStore {
 
 ///|
 pub fn AppStateStore::new() -> AppStateStore {
-  { entries: {}, order: [] }
+  { entries: {}, order: [], }
 }
 
 ///|
@@ -81,8 +82,8 @@ pub fn AppStateStore::put(
 pub fn AppStateStore::set(
   self : AppStateStore,
   key : String,
-  kind? : String = "",
-  value? : String = "",
+  kind~ : String = "",
+  value~ : String = "",
 ) -> Result[AppStateEntry, Array[String]] {
   self.put(AppStateEntry::new(key~, kind~, value~))
 }
@@ -98,7 +99,7 @@ pub fn AppStateStore::contains(self : AppStateStore, key : String) -> Bool {
 }
 
 ///|
-pub fn AppStateStore::count(self : AppStateStore) -> Int {
+pub fn AppStateStore::count(self : AppStateStore) -> Int32 {
   self.entries.length()
 }
 
@@ -180,7 +181,7 @@ pub struct AppManager {
 ///|
 pub fn AppManager::new(
   plan : RuntimePlan,
-  registry? : CommandRegistry = CommandRegistry::new(),
+  registry~ : CommandRegistry = CommandRegistry::new(),
 ) -> AppManager {
   {
     plan,
@@ -195,8 +196,8 @@ pub fn AppManager::new(
 ///|
 pub fn App::manager(
   self : App,
-  config? : RuntimeConfig = RuntimeConfig::system_webview(),
-  registry? : CommandRegistry = CommandRegistry::new(),
+  config~ : RuntimeConfig = RuntimeConfig::system_webview(),
+  registry~ : CommandRegistry = CommandRegistry::new(),
 ) -> Result[AppManager, Array[String]] {
   match self.runtime_plan(config~) {
     Ok(plan) => Ok(AppManager::new(plan, registry~))
@@ -230,37 +231,37 @@ pub fn AppManager::audit(self : AppManager) -> RuntimeAudit {
 }
 
 ///|
-pub fn AppManager::window_count(self : AppManager) -> Int {
+pub fn AppManager::window_count(self : AppManager) -> Int32 {
   self.plan.window_count()
 }
 
 ///|
-pub fn AppManager::plugin_count(self : AppManager) -> Int {
+pub fn AppManager::plugin_count(self : AppManager) -> Int32 {
   self.plan.plugin_count()
 }
 
 ///|
-pub fn AppManager::capability_count(self : AppManager) -> Int {
+pub fn AppManager::capability_count(self : AppManager) -> Int32 {
   self.plan.capability_count()
 }
 
 ///|
-pub fn AppManager::resource_count(self : AppManager) -> Int {
+pub fn AppManager::resource_count(self : AppManager) -> Int32 {
   self.resources.count() + self.channels.count()
 }
 
 ///|
-pub fn AppManager::channel_count(self : AppManager) -> Int {
+pub fn AppManager::channel_count(self : AppManager) -> Int32 {
   self.channels.count()
 }
 
 ///|
-pub fn AppManager::listener_count(self : AppManager) -> Int {
+pub fn AppManager::listener_count(self : AppManager) -> Int32 {
   self.events.listener_count()
 }
 
 ///|
-pub fn AppManager::state_count(self : AppManager) -> Int {
+pub fn AppManager::state_count(self : AppManager) -> Int32 {
   self.state.count()
 }
 
@@ -373,9 +374,9 @@ pub fn AppManager::close_resource_handle(
 ///|
 pub fn AppManager::open_channel(
   self : AppManager,
-  owner? : String = "",
-  name? : String = "",
-  metadata? : String = "",
+  owner~ : String = "",
+  name~ : String = "",
+  metadata~ : String = "",
 ) -> Result[Channel, Array[String]] {
   self.channels.open(owner~, name~, metadata~)
 }
@@ -431,8 +432,8 @@ pub fn AppManager::drain_channel(
 pub fn AppManager::listen(
   self : AppManager,
   name : String,
-  target? : EventTarget = AppTarget,
-  once? : Bool = false,
+  target~ : EventTarget = AppTarget,
+  once~ : Bool = false,
 ) -> Result[EventListener, Array[String]] {
   self.events.listen(name, target~, once~)
 }
@@ -441,7 +442,7 @@ pub fn AppManager::listen(
 pub fn AppManager::once(
   self : AppManager,
   name : String,
-  target? : EventTarget = AppTarget,
+  target~ : EventTarget = AppTarget,
 ) -> Result[EventListener, Array[String]] {
   self.events.once(name, target~)
 }
@@ -450,7 +451,7 @@ pub fn AppManager::once(
 pub fn AppManager::emit(
   self : AppManager,
   event : Event,
-  target? : EventTarget = AppTarget,
+  target~ : EventTarget = AppTarget,
 ) -> Result[Array[EventDelivery], Array[String]] {
   self.events.emit(event, target~)
 }
@@ -467,8 +468,8 @@ pub fn AppManager::unlisten(
 pub fn AppManager::manage_state(
   self : AppManager,
   key : String,
-  kind? : String = "",
-  value? : String = "",
+  kind~ : String = "",
+  value~ : String = "",
 ) -> Result[AppStateEntry, Array[String]] {
   self.state.set(key, kind~, value~)
 }

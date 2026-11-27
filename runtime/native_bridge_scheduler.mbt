@@ -1,14 +1,16 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeBridgeSchedulerMode {
   NativeBridgeSyncOnly
   NativeBridgeAsyncCapable
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeBridgeDrainStrategy {
   NativeBridgeDrainUnavailable
   NativeBridgeDrainEventLoop
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeBridgeSchedulerMode::name(
@@ -41,22 +43,25 @@ pub fn NativeBridgeSchedulerMode::drain_strategy(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeScheduler {
   sync_routes : Array[String]
   async_routes : Array[String]
   mode : NativeBridgeSchedulerMode
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeAsyncExecutor {
   required : Bool
   available : Bool
   callback : String
   input_encoding : String
   output_encoding : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeLoopContract {
   required : Bool
   available : Bool
@@ -74,15 +79,15 @@ pub struct NativeBridgeLoopContract {
   delivery_type : String
   input_encoding : String
   output_encoding : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeBridgeScheduler::new(
   sync_routes~ : Array[String],
   async_routes~ : Array[String],
-  mode? : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> NativeBridgeScheduler {
-  { sync_routes: sync_routes.copy(), async_routes: async_routes.copy(), mode }
+  { sync_routes: sync_routes.copy(), async_routes: async_routes.copy(), mode, }
 }
 
 ///|
@@ -256,7 +261,7 @@ pub fn NativeBridgeAsyncExecutor::to_json(
 pub fn NativeBridgeLoopContract::new(
   required~ : Bool,
   available~ : Bool,
-  drain_strategy? : NativeBridgeDrainStrategy = if available {
+  drain_strategy~ : NativeBridgeDrainStrategy = if available {
     NativeBridgeDrainEventLoop
   } else {
     NativeBridgeDrainUnavailable
@@ -423,7 +428,7 @@ pub fn NativeBridgeLoopContract::to_json(
 ///|
 pub fn NativeRunnerPlan::bridge_scheduler(
   self : NativeRunnerPlan,
-  mode? : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> NativeBridgeScheduler {
   NativeBridgeScheduler::new(
     sync_routes=self.bridge_sync_routes(),
@@ -435,7 +440,7 @@ pub fn NativeRunnerPlan::bridge_scheduler(
 ///|
 pub fn NativePreparedRunPlan::bridge_scheduler(
   self : NativePreparedRunPlan,
-  mode? : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> NativeBridgeScheduler {
   self.runner().bridge_scheduler(mode~)
 }

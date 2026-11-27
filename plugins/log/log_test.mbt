@@ -1,10 +1,10 @@
 ///|
 test "log plugin declares command and capability" {
-  let declared = plugin()
+  let declared = @log.plugin()
   assert_eq(declared.name(), "log")
   assert_eq(declared.command_routes()[0], "log.write")
-  let grant = capability_for_window("main")
-  let registry = registry()
+  let grant = @log.capability_for_window("main")
+  let registry = @log.registry()
   assert_true(registry.contains("log.write"))
   let denied = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -24,8 +24,8 @@ test "log plugin declares command and capability" {
 
 ///|
 test "log registry writes payloads into buffer" {
-  let buffer = LogBuffer::new()
-  let registry = registry(buffer~)
+  let buffer = @log.LogBuffer::new()
+  let registry = @log.registry(buffer~)
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -34,7 +34,7 @@ test "log registry writes payloads into buffer" {
       command="write",
       payload="{\"level\":\"warn\",\"message\":\"careful\",\"target\":\"main\"}",
     ),
-    capabilities=[capability_for_window("main")],
+    capabilities=[@log.capability_for_window("main")],
   )
   assert_true(response is InvokeOk("1", _))
   assert_eq(buffer.entries().length(), 1)
@@ -48,8 +48,8 @@ test "log registry writes payloads into buffer" {
 
 ///|
 test "log registry supports string payloads" {
-  let buffer = LogBuffer::new()
-  let registry = registry(buffer~)
+  let buffer = @log.LogBuffer::new()
+  let registry = @log.registry(buffer~)
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -58,7 +58,7 @@ test "log registry supports string payloads" {
       command="write",
       payload="\"hello\"",
     ),
-    capabilities=[capability_for_window("main")],
+    capabilities=[@log.capability_for_window("main")],
   )
   assert_true(response is InvokeOk("1", _))
   assert_eq(buffer.entries()[0].level(), "info")
@@ -67,7 +67,7 @@ test "log registry supports string payloads" {
 
 ///|
 test "log registry validates payloads" {
-  let registry = registry()
+  let registry = @log.registry()
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -76,7 +76,7 @@ test "log registry validates payloads" {
       command="write",
       payload="{\"message\":\"\"}",
     ),
-    capabilities=[capability()],
+    capabilities=[@log.capability()],
   )
   assert_eq(response.error_message().unwrap_or(""), "log message is required")
 }

@@ -20,9 +20,10 @@ pub fn registry(policy? : LocalhostPolicy) -> @lepusa.CommandRegistry
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct LocalhostPolicy {
   services : Array[@lepusa.LocalService]
-} derive(Eq, @debug.Debug)
+}
 pub fn LocalhostPolicy::new(services? : Array[@lepusa.LocalService]) -> Self
 pub fn LocalhostPolicy::service(Self, @lepusa.LocalService) -> Self
 pub fn LocalhostPolicy::service_names(Self) -> Array[String]

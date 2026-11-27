@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum ChannelMessageKind {
   ChannelData
   ChannelError
   ChannelEnd
   ChannelCancel
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ChannelMessageKind::name(self : ChannelMessageKind) -> String {
@@ -17,21 +18,22 @@ pub fn ChannelMessageKind::name(self : ChannelMessageKind) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ChannelMessage {
   channel_id : String
-  sequence : Int
+  sequence : Int32
   kind : ChannelMessageKind
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn ChannelMessage::new(
   channel_id~ : String,
-  sequence~ : Int,
+  sequence~ : Int32,
   kind~ : ChannelMessageKind,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> ChannelMessage {
-  { channel_id, sequence, kind, payload }
+  { channel_id, sequence, kind, payload, }
 }
 
 ///|
@@ -40,7 +42,7 @@ pub fn ChannelMessage::channel_id(self : ChannelMessage) -> String {
 }
 
 ///|
-pub fn ChannelMessage::sequence(self : ChannelMessage) -> Int {
+pub fn ChannelMessage::sequence(self : ChannelMessage) -> Int32 {
   self.sequence
 }
 
@@ -67,17 +69,18 @@ pub fn ChannelMessage::to_json(self : ChannelMessage) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct Channel {
   resource : ResourceEntry
-  mut next_sequence : Int
+  mut next_sequence : Int32
   messages : Array[ChannelMessage]
   closed : Bool
   cancelled : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 fn Channel::new(resource : ResourceEntry) -> Channel {
-  { resource, next_sequence: 1, messages: [], closed: false, cancelled: false }
+  { resource, next_sequence: 1, messages: [], closed: false, cancelled: false, }
 }
 
 ///|
@@ -101,7 +104,7 @@ pub fn Channel::cancelled(self : Channel) -> Bool {
 }
 
 ///|
-pub fn Channel::pending_count(self : Channel) -> Int {
+pub fn Channel::pending_count(self : Channel) -> Int32 {
   self.messages.length()
 }
 
@@ -127,15 +130,15 @@ pub struct ChannelTable {
 
 ///|
 pub fn ChannelTable::new() -> ChannelTable {
-  { resources: ResourceTable::with_prefix("channel"), channels: {}, order: [] }
+  { resources: ResourceTable::with_prefix("channel"), channels: {}, order: [], }
 }
 
 ///|
 pub fn ChannelTable::open(
   self : ChannelTable,
-  owner? : String = "",
-  name? : String = "",
-  metadata? : String = "",
+  owner~ : String = "",
+  name~ : String = "",
+  metadata~ : String = "",
 ) -> Result[Channel, Array[String]] {
   match
     self.resources.open(
@@ -162,7 +165,7 @@ pub fn ChannelTable::contains(self : ChannelTable, id : String) -> Bool {
 }
 
 ///|
-pub fn ChannelTable::count(self : ChannelTable) -> Int {
+pub fn ChannelTable::count(self : ChannelTable) -> Int32 {
   self.channels.length()
 }
 
@@ -320,8 +323,8 @@ fn ChannelTable::emit_terminal(
         let message = channel.next_message(kind, payload)
         channel.messages.push(message)
         let terminal = match kind {
-          ChannelCancel => { ..channel, cancelled: true }
-          _ => { ..channel, closed: true }
+          ChannelCancel => { ..channel, cancelled: true, }
+          _ => { ..channel, closed: true, }
         }
         self.channels[id] = terminal
         Ok(message)

@@ -1,6 +1,6 @@
 ///|
 test "app plugin declares metadata and control commands" {
-  let declared = plugin()
+  let declared = @app.plugin()
   assert_eq(declared.name(), "app")
   assert_true(declared.command_routes().contains("app.info"))
   assert_true(declared.command_routes().contains("app.name"))
@@ -20,7 +20,7 @@ test "app plugin declares metadata and control commands" {
 
 ///|
 test "app capability grants app permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @app.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=App))
   assert_false(grant.allows(window_label="settings", permission=App))
   assert_false(grant.allows(window_label="main", permission=Window))
@@ -28,7 +28,7 @@ test "app capability grants app permission by window" {
 
 ///|
 test "app info can be derived from metadata" {
-  let info = AppInfo::from_metadata(
+  let info = @app.AppInfo::from_metadata(
     @lepusa.AppMetadata::new(
       identifier="dev.lepusa.demo",
       product_name="Demo App",
@@ -40,22 +40,22 @@ test "app info can be derived from metadata" {
   assert_eq(info.identifier(), "dev.lepusa.demo")
   assert_eq(info.validate().length(), 0)
   assert_eq(
-    AppInfo::new(name="", version="", identifier="").validate().length(),
+    @app.AppInfo::new(name="", version="", identifier="").validate().length(),
     3,
   )
 }
 
 ///|
 test "app registry reports metadata and queues controls" {
-  let state = AppState::new(
-    info=AppInfo::new(
+  let state = @app.AppState::new(
+    info=@app.AppInfo::new(
       name="Desk",
       version="2.0.0",
       identifier="dev.lepusa.desk",
     ),
   )
-  let registry = register(@lepusa.CommandRegistry::new(), state~)
-  let grant = capability_for_window("main")
+  let registry = @app.register(@lepusa.CommandRegistry::new(), state~)
+  let grant = @app.capability_for_window("main")
   let info = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="info",
@@ -120,8 +120,8 @@ test "app registry reports metadata and queues controls" {
 
 ///|
 test "app registry validates control payloads" {
-  let registry = registry()
-  let grant = capability_for_window("main")
+  let registry = @app.registry()
+  let grant = @app.capability_for_window("main")
   let theme = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="bad-theme",

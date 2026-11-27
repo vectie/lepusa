@@ -28,9 +28,10 @@ pub fn write_capability_for_window(String, name? : String) -> @lepusa.Capability
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct FsPolicy {
   scopes : Array[@lepusa.FileSystemScope]
-} derive(Eq, @debug.Debug)
+}
 pub fn FsPolicy::new(scopes? : Array[@lepusa.FileSystemScope]) -> Self
 pub fn FsPolicy::resolve(Self, scope_name~ : String, path~ : String, write? : Bool) -> Result[String, String]
 pub fn FsPolicy::scope(Self, @lepusa.FileSystemScope) -> Self

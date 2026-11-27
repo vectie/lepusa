@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeWebViewLaunchPacket {
   label : Bytes
   title : Bytes
@@ -6,18 +7,19 @@ pub struct NativeWebViewLaunchPacket {
   initialization_script : Bytes
   native_hook : Bytes
   asset_protocol : Bytes
-  width : Int
-  height : Int
-  resizable : Int
-} derive(Debug, Eq)
+  width : Int32
+  height : Int32
+  resizable : Int32
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeWebViewLaunchContext {
   packet : NativeWebViewLaunchPacket
   bridge_scheduler : NativeBridgeScheduler
   async_bridge_executor : NativeBridgeAsyncExecutor
   bridge_loop : NativeBridgeLoopContract
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeWebViewPlan::launch_packet(
@@ -239,20 +241,20 @@ pub fn NativeWebViewLaunchPacket::asset_protocol_text(
 ///|
 pub fn NativeWebViewLaunchPacket::width(
   self : NativeWebViewLaunchPacket,
-) -> Int {
+) -> Int32 {
   self.width
 }
 
 ///|
 pub fn NativeWebViewLaunchPacket::height(
   self : NativeWebViewLaunchPacket,
-) -> Int {
+) -> Int32 {
   self.height
 }
 
 ///|
 pub fn NativeWebViewLaunchPacket::resizable(
   self : NativeWebViewLaunchPacket,
-) -> Int {
+) -> Int32 {
   self.resizable
 }

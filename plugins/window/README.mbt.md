@@ -8,8 +8,8 @@ bridge lowers approved dispatches to a typed `open-window` operation.
 ```mbt check
 ///|
 test "window plugin usage" {
-  let state = WindowControlState::new()
-  let registry = registry(state~)
+  let state = @window.WindowControlState::new()
+  let registry = @window.registry(state~)
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -18,7 +18,7 @@ test "window plugin usage" {
       command="setTitle",
       payload="{\"windowLabel\":\"main\",\"title\":\"Dashboard\"}",
     ),
-    capabilities=[capability_for_window("main")],
+    capabilities=[@window.capability_for_window("main")],
   )
   assert_true(response is InvokeOk("1", _))
   assert_eq(state.operations()[0].window_label(), "main")

@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 struct RuntimeCliResult {
-  exit_code : Int
+  exit_code : Int32
   output : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn drop_program(argv : Array[String]) -> Array[String] {
@@ -106,7 +107,7 @@ async fn render_runtime_run(
 fn render_runtime_run_text(
   path : String,
   text : String,
-  launch? : Bool = false,
+  launch~ : Bool = false,
 ) -> RuntimeCliResult {
   match @bundled.BundledRuntimeManifest::parse(path, text) {
     Err(problem) => runtime_fail("Lepusa runtime run\n[fail] \{problem}\n")
@@ -285,10 +286,10 @@ fn render_bundled_runtime_run_report(
 fn render_runtime_run_report(
   report : @lepusa.RunReport,
   launch~ : Bool,
-  include_title? : Bool = false,
-  include_load_url? : Bool = false,
-  include_bridge_url? : Bool = false,
-  include_bridge_routes? : Bool = false,
+  include_title~ : Bool = false,
+  include_load_url~ : Bool = false,
+  include_bridge_url~ : Bool = false,
+  include_bridge_routes~ : Bool = false,
 ) -> String {
   let title = if include_title {
     "title: \{report.first_window_title()}\n"
@@ -904,9 +905,9 @@ async fn render_runtime_bridge_drain_text(
 ///|
 fn render_runtime_bridge_drain_json(
   handoff_script : String,
-  pending_after_handoff~ : Int,
+  pending_after_handoff~ : Int32,
   delivery_json~ : String,
-  pending_after_drain~ : Int,
+  pending_after_drain~ : Int32,
 ) -> String {
   [
     "{",

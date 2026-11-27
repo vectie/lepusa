@@ -1,6 +1,6 @@
 ///|
 test "window state plugin declares persistence commands" {
-  let declared = plugin()
+  let declared = @window_state.plugin()
   assert_eq(declared.name(), "windowState")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("windowState.save"))
@@ -15,7 +15,7 @@ test "window state plugin declares persistence commands" {
 
 ///|
 test "window state capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @window_state.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=WindowState))
   assert_false(grant.allows(window_label="settings", permission=WindowState))
   assert_false(grant.allows(window_label="main", permission=AutoLaunch))
@@ -23,10 +23,15 @@ test "window state capabilities grant permission by window" {
 
 ///|
 test "window state policy validates persistence rules" {
-  let policy = WindowStatePolicy::new(store_name="dev.local.lepusa")
-    .rule(WindowStateRule::new(window_label="main"))
+  let policy = @window_state.WindowStatePolicy::new(
+      store_name="dev.local.lepusa",
+    )
+    .rule(@window_state.WindowStateRule::new(window_label="main"))
     .rule(
-      WindowStateRule::new(window_label="settings", remember_visibility=true),
+      @window_state.WindowStateRule::new(
+        window_label="settings",
+        remember_visibility=true,
+      ),
     )
   assert_eq(policy.validate().length(), 0)
   assert_eq(policy.store_name(), "dev.local.lepusa")
@@ -37,11 +42,11 @@ test "window state policy validates persistence rules" {
 
 ///|
 test "window state policy rejects invalid metadata" {
-  let policy = WindowStatePolicy::new(store_name="bad/name")
-    .rule(WindowStateRule::new(window_label="main"))
-    .rule(WindowStateRule::new(window_label="main"))
+  let policy = @window_state.WindowStatePolicy::new(store_name="bad/name")
+    .rule(@window_state.WindowStateRule::new(window_label="main"))
+    .rule(@window_state.WindowStateRule::new(window_label="main"))
     .rule(
-      WindowStateRule::new(
+      @window_state.WindowStateRule::new(
         window_label="bad label",
         remember_size=false,
         remember_position=false,
@@ -58,14 +63,14 @@ test "window state policy rejects invalid metadata" {
 
 ///|
 test "window state plugin registers portable state handlers" {
-  let store = WindowStateStore::new()
-  let registry = register(@lepusa.CommandRegistry::new(), store~)
+  let store = @window_state.WindowStateStore::new()
+  let registry = @window_state.register(@lepusa.CommandRegistry::new(), store~)
   assert_true(registry.contains("windowState.save"))
   assert_true(registry.contains("windowState.restore"))
   assert_true(registry.contains("windowState.clear"))
   assert_true(registry.contains("windowState.get"))
   assert_true(registry.contains("windowState.set"))
-  let capability = capability_for_window("main")
+  let capability = @window_state.capability_for_window("main")
   let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="set",
@@ -108,10 +113,13 @@ test "window state plugin registers portable state handlers" {
 ///|
 test "window state file registry persists across registry instances" {
   let root = "/tmp/lepusa-window-state-test"
-  let store = WindowStateFileStore::new(root~, store_name="lepusa-test")
-  let capability = capability_for_window("main")
+  let store = @window_state.WindowStateFileStore::new(
+    root~,
+    store_name="lepusa-test",
+  )
+  let capability = @window_state.capability_for_window("main")
   ignore(
-    file_registry(store).dispatch(
+    @window_state.file_registry(store).dispatch(
       @lepusa.InvokeRequest::new(
         id="reset",
         window_label="main",
@@ -121,7 +129,7 @@ test "window state file registry persists across registry instances" {
       capabilities=[capability],
     ),
   )
-  let registry = file_registry(store)
+  let registry = @window_state.file_registry(store)
   let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="set",
@@ -133,7 +141,7 @@ test "window state file registry persists across registry instances" {
     capabilities=[capability],
   )
   assert_true(set is InvokeOk("set", _))
-  let restored = file_registry(store).dispatch(
+  let restored = @window_state.file_registry(store).dispatch(
     @lepusa.InvokeRequest::new(
       id="restore",
       window_label="main",
@@ -146,7 +154,7 @@ test "window state file registry persists across registry instances" {
   assert_true(restored is InvokeOk("restore", _))
   assert_true(restored.payload().unwrap_or("").contains("\"found\":true"))
   assert_true(restored.payload().unwrap_or("").contains("\\\"width\\\":1200"))
-  let clear = file_registry(store).dispatch(
+  let clear = @window_state.file_registry(store).dispatch(
     @lepusa.InvokeRequest::new(
       id="clear",
       window_label="main",
@@ -157,7 +165,7 @@ test "window state file registry persists across registry instances" {
     capabilities=[capability],
   )
   assert_true(clear.payload().unwrap_or("").contains("\"cleared\":1"))
-  let missing = file_registry(store).dispatch(
+  let missing = @window_state.file_registry(store).dispatch(
     @lepusa.InvokeRequest::new(
       id="missing",
       window_label="main",

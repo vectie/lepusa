@@ -139,10 +139,11 @@ fn verify_launch_manifest(
 }
 
 ///|
+#derive(Debug, Eq)
 enum VerifiedContent {
   Checked
   Skipped
-} derive(Debug, Eq)
+}
 
 ///|
 async fn verify_webview_content(

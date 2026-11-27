@@ -1,18 +1,19 @@
 ///|
+#derive(Debug, Eq)
 pub struct FrontendEventDispatch {
   window_label : String
   hook : String
   event : Event
   script : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn FrontendEventDispatch::new(
   window_label~ : String,
-  hook? : String = "__lepusaDispatchEvent",
+  hook~ : String = "__lepusaDispatchEvent",
   event~ : Event,
 ) -> FrontendEventDispatch {
-  { window_label, hook, event, script: frontend_event_script(hook, event) }
+  { window_label, hook, event, script: frontend_event_script(hook, event), }
 }
 
 ///|

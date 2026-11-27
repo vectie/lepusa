@@ -1,29 +1,33 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum MacOSRunMode {
   MacOSDryRun
   MacOSOpenWindow
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MacOSBridgePlan {
   sync_command_routes : Array[String]
   async_command_routes : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MacOSRunPlan {
   webviews : Array[@runtime.NativeWebViewPlan]
   execution : @runtime.NativeExecutionPlan
   bridge : MacOSBridgePlan
   service_supervisor : @runtime.NativeServiceSupervisorPlan
   initial_open_packet : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MacOSRunResult {
   plan : MacOSRunPlan
   status : @lepusa.RunStatus
-} derive(Debug, Eq)
+}
 
 ///|
 #borrow(label, title, url, initialization_script, native_hook, asset_protocol, initial_open_packet, dispatch, resolve_asset)
@@ -35,14 +39,14 @@ extern "c" fn run_webview_with_bridge(
   native_hook : Bytes,
   asset_protocol : Bytes,
   initial_open_packet : Bytes,
-  width : Int,
-  height : Int,
-  resizable : Int,
+  width : Int32,
+  height : Int32,
+  resizable : Int32,
   call_dispatch : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
   dispatch : (Bytes) -> Bytes,
   call_resolve_asset : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
   resolve_asset : (Bytes) -> Bytes,
-) -> Int = "lepusa_macos_run_webview_with_bridge"
+) -> Int32 = "lepusa_macos_run_webview_with_bridge"
 
 ///|
 pub fn prepare_run(
@@ -164,7 +168,7 @@ fn macos_bridge_plan_from_bundled(
 ///|
 pub fn run(
   runtime : @runtime.NativeRuntime,
-  mode? : MacOSRunMode = MacOSDryRun,
+  mode~ : MacOSRunMode = MacOSDryRun,
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
@@ -187,7 +191,7 @@ pub fn run(
 ///|
 pub fn run_bundled(
   manifest : @bundled.BundledRuntimeManifest,
-  mode? : MacOSRunMode = MacOSDryRun,
+  mode~ : MacOSRunMode = MacOSDryRun,
 ) -> Result[MacOSRunResult, Array[String]] {
   match prepare_bundled_run(manifest) {
     Err(problems) => Err(problems)
@@ -265,7 +269,7 @@ pub fn MacOSRunPlan::initial_open_packet(self : MacOSRunPlan) -> String {
 ///|
 pub fn MacOSRunPlan::launch_session(
   self : MacOSRunPlan,
-  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeLaunchSession {
   @runtime.NativeLaunchSession::new(
     webviews=self.webviews(),
@@ -323,7 +327,7 @@ pub fn MacOSBridgePlan::requires_async_dispatch(self : MacOSBridgePlan) -> Bool 
 ///|
 pub fn MacOSBridgePlan::scheduler(
   self : MacOSBridgePlan,
-  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeBridgeScheduler {
   @runtime.NativeBridgeScheduler::new(
     sync_routes=self.sync_command_routes(),
@@ -350,11 +354,11 @@ fn run_plan(
   resolve_asset_for_window~ : (String) -> (Bytes) -> Bytes,
 ) -> Result[MacOSRunResult, Array[String]] {
   match mode {
-    MacOSDryRun => Ok({ plan, status: RunPrepared })
+    MacOSDryRun => Ok({ plan, status: RunPrepared, })
     MacOSOpenWindow => {
       let capability = launch_capability()
       match plan.launch_blocker_with_capability("macOS", capability) {
-        Some(message) => return Ok({ plan, status: RunUnsupported(message) })
+        Some(message) => return Ok({ plan, status: RunUnsupported(message), })
         None => ()
       }
       let session = plan.launch_session_with_capability(capability)
@@ -367,7 +371,7 @@ fn run_plan(
       match startup.first_failure_message(context="macOS service startup") {
         Some(message) => {
           ignore(plan.execute_service_shutdown())
-          return Ok({ plan, status: RunFailed(message) })
+          return Ok({ plan, status: RunFailed(message), })
         }
         None => ()
       }
@@ -403,12 +407,12 @@ fn run_plan(
           None =>
             match
               shutdown.first_failure_message(context="macOS service shutdown") {
-              Some(message) => Ok({ plan, status: RunFailed(message) })
-              None => Ok({ plan, status: RunLaunched })
+              Some(message) => Ok({ plan, status: RunFailed(message), })
+              None => Ok({ plan, status: RunLaunched, })
             }
         }
       } else {
-        Ok({ plan, status: RunFailed("macOS WebView launch failed") })
+        Ok({ plan, status: RunFailed("macOS WebView launch failed"), })
       }
     }
   }
@@ -432,7 +436,7 @@ fn macos_initialization_script(
 ///|
 fn macos_native_hook_script(
   hook : String,
-  allowed_routes? : Array[String] = [],
+  allowed_routes~ : Array[String] = [],
 ) -> String {
   let browser_host_route_available = allowed_routes.contains(
       "browserHost.execute",

@@ -1,13 +1,14 @@
 ///|
+#derive(Debug, Eq)
 pub struct ResourceLeakReport {
   resources : Array[ResourceEntry]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResourceLeakReport::new(
-  resources? : Array[ResourceEntry] = [],
+  resources~ : Array[ResourceEntry] = [],
 ) -> ResourceLeakReport {
-  { resources: resources.copy() }
+  { resources: resources.copy(), }
 }
 
 ///|
@@ -25,7 +26,7 @@ pub fn ResourceLeakReport::handles(
 }
 
 ///|
-pub fn ResourceLeakReport::count(self : ResourceLeakReport) -> Int {
+pub fn ResourceLeakReport::count(self : ResourceLeakReport) -> Int32 {
   self.resources.length()
 }
 
@@ -85,17 +86,18 @@ pub fn ResourceLeakReport::to_json(self : ResourceLeakReport) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ResourceCleanupReport {
   closed : Array[ResourceEntry]
   remaining : Array[ResourceEntry]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResourceCleanupReport::new(
-  closed? : Array[ResourceEntry] = [],
-  remaining? : Array[ResourceEntry] = [],
+  closed~ : Array[ResourceEntry] = [],
+  remaining~ : Array[ResourceEntry] = [],
 ) -> ResourceCleanupReport {
-  { closed: closed.copy(), remaining: remaining.copy() }
+  { closed: closed.copy(), remaining: remaining.copy(), }
 }
 
 ///|
@@ -113,14 +115,16 @@ pub fn ResourceCleanupReport::remaining(
 }
 
 ///|
-pub fn ResourceCleanupReport::closed_count(self : ResourceCleanupReport) -> Int {
+pub fn ResourceCleanupReport::closed_count(
+  self : ResourceCleanupReport,
+) -> Int32 {
   self.closed.length()
 }
 
 ///|
 pub fn ResourceCleanupReport::remaining_count(
   self : ResourceCleanupReport,
-) -> Int {
+) -> Int32 {
   self.remaining.length()
 }
 

@@ -1,9 +1,10 @@
 ///|
+#derive(Debug, Eq)
 pub struct PluginScaffoldResult {
   root : String
   plugin_name : String
   files : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn PluginScaffoldResult::root(self : PluginScaffoldResult) -> String {
@@ -63,7 +64,7 @@ pub async fn write_plugin_with_workspace(
     }
   }
   if problems.is_empty() {
-    Ok({ root, plugin_name: normalized_name, files })
+    Ok({ root, plugin_name: normalized_name, files, })
   } else {
     Err(problems)
   }
@@ -100,7 +101,7 @@ fn normalize_plugin_name(name : String) -> String {
 ///|
 fn plugin_skeleton_files(
   plugin_name : String,
-  lepusa_root? : String = "",
+  lepusa_root~ : String = "",
 ) -> Array[ScaffoldFile] {
   let files = [
     ScaffoldFile::new(path="moon.mod", content=plugin_moon_mod(plugin_name)),

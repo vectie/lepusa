@@ -33,10 +33,10 @@ pub fn[Model, Msg] UiProgram::new(
   view~ : UiView[Model, Msg],
   encode~ : UiEncode[Msg],
   decode~ : UiDecode[Msg],
-  route? : String = "ui.dispatch",
-  render_event? : String = "ui.render",
-  window_label? : String = "main",
-  root_id? : String = "lepusa-root",
+  route~ : String = "ui.dispatch",
+  render_event~ : String = "ui.render",
+  window_label~ : String = "main",
+  root_id~ : String = "lepusa-root",
 ) -> UiProgram[Model, Msg] {
   {
     model,
@@ -124,7 +124,7 @@ pub fn[Model, Msg] UiProgram::plugin(
 ///|
 pub fn[Model, Msg] UiProgram::capability(
   self : UiProgram[Model, Msg],
-  name? : String = "ui",
+  name~ : String = "ui",
 ) -> @lepusa.Capability {
   @lepusa.Capability::new(name).command(self.route)
 }
@@ -132,7 +132,7 @@ pub fn[Model, Msg] UiProgram::capability(
 ///|
 pub fn[Model, Msg] UiProgram::capability_for_window(
   self : UiProgram[Model, Msg],
-  name? : String = "ui",
+  name~ : String = "ui",
 ) -> @lepusa.Capability {
   self.capability(name~).window(self.window_label)
 }
@@ -195,7 +195,7 @@ pub fn[Model, Msg] UiProgram::dispatch(
     Err(problem) => Err(problem)
     Ok(message) => {
       let (next_model, command) = (self.update)(message, self.model)
-      let next_program = { ..self, model: next_model }
+      let next_program = { ..self, model: next_model, }
       Ok(
         UiTransition::new(
           program=next_program,
@@ -300,7 +300,7 @@ fn[Model, Msg] UiTransition::new(
   message~ : Msg,
   command~ : @lepusa.Cmd,
 ) -> UiTransition[Model, Msg] {
-  { program, message, command }
+  { program, message, command, }
 }
 
 ///|

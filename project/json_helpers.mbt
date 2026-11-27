@@ -18,7 +18,7 @@ fn required_config_int(
   object : Map[String, Json],
   key : String,
   problems : Array[String],
-) -> Int {
+) -> Int32 {
   match optional_config_int(object, key) {
     Some(value) => value
     None => {
@@ -89,7 +89,7 @@ fn optional_config_bool(object : Map[String, Json], key : String) -> Bool? {
 }
 
 ///|
-fn optional_config_int(object : Map[String, Json], key : String) -> Int? {
+fn optional_config_int(object : Map[String, Json], key : String) -> Int32? {
   match object.get(key) {
     Some(value) =>
       try @json.from_json(value) catch {

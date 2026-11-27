@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum BackpressureOverflow {
   RejectNew
   DropOldest
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BackpressureOverflow::name(self : BackpressureOverflow) -> String {
@@ -13,34 +14,35 @@ pub fn BackpressureOverflow::name(self : BackpressureOverflow) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BackpressurePolicy {
-  max_pending : Int
+  max_pending : Int32
   overflow : BackpressureOverflow
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BackpressurePolicy::unbounded() -> BackpressurePolicy {
-  { max_pending: -1, overflow: RejectNew }
+  { max_pending: -1, overflow: RejectNew, }
 }
 
 ///|
 pub fn BackpressurePolicy::bounded(
-  max_pending~ : Int,
-  overflow? : BackpressureOverflow = RejectNew,
+  max_pending~ : Int32,
+  overflow~ : BackpressureOverflow = RejectNew,
 ) -> BackpressurePolicy {
-  { max_pending, overflow }
+  { max_pending, overflow, }
 }
 
 ///|
 pub fn BackpressurePolicy::new(
-  max_pending? : Int = -1,
-  overflow? : BackpressureOverflow = RejectNew,
+  max_pending~ : Int32 = -1,
+  overflow~ : BackpressureOverflow = RejectNew,
 ) -> BackpressurePolicy {
-  { max_pending, overflow }
+  { max_pending, overflow, }
 }
 
 ///|
-pub fn BackpressurePolicy::max_pending(self : BackpressurePolicy) -> Int {
+pub fn BackpressurePolicy::max_pending(self : BackpressurePolicy) -> Int32 {
   self.max_pending
 }
 
@@ -64,7 +66,7 @@ pub fn BackpressurePolicy::is_unbounded(self : BackpressurePolicy) -> Bool {
 ///|
 pub fn BackpressurePolicy::at_capacity(
   self : BackpressurePolicy,
-  pending : Int,
+  pending : Int32,
 ) -> Bool {
   self.is_bounded() && pending >= self.max_pending
 }

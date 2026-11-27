@@ -8,26 +8,27 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "shell") -> @lepusa.Capability {
+pub fn capability(name~ : String = "shell") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Shell)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "shell",
+  name~ : String = "shell",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ShellPolicy {
   allowed_commands : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
-pub fn ShellPolicy::new(allowed_commands? : Array[String] = []) -> ShellPolicy {
-  { allowed_commands: allowed_commands.copy() }
+pub fn ShellPolicy::new(allowed_commands~ : Array[String] = []) -> ShellPolicy {
+  { allowed_commands: allowed_commands.copy(), }
 }
 
 ///|
@@ -113,13 +114,13 @@ pub fn ShellProcess::stdin_chunks(self : ShellProcess) -> Array[String] {
 
 ///|
 pub struct ShellProcessTable {
-  mut next_id : Int
+  mut next_id : Int32
   processes : Map[String, ShellProcess]
 }
 
 ///|
 pub fn ShellProcessTable::new() -> ShellProcessTable {
-  { next_id: 1, processes: {} }
+  { next_id: 1, processes: {}, }
 }
 
 ///|
@@ -162,7 +163,7 @@ fn ShellProcessTable::spawn(
 pub fn ShellProcessTable::kill(self : ShellProcessTable, id : String) -> Bool {
   match self.processes.get(id) {
     Some(process) => {
-      self.processes[id] = { ..process, status: "killed" }
+      self.processes[id] = { ..process, status: "killed", }
       true
     }
     None => false
@@ -188,8 +189,8 @@ pub fn ShellProcessTable::write_stdin(
 
 ///|
 pub fn registry(
-  policy? : ShellPolicy = ShellPolicy::new(),
-  table? : ShellProcessTable = ShellProcessTable::new(),
+  policy~ : ShellPolicy = ShellPolicy::new(),
+  table~ : ShellProcessTable = ShellProcessTable::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, table~)
 }
@@ -197,8 +198,8 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : ShellPolicy = ShellPolicy::new(),
-  table? : ShellProcessTable = ShellProcessTable::new(),
+  policy~ : ShellPolicy = ShellPolicy::new(),
+  table~ : ShellProcessTable = ShellProcessTable::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_async_fn(
@@ -362,7 +363,7 @@ fn command_spec(
   if command == "" {
     Err("\{context} command is required")
   } else {
-    Ok({ command, args: args.copy(), cwd, stdin })
+    Ok({ command, args: args.copy(), cwd, stdin, })
   }
 }
 

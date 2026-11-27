@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct ProjectManifest {
   metadata : AppMetadata
   windows : Array[WindowConfig]
@@ -12,22 +13,22 @@ pub struct ProjectManifest {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ProjectManifest::new(
   metadata : AppMetadata,
-  windows? : Array[WindowConfig] = [],
-  plugins? : Array[Plugin] = [],
-  capabilities? : Array[Capability] = [],
-  filesystem_scopes? : Array[FileSystemScope] = [],
-  startup? : Cmd = None,
-  lifecycle_hooks? : Array[LifecycleHook] = [],
-  runtime? : RuntimeConfig = RuntimeConfig::system_webview(),
+  windows~ : Array[WindowConfig] = [],
+  plugins~ : Array[Plugin] = [],
+  capabilities~ : Array[Capability] = [],
+  filesystem_scopes~ : Array[FileSystemScope] = [],
+  startup~ : Cmd = None,
+  lifecycle_hooks~ : Array[LifecycleHook] = [],
+  runtime~ : RuntimeConfig = RuntimeConfig::system_webview(),
   icon_path? : String,
-  resource_sources? : Array[BundleResourceSource] = [],
-  runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
-  signing? : SigningConfig = SigningConfig::new(),
+  resource_sources~ : Array[BundleResourceSource] = [],
+  runtime_dependency_sources~ : Array[BundleRuntimeDependencySource] = [],
+  signing~ : SigningConfig = SigningConfig::new(),
 ) -> ProjectManifest {
   {
     metadata,
@@ -182,7 +183,7 @@ pub fn ProjectManifest::with_icon_path(
   self : ProjectManifest,
   icon_path : String,
 ) -> ProjectManifest {
-  { ..self, icon_path: Some(icon_path) }
+  { ..self, icon_path: Some(icon_path), }
 }
 
 ///|
@@ -333,8 +334,8 @@ pub fn ProjectManifest::runtime_plan(
 pub fn ProjectManifest::bundle_plan(
   self : ProjectManifest,
   root : Cell,
-  target? : BundleTarget = MacOS,
-  registered_routes? : Array[String] = [],
+  target~ : BundleTarget = MacOS,
+  registered_routes~ : Array[String] = [],
 ) -> Result[BundlePlan, Array[String]] {
   match self.runtime_plan(root) {
     Ok(runtime) => {

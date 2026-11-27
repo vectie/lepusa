@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum CommandMode {
   Sync
   Async
   Stream
   Event
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CommandMode::name(self : CommandMode) -> String {
@@ -17,11 +18,12 @@ pub fn CommandMode::name(self : CommandMode) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum CommandExecutionAffinity {
   MainThread
   WorkerThread
   AnyThread
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CommandExecutionAffinity::name(
@@ -35,6 +37,7 @@ pub fn CommandExecutionAffinity::name(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct CommandSpec {
   name : String
   mode : CommandMode
@@ -42,16 +45,16 @@ pub struct CommandSpec {
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn CommandSpec::new(
   name : String,
-  mode? : CommandMode = Sync,
-  affinity? : CommandExecutionAffinity = AnyThread,
-  permission? : Permission = Permission::command(name),
-  request? : IpcSchema = IpcSchema::any(),
-  response? : IpcSchema = IpcSchema::any(),
+  mode~ : CommandMode = Sync,
+  affinity~ : CommandExecutionAffinity = AnyThread,
+  permission~ : Permission = Permission::command(name),
+  request~ : IpcSchema = IpcSchema::any(),
+  response~ : IpcSchema = IpcSchema::any(),
 ) -> CommandSpec {
   {
     name,
@@ -96,10 +99,10 @@ pub fn CommandSpec::response_schema(self : CommandSpec) -> IpcSchema {
 ///|
 pub fn CommandSpec::with_schema(
   self : CommandSpec,
-  request? : IpcSchema = self.request_schema,
-  response? : IpcSchema = self.response_schema,
+  request~ : IpcSchema = self.request_schema,
+  response~ : IpcSchema = self.response_schema,
 ) -> CommandSpec {
-  { ..self, request_schema: request, response_schema: response }
+  { ..self, request_schema: request, response_schema: response, }
 }
 
 ///|
@@ -111,23 +114,24 @@ pub fn CommandSpec::with_affinity(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Plugin::new(name : String) -> Plugin {
-  { name, commands: [], lifecycle_hooks: [] }
+  { name, commands: [], lifecycle_hooks: [], }
 }
 
 ///|
 pub fn Plugin::command(
   self : Plugin,
   name : String,
-  mode? : CommandMode = Sync,
-  affinity? : CommandExecutionAffinity = AnyThread,
+  mode~ : CommandMode = Sync,
+  affinity~ : CommandExecutionAffinity = AnyThread,
   permission? : Permission,
   request? : IpcSchema,
   response? : IpcSchema,
@@ -150,7 +154,7 @@ pub fn Plugin::command_sync(
   permission? : Permission,
   request? : IpcSchema,
   response? : IpcSchema,
-  affinity? : CommandExecutionAffinity = AnyThread,
+  affinity~ : CommandExecutionAffinity = AnyThread,
 ) -> Plugin {
   self.command(name, mode=Sync, affinity~, permission?, request?, response?)
 }
@@ -162,7 +166,7 @@ pub fn Plugin::command_async(
   permission? : Permission,
   request? : IpcSchema,
   response? : IpcSchema,
-  affinity? : CommandExecutionAffinity = AnyThread,
+  affinity~ : CommandExecutionAffinity = AnyThread,
 ) -> Plugin {
   self.command(name, mode=Async, affinity~, permission?, request?, response?)
 }
@@ -174,7 +178,7 @@ pub fn Plugin::command_stream(
   permission? : Permission,
   request? : IpcSchema,
   response? : IpcSchema,
-  affinity? : CommandExecutionAffinity = AnyThread,
+  affinity~ : CommandExecutionAffinity = AnyThread,
 ) -> Plugin {
   self.command(name, mode=Stream, affinity~, permission?, request?, response?)
 }
@@ -186,7 +190,7 @@ pub fn Plugin::command_event(
   permission? : Permission,
   request? : IpcSchema,
   response? : IpcSchema,
-  affinity? : CommandExecutionAffinity = AnyThread,
+  affinity~ : CommandExecutionAffinity = AnyThread,
 ) -> Plugin {
   self.command(name, mode=Event, affinity~, permission?, request?, response?)
 }

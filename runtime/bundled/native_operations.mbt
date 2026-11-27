@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 pub struct BundledNativeLifecycleStep {
   event : BundledLifecycleEvent
   executable_operations : Array[@runtime.NativeExecutableOperation]
   evaluation_scripts : Array[@runtime.NativeEvaluationScript]
   navigations : Array[@runtime.NativeNavigation]
-} derive(Debug)
+}
 
 ///|
 pub fn BundledBootstrapPlan::startup_executable_operations(

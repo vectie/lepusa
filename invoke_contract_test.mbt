@@ -1,5 +1,5 @@
 ///|
-fn invoke_contract_app(include_write? : Bool = false) -> @lepusa.App {
+fn invoke_contract_app(include_write~ : Bool = false) -> @lepusa.App {
   let app = @lepusa.new(
       @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
     )
@@ -47,7 +47,7 @@ fn invoke_contract_app(include_write? : Bool = false) -> @lepusa.App {
 }
 
 ///|
-fn invoke_contract_plan(include_write? : Bool = false) -> @lepusa.RuntimePlan {
+fn invoke_contract_plan(include_write~ : Bool = false) -> @lepusa.RuntimePlan {
   match
     invoke_contract_app(include_write~).runtime_plan(
       config=@lepusa.RuntimeConfig::headless(),

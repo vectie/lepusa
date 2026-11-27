@@ -3,12 +3,12 @@ pub fn NativeRuntime::run_report(
   self : NativeRuntime,
   target~ : String,
   status~ : @lepusa.RunStatus,
-  load_url? : String = "",
-  execution_report? : NativeOperationExecutionReport? = None,
-  bridge_sync_routes? : Int = 0,
-  bridge_async_routes? : Int = 0,
-  target_can_launch? : Bool = true,
-  target_launch_blocker? : String = "",
+  load_url~ : String = "",
+  execution_report~ : NativeOperationExecutionReport? = None,
+  bridge_sync_routes~ : Int32 = 0,
+  bridge_async_routes~ : Int32 = 0,
+  target_can_launch~ : Bool = true,
+  target_launch_blocker~ : String = "",
 ) -> @lepusa.RunReport {
   let plan = self.runner_plan()
   let services = plan.service_plan()

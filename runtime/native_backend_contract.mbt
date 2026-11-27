@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeBackendContract {
   backend_name : String
   webview_engine : String
@@ -8,17 +9,17 @@ pub struct NativeBackendContract {
   async_executor : NativeBridgeAsyncExecutor
   bridge_loop : NativeBridgeLoopContract
   invoke_contract_report : @lepusa.InvokeContractReport
-  webview_count : Int
+  webview_count : Int32
   launch_blocker : String?
   problems : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeBackend::contract(
   self : NativeBackend,
   host : RuntimeHost,
   capability~ : NativeLaunchCapability,
-  platform_name? : String = self.name,
+  platform_name~ : String = self.name,
 ) -> Result[NativeBackendContract, Array[String]] {
   match self.runner_plan(host) {
     Ok(runner) =>
@@ -38,7 +39,7 @@ pub fn NativeBackend::contract(
 pub fn NativeRuntime::backend_contract(
   self : NativeRuntime,
   capability~ : NativeLaunchCapability,
-  platform_name? : String = self.backend().name(),
+  platform_name~ : String = self.backend().name(),
 ) -> NativeBackendContract {
   NativeBackendContract::from_runner(
     self.runner_plan(),
@@ -70,7 +71,7 @@ fn NativeBackendContract::from_runner(
   capability~ : NativeLaunchCapability,
   invoke_contract_report~ : @lepusa.InvokeContractReport,
   platform_name~ : String,
-  webview_count? : Int = runner.webview_specs().length(),
+  webview_count~ : Int32 = runner.webview_specs().length(),
 ) -> NativeBackendContract {
   let bridge_scheduler = runner.bridge_scheduler(mode=capability.bridge_mode())
   let launch_blocker = match
@@ -177,7 +178,7 @@ pub fn NativeBackendContract::invoke_contract_report(
 ///|
 pub fn NativeBackendContract::webview_count(
   self : NativeBackendContract,
-) -> Int {
+) -> Int32 {
   self.webview_count
 }
 

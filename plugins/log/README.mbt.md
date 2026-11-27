@@ -6,8 +6,8 @@ declaration, scoped capability helpers, and command registry wiring.
 ```mbt check
 ///|
 test "log plugin usage" {
-  let buffer = LogBuffer::new()
-  let registry = registry(buffer~)
+  let buffer = @log.LogBuffer::new()
+  let registry = @log.registry(buffer~)
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -16,7 +16,7 @@ test "log plugin usage" {
       command="write",
       payload="{\"message\":\"ready\"}",
     ),
-    capabilities=[capability_for_window("main")],
+    capabilities=[@log.capability_for_window("main")],
   )
   assert_true(response is InvokeOk("1", _))
   assert_eq(buffer.entries()[0].message(), "ready")

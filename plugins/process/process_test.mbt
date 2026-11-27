@@ -1,6 +1,6 @@
 ///|
 test "process plugin declares explicit process commands" {
-  let declared = plugin()
+  let declared = @process.plugin()
   assert_eq(declared.name(), "process")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("process.info"))
@@ -19,17 +19,17 @@ test "process plugin declares explicit process commands" {
 
 ///|
 test "process capabilities split info environment and control" {
-  let info = info_capability().window("main")
+  let info = @process.info_capability().window("main")
   assert_true(info.allows(window_label="main", permission=ProcessInfo))
   assert_false(info.allows(window_label="main", permission=ProcessEnvironment))
-  let environment = environment_capability().window("main")
+  let environment = @process.environment_capability().window("main")
   assert_true(
     environment.allows(window_label="main", permission=ProcessEnvironment),
   )
   assert_false(
     environment.allows(window_label="main", permission=ProcessControl),
   )
-  let all = capability_for_window("main")
+  let all = @process.capability_for_window("main")
   assert_true(all.allows(window_label="main", permission=ProcessInfo))
   assert_true(all.allows(window_label="main", permission=ProcessEnvironment))
   assert_true(all.allows(window_label="main", permission=ProcessControl))
@@ -38,13 +38,13 @@ test "process capabilities split info environment and control" {
 
 ///|
 test "process plugin registers portable process handlers" {
-  let registry = register(@lepusa.CommandRegistry::new())
+  let registry = @process.register(@lepusa.CommandRegistry::new())
   assert_true(registry.contains("process.info"))
   assert_true(registry.contains("process.cwd"))
   assert_true(registry.contains("process.env"))
   assert_true(registry.contains("process.setEnv"))
   assert_false(registry.contains("process.exit"))
-  let capability = capability_for_window("main")
+  let capability = @process.capability_for_window("main")
   let info = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="info",

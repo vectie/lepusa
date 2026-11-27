@@ -1,21 +1,24 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundleInstallSmokeCommand {
   name : String
   tool : String
   arguments : Array[String]
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleInstallSmokeCheck {
   kind : String
   path : String
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleInstallSmokePlan {
   manifest : BundleDistributionManifest
   install_root : String
@@ -23,17 +26,17 @@ pub struct BundleInstallSmokePlan {
   commands : Array[BundleInstallSmokeCommand]
   checks : Array[BundleInstallSmokeCheck]
   blockers : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleInstallSmokeCommand::new(
   name~ : String,
   tool~ : String,
-  arguments? : Array[String] = [],
-  required? : Bool = true,
+  arguments~ : Array[String] = [],
+  required~ : Bool = true,
   description~ : String,
 ) -> BundleInstallSmokeCommand {
-  { name, tool, arguments, required, description }
+  { name, tool, arguments, required, description, }
 }
 
 ///|
@@ -90,10 +93,10 @@ pub fn BundleInstallSmokeCommand::to_json(
 pub fn BundleInstallSmokeCheck::new(
   kind~ : String,
   path~ : String,
-  required? : Bool = true,
+  required~ : Bool = true,
   description~ : String,
 ) -> BundleInstallSmokeCheck {
-  { kind, path, required, description }
+  { kind, path, required, description, }
 }
 
 ///|
@@ -137,7 +140,7 @@ pub fn BundleInstallSmokeCheck::to_json(
 ///|
 pub fn BundleDistributionManifest::install_smoke_plan(
   self : BundleDistributionManifest,
-  install_root? : String = "_build/lepusa-install-smoke",
+  install_root~ : String = "_build/lepusa-install-smoke",
 ) -> BundleInstallSmokePlan {
   let root = clean_install_root(install_root)
   let blockers : Array[String] = []

@@ -1,19 +1,21 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum EventTarget {
   AppTarget
   WindowTarget(String)
   WebviewTarget(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct Event {
   name : String
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
-pub fn Event::new(name : String, payload? : String = "") -> Event {
-  { name, payload }
+pub fn Event::new(name : String, payload~ : String = "") -> Event {
+  { name, payload, }
 }
 
 ///|

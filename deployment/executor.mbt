@@ -1,32 +1,35 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum DeploymentExecutionStatus {
   DeploymentStepCompleted(String)
   DeploymentStepSkipped(String)
   DeploymentStepFailed(String)
   DeploymentStepRolledBack(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct DeploymentStepOutcome {
   step : DeploymentStep
   status : DeploymentExecutionStatus
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct DeploymentExecutionReport {
   plan : DeploymentPlan
   dry_run : Bool
   committed : Bool
   rolled_back : Bool
   outcomes : Array[DeploymentStepOutcome]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn DeploymentStepOutcome::new(
   step~ : DeploymentStep,
   status~ : DeploymentExecutionStatus,
 ) -> DeploymentStepOutcome {
-  { step, status }
+  { step, status, }
 }
 
 ///|
@@ -87,7 +90,7 @@ pub fn DeploymentStepOutcome::to_json(self : DeploymentStepOutcome) -> String {
 pub fn DeploymentPlan::dry_run(
   self : DeploymentPlan,
   fail_at? : DeploymentStepKind,
-  allow_restart? : Bool = false,
+  allow_restart~ : Bool = false,
 ) -> DeploymentExecutionReport {
   deployment_execute_dry_run(self, fail_at~, allow_restart~)
 }
@@ -135,28 +138,28 @@ pub fn DeploymentExecutionReport::ok(self : DeploymentExecutionReport) -> Bool {
 ///|
 pub fn DeploymentExecutionReport::completed_count(
   self : DeploymentExecutionReport,
-) -> Int {
+) -> Int32 {
   deployment_outcome_count(self.outcomes, "completed")
 }
 
 ///|
 pub fn DeploymentExecutionReport::skipped_count(
   self : DeploymentExecutionReport,
-) -> Int {
+) -> Int32 {
   deployment_outcome_count(self.outcomes, "skipped")
 }
 
 ///|
 pub fn DeploymentExecutionReport::failed_count(
   self : DeploymentExecutionReport,
-) -> Int {
+) -> Int32 {
   deployment_outcome_count(self.outcomes, "failed")
 }
 
 ///|
 pub fn DeploymentExecutionReport::rolled_back_count(
   self : DeploymentExecutionReport,
-) -> Int {
+) -> Int32 {
   deployment_outcome_count(self.outcomes, "rolled-back")
 }
 
@@ -298,7 +301,7 @@ fn deployment_execute_dry_run(
   let rolled_back = outcomes.any(fn(outcome) {
     outcome.status() is DeploymentStepRolledBack(_)
   })
-  { plan, dry_run: true, committed: !failed, rolled_back, outcomes }
+  { plan, dry_run: true, committed: !failed, rolled_back, outcomes, }
 }
 
 ///|
@@ -316,6 +319,6 @@ fn deployment_should_fail(
 fn deployment_outcome_count(
   outcomes : Array[DeploymentStepOutcome],
   name : String,
-) -> Int {
+) -> Int32 {
   outcomes.filter(fn(outcome) { outcome.status().name() == name }).length()
 }

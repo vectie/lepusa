@@ -20,6 +20,7 @@ pub fn registry(state? : AppState) -> @lepusa.CommandRegistry
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum AppControlAction {
   Show
   Hide
@@ -27,23 +28,25 @@ pub(all) enum AppControlAction {
   SetDockVisibility
   Exit
   Restart
-} derive(Eq, @debug.Debug)
+}
 pub fn AppControlAction::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct AppControlOperation {
   action : AppControlAction
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AppControlOperation::action(Self) -> AppControlAction
 pub fn AppControlOperation::new(action~ : AppControlAction, payload? : String) -> Self
 pub fn AppControlOperation::payload(Self) -> String
 pub fn AppControlOperation::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct AppInfo {
   name : String
   version : String
   identifier : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AppInfo::default() -> Self
 pub fn AppInfo::from_metadata(@lepusa.AppMetadata) -> Self
 pub fn AppInfo::identifier(Self) -> String
@@ -71,14 +74,14 @@ pub fn AppState::restart_requested(Self) -> Bool
 pub fn AppState::theme(Self) -> AppTheme
 pub fn AppState::visible(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum AppTheme {
   System
   Light
   Dark
-} derive(Eq, @debug.Debug)
+}
 pub fn AppTheme::name(Self) -> String
 
 // Type aliases
 
 // Traits
-

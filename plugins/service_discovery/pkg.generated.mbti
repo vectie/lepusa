@@ -20,9 +20,10 @@ pub fn registry(policy? : ServiceDiscoveryPolicy) -> @lepusa.CommandRegistry
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct ServiceDiscoveryPolicy {
   services : Array[ServiceEndpoint]
-} derive(Eq, @debug.Debug)
+}
 pub fn ServiceDiscoveryPolicy::from_local_services(Array[@lepusa.LocalService]) -> Self
 pub fn ServiceDiscoveryPolicy::new(services? : Array[ServiceEndpoint]) -> Self
 pub fn ServiceDiscoveryPolicy::service(Self, ServiceEndpoint) -> Self
@@ -30,11 +31,12 @@ pub fn ServiceDiscoveryPolicy::service_names(Self) -> Array[String]
 pub fn ServiceDiscoveryPolicy::services(Self) -> Array[ServiceEndpoint]
 pub fn ServiceDiscoveryPolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct ServiceEndpoint {
   name : String
   url : String
   health_path : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn ServiceEndpoint::health_path(Self) -> String?
 pub fn ServiceEndpoint::name(Self) -> String
 pub fn ServiceEndpoint::new(name~ : String, url~ : String, health_path? : String) -> Self

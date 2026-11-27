@@ -375,9 +375,9 @@ async fn render_bridge_drain_async(args : Array[String]) -> CliResult {
 ///|
 fn render_bridge_drain_json(
   handoff_script : String,
-  pending_after_handoff~ : Int,
+  pending_after_handoff~ : Int32,
   delivery_json~ : String,
-  pending_after_drain~ : Int,
+  pending_after_drain~ : Int32,
 ) -> String {
   [
     "{",

@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeLaunchReadiness {
   target : String
   platform_name : String
@@ -6,7 +7,7 @@ pub struct NativeLaunchReadiness {
   capability : NativeLaunchCapability
   preflight : NativeBackendPreflight
   requested_bridge_mode : NativeBridgeSchedulerMode
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeLaunchReadiness::new(

@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundledServicePlan {
   services : Array[@lepusa.LocalService]
   startup_services : Array[@lepusa.LocalService]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundledRuntimeManifest::service_plan(
@@ -26,7 +27,7 @@ pub fn BundledRuntimeManifest::service_plan(
 pub fn BundledServicePlan::new(
   services~ : Array[@lepusa.LocalService],
 ) -> BundledServicePlan {
-  { services: services.copy(), startup_services: services.copy() }
+  { services: services.copy(), startup_services: services.copy(), }
 }
 
 ///|

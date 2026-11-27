@@ -1,57 +1,61 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum TrayMenuItemKind {
   Action
   Separator
   Check
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct TrayMenuItem {
   id : String
   label : String
   kind : TrayMenuItemKind
   enabled : Bool
   checked : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct TrayPolicy {
   icon_path : String?
   tooltip : String?
   menu : Array[TrayMenuItem]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct TrayState {
   mut icon_path : String?
   mut tooltip : String?
   mut menu : Array[TrayMenuItem]
   mut visible : Bool
   mut destroyed : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn TrayMenuItem::action(
   id~ : String,
   label~ : String,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> TrayMenuItem {
-  { id, label, kind: Action, enabled, checked: false }
+  { id, label, kind: Action, enabled, checked: false, }
 }
 
 ///|
 pub fn TrayMenuItem::separator() -> TrayMenuItem {
-  { id: "", label: "", kind: Separator, enabled: false, checked: false }
+  { id: "", label: "", kind: Separator, enabled: false, checked: false, }
 }
 
 ///|
 pub fn TrayMenuItem::check(
   id~ : String,
   label~ : String,
-  checked? : Bool = false,
-  enabled? : Bool = true,
+  checked~ : Bool = false,
+  enabled~ : Bool = true,
 ) -> TrayMenuItem {
-  { id, label, kind: Check, enabled, checked }
+  { id, label, kind: Check, enabled, checked, }
 }
 
 ///|
@@ -102,9 +106,9 @@ pub fn TrayMenuItem::validate(self : TrayMenuItem) -> Array[String] {
 pub fn TrayPolicy::new(
   icon_path? : String,
   tooltip? : String,
-  menu? : Array[TrayMenuItem] = [],
+  menu~ : Array[TrayMenuItem] = [],
 ) -> TrayPolicy {
-  { icon_path, tooltip, menu }
+  { icon_path, tooltip, menu, }
 }
 
 ///|
@@ -169,7 +173,7 @@ fn validate_tray_fields(
 }
 
 ///|
-pub fn TrayState::new(policy? : TrayPolicy = TrayPolicy::new()) -> TrayState {
+pub fn TrayState::new(policy~ : TrayPolicy = TrayPolicy::new()) -> TrayState {
   {
     icon_path: policy.icon_path(),
     tooltip: policy.tooltip(),
@@ -217,21 +221,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "tray") -> @lepusa.Capability {
+pub fn capability(name~ : String = "tray") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Tray)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "tray",
+  name~ : String = "tray",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : TrayPolicy = TrayPolicy::new(),
+  policy~ : TrayPolicy = TrayPolicy::new(),
   state? : TrayState,
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state?)
@@ -240,7 +244,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : TrayPolicy = TrayPolicy::new(),
+  policy~ : TrayPolicy = TrayPolicy::new(),
   state? : TrayState,
 ) -> @lepusa.CommandRegistry {
   let state = state.unwrap_or(TrayState::new(policy~))

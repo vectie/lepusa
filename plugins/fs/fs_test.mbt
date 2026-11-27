@@ -1,6 +1,6 @@
 ///|
 test "fs plugin declares permissioned async commands" {
-  let declared = plugin()
+  let declared = @fs.plugin()
   assert_eq(declared.name(), "fs")
   assert_eq(declared.command_routes().length(), 9)
   assert_true(declared.command_routes().contains("fs.readText"))
@@ -13,18 +13,18 @@ test "fs plugin declares permissioned async commands" {
 
 ///|
 test "fs capabilities split read write and scoped window grants" {
-  let read = read_capability_for_window("main")
+  let read = @fs.read_capability_for_window("main")
   assert_true(read.allows(window_label="main", permission=FileSystemRead))
   assert_false(read.allows(window_label="main", permission=FileSystemWrite))
   assert_false(read.allows(window_label="other", permission=FileSystemRead))
-  let both = read_write_capability()
+  let both = @fs.read_write_capability()
   assert_true(both.allows(window_label="any", permission=FileSystemRead))
   assert_true(both.allows(window_label="any", permission=FileSystemWrite))
 }
 
 ///|
 test "fs policy validates scopes and resolves safe relative paths" {
-  let policy = FsPolicy::new()
+  let policy = @fs.FsPolicy::new()
     .scope(@lepusa.FileSystemScope::new(name="assets", root="/app/assets"))
     .scope(
       @lepusa.FileSystemScope::new(
@@ -47,7 +47,7 @@ test "fs policy validates scopes and resolves safe relative paths" {
 
 ///|
 test "fs policy rejects unsafe paths and read-only writes" {
-  let policy = FsPolicy::new().scope(
+  let policy = @fs.FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="assets", root="/app/assets"),
   )
   assert_true(
@@ -74,7 +74,7 @@ test "fs policy rejects unsafe paths and read-only writes" {
 
 ///|
 test "fs policy reports invalid and duplicate scopes" {
-  let problems = FsPolicy::new()
+  let problems = @fs.FsPolicy::new()
     .scope(@lepusa.FileSystemScope::new(name="", root=""))
     .scope(@lepusa.FileSystemScope::new(name="bad/name", root="/tmp"))
     .scope(@lepusa.FileSystemScope::new(name="bad/name", root="/tmp2"))
@@ -104,11 +104,11 @@ async test "fs registry handles scoped text operations" {
   @xfs.create_dir(root) catch {
     _ => ()
   }
-  let policy = FsPolicy::new().scope(
+  let policy = @fs.FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="data", root~, writable=true),
   )
-  let registry = register(@lepusa.CommandRegistry::new(), policy~)
-  let grant = read_write_capability_for_window("main")
+  let registry = @fs.register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = @fs.read_write_capability_for_window("main")
   let create = registry.dispatch_async(
     fs_request("createDir", "{\"scope\":\"data\",\"path\":\"nested\"}"),
     capabilities=[grant],
@@ -149,11 +149,11 @@ async test "fs registry handles bytes list metadata and delete" {
   @xfs.create_dir(root + "/binary") catch {
     _ => ()
   }
-  let policy = FsPolicy::new().scope(
+  let policy = @fs.FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="data", root~, writable=true),
   )
-  let registry = register(@lepusa.CommandRegistry::new(), policy~)
-  let grant = read_write_capability_for_window("main")
+  let registry = @fs.register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = @fs.read_write_capability_for_window("main")
   let write = registry.dispatch_async(
     fs_request(
       "writeBytes", "{\"scope\":\"data\",\"path\":\"binary/data.bin\",\"base64\":\"aGVsbG8=\"}",
@@ -194,11 +194,11 @@ async test "fs registry handles bytes list metadata and delete" {
 
 ///|
 async test "fs registry enforces scope policy" {
-  let policy = FsPolicy::new().scope(
+  let policy = @fs.FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="assets", root="/tmp/lepusa-assets"),
   )
-  let registry = register(@lepusa.CommandRegistry::new(), policy~)
-  let grant = read_write_capability_for_window("main")
+  let registry = @fs.register(@lepusa.CommandRegistry::new(), policy~)
+  let grant = @fs.read_write_capability_for_window("main")
   let unsafe_read = registry.dispatch_async(
     fs_request("readText", "{\"scope\":\"assets\",\"path\":\"../secret\"}"),
     capabilities=[grant],
@@ -238,15 +238,15 @@ async test "fs manager dispatch enforces compiled operation scopes" {
   @xfs.create_dir(root + "/allowed") catch {
     _ => ()
   }
-  let policy = FsPolicy::new().scope(
+  let policy = @fs.FsPolicy::new().scope(
     @lepusa.FileSystemScope::new(name="data", root~, writable=true),
   )
-  let registry = register(@lepusa.CommandRegistry::new(), policy~)
+  let registry = @fs.register(@lepusa.CommandRegistry::new(), policy~)
   let app = @lepusa.new(
       @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
     )
     .window(label="main", source=@lepusa.Source::html("<main></main>"))
-    .with_plugin(plugin())
+    .with_plugin(@fs.plugin())
     .with_capability(
       @lepusa.Capability::new("main-fs")
       .window("main")

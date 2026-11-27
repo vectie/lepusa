@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeWindowOpenPlan {
   window : RuntimeWindow
   asset_protocol : String
@@ -7,7 +8,7 @@ pub struct RuntimeWindowOpenPlan {
   devtools : Bool
   bridge_source : String
   allowed_routes : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeWindowOpenPlan::new(
@@ -39,7 +40,7 @@ pub fn RuntimeWindowOpenPlan::from_window_config(
   devtools~ : Bool,
   bridge_source~ : String,
   allowed_routes~ : Array[String],
-  event_dispatch_hook? : String = "__lepusaDispatchEvent",
+  event_dispatch_hook~ : String = "__lepusaDispatchEvent",
 ) -> Result[RuntimeWindowOpenPlan, Array[String]] {
   match window.resolve(asset_protocol~) {
     Ok(resolved) =>
@@ -202,7 +203,7 @@ pub fn RuntimeSession::close_window(
     Ok(step) => {
       let operations = step.operations()
       operations.push(RuntimeCloseWindow(window_label))
-      Ok({ session: step.session().without_window(window_label), operations })
+      Ok({ session: step.session().without_window(window_label), operations, })
     }
     Err(problems) => Err(problems)
   }

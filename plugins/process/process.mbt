@@ -9,26 +9,26 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn info_capability(name? : String = "process-info") -> @lepusa.Capability {
+pub fn info_capability(name~ : String = "process-info") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(ProcessInfo)
 }
 
 ///|
 pub fn environment_capability(
-  name? : String = "process-environment",
+  name~ : String = "process-environment",
 ) -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(ProcessEnvironment)
 }
 
 ///|
 pub fn control_capability(
-  name? : String = "process-control",
+  name~ : String = "process-control",
 ) -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(ProcessControl)
 }
 
 ///|
-pub fn capability(name? : String = "process") -> @lepusa.Capability {
+pub fn capability(name~ : String = "process") -> @lepusa.Capability {
   @lepusa.Capability::new(name)
   .permission(ProcessInfo)
   .permission(ProcessEnvironment)
@@ -38,7 +38,7 @@ pub fn capability(name? : String = "process") -> @lepusa.Capability {
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "process",
+  name~ : String = "process",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -186,6 +186,6 @@ fn required_string_field(object : Map[String, Json], key : String) -> String {
 }
 
 ///|
-fn json_int(value : Int) -> Json {
+fn json_int(value : Int32) -> Json {
   Json::number(value.to_double(), repr=value.to_string())
 }

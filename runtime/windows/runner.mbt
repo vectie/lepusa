@@ -1,20 +1,23 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum WindowsRunMode {
   WindowsDryRun
   WindowsOpenWindow
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowsRunResult {
   plan : @runtime.NativePreparedRunPlan
   status : @lepusa.RunStatus
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug)
 pub struct WindowsBundledRunResult {
   plan : @bundled.BundledNativeRunPlan
   status : @lepusa.RunStatus
-} derive(Debug)
+}
 
 ///|
 #borrow(label, title, url, initialization_script, native_hook, asset_protocol, initial_open_packet, dispatch, resolve_asset)
@@ -26,14 +29,14 @@ extern "c" fn native_run_webview(
   native_hook : Bytes,
   asset_protocol : Bytes,
   initial_open_packet : Bytes,
-  width : Int,
-  height : Int,
-  resizable : Int,
+  width : Int32,
+  height : Int32,
+  resizable : Int32,
   call_dispatch : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
   dispatch : (Bytes) -> Bytes,
   call_resolve_asset : FuncRef[((Bytes) -> Bytes, Bytes) -> Bytes],
   resolve_asset : (Bytes) -> Bytes,
-) -> Int = "lepusa_windows_run_webview"
+) -> Int32 = "lepusa_windows_run_webview"
 
 ///|
 pub fn prepare_run(
@@ -48,7 +51,7 @@ pub fn prepare_run(
 ///|
 pub fn run(
   runtime : @runtime.NativeRuntime,
-  mode? : WindowsRunMode = WindowsDryRun,
+  mode~ : WindowsRunMode = WindowsDryRun,
 ) -> Result[WindowsRunResult, Array[String]] {
   match prepare_run(runtime) {
     Err(problems) => Err(problems)
@@ -87,7 +90,7 @@ pub fn prepare_bundled_run(
 ///|
 pub fn run_bundled(
   manifest : @bundled.BundledRuntimeManifest,
-  mode? : WindowsRunMode = WindowsDryRun,
+  mode~ : WindowsRunMode = WindowsDryRun,
 ) -> Result[WindowsBundledRunResult, Array[String]] {
   match prepare_bundled_run(manifest) {
     Err(problems) => Err(problems)
@@ -131,7 +134,7 @@ pub fn WindowsRunResult::execution_plan(
 ///|
 pub fn WindowsRunResult::launch_session(
   self : WindowsRunResult,
-  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeLaunchSession {
   self.plan.launch_session(bridge_mode~)
 }
@@ -160,7 +163,7 @@ pub fn WindowsBundledRunResult::execution_plan(
 ///|
 pub fn WindowsBundledRunResult::launch_session(
   self : WindowsBundledRunResult,
-  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> Result[@runtime.NativeLaunchSession, String] {
   self.plan.launch_session(bridge_mode~)
 }
@@ -319,7 +322,7 @@ fn windows_open_bundled_window(
 }
 
 ///|
-fn windows_status_from_exit_code(exit_code : Int) -> @lepusa.RunStatus {
+fn windows_status_from_exit_code(exit_code : Int32) -> @lepusa.RunStatus {
   match exit_code {
     0 => RunLaunched
     2 =>

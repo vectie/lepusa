@@ -1,17 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeBackend {
   name : String
   webview_engine : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeLaunchPlan {
   backend_name : String
   webview_engine : String
   manifest : @lepusa.RuntimeLaunchManifest
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeOperation {
   NativeStartService(@lepusa.LocalService)
   NativeOpenWindow(RuntimeWindowOpenPlan)
@@ -19,9 +22,10 @@ pub(all) enum NativeOperation {
   NativeDispatchEvent(@lepusa.FrontendEventDispatch)
   NativeRunEffect(String)
   NativeNavigateWindow(String, String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeRunnerPlan {
   backend_name : String
   webview_engine : String
@@ -32,21 +36,22 @@ pub struct NativeRunnerPlan {
   lifecycle_steps : Array[NativeRunnerStep]
   bridge_sync_routes : Array[String]
   bridge_async_routes : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeRunnerStep {
   event : @lepusa.LifecycleEvent
   session : RuntimeSession
   operations : Array[NativeOperation]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeBackend::new(
   name~ : String,
   webview_engine~ : String,
 ) -> NativeBackend {
-  { name, webview_engine }
+  { name, webview_engine, }
 }
 
 ///|
@@ -334,7 +339,7 @@ pub fn NativeRunnerPlan::lifecycle_step(
           })
         Err(problems) => Err(problems)
       }
-    _ => Ok({ event, session: self.session, operations: [] })
+    _ => Ok({ event, session: self.session, operations: [], })
   }
 }
 

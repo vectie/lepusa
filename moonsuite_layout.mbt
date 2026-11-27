@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq, ToJson, FromJson)
 pub(all) struct LepusaMoonSuiteProductHome {
   product_id : String
   state_path : String
@@ -6,7 +7,7 @@ pub(all) struct LepusaMoonSuiteProductHome {
   runtime_path : String
   update_metadata_path : String
   tmp_path : String
-} derive(Debug, Eq, ToJson, FromJson)
+}
 
 ///|
 pub fn moonsuite_product_id() -> String {

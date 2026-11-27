@@ -1,11 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub struct Html {
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Html::empty() -> Html {
-  { content: "" }
+  { content: "", }
 }
 
 ///|

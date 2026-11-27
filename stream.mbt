@@ -14,7 +14,7 @@ fn StreamSink::new(
   channel_id~ : String,
   channels~ : ChannelTable,
 ) -> StreamSink {
-  { route, channel_id, channels }
+  { route, channel_id, channels, }
 }
 
 ///|

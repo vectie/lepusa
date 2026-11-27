@@ -1,19 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct ResourceDescriptor {
   kind : String
   owner : String
   name : String
   metadata : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResourceDescriptor::new(
   kind~ : String,
-  owner? : String = "",
-  name? : String = "",
-  metadata? : String = "",
+  owner~ : String = "",
+  name~ : String = "",
+  metadata~ : String = "",
 ) -> ResourceDescriptor {
-  { kind, owner, name, metadata }
+  { kind, owner, name, metadata, }
 }
 
 ///|
@@ -58,21 +59,22 @@ pub fn ResourceDescriptor::to_json(self : ResourceDescriptor) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ResourceHandle {
   id : String
   kind : String
   owner : String
   name : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResourceHandle::new(
   id~ : String,
   kind~ : String,
-  owner? : String = "",
-  name? : String = "",
+  owner~ : String = "",
+  name~ : String = "",
 ) -> ResourceHandle {
-  { id, kind, owner, name }
+  { id, kind, owner, name, }
 }
 
 ///|
@@ -130,20 +132,21 @@ pub fn ResourceHandle::to_json(self : ResourceHandle) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ResourceEntry {
   id : String
-  sequence : Int
+  sequence : Int32
   kind : String
   owner : String
   name : String
   metadata : String
   closed : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 fn ResourceEntry::new(
   id~ : String,
-  sequence~ : Int,
+  sequence~ : Int32,
   descriptor : ResourceDescriptor,
 ) -> ResourceEntry {
   {
@@ -163,7 +166,7 @@ pub fn ResourceEntry::id(self : ResourceEntry) -> String {
 }
 
 ///|
-pub fn ResourceEntry::sequence(self : ResourceEntry) -> Int {
+pub fn ResourceEntry::sequence(self : ResourceEntry) -> Int32 {
   self.sequence
 }
 
@@ -224,12 +227,12 @@ pub fn ResourceEntry::to_json(self : ResourceEntry) -> String {
 
 ///|
 fn ResourceEntry::as_closed(self : ResourceEntry) -> ResourceEntry {
-  { ..self, closed: true }
+  { ..self, closed: true, }
 }
 
 ///|
 pub struct ResourceTable {
-  mut next_sequence : Int
+  mut next_sequence : Int32
   id_prefix : String
   entries : Map[String, ResourceEntry]
   order : Array[String]
@@ -243,7 +246,7 @@ pub fn ResourceTable::new() -> ResourceTable {
 ///|
 pub fn ResourceTable::with_prefix(id_prefix : String) -> ResourceTable {
   let id_prefix = if id_prefix == "" { "resource" } else { id_prefix }
-  { next_sequence: 1, id_prefix, entries: {}, order: [] }
+  { next_sequence: 1, id_prefix, entries: {}, order: [], }
 }
 
 ///|
@@ -312,7 +315,7 @@ pub fn ResourceTable::contains(self : ResourceTable, id : String) -> Bool {
 }
 
 ///|
-pub fn ResourceTable::count(self : ResourceTable) -> Int {
+pub fn ResourceTable::count(self : ResourceTable) -> Int32 {
   self.entries.length()
 }
 

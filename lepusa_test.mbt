@@ -2,7 +2,7 @@
 test "cell_with_emit keeps rabbita style authoring surface" {
   let (emit, cell) = @lepusa.cell_with_emit(
     model=1,
-    update=fn(message : String, model : Int) {
+    update=fn(message : String, model : Int32) {
       (model + 1, @lepusa.Cmd::effect(message))
     },
     view=fn(_emit, model) { @lepusa.Html::text("model \{model}") },
@@ -546,7 +546,7 @@ test "runtime plans lower commands to backend actions" {
             actions[1]
             is RuntimeNavigate(
               "main",
-              { url: "lepusa://inline/main/index.html", .. }
+              { url: "lepusa://inline/main/index.html", .. },
             ),
           )
           assert_true(actions[2] is RuntimeEffect("boot"))

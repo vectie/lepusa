@@ -1,7 +1,8 @@
 ///|
 test "bundled runtime manifest summarizes launch data" {
   let manifest = sample_bundled_manifest()
-  match BundledRuntimeManifest::parse("/app/lepusa/runtime.json", manifest) {
+  match
+    @bundled.BundledRuntimeManifest::parse("/app/lepusa/runtime.json", manifest) {
     Ok(runtime) => {
       assert_eq(runtime.bundle_root(), "/app")
       let summary = runtime.summary()
@@ -27,7 +28,7 @@ test "bundled runtime manifest summarizes launch data" {
 ///|
 test "bundled runtime manifest exposes distribution envelope" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -58,7 +59,7 @@ test "bundled runtime manifest exposes distribution envelope" {
 ///|
 test "bundled runtime manifest exposes service plan" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -89,7 +90,7 @@ test "bundled runtime manifest exposes service plan" {
 ///|
 test "bundled runtime manifest builds target-aware run plan" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -153,7 +154,7 @@ test "bundled runtime service plan validates service shape" {
     #|    ]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(runtime) =>
       match runtime.service_plan() {
         Ok(_) => abort("unexpected valid service plan")
@@ -167,7 +168,7 @@ test "bundled runtime service plan validates service shape" {
 ///|
 test "bundled runtime manifest exposes first webview" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -199,7 +200,7 @@ test "bundled runtime manifest exposes first webview" {
 ///|
 test "bundled runtime manifest emits bootstrap json" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -238,7 +239,7 @@ test "bundled runtime manifest emits bootstrap json" {
 ///|
 test "bundled runtime manifest resolves protocol assets" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -319,7 +320,7 @@ test "bundled runtime manifest resolves protocol assets" {
 ///|
 test "bundled runtime manifest owns bridge and asset callbacks" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -357,7 +358,7 @@ test "bundled runtime manifest owns bridge and asset callbacks" {
 ///|
 test "bundled runtime manifest prepares shared native run plans" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
@@ -424,7 +425,7 @@ test "bundled runtime manifest prepares shared native run plans" {
 ///|
 test "bundled native run plans expose executable operation views" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       bundled_native_operation_manifest(),
     ) {
@@ -541,20 +542,22 @@ test "bundled native run plans expose executable operation views" {
 ///|
 test "bundled runtime manifest selects lifecycle actions" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "/app/lepusa/runtime.json",
       sample_bundled_manifest(),
     ) {
     Ok(runtime) => {
-      let startup = runtime.lifecycle_json(BundledLifecycleEvent::app_started())
+      let startup = runtime.lifecycle_json(
+        @bundled.BundledLifecycleEvent::app_started(),
+      )
       assert_true(startup.contains("\"name\":\"api\""))
       assert_true(startup.contains("\"name\":\"boot\""))
       let shutdown = runtime.lifecycle_json(
-        BundledLifecycleEvent::app_will_exit(),
+        @bundled.BundledLifecycleEvent::app_will_exit(),
       )
       assert_true(shutdown.contains("\"name\":\"flush\""))
       assert_false(shutdown.contains("\"name\":\"api\""))
-      match BundledLifecycleEvent::window_close_requested("main") {
+      match @bundled.BundledLifecycleEvent::window_close_requested("main") {
         Ok(event) => {
           let close = runtime.lifecycle_json(event)
           assert_true(close.contains("\"label\":\"main\""))
@@ -570,13 +573,13 @@ test "bundled runtime manifest selects lifecycle actions" {
 ///|
 test "bundled runtime manifest validates input shape" {
   assert_true(
-    BundledRuntimeManifest::parse("runtime.json", "{}")
+    @bundled.BundledRuntimeManifest::parse("runtime.json", "{}")
     is Err("runtime object is required"),
   )
-  let invalid = BundledRuntimeManifest::parse("runtime.json", "{")
+  let invalid = @bundled.BundledRuntimeManifest::parse("runtime.json", "{")
   assert_true(invalid is Err(_))
   assert_true(
-    BundledLifecycleEvent::window_closed("")
+    @bundled.BundledLifecycleEvent::window_closed("")
     is Err("lifecycle window is required"),
   )
 }
@@ -593,9 +596,9 @@ async test "bundled runtime preserves official plugin state" {
     #|    "registeredRoutes": ["store.set", "store.get", "windowState.set", "windowState.get"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
-      let runtime = BundledRuntime::new(manifest)
+      let runtime = @bundled.BundledRuntime::new(manifest)
       let set = runtime.dispatch_json_async(
         id="set",
         window_label="main",
@@ -644,7 +647,7 @@ test "bundled runtime dispatches sync official plugins" {
     #|    "registeredRoutes": ["log.write", "fs.writeText"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
       let sync_routes = manifest.registered_sync_routes()
       assert_eq(sync_routes.length(), 1)
@@ -691,9 +694,9 @@ test "bundled bridge dispatch lowers window open to native operation" {
     #|    "registeredRoutes": ["window.open"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
-      let runtime = BundledRuntime::new(manifest)
+      let runtime = @bundled.BundledRuntime::new(manifest)
       let message = "{\"id\":\"open\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"open\",\"payload\":\"{\\\"label\\\":\\\"tools\\\",\\\"title\\\":\\\"Tools\\\",\\\"width\\\":480,\\\"height\\\":360,\\\"source\\\":{\\\"kind\\\":\\\"html\\\",\\\"content\\\":\\\"<aside>tools</aside>\\\"}}\"}"
       match runtime.dispatch_bridge_message_sync(message) {
         Ok(dispatch) => {
@@ -753,9 +756,9 @@ test "bundled bridge dispatch lowers window close to native cleanup operation" {
     #|    "registeredRoutes": ["window.close"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
-      let runtime = BundledRuntime::new(manifest)
+      let runtime = @bundled.BundledRuntime::new(manifest)
       let message = "{\"id\":\"close\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"close\",\"payload\":\"{\\\"windowLabel\\\":\\\"main\\\"}\"}"
       match runtime.dispatch_bridge_message_sync(message) {
         Ok(dispatch) => {
@@ -801,9 +804,9 @@ test "bundled bridge dispatch lowers desktop shell responses" {
     #|    "registeredRoutes": ["menu.setAppMenu", "tray.setVisible"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
-      let runtime = BundledRuntime::new(manifest)
+      let runtime = @bundled.BundledRuntime::new(manifest)
       let menu_message = "{\"id\":\"menu\",\"window_label\":\"main\",\"plugin\":\"menu\",\"command\":\"setAppMenu\",\"payload\":\"{\\\"items\\\":[{\\\"id\\\":\\\"quit\\\",\\\"label\\\":\\\"Quit\\\"}]}\"}"
       match runtime.dispatch_bridge_message_sync(menu_message) {
         Ok(dispatch) => {
@@ -859,7 +862,7 @@ test "bundled runtime enforces command manifest origins" {
     #|    "registeredRoutes": ["log.write"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
       let allowed = manifest.dispatch_json(
         id="log-ok",
@@ -901,7 +904,7 @@ async test "bundled runtime owns bridge message transport" {
     #|    "registeredRoutes": ["store.set", "store.get", "log.write", "fs.writeText"]
     #|  }
     #|}
-  match BundledRuntimeManifest::parse("runtime.json", manifest) {
+  match @bundled.BundledRuntimeManifest::parse("runtime.json", manifest) {
     Ok(manifest) => {
       let scheduler = manifest.bridge_scheduler()
       assert_true(scheduler.requires_async_dispatch())
@@ -964,7 +967,7 @@ async test "bundled runtime owns bridge message transport" {
         }
         Err(problem) => abort(problem)
       }
-      let runtime = BundledRuntime::new(manifest)
+      let runtime = @bundled.BundledRuntime::new(manifest)
       let sync_message = "{\"id\":\"log\",\"window_label\":\"main\",\"plugin\":\"log\",\"command\":\"write\",\"payload\":\"{\\\"message\\\":\\\"ready\\\"}\"}"
       match runtime.bridge_dispatch_task(sync_message) {
         Ok(task) => {
@@ -1049,7 +1052,8 @@ async test "bundled runtime owns bridge message transport" {
       }
       match runtime.bridge_handoff(sync_message) {
         Ok(handoff) =>
-          match BundledBridgeWorkQueue::new().enqueue_handoff(handoff) {
+          match
+            @bundled.BundledBridgeWorkQueue::new().enqueue_handoff(handoff) {
             Err(problem) =>
               assert_eq(
                 problem, "bundled bridge queue only accepts deferred async handoffs",
@@ -1058,7 +1062,7 @@ async test "bundled runtime owns bridge message transport" {
           }
         Err(_) => abort("unexpected bundled immediate queue setup failure")
       }
-      let sync_queue = BundledBridgeWorkQueue::new()
+      let sync_queue = @bundled.BundledBridgeWorkQueue::new()
       let sync_queue_script = @utf8.decode(
         sync_queue.handoff_callback(runtime)(@utf8.encode(sync_message)),
       ) catch {
@@ -1119,7 +1123,7 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
-          let queue = BundledBridgeWorkQueue::new()
+          let queue = @bundled.BundledBridgeWorkQueue::new()
           assert_true(queue.is_empty())
           let queued_script = @utf8.decode(
             queue.handoff_callback(runtime)(@utf8.encode(async_message)),
@@ -1132,7 +1136,7 @@ async test "bundled runtime owns bridge message transport" {
           let queued_completions = queue.drain(runtime)
           assert_eq(queued_completions.length(), 1)
           assert_true(queue.is_empty())
-          let result_queue = BundledBridgeWorkQueue::new()
+          let result_queue = @bundled.BundledBridgeWorkQueue::new()
           ignore(result_queue.enqueue_handoff(handoff))
           let drain_result = result_queue.drain_result(runtime)
           assert_eq(drain_result.pending_before(), 1)
@@ -1220,7 +1224,7 @@ async test "bundled runtime owns bridge message transport" {
           assert_eq(packet_adapter.pending_count(), 1)
           let native_drain_packet = @utf8.decode(
             packet_callbacks.handoff_packet_callback()(
-              bundled_bridge_drain_request_packet("main"),
+              @bundled.bundled_bridge_drain_request_packet("main"),
             ),
           ) catch {
             _ => abort("unexpected invalid bundled native drain request packet")
@@ -1339,7 +1343,7 @@ async test "bundled runtime owns bridge message transport" {
           assert_eq(completions.length(), 1)
           assert_true(queue.is_empty())
           assert_eq(queue.drain(runtime).length(), 0)
-          let rejecting_queue = BundledBridgeWorkQueue::new(
+          let rejecting_queue = @bundled.BundledBridgeWorkQueue::new(
             policy=@lepusa.BackpressurePolicy::bounded(max_pending=1),
           )
           ignore(rejecting_queue.enqueue_handoff(handoff))
@@ -1353,7 +1357,7 @@ async test "bundled runtime owns bridge message transport" {
           assert_true(
             rejecting_queue.to_json().contains("\"overflow\":\"reject-new\""),
           )
-          let dropping_queue = BundledBridgeWorkQueue::new(
+          let dropping_queue = @bundled.BundledBridgeWorkQueue::new(
             policy=@lepusa.BackpressurePolicy::bounded(
               max_pending=1,
               overflow=DropOldest,
@@ -1438,7 +1442,7 @@ async test "bundled runtime owns bridge message transport" {
 ///|
 test "bundled bridge transport validates target window" {
   match
-    BundledRuntimeManifest::parse(
+    @bundled.BundledRuntimeManifest::parse(
       "runtime.json",
       (
         #|{

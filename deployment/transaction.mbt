@@ -1,10 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum DeploymentMode {
   FreshInstall
   UpdateInstall
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum DeploymentStepKind {
   ValidateUpdateManifest
   DownloadUpdateArtifact
@@ -15,9 +17,10 @@ pub(all) enum DeploymentStepKind {
   InstallUpdateArtifact
   RollbackUpdateArtifact
   RestartApplication
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct DeploymentStep {
   kind : DeploymentStepKind
   artifact_path : String?
@@ -25,9 +28,10 @@ pub struct DeploymentStep {
   destination : String?
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct DeploymentPlan {
   target : @lepusa.BundleTarget
   mode : DeploymentMode
@@ -39,7 +43,7 @@ pub struct DeploymentPlan {
   staging_root : String
   trust : @lepusa.UpdateTrustReport
   steps : Array[DeploymentStep]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn DeploymentStep::new(
@@ -47,10 +51,10 @@ pub fn DeploymentStep::new(
   artifact_path? : String,
   source? : String,
   destination? : String,
-  required? : Bool = true,
+  required~ : Bool = true,
   description~ : String,
 ) -> DeploymentStep {
-  { kind, artifact_path, source, destination, required, description }
+  { kind, artifact_path, source, destination, required, description, }
 }
 
 ///|
@@ -127,7 +131,7 @@ pub fn DeploymentPlan::from_update_manifest(
   install_root~ : String,
   staging_root~ : String,
   current_version? : String,
-  require_signature? : Bool = true,
+  require_signature~ : Bool = true,
 ) -> Result[DeploymentPlan, Array[String]] {
   let problems = deployment_config_problems(
     install_root, staging_root, current_version,

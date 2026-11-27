@@ -27,11 +27,12 @@ pub fn LogBuffer::entries(Self) -> Array[LogEntry]
 pub fn LogBuffer::new() -> Self
 pub fn LogBuffer::write(Self, LogEntry) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub struct LogEntry {
   level : String
   message : String
   target : String
-} derive(Eq, @debug.Debug)
+}
 pub fn LogEntry::level(Self) -> String
 pub fn LogEntry::message(Self) -> String
 pub fn LogEntry::new(message~ : String, level? : String, target? : String) -> Self

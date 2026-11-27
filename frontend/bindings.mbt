@@ -1,24 +1,26 @@
 ///|
+#derive(Debug, Eq)
 pub struct FrontendApiConfig {
   global_name : String
   module_name : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct FrontendApiBundle {
   config : FrontendApiConfig
   command_manifest : @lepusa.CommandManifest
   invoke_contract_report : @lepusa.InvokeContractReport?
   javascript : String
   typescript : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn FrontendApiConfig::new(
-  global_name? : String = "lepusa",
-  module_name? : String = "lepusa-api",
+  global_name~ : String = "lepusa",
+  module_name~ : String = "lepusa-api",
 ) -> FrontendApiConfig {
-  { global_name, module_name }
+  { global_name, module_name, }
 }
 
 ///|
@@ -46,7 +48,7 @@ pub fn FrontendApiConfig::validate(self : FrontendApiConfig) -> Array[String] {
 ///|
 pub fn FrontendApiBundle::from_runtime_plan(
   plan : @lepusa.RuntimePlan,
-  config? : FrontendApiConfig = FrontendApiConfig::new(),
+  config~ : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
   FrontendApiBundle::from_command_manifest(
     frontend_invokable_manifest(plan.command_manifest()),
@@ -57,7 +59,7 @@ pub fn FrontendApiBundle::from_runtime_plan(
 ///|
 pub fn FrontendApiBundle::from_launch_manifest(
   manifest : @lepusa.RuntimeLaunchManifest,
-  config? : FrontendApiConfig = FrontendApiConfig::new(),
+  config~ : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
   FrontendApiBundle::from_command_manifest(
     frontend_invokable_manifest(
@@ -72,7 +74,7 @@ pub fn FrontendApiBundle::from_launch_manifest(
 ///|
 pub fn FrontendApiBundle::from_command_manifest(
   manifest : @lepusa.CommandManifest,
-  config? : FrontendApiConfig = FrontendApiConfig::new(),
+  config~ : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
   FrontendApiBundle::build(manifest, report=None, config~)
 }
@@ -81,7 +83,7 @@ pub fn FrontendApiBundle::from_command_manifest(
 pub fn FrontendApiBundle::from_invoke_contract_report(
   manifest : @lepusa.CommandManifest,
   report : @lepusa.InvokeContractReport,
-  config? : FrontendApiConfig = FrontendApiConfig::new(),
+  config~ : FrontendApiConfig = FrontendApiConfig::new(),
 ) -> Result[FrontendApiBundle, Array[String]] {
   FrontendApiBundle::build(
     frontend_manifest_for_contract_report(manifest, report),
@@ -250,8 +252,8 @@ fn frontend_api_javascript(
 ///|
 fn frontend_invokable_manifest(
   manifest : @lepusa.CommandManifest,
-  registered_routes? : Array[String] = [],
-  restrict_registered? : Bool = false,
+  registered_routes~ : Array[String] = [],
+  restrict_registered~ : Bool = false,
 ) -> @lepusa.CommandManifest {
   let entries : Array[@lepusa.CommandManifestEntry] = []
   for entry in manifest.entries() {

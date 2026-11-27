@@ -47,11 +47,12 @@ fn verify_bridge_dispatch_text(
 }
 
 ///|
+#derive(Debug, Eq)
 struct BridgeSmokeRoute {
   window_label : String
   route : String
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn run_bridge_smoke(
@@ -103,7 +104,7 @@ fn select_bridge_smoke_route(
             Some(payload) =>
               if webview.allowed_routes().contains(route) {
                 return Ok(
-                  Some({ window_label: webview.label(), route, payload }),
+                  Some({ window_label: webview.label(), route, payload, }),
                 )
               }
             None => ()

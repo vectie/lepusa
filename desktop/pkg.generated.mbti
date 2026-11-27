@@ -61,7 +61,7 @@ pub fn DesktopProject::root(Self) -> @lepusa.Cell
 pub fn DesktopProject::runtime_host(Self) -> Result[@runtime.RuntimeHost, Array[String]]
 pub fn DesktopProject::runtime_plan(Self) -> Result[@lepusa.RuntimePlan, Array[String]]
 pub fn DesktopProject::validate(Self) -> Array[String]
-pub fn DesktopProject::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : @lepusa.TitleBarStyle, source? : @lepusa.Source) -> Self
+pub fn DesktopProject::window(Self, label? : String, title? : String, width? : Int32, height? : Int32, resizable? : Bool, title_bar? : @lepusa.TitleBarStyle, source? : @lepusa.Source) -> Self
 pub fn DesktopProject::with_capability(Self, @lepusa.Capability) -> Self
 pub fn DesktopProject::with_filesystem_scope(Self, @lepusa.FileSystemScope) -> Self
 pub fn DesktopProject::with_icon_path(Self, String) -> Self

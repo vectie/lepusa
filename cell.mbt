@@ -2,10 +2,11 @@
 pub type Emit[Msg] = (Msg) -> Cmd
 
 ///|
+#derive(Debug, Eq)
 pub struct Cell {
   id : String
   html : Html
-} derive(Debug, Eq)
+}
 
 ///|
 fn next_cell_id() -> String {
@@ -14,10 +15,10 @@ fn next_cell_id() -> String {
 
 ///|
 pub fn Cell::new(
-  id? : String = next_cell_id(),
-  html? : Html = Html::empty(),
+  id~ : String = next_cell_id(),
+  html~ : Html = Html::empty(),
 ) -> Cell {
-  { id, html }
+  { id, html, }
 }
 
 ///|

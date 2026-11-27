@@ -1,14 +1,16 @@
 ///|
+#derive(Debug, Eq)
 pub struct ServiceEndpoint {
   name : String
   url : String
   health_path : String?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct ServiceDiscoveryPolicy {
   services : Array[ServiceEndpoint]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ServiceEndpoint::new(
@@ -16,7 +18,7 @@ pub fn ServiceEndpoint::new(
   url~ : String,
   health_path? : String,
 ) -> ServiceEndpoint {
-  { name, url, health_path }
+  { name, url, health_path, }
 }
 
 ///|
@@ -58,7 +60,7 @@ pub fn ServiceEndpoint::validate(self : ServiceEndpoint) -> Array[String] {
 
 ///|
 pub fn ServiceDiscoveryPolicy::new(
-  services? : Array[ServiceEndpoint] = [],
+  services~ : Array[ServiceEndpoint] = [],
 ) -> ServiceDiscoveryPolicy {
   { services, }
 }
@@ -122,21 +124,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "service-discovery") -> @lepusa.Capability {
+pub fn capability(name~ : String = "service-discovery") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(ServiceDiscovery)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "service-discovery",
+  name~ : String = "service-discovery",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
+  policy~ : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~)
 }
@@ -144,7 +146,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
+  policy~ : ServiceDiscoveryPolicy = ServiceDiscoveryPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("serviceDiscovery.list", permission=ServiceDiscovery, handler=fn(

@@ -1,6 +1,6 @@
 ///|
 test "menu plugin declares sync menu commands" {
-  let declared = plugin()
+  let declared = @menu.plugin()
   assert_eq(declared.name(), "menu")
   assert_true(declared.command_routes().contains("menu.setAppMenu"))
   assert_true(declared.command_routes().contains("menu.setWindowMenu"))
@@ -17,7 +17,7 @@ test "menu plugin declares sync menu commands" {
 
 ///|
 test "menu capability grants menu permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @menu.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Menu))
   assert_false(grant.allows(window_label="settings", permission=Menu))
   assert_false(grant.allows(window_label="main", permission=Tray))
@@ -25,16 +25,16 @@ test "menu capability grants menu permission by window" {
 
 ///|
 test "menu model validates nested items and accelerators" {
-  let menu = MenuBar::new(items=[
-    MenuItem::submenu(id="file", label="File", items=[
-      MenuItem::action(id="new", label="New", accelerator="CmdOrCtrl+N"),
-      MenuItem::check(id="autosave", label="Autosave", checked=true),
+  let menu = @menu.MenuBar::new(items=[
+    @menu.MenuItem::submenu(id="file", label="File", items=[
+      @menu.MenuItem::action(id="new", label="New", accelerator="CmdOrCtrl+N"),
+      @menu.MenuItem::check(id="autosave", label="Autosave", checked=true),
     ]),
   ])
   assert_eq(menu.validate().length(), 0)
-  let invalid = MenuBar::new(items=[
-    MenuItem::action(id="bad id", label="", accelerator="Cmd\nN"),
-    MenuItem::action(id="bad id", label="Again"),
+  let invalid = @menu.MenuBar::new(items=[
+    @menu.MenuItem::action(id="bad id", label="", accelerator="Cmd\nN"),
+    @menu.MenuItem::action(id="bad id", label="Again"),
   ])
   let problems = invalid.validate()
   assert_true(problems.contains("menu item id is invalid: bad id"))
@@ -45,9 +45,9 @@ test "menu model validates nested items and accelerators" {
 
 ///|
 test "menu registry sets app menu and updates nested items" {
-  let state = MenuState::new()
-  let registry = register(@lepusa.CommandRegistry::new(), state~)
-  let grant = capability_for_window("main")
+  let state = @menu.MenuState::new()
+  let registry = @menu.register(@lepusa.CommandRegistry::new(), state~)
+  let grant = @menu.capability_for_window("main")
   let app_menu_payload = "{\"items\":[{\"id\":\"file\",\"label\":\"File\",\"kind\":\"submenu\",\"items\":[{\"id\":\"new\",\"label\":\"New\",\"accelerator\":\"CmdOrCtrl+N\"},{\"id\":\"autosave\",\"label\":\"Autosave\",\"kind\":\"check\",\"checked\":false}]}]}"
   let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -104,9 +104,9 @@ test "menu registry sets app menu and updates nested items" {
 
 ///|
 test "menu registry sets and clears window menus" {
-  let state = MenuState::new()
-  let registry = register(@lepusa.CommandRegistry::new(), state~)
-  let grant = capability_for_window("main")
+  let state = @menu.MenuState::new()
+  let registry = @menu.register(@lepusa.CommandRegistry::new(), state~)
+  let grant = @menu.capability_for_window("main")
   let window_menu_payload = "{\"windowLabel\":\"main\",\"items\":[{\"id\":\"view\",\"label\":\"View\"}]}"
   let set = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -140,8 +140,8 @@ test "menu registry sets and clears window menus" {
 
 ///|
 test "menu registry validates payloads and missing items" {
-  let registry = registry()
-  let grant = capability_for_window("main")
+  let registry = @menu.registry()
+  let grant = @menu.capability_for_window("main")
   let invalid = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="invalid",

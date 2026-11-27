@@ -20,12 +20,13 @@ pub fn registry(policy? : SingleInstancePolicy, state? : SingleInstanceState) ->
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct SingleInstancePolicy {
   key : String
   primary_window : String?
   forward_args : Bool
   forward_urls : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn SingleInstancePolicy::forward_args(Self) -> Bool
 pub fn SingleInstancePolicy::forward_urls(Self) -> Bool
 pub fn SingleInstancePolicy::key(Self) -> String
@@ -35,11 +36,11 @@ pub fn SingleInstancePolicy::validate(Self) -> Array[String]
 
 pub struct SingleInstanceState {
   mut acquired : Bool
-  mut focused_count : Int
+  mut focused_count : Int32
   second_launches : Array[String]
 }
 pub fn SingleInstanceState::acquired(Self) -> Bool
-pub fn SingleInstanceState::focused_count(Self) -> Int
+pub fn SingleInstanceState::focused_count(Self) -> Int32
 pub fn SingleInstanceState::new(acquired? : Bool) -> Self
 pub fn SingleInstanceState::second_launches(Self) -> Array[String]
 

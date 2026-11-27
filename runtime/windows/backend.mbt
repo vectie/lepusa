@@ -1,5 +1,5 @@
 ///|
-extern "c" fn backend_available() -> Int = "lepusa_windows_backend_available"
+extern "c" fn backend_available() -> Int32 = "lepusa_windows_backend_available"
 
 ///|
 extern "c" fn backend_engine_name() -> Bytes = "lepusa_windows_backend_engine_name"

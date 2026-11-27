@@ -26,12 +26,13 @@ pub fn registry(policy? : AutoLaunchPolicy, state? : AutoLaunchState) -> @lepusa
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct AutoLaunchPolicy {
   name : String
   executable : String?
   arguments : Array[String]
   open_hidden : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn AutoLaunchPolicy::argument(Self, String) -> Self
 pub fn AutoLaunchPolicy::arguments(Self) -> Array[String]
 pub fn AutoLaunchPolicy::executable(Self) -> String?
@@ -40,10 +41,11 @@ pub fn AutoLaunchPolicy::new(name~ : String, executable? : String, arguments? : 
 pub fn AutoLaunchPolicy::open_hidden(Self) -> Bool
 pub fn AutoLaunchPolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct AutoLaunchState {
   mut enabled : Bool
   mut last_action : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AutoLaunchState::enabled(Self) -> Bool
 pub fn AutoLaunchState::last_action(Self) -> String
 pub fn AutoLaunchState::new(enabled? : Bool) -> Self

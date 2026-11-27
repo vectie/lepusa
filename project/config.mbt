@@ -23,7 +23,7 @@ pub fn ProjectConfig::registry(self : ProjectConfig) -> @lepusa.CommandRegistry 
 ///|
 pub fn ProjectConfig::parse(
   text : String,
-  base_dir? : String = ".",
+  base_dir~ : String = ".",
 ) -> Result[ProjectConfig, Array[String]] {
   let json = @json.parse(text) catch {
     error => return Err(["invalid project config json: \{error}"])
@@ -120,7 +120,7 @@ fn loaded_project_from_object(
       filesystem_scopes~,
       local_services=project_local_services(manifest, root),
     )
-    Ok({ manifest, root, registry })
+    Ok({ manifest, root, registry, })
   } else {
     Err(problems)
   }

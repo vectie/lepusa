@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundlePackageWriteResult {
   root : String
   plan_path : String
@@ -6,7 +7,7 @@ pub struct BundlePackageWriteResult {
   script_path : String
   installer_script_path : String?
   plan : BundlePackagePlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundlePackageWriteResult::root(

@@ -1,25 +1,27 @@
 ///|
+#derive(Debug, Eq)
 pub struct WindowStateRule {
   window_label : String
   remember_size : Bool
   remember_position : Bool
   remember_visibility : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowStatePolicy {
   store_name : String
   rules : Array[WindowStateRule]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn WindowStateRule::new(
   window_label~ : String,
-  remember_size? : Bool = true,
-  remember_position? : Bool = true,
-  remember_visibility? : Bool = false,
+  remember_size~ : Bool = true,
+  remember_position~ : Bool = true,
+  remember_visibility~ : Bool = false,
 ) -> WindowStateRule {
-  { window_label, remember_size, remember_position, remember_visibility }
+  { window_label, remember_size, remember_position, remember_visibility, }
 }
 
 ///|
@@ -59,9 +61,9 @@ pub fn WindowStateRule::validate(self : WindowStateRule) -> Array[String] {
 ///|
 pub fn WindowStatePolicy::new(
   store_name~ : String,
-  rules? : Array[WindowStateRule] = [],
+  rules~ : Array[WindowStateRule] = [],
 ) -> WindowStatePolicy {
-  { store_name, rules }
+  { store_name, rules, }
 }
 
 ///|
@@ -120,14 +122,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "window-state") -> @lepusa.Capability {
+pub fn capability(name~ : String = "window-state") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(WindowState)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "window-state",
+  name~ : String = "window-state",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -138,21 +140,22 @@ pub struct WindowStateStore {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowStateFileStore {
   root : String
   store_name : String
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct WindowStateBackend {
   get : (String) -> Result[String?, String]
   set : (String, String) -> Result[Unit, String]
-  clear : (String) -> Result[Int, String]
+  clear : (String) -> Result[Int32, String]
 }
 
 ///|
 pub fn WindowStateStore::new() -> WindowStateStore {
-  { states: {} }
+  { states: {}, }
 }
 
 ///|
@@ -175,8 +178,8 @@ pub fn WindowStateStore::set(
 ///|
 pub fn WindowStateStore::clear(
   self : WindowStateStore,
-  window_label? : String = "",
-) -> Int {
+  window_label~ : String = "",
+) -> Int32 {
   if window_label == "" {
     let count = self.states.length()
     self.states.clear()
@@ -195,9 +198,9 @@ pub fn WindowStateStore::clear(
 ///|
 pub fn WindowStateFileStore::new(
   root~ : String,
-  store_name? : String = "lepusa-window-state",
+  store_name~ : String = "lepusa-window-state",
 ) -> WindowStateFileStore {
-  { root, store_name }
+  { root, store_name, }
 }
 
 ///|
@@ -228,7 +231,7 @@ pub fn WindowStateFileStore::validate(
 
 ///|
 pub fn registry(
-  store? : WindowStateStore = WindowStateStore::new(),
+  store~ : WindowStateStore = WindowStateStore::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), store~)
 }
@@ -241,7 +244,7 @@ pub fn file_registry(store : WindowStateFileStore) -> @lepusa.CommandRegistry {
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  store? : WindowStateStore = WindowStateStore::new(),
+  store~ : WindowStateStore = WindowStateStore::new(),
 ) -> @lepusa.CommandRegistry {
   register_backend(registry, memory_backend(store))
 }
@@ -414,7 +417,7 @@ fn file_store_set(
 fn file_store_clear(
   store : WindowStateFileStore,
   label : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match first_problem(store.validate()) {
     Some(problem) => Err(problem)
     None =>
@@ -435,7 +438,7 @@ fn file_store_clear(
 }
 
 ///|
-fn clear_store_files(store : WindowStateFileStore) -> Result[Int, String] {
+fn clear_store_files(store : WindowStateFileStore) -> Result[Int32, String] {
   if !file_exists(store.root()) {
     return Ok(0)
   }

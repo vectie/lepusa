@@ -37,11 +37,12 @@ pub fn NotificationCenter::new(permission? : NotificationPermissionState) -> Sel
 pub fn NotificationCenter::permission(Self) -> NotificationPermissionState
 pub fn NotificationCenter::set_permission(Self, NotificationPermissionState) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) enum NotificationPermissionState {
   Default
   Granted
   Denied
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

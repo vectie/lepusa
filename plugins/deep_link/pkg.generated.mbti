@@ -20,19 +20,21 @@ pub fn registry(policy? : DeepLinkPolicy, state? : DeepLinkState) -> @lepusa.Com
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct DeepLinkPolicy {
   schemes : Array[DeepLinkScheme]
-} derive(Eq, @debug.Debug)
+}
 pub fn DeepLinkPolicy::new(schemes? : Array[DeepLinkScheme]) -> Self
 pub fn DeepLinkPolicy::scheme(Self, DeepLinkScheme) -> Self
 pub fn DeepLinkPolicy::scheme_names(Self) -> Array[String]
 pub fn DeepLinkPolicy::schemes(Self) -> Array[DeepLinkScheme]
 pub fn DeepLinkPolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct DeepLinkScheme {
   scheme : String
   hosts : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn DeepLinkScheme::hosts(Self) -> Array[String]
 pub fn DeepLinkScheme::new(scheme~ : String, hosts? : Array[String]) -> Self
 pub fn DeepLinkScheme::scheme(Self) -> String

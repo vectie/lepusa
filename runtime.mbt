@@ -1,29 +1,31 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeBackend {
   SystemWebView
   Headless
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeConfig {
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
   platform : String
-} derive(Debug, Eq)
-
-///|
-pub fn RuntimeConfig::system_webview(
-  devtools? : Bool = false,
-  asset_protocol? : String = "lepusa",
-  platform? : String = "",
-) -> RuntimeConfig {
-  { backend: SystemWebView, devtools, asset_protocol, platform }
 }
 
 ///|
-pub fn RuntimeConfig::headless(platform? : String = "") -> RuntimeConfig {
-  { backend: Headless, devtools: false, asset_protocol: "lepusa", platform }
+pub fn RuntimeConfig::system_webview(
+  devtools~ : Bool = false,
+  asset_protocol~ : String = "lepusa",
+  platform~ : String = "",
+) -> RuntimeConfig {
+  { backend: SystemWebView, devtools, asset_protocol, platform, }
+}
+
+///|
+pub fn RuntimeConfig::headless(platform~ : String = "") -> RuntimeConfig {
+  { backend: Headless, devtools: false, asset_protocol: "lepusa", platform, }
 }
 
 ///|
@@ -41,6 +43,7 @@ pub fn RuntimeConfig::platform(self : RuntimeConfig) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimePlan {
   app_metadata : AppMetadata?
   launch : LaunchPlan
@@ -51,7 +54,7 @@ pub struct RuntimePlan {
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
   filesystem_scopes : Array[FileSystemScope]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimePlan::app_metadata(self : RuntimePlan) -> AppMetadata? {
@@ -87,7 +90,7 @@ pub fn RuntimePlan::devtools(self : RuntimePlan) -> Bool {
 }
 
 ///|
-pub fn RuntimePlan::window_count(self : RuntimePlan) -> Int {
+pub fn RuntimePlan::window_count(self : RuntimePlan) -> Int32 {
   self.windows.length()
 }
 
@@ -97,12 +100,12 @@ pub fn RuntimePlan::windows(self : RuntimePlan) -> Array[ResolvedWindow] {
 }
 
 ///|
-pub fn RuntimePlan::plugin_count(self : RuntimePlan) -> Int {
+pub fn RuntimePlan::plugin_count(self : RuntimePlan) -> Int32 {
   self.launch.plugin_count()
 }
 
 ///|
-pub fn RuntimePlan::capability_count(self : RuntimePlan) -> Int {
+pub fn RuntimePlan::capability_count(self : RuntimePlan) -> Int32 {
   self.launch.capability_count()
 }
 
@@ -156,7 +159,7 @@ fn RuntimePlan::with_file_system_scopes(
   self : RuntimePlan,
   scopes : Array[FileSystemScope],
 ) -> RuntimePlan {
-  { ..self, filesystem_scopes: scopes.copy() }
+  { ..self, filesystem_scopes: scopes.copy(), }
 }
 
 ///|
@@ -164,7 +167,7 @@ fn RuntimePlan::with_app_metadata(
   self : RuntimePlan,
   metadata : AppMetadata,
 ) -> RuntimePlan {
-  { ..self, app_metadata: Some(metadata) }
+  { ..self, app_metadata: Some(metadata), }
 }
 
 ///|
@@ -193,7 +196,7 @@ pub fn RuntimePlan::window_command_routes(
 ///|
 pub fn App::runtime_plan(
   self : App,
-  config? : RuntimeConfig = RuntimeConfig::system_webview(),
+  config~ : RuntimeConfig = RuntimeConfig::system_webview(),
 ) -> Result[RuntimePlan, Array[String]] {
   let problems = config.validate()
   match self.launch_plan() {

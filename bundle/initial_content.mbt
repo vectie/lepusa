@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 enum BundledContentResult {
   BundledContentChecked
   BundledContentSkipped
-} derive(Debug, Eq)
+}
 
 ///|
 async fn verify_initial_content(path : String) -> BundleWriteCheck {
@@ -47,7 +48,7 @@ async fn verify_initial_content(path : String) -> BundleWriteCheck {
 ///|
 async fn verify_bundled_initial_content(
   manifest : @bundled.BundledRuntimeManifest,
-) -> Result[(Int, Int), String] {
+) -> Result[(Int32, Int32), String] {
   match manifest.webviews() {
     Ok(webviews) => {
       let mut checked = 0

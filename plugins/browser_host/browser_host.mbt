@@ -6,7 +6,7 @@ pub struct BrowserHostState {
 
 ///|
 pub fn BrowserHostState::new() -> BrowserHostState {
-  { pending: {}, terminal: {} }
+  { pending: {}, terminal: {}, }
 }
 
 ///|
@@ -19,7 +19,7 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "browser-host") -> @lepusa.Capability {
+pub fn capability(name~ : String = "browser-host") -> @lepusa.Capability {
   @lepusa.Capability::new(name)
   .command("browserHost.execute")
   .command("browserHost.complete")
@@ -30,14 +30,14 @@ pub fn capability(name? : String = "browser-host") -> @lepusa.Capability {
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "browser-host",
+  name~ : String = "browser-host",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  state? : BrowserHostState = BrowserHostState::new(),
+  state~ : BrowserHostState = BrowserHostState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), state~)
 }
@@ -45,7 +45,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  state? : BrowserHostState = BrowserHostState::new(),
+  state~ : BrowserHostState = BrowserHostState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("browserHost.execute", handler=fn(payload) {
@@ -87,7 +87,7 @@ fn handle_capture_screenshot() -> Result[String, String] {
       "protocol": Json::string("lepusa-browser-host-v1"),
       "kind": Json::string("native-visible-webview-png"),
       "byte_length": Json::number(png.length().to_double()),
-      "png_base64": Json::string(@base64.encode(png.view())),
+      "png_base64": Json::string(@base64.encode(png.exact_view())),
     }).stringify(),
   )
 }

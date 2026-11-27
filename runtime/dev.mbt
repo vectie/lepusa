@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeDevPlan {
   launch_manifest : @lepusa.RuntimeLaunchManifest
   session : RuntimeSession
@@ -9,17 +10,19 @@ pub struct RuntimeDevPlan {
   bridge_sync_routes : Array[String]
   bridge_async_routes : Array[String]
   commands : Array[RuntimeDevCommand]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeDevSession {
   webviews : Array[RuntimeDevWebView]
   service_plan : RuntimeServicePlan
   reload_event : String
   proxy_mode : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeDevWebView {
   label : String
   url : String
@@ -29,9 +32,10 @@ pub struct RuntimeDevWebView {
   native_hook : String
   event_dispatch_hook : String
   local_service : @lepusa.LocalService?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeDevSourceKind {
   RuntimeDevInlineAssets
   RuntimeDevRabbitaAssets
@@ -40,22 +44,24 @@ pub(all) enum RuntimeDevSourceKind {
   RuntimeDevSupervisedLocalhost
   RuntimeDevExternalUrl
   RuntimeDevCustomUrl
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeDevReloadMode {
   RuntimeDevReloadWindow
   RuntimeDevReloadExternal
   RuntimeDevReloadNone
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeDevCommand {
   name : String
   purpose : String
   template : String
   target_required : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeHost::dev_plan(
@@ -145,9 +151,9 @@ pub fn RuntimeDevCommand::new(
   name~ : String,
   purpose~ : String,
   template~ : String,
-  target_required? : Bool = false,
+  target_required~ : Bool = false,
 ) -> RuntimeDevCommand {
-  { name, purpose, template, target_required }
+  { name, purpose, template, target_required, }
 }
 
 ///|
@@ -200,7 +206,9 @@ pub fn RuntimeDevSession::requires_supervisor(self : RuntimeDevSession) -> Bool 
 }
 
 ///|
-pub fn RuntimeDevSession::window_reload_count(self : RuntimeDevSession) -> Int {
+pub fn RuntimeDevSession::window_reload_count(
+  self : RuntimeDevSession,
+) -> Int32 {
   let mut count = 0
   for webview in self.webviews {
     if webview.reload_mode() is RuntimeDevReloadWindow {
@@ -213,7 +221,7 @@ pub fn RuntimeDevSession::window_reload_count(self : RuntimeDevSession) -> Int {
 ///|
 pub fn RuntimeDevSession::external_reload_count(
   self : RuntimeDevSession,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for webview in self.webviews {
     if webview.reload_mode() is RuntimeDevReloadExternal {

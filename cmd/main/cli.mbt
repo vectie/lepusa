@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 struct CliResult {
-  exit_code : Int
+  exit_code : Int32
   output : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn render_cli(args : Array[String]) -> CliResult {
@@ -58,12 +59,12 @@ async fn render_cli_async(args : Array[String]) -> CliResult {
 
 ///|
 fn ok(output : String) -> CliResult {
-  { exit_code: 0, output }
+  { exit_code: 0, output, }
 }
 
 ///|
 fn fail(output : String) -> CliResult {
-  { exit_code: 1, output }
+  { exit_code: 1, output, }
 }
 
 ///|

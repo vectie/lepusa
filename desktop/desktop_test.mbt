@@ -1,6 +1,8 @@
 ///|
 test "desktop kit installs official plugin metadata and handlers together" {
-  let kit = DesktopKit::new().with_plugin("log").with_plugin("clipboard")
+  let kit = @desktop.DesktopKit::new()
+    .with_plugin("log")
+    .with_plugin("clipboard")
   assert_eq(kit.validate().length(), 0)
   assert_true(kit.plugin_names().contains("log"))
   assert_true(kit.plugin_names().contains("clipboard"))
@@ -12,14 +14,14 @@ test "desktop kit installs official plugin metadata and handlers together" {
 
 ///|
 test "desktop kit installs sync-safe official profile" {
-  let names = sync_plugin_names()
+  let names = @desktop.sync_plugin_names()
   assert_true(names.contains("app"))
   assert_true(names.contains("log"))
   assert_true(names.contains("menu"))
   assert_true(names.contains("window"))
   assert_true(names.contains("windowState"))
   assert_false(names.contains("fs"))
-  let kit = DesktopKit::new().with_sync_plugins()
+  let kit = @desktop.DesktopKit::new().with_sync_plugins()
   assert_eq(kit.validate().length(), 0)
   for name in names {
     assert_true(kit.plugin_names().contains(name))
@@ -35,7 +37,7 @@ test "desktop kit installs sync-safe official profile" {
 
 ///|
 test "desktop kit applies plugins and capabilities to app runtime" {
-  let kit = DesktopKit::new().with_plugins(["log", "clipboard"])
+  let kit = @desktop.DesktopKit::new().with_plugins(["log", "clipboard"])
   let base = @lepusa.new(
     @lepusa.simple_cell(@lepusa.Html::text("<main>desktop</main>")),
   ).window(source=@lepusa.Source::html("<main>desktop</main>"))
@@ -83,7 +85,7 @@ test "desktop kit applies plugins and capabilities to app runtime" {
 
 ///|
 test "desktop project builds launchable sync plugin host" {
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.sync",
         product_name="Lepusa Sync",
@@ -127,7 +129,7 @@ test "desktop kit rejects runtime routes without registered handlers" {
     .with_capability(@lepusa.Capability::new("custom").command("custom.run"))
   match app.runtime_plan() {
     Ok(plan) =>
-      match DesktopKit::new().runtime_host(plan) {
+      match @desktop.DesktopKit::new().runtime_host(plan) {
         Ok(_) => abort("unexpected valid host")
         Err(problems) => {
           assert_eq(problems.length(), 1)
@@ -148,7 +150,9 @@ test "desktop kit accepts custom app registries with official handlers" {
   ) {
     Ok("{\"ok\":true}")
   })
-  let kit = DesktopKit::new().with_registry(registry).with_plugin("log")
+  let kit = @desktop.DesktopKit::new()
+    .with_registry(registry)
+    .with_plugin("log")
   let app = @lepusa.new(
       @lepusa.simple_cell(@lepusa.Html::text("<main>desktop</main>")),
     )
@@ -183,7 +187,7 @@ test "desktop kit accepts custom app registries with official handlers" {
 
 ///|
 test "desktop kit reports unknown official plugins before app planning" {
-  let kit = DesktopKit::new().with_plugin("missing")
+  let kit = @desktop.DesktopKit::new().with_plugin("missing")
   let problems = kit.validate()
   assert_eq(problems.length(), 1)
   assert_eq(problems[0], "unknown official plugin: missing")
@@ -191,7 +195,7 @@ test "desktop kit reports unknown official plugins before app planning" {
 
 ///|
 test "desktop project builds runtime host and bundle plan from one boundary" {
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.desktop",
         product_name="Lepusa Desktop",
@@ -254,7 +258,7 @@ test "desktop project carries custom app registries" {
     "counter.dispatch",
     handler=fn(_) { Ok("{\"html\":\"<main>ok</main>\"}") },
   )
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.counter",
         product_name="Lepusa Counter",
@@ -280,7 +284,7 @@ test "desktop project carries custom app registries" {
 
 ///|
 test "desktop project reports unknown official plugins before planning" {
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.desktop",
         product_name="Lepusa Desktop",
@@ -301,7 +305,7 @@ test "desktop project reports unknown official plugins before planning" {
 
 ///|
 async test "desktop project derives localhost services for catalog handlers" {
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.gateway",
         product_name="Lepusa Gateway",
@@ -341,7 +345,9 @@ async test "desktop kit passes policies into catalog registries" {
     root="/tmp/lepusa-desktop-kit",
     writable=true,
   )
-  let kit = DesktopKit::new().with_plugin("fs").with_filesystem_scope(scope)
+  let kit = @desktop.DesktopKit::new()
+    .with_plugin("fs")
+    .with_filesystem_scope(scope)
   match
     kit.apply(
       @lepusa.new(@lepusa.simple_cell(@lepusa.Html::text("<main></main>"))).window(

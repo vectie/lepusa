@@ -1,19 +1,20 @@
 ///|
+#derive(Debug, Eq)
 pub struct SingleInstancePolicy {
   key : String
   primary_window : String?
   forward_args : Bool
   forward_urls : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn SingleInstancePolicy::new(
   key~ : String,
   primary_window? : String,
-  forward_args? : Bool = true,
-  forward_urls? : Bool = true,
+  forward_args~ : Bool = true,
+  forward_urls~ : Bool = true,
 ) -> SingleInstancePolicy {
-  { key, primary_window, forward_args, forward_urls }
+  { key, primary_window, forward_args, forward_urls, }
 }
 
 ///|
@@ -69,14 +70,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "single-instance") -> @lepusa.Capability {
+pub fn capability(name~ : String = "single-instance") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(SingleInstance)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "single-instance",
+  name~ : String = "single-instance",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -84,15 +85,15 @@ pub fn capability_for_window(
 ///|
 pub struct SingleInstanceState {
   mut acquired : Bool
-  mut focused_count : Int
+  mut focused_count : Int32
   second_launches : Array[String]
 }
 
 ///|
 pub fn SingleInstanceState::new(
-  acquired? : Bool = false,
+  acquired~ : Bool = false,
 ) -> SingleInstanceState {
-  { acquired, focused_count: 0, second_launches: [] }
+  { acquired, focused_count: 0, second_launches: [], }
 }
 
 ///|
@@ -101,7 +102,7 @@ pub fn SingleInstanceState::acquired(self : SingleInstanceState) -> Bool {
 }
 
 ///|
-pub fn SingleInstanceState::focused_count(self : SingleInstanceState) -> Int {
+pub fn SingleInstanceState::focused_count(self : SingleInstanceState) -> Int32 {
   self.focused_count
 }
 
@@ -114,8 +115,8 @@ pub fn SingleInstanceState::second_launches(
 
 ///|
 pub fn registry(
-  policy? : SingleInstancePolicy = SingleInstancePolicy::new(key="lepusa"),
-  state? : SingleInstanceState = SingleInstanceState::new(),
+  policy~ : SingleInstancePolicy = SingleInstancePolicy::new(key="lepusa"),
+  state~ : SingleInstanceState = SingleInstanceState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state~)
 }
@@ -123,8 +124,8 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : SingleInstancePolicy = SingleInstancePolicy::new(key="lepusa"),
-  state? : SingleInstanceState = SingleInstanceState::new(),
+  policy~ : SingleInstancePolicy = SingleInstancePolicy::new(key="lepusa"),
+  state~ : SingleInstanceState = SingleInstanceState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("singleInstance.status", permission=SingleInstance, handler=_ => {

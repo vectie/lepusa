@@ -170,11 +170,12 @@ fn BundledRuntimeManifest::resolve_file_json(
 }
 
 ///|
+#derive(Debug, Eq)
 struct ParsedRuntimeAssetUrl {
   scheme : String
   authority : String
   path : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn parse_runtime_asset_url(
@@ -186,7 +187,7 @@ fn parse_runtime_asset_url(
       let scheme = url[:index].to_owned()
       let rest = url[index + 3:].to_owned()
       match rest.find("/") {
-        None => Ok({ scheme, authority: rest, path: "" })
+        None => Ok({ scheme, authority: rest, path: "", })
         Some(path_index) =>
           Ok({
             scheme,
@@ -328,8 +329,8 @@ fn runtime_asset_ok_json(
   url : String,
   mime_type : String,
   kind : String,
-  content? : String = "",
-  path? : String = "",
+  content~ : String = "",
+  path~ : String = "",
 ) -> String {
   let body = if kind == "virtual" {
     "\"body\":{\"kind\":\"virtual\",\"content\":\{content.json_string()}}"

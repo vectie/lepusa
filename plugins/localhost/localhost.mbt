@@ -1,11 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub struct LocalhostPolicy {
   services : Array[@lepusa.LocalService]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LocalhostPolicy::new(
-  services? : Array[@lepusa.LocalService] = [],
+  services~ : Array[@lepusa.LocalService] = [],
 ) -> LocalhostPolicy {
   { services, }
 }
@@ -65,21 +66,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "localhost") -> @lepusa.Capability {
+pub fn capability(name~ : String = "localhost") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Localhost)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "localhost",
+  name~ : String = "localhost",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : LocalhostPolicy = LocalhostPolicy::new(),
+  policy~ : LocalhostPolicy = LocalhostPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~)
 }
@@ -87,7 +88,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : LocalhostPolicy = LocalhostPolicy::new(),
+  policy~ : LocalhostPolicy = LocalhostPolicy::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("localhost.status", permission=Localhost, handler=fn(payload) {

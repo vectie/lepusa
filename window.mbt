@@ -1,32 +1,34 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum TitleBarStyle {
   Native
   Transparent
   Hidden
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct WindowConfig {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   source : Source?
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn WindowConfig::new(
-  label? : String = "main",
-  title? : String = "Lepusa",
-  width? : Int = 1000,
-  height? : Int = 720,
-  resizable? : Bool = true,
-  title_bar? : TitleBarStyle = Native,
+  label~ : String = "main",
+  title~ : String = "Lepusa",
+  width~ : Int32 = 1000,
+  height~ : Int32 = 720,
+  resizable~ : Bool = true,
+  title_bar~ : TitleBarStyle = Native,
   source? : Source,
 ) -> WindowConfig {
-  { label, title, width, height, resizable, title_bar, source }
+  { label, title, width, height, resizable, title_bar, source, }
 }
 
 ///|
@@ -34,7 +36,7 @@ pub fn WindowConfig::with_source(
   self : WindowConfig,
   source : Source,
 ) -> WindowConfig {
-  { ..self, source: Some(source) }
+  { ..self, source: Some(source), }
 }
 
 ///|
@@ -49,20 +51,21 @@ fn WindowConfig::with_default_source(
 ) -> WindowConfig {
   match self.source {
     Some(_) => self
-    None => { ..self, source: Some(Source::rabbita(root)) }
+    None => { ..self, source: Some(Source::rabbita(root)), }
   }
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct ResolvedWindow {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   source : ResolvedSource
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResolvedWindow::label(self : ResolvedWindow) -> String {
@@ -75,12 +78,12 @@ pub fn ResolvedWindow::title(self : ResolvedWindow) -> String {
 }
 
 ///|
-pub fn ResolvedWindow::width(self : ResolvedWindow) -> Int {
+pub fn ResolvedWindow::width(self : ResolvedWindow) -> Int32 {
   self.width
 }
 
 ///|
-pub fn ResolvedWindow::height(self : ResolvedWindow) -> Int {
+pub fn ResolvedWindow::height(self : ResolvedWindow) -> Int32 {
   self.height
 }
 
@@ -107,7 +110,7 @@ pub fn ResolvedWindow::source(self : ResolvedWindow) -> ResolvedSource {
 ///|
 pub fn WindowConfig::resolve(
   self : WindowConfig,
-  asset_protocol? : String = "lepusa",
+  asset_protocol~ : String = "lepusa",
 ) -> Result[ResolvedWindow, Array[String]] {
   let problems = self.validate()
   if !problems.is_empty() {

@@ -1,13 +1,15 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum RuntimeInvokeAuthorizationKind {
   RuntimeInvokeAuthorized
   RuntimeInvokeInvalidRequest
   RuntimeInvokeUnknownCommand
   RuntimeInvokeUnregisteredCommand
   RuntimeInvokePermissionDenied
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeInvokeAuthorization {
   kind : RuntimeInvokeAuthorizationKind
   route : String
@@ -18,7 +20,7 @@ pub struct RuntimeInvokeAuthorization {
   registered : Bool
   capability : String
   reason : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeInvokeAuthorizationKind::name(
@@ -58,7 +60,7 @@ fn RuntimeInvokeAuthorization::allow(
 fn RuntimeInvokeAuthorization::deny(
   kind~ : RuntimeInvokeAuthorizationKind,
   request : InvokeRequest,
-  platform? : String = "",
+  platform~ : String = "",
   permission? : Permission,
   registered~ : Bool,
   reason~ : String,
@@ -203,8 +205,8 @@ pub fn RuntimeInvokeAuthorization::to_json(
 pub fn RuntimePlan::authorize_invoke(
   self : RuntimePlan,
   request : InvokeRequest,
-  registered_routes? : Array[String] = [],
-  check_registered? : Bool = false,
+  registered_routes~ : Array[String] = [],
+  check_registered~ : Bool = false,
 ) -> RuntimeInvokeAuthorization {
   let request_problems = request.validate()
   if !request_problems.is_empty() {

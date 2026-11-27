@@ -7,14 +7,14 @@ pub struct RuntimeHost {
 ///|
 pub fn RuntimeHost::new(
   plan : @lepusa.RuntimePlan,
-  registry? : @lepusa.CommandRegistry = @lepusa.CommandRegistry::new(),
+  registry~ : @lepusa.CommandRegistry = @lepusa.CommandRegistry::new(),
 ) -> RuntimeHost {
-  { manager: @lepusa.AppManager::new(plan, registry~), session: None }
+  { manager: @lepusa.AppManager::new(plan, registry~), session: None, }
 }
 
 ///|
 pub fn RuntimeHost::from_manager(manager : @lepusa.AppManager) -> RuntimeHost {
-  { manager, session: None }
+  { manager, session: None, }
 }
 
 ///|

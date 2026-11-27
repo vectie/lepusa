@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundleWriteResult {
   root : String
   files : Array[String]
   resources : Array[String]
   checks : Array[BundleWriteCheck]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleWriteCheckKind {
   PlannedFileCheck
   PlannedResourceCheck
@@ -17,15 +19,16 @@ pub(all) enum BundleWriteCheckKind {
   InitialContentCheck
   BridgeDispatchCheck
   NativeLaunchSessionCheck
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleWriteCheck {
   kind : BundleWriteCheckKind
   path : String
   ok : Bool
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleWriteResult::root(self : BundleWriteResult) -> String {
@@ -79,7 +82,7 @@ pub fn BundleWriteCheck::new(
   ok~ : Bool,
   message~ : String,
 ) -> BundleWriteCheck {
-  { kind, path, ok, message }
+  { kind, path, ok, message, }
 }
 
 ///|
@@ -202,7 +205,7 @@ pub async fn write_plan(
           Some(path) => checks.push(verify_runtime_executable(path))
           None => ()
         }
-        Ok({ root, files: written, resources: copied_resources, checks })
+        Ok({ root, files: written, resources: copied_resources, checks, })
       } else {
         Err(problems)
       }

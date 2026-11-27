@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundledWebView {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : String
   devtools : Bool
@@ -14,7 +15,7 @@ pub struct BundledWebView {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundledRuntimeManifest::first_webview(
@@ -98,7 +99,7 @@ fn BundledRuntimeManifest::parse_webview(
 ///|
 pub fn BundledRuntimeManifest::webview_count(
   self : BundledRuntimeManifest,
-) -> Int {
+) -> Int32 {
   optional_array(self.runtime, "webviews").unwrap_or([]).length()
 }
 
@@ -118,12 +119,12 @@ pub fn BundledWebView::url(self : BundledWebView) -> String {
 }
 
 ///|
-pub fn BundledWebView::width(self : BundledWebView) -> Int {
+pub fn BundledWebView::width(self : BundledWebView) -> Int32 {
   self.width
 }
 
 ///|
-pub fn BundledWebView::height(self : BundledWebView) -> Int {
+pub fn BundledWebView::height(self : BundledWebView) -> Int32 {
   self.height
 }
 
@@ -175,7 +176,7 @@ pub fn BundledWebView::initialization_scripts(
 }
 
 ///|
-fn optional_int(object : Map[String, Json], key : String) -> Int? {
+fn optional_int(object : Map[String, Json], key : String) -> Int32? {
   match object.get(key) {
     Some(Number(value, ..)) => Some(value.to_int())
     _ => None

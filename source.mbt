@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
@@ -6,20 +7,21 @@ pub(all) enum Source {
   RemoteUrl(String)
   Localhost(LocalhostSource)
   RabbitaCell(Cell)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct ProtocolMapping {
   scheme : String
   root : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ProtocolMapping::new(
   scheme~ : String,
   root~ : String,
 ) -> ProtocolMapping {
-  { scheme, root }
+  { scheme, root, }
 }
 
 ///|
@@ -33,14 +35,15 @@ pub fn ProtocolMapping::root(self : ProtocolMapping) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct VirtualFile {
   path : String
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn VirtualFile::new(path~ : String, content~ : String) -> VirtualFile {
-  { path, content }
+  { path, content, }
 }
 
 ///|
@@ -54,6 +57,7 @@ pub fn VirtualFile::content(self : VirtualFile) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
@@ -61,16 +65,17 @@ pub(all) enum ResolvedSourceKind {
   ResolvedRemoteUrl
   ResolvedLocalhost
   ResolvedRabbitaMount
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct ResolvedSource {
   kind : ResolvedSourceKind
   url : String
   protocol_mappings : Array[ProtocolMapping]
   virtual_files : Array[VirtualFile]
   local_services : Array[LocalService]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ResolvedSource::kind(self : ResolvedSource) -> ResolvedSourceKind {
@@ -125,11 +130,11 @@ pub fn Source::url(url : String) -> Source {
 
 ///|
 pub fn Source::localhost(
-  port~ : Int,
-  host? : String = "127.0.0.1",
-  path? : String = "/",
+  port~ : Int32,
+  host~ : String = "127.0.0.1",
+  path~ : String = "/",
   readiness_path? : String,
-  command? : Array[String] = [],
+  command~ : Array[String] = [],
 ) -> Source {
   Localhost(
     LocalhostSource::new(port~, host~, path~, readiness_path?, command~),
@@ -162,7 +167,7 @@ pub fn Source::is_empty(self : Source) -> Bool {
 pub fn Source::resolve(
   self : Source,
   window_label~ : String,
-  asset_protocol? : String = "lepusa",
+  asset_protocol~ : String = "lepusa",
 ) -> Result[ResolvedSource, String] {
   if self.is_empty() {
     return Err("source must not be empty")

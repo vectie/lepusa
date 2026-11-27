@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum MenuItemKind {
   Action
   Separator
   Check
   Submenu
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum MenuControlAction {
   SetAppMenu
   SetWindowMenu
@@ -15,15 +17,17 @@ pub(all) enum MenuControlAction {
   SetItemEnabled
   SetItemChecked
   ActivateItem
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum MenuTarget {
   AppMenu
   WindowMenu(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MenuItem {
   id : String
   label : String
@@ -32,19 +36,21 @@ pub struct MenuItem {
   enabled : Bool
   checked : Bool
   items : Array[MenuItem]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MenuBar {
   items : Array[MenuItem]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct MenuOperation {
   target : MenuTarget
   action : MenuControlAction
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub struct MenuState {
@@ -73,9 +79,9 @@ pub fn MenuItem::action(
   id~ : String,
   label~ : String,
   accelerator? : String,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> MenuItem {
-  { id, label, kind: Action, accelerator, enabled, checked: false, items: [] }
+  { id, label, kind: Action, accelerator, enabled, checked: false, items: [], }
 }
 
 ///|
@@ -95,19 +101,19 @@ pub fn MenuItem::separator() -> MenuItem {
 pub fn MenuItem::check(
   id~ : String,
   label~ : String,
-  checked? : Bool = false,
+  checked~ : Bool = false,
   accelerator? : String,
-  enabled? : Bool = true,
+  enabled~ : Bool = true,
 ) -> MenuItem {
-  { id, label, kind: Check, accelerator, enabled, checked, items: [] }
+  { id, label, kind: Check, accelerator, enabled, checked, items: [], }
 }
 
 ///|
 pub fn MenuItem::submenu(
   id~ : String,
   label~ : String,
-  items? : Array[MenuItem] = [],
-  enabled? : Bool = true,
+  items~ : Array[MenuItem] = [],
+  enabled~ : Bool = true,
 ) -> MenuItem {
   {
     id,
@@ -197,8 +203,8 @@ pub fn MenuItem::validate(self : MenuItem) -> Array[String] {
 }
 
 ///|
-pub fn MenuBar::new(items? : Array[MenuItem] = []) -> MenuBar {
-  { items: items.copy() }
+pub fn MenuBar::new(items~ : Array[MenuItem] = []) -> MenuBar {
+  { items: items.copy(), }
 }
 
 ///|
@@ -226,7 +232,7 @@ pub fn MenuBar::validate(self : MenuBar) -> Array[String] {
 
 ///|
 pub fn MenuState::new(app_menu? : MenuBar) -> MenuState {
-  { app_menu, window_menus: {}, last_activated: None, operations: [] }
+  { app_menu, window_menus: {}, last_activated: None, operations: [], }
 }
 
 ///|
@@ -261,9 +267,9 @@ pub fn MenuState::last(self : MenuState) -> MenuOperation? {
 pub fn MenuOperation::new(
   target~ : MenuTarget,
   action~ : MenuControlAction,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> MenuOperation {
-  { target, action, payload }
+  { target, action, payload, }
 }
 
 ///|
@@ -339,21 +345,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "menu") -> @lepusa.Capability {
+pub fn capability(name~ : String = "menu") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Menu)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "menu",
+  name~ : String = "menu",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  state? : MenuState = MenuState::new(),
+  state~ : MenuState = MenuState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), state~)
 }
@@ -361,7 +367,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  state? : MenuState = MenuState::new(),
+  state~ : MenuState = MenuState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("menu.setAppMenu", permission=Menu, handler=payload => {
@@ -578,13 +584,13 @@ fn update_menu_items(
       found = true
     } else if item.kind() is Submenu {
       let child = update_menu_items(item.items(), update)
-      next.push({ ..item, items: child.items })
+      next.push({ ..item, items: child.items, })
       found = found || child.found
     } else {
       next.push(item)
     }
   }
-  { items: next, found }
+  { items: next, found, }
 }
 
 ///|

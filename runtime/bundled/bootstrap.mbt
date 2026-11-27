@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 pub struct BundledBootstrapPlan {
   manifest : BundledRuntimeManifest
   run_plan : BundledRunPlan
   startup_operations : Array[String]
   lifecycle_operations : Array[String]
-} derive(Debug)
+}
 
 ///|
 pub fn BundledRuntimeManifest::bootstrap_json(

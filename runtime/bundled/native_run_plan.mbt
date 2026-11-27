@@ -1,20 +1,21 @@
 ///|
+#derive(Debug)
 pub struct BundledNativeRunPlan {
   bootstrap : BundledBootstrapPlan
   bundled_webviews : Array[BundledWebView]
   webviews : Array[@runtime.NativeWebViewPlan]
-} derive(Debug)
+}
 
 ///|
 pub fn BundledRuntimeManifest::prepare_native_run_plan(
   self : BundledRuntimeManifest,
   target~ : String,
-  target_name? : String = target,
+  target_name~ : String = target,
   prepare_webview~ : (BundledWebView) -> Result[
     @runtime.NativeWebViewPlan,
     String,
   ],
-  missing_webview_message? : String = "bundled run requires at least one webview",
+  missing_webview_message~ : String = "bundled run requires at least one webview",
 ) -> Result[BundledNativeRunPlan, Array[String]] {
   if self.target() != target {
     return Err([
@@ -96,7 +97,9 @@ pub fn BundledNativeRunPlan::bundled_webviews(
 }
 
 ///|
-pub fn BundledNativeRunPlan::webview_count(self : BundledNativeRunPlan) -> Int {
+pub fn BundledNativeRunPlan::webview_count(
+  self : BundledNativeRunPlan,
+) -> Int32 {
   self.webviews.length()
 }
 
@@ -133,7 +136,7 @@ pub fn BundledNativeRunPlan::first_webview(
 ///|
 pub fn BundledNativeRunPlan::startup_operation_count(
   self : BundledNativeRunPlan,
-) -> Int {
+) -> Int32 {
   self.bootstrap.startup_operations().length()
 }
 
@@ -159,21 +162,21 @@ pub fn BundledNativeRunPlan::service_supervisor_report(
 ///|
 pub fn BundledNativeRunPlan::lifecycle_step_count(
   self : BundledNativeRunPlan,
-) -> Int {
+) -> Int32 {
   self.bootstrap.lifecycle_operations().length()
 }
 
 ///|
 pub fn BundledNativeRunPlan::bridge_sync_route_count(
   self : BundledNativeRunPlan,
-) -> Int {
+) -> Int32 {
   self.bootstrap.run_plan().sync_route_count()
 }
 
 ///|
 pub fn BundledNativeRunPlan::bridge_async_route_count(
   self : BundledNativeRunPlan,
-) -> Int {
+) -> Int32 {
   self.bootstrap.run_plan().async_route_count()
 }
 
@@ -187,7 +190,7 @@ pub fn BundledNativeRunPlan::requires_async_bridge_dispatch(
 ///|
 pub fn BundledNativeRunPlan::bridge_scheduler(
   self : BundledNativeRunPlan,
-  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeBridgeScheduler {
   self.bootstrap.manifest.bridge_scheduler(mode~)
 }
@@ -203,7 +206,7 @@ pub fn BundledNativeRunPlan::async_bridge_launch_message(
 ///|
 pub fn BundledNativeRunPlan::launch_session(
   self : BundledNativeRunPlan,
-  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> Result[@runtime.NativeLaunchSession, String] {
   match self.native_execution_plan() {
     Ok(execution) =>
@@ -255,10 +258,10 @@ pub fn BundledNativeRunPlan::operation_execution_report(
 pub fn BundledNativeRunPlan::report(
   self : BundledNativeRunPlan,
   status~ : @lepusa.RunStatus,
-  load_url? : String = "",
-  execution_report? : @runtime.NativeOperationExecutionReport? = None,
-  target_can_launch? : Bool = true,
-  target_launch_blocker? : String = "",
+  load_url~ : String = "",
+  execution_report~ : @runtime.NativeOperationExecutionReport? = None,
+  target_can_launch~ : Bool = true,
+  target_launch_blocker~ : String = "",
 ) -> @lepusa.RunReport {
   let execution = match execution_report {
     Some(report) => Ok(report)

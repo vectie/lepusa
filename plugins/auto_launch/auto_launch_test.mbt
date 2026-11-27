@@ -1,6 +1,6 @@
 ///|
 test "auto launch plugin declares startup registration commands" {
-  let declared = plugin()
+  let declared = @auto_launch.plugin()
   assert_eq(declared.name(), "autoLaunch")
   assert_eq(declared.command_routes().length(), 4)
   assert_true(declared.command_routes().contains("autoLaunch.status"))
@@ -14,7 +14,7 @@ test "auto launch plugin declares startup registration commands" {
 
 ///|
 test "auto launch capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @auto_launch.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=AutoLaunch))
   assert_false(grant.allows(window_label="settings", permission=AutoLaunch))
   assert_false(grant.allows(window_label="main", permission=Tray))
@@ -22,7 +22,7 @@ test "auto launch capabilities grant permission by window" {
 
 ///|
 test "auto launch policy validates startup metadata" {
-  let policy = AutoLaunchPolicy::new(
+  let policy = @auto_launch.AutoLaunchPolicy::new(
     name="dev.local.lepusa",
     executable="Contents/MacOS/lepusa",
     open_hidden=true,
@@ -36,9 +36,11 @@ test "auto launch policy validates startup metadata" {
 
 ///|
 test "auto launch policy rejects invalid metadata" {
-  let policy = AutoLaunchPolicy::new(name="bad/name", executable="bad\\app", arguments=[
-    "",
-  ])
+  let policy = @auto_launch.AutoLaunchPolicy::new(
+    name="bad/name",
+    executable="bad\\app",
+    arguments=[""],
+  )
   let problems = policy.validate()
   assert_true(problems.contains("auto launch name is invalid: bad/name"))
   assert_true(
@@ -49,15 +51,15 @@ test "auto launch policy rejects invalid metadata" {
 
 ///|
 test "auto launch registry tracks delegated enablement state" {
-  let policy = AutoLaunchPolicy::new(
+  let policy = @auto_launch.AutoLaunchPolicy::new(
     name="dev.local.lepusa",
     executable="Contents/MacOS/lepusa",
     arguments=["--background"],
     open_hidden=true,
   )
-  let state = AutoLaunchState::new()
-  let registry = registry(policy~, state~)
-  let grant = capability_for_window("main")
+  let state = @auto_launch.AutoLaunchState::new()
+  let registry = @auto_launch.registry(policy~, state~)
+  let grant = @auto_launch.capability_for_window("main")
   assert_true(registry.contains("autoLaunch.status"))
   assert_true(registry.contains("autoLaunch.enable"))
   assert_true(registry.contains("autoLaunch.disable"))
@@ -109,9 +111,9 @@ test "auto launch registry tracks delegated enablement state" {
 
 ///|
 test "auto launch registry validates policy and payloads" {
-  let bad_policy = AutoLaunchPolicy::new(name="bad/name")
-  let bad_registry = registry(policy=bad_policy)
-  let grant = capability_for_window("main")
+  let bad_policy = @auto_launch.AutoLaunchPolicy::new(name="bad/name")
+  let bad_registry = @auto_launch.registry(policy=bad_policy)
+  let grant = @auto_launch.capability_for_window("main")
   let status_request = @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",
@@ -123,7 +125,9 @@ test "auto launch registry validates policy and payloads" {
     status.error_message().unwrap_or(""),
     "auto launch name is invalid: bad/name",
   )
-  let valid = registry(policy=AutoLaunchPolicy::new(name="dev.local.lepusa"))
+  let valid = @auto_launch.registry(
+    policy=@auto_launch.AutoLaunchPolicy::new(name="dev.local.lepusa"),
+  )
   let set_request = @lepusa.InvokeRequest::new(
     id="2",
     window_label="main",
@@ -140,9 +144,9 @@ test "auto launch registry validates policy and payloads" {
 
 ///|
 test "auto launch native registry reports status without mutating host" {
-  let policy = AutoLaunchPolicy::new(name="dev.local.lepusa")
-  let registry = native_registry(policy~)
-  let grant = capability_for_window("main")
+  let policy = @auto_launch.AutoLaunchPolicy::new(name="dev.local.lepusa")
+  let registry = @auto_launch.native_registry(policy~)
+  let grant = @auto_launch.capability_for_window("main")
   assert_true(registry.contains("autoLaunch.status"))
   assert_true(registry.contains("autoLaunch.enable"))
   assert_true(registry.contains("autoLaunch.disable"))
@@ -156,7 +160,7 @@ test "auto launch native registry reports status without mutating host" {
     ),
     capabilities=[grant],
   )
-  if native_available() {
+  if @auto_launch.native_available() {
     assert_true(status.payload().unwrap_or("").contains("\"enabled\":"))
     assert_true(status.payload().unwrap_or("").contains("\"native\":true"))
   } else {
@@ -169,8 +173,8 @@ test "auto launch native registry reports status without mutating host" {
 
 ///|
 test "auto launch native enable requires executable" {
-  let registry = native_registry(
-    policy=AutoLaunchPolicy::new(name="dev.local.lepusa"),
+  let registry = @auto_launch.native_registry(
+    policy=@auto_launch.AutoLaunchPolicy::new(name="dev.local.lepusa"),
   )
   let enabled = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -179,7 +183,7 @@ test "auto launch native enable requires executable" {
       plugin="autoLaunch",
       command="enable",
     ),
-    capabilities=[capability_for_window("main")],
+    capabilities=[@auto_launch.capability_for_window("main")],
   )
   assert_eq(enabled.id(), "native-enable")
   assert_eq(

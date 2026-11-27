@@ -1,38 +1,41 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundlePackageCommand {
   name : String
   tool : String
   arguments : Array[String]
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundlePackageOutput {
   kind : String
   path : String
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundlePackagePlan {
   manifest : BundleDistributionManifest
   package_kind : String
   commands : Array[BundlePackageCommand]
   outputs : Array[BundlePackageOutput]
   blockers : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundlePackageCommand::new(
   name~ : String,
   tool~ : String,
-  arguments? : Array[String] = [],
-  required? : Bool = true,
+  arguments~ : Array[String] = [],
+  required~ : Bool = true,
   description~ : String,
 ) -> BundlePackageCommand {
-  { name, tool, arguments, required, description }
+  { name, tool, arguments, required, description, }
 }
 
 ///|
@@ -79,10 +82,10 @@ pub fn BundlePackageCommand::to_json(self : BundlePackageCommand) -> String {
 pub fn BundlePackageOutput::new(
   kind~ : String,
   path~ : String,
-  required? : Bool = true,
+  required~ : Bool = true,
   description~ : String,
 ) -> BundlePackageOutput {
-  { kind, path, required, description }
+  { kind, path, required, description, }
 }
 
 ///|

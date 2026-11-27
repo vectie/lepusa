@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub struct AppScaffoldResult {
   root : String
   files : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn AppScaffoldResult::root(self : AppScaffoldResult) -> String {
@@ -15,14 +16,17 @@ pub fn AppScaffoldResult::files(self : AppScaffoldResult) -> Array[String] {
 }
 
 ///|
+#derive(Debug, Eq)
+#derive(Debug, Eq)
+#derive(Debug, Eq)
 struct ScaffoldFile {
   path : String
   content : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn ScaffoldFile::new(path~ : String, content~ : String) -> ScaffoldFile {
-  { path, content }
+  { path, content, }
 }
 
 ///|
@@ -70,7 +74,7 @@ pub async fn write_app_with_workspace(
     }
   }
   if problems.is_empty() {
-    Ok({ root, files })
+    Ok({ root, files, })
   } else {
     Err(problems)
   }
@@ -87,7 +91,7 @@ fn normalize_project_root(path : String) -> String {
 }
 
 ///|
-fn app_skeleton_files(lepusa_root? : String = "") -> Array[ScaffoldFile] {
+fn app_skeleton_files(lepusa_root~ : String = "") -> Array[ScaffoldFile] {
   let files = [
     ScaffoldFile::new(path="moon.mod", content=project_moon_mod()),
     ScaffoldFile::new(path="lepusa.json", content=project_lepusa_json()),
@@ -215,13 +219,13 @@ fn project_main_mbt() -> String {
     #|///|
     #|struct Model {
     #|  count : Int
-    #|} derive(Debug, Eq)
+    #|}
     #|
     #|///|
     #|enum Msg {
     #|  Increment
     #|  Reset
-    #|} derive(Debug, Eq)
+    #|}
     #|
     #|///|
     #|fn update(msg : Msg, model : Model) -> (Model, @lepusa.Cmd) {

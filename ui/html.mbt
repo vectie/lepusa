@@ -1,12 +1,13 @@
 ///|
+#derive(Debug, Eq)
 pub struct Attr {
   name : String
   value : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn Attr::new(name : String, value : String) -> Attr {
-  { name, value }
+  { name, value, }
 }
 
 ///|
@@ -74,7 +75,7 @@ pub fn aria(name : String, value : String) -> Attr {
 }
 
 ///|
-pub fn on_click(route : String, payload? : String = "{}") -> Attr {
+pub fn on_click(route : String, payload~ : String = "{}") -> Attr {
   attr(
     "onclick",
     "window.lepusa&&window.lepusa.invoke(\{js_string(route)},\{payload})",
@@ -85,7 +86,7 @@ pub fn on_click(route : String, payload? : String = "{}") -> Attr {
 pub fn element(
   tag : String,
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   let rendered_attrs = attrs
     .map(fn(item) { item.render() })
@@ -100,7 +101,7 @@ pub fn element(
 }
 
 ///|
-pub fn void_element(tag : String, attrs? : Array[Attr] = []) -> @lepusa.Html {
+pub fn void_element(tag : String, attrs~ : Array[Attr] = []) -> @lepusa.Html {
   let rendered_attrs = attrs
     .map(fn(item) { item.render() })
     .filter(fn(item) { item != "" })
@@ -115,7 +116,7 @@ pub fn void_element(tag : String, attrs? : Array[Attr] = []) -> @lepusa.Html {
 ///|
 pub fn div(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("div", children, attrs~)
 }
@@ -123,7 +124,7 @@ pub fn div(
 ///|
 pub fn span(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("span", children, attrs~)
 }
@@ -131,7 +132,7 @@ pub fn span(
 ///|
 pub fn main_(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("main", children, attrs~)
 }
@@ -139,7 +140,7 @@ pub fn main_(
 ///|
 pub fn section(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("section", children, attrs~)
 }
@@ -147,7 +148,7 @@ pub fn section(
 ///|
 pub fn h1(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("h1", children, attrs~)
 }
@@ -155,7 +156,7 @@ pub fn h1(
 ///|
 pub fn h2(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("h2", children, attrs~)
 }
@@ -163,18 +164,18 @@ pub fn h2(
 ///|
 pub fn p(
   children : Array[@lepusa.Html],
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
 ) -> @lepusa.Html {
   element("p", children, attrs~)
 }
 
 ///|
-pub fn button(label : String, attrs? : Array[Attr] = []) -> @lepusa.Html {
+pub fn button(label : String, attrs~ : Array[Attr] = []) -> @lepusa.Html {
   element("button", [text(label)], attrs~)
 }
 
 ///|
-pub fn input(attrs? : Array[Attr] = []) -> @lepusa.Html {
+pub fn input(attrs~ : Array[Attr] = []) -> @lepusa.Html {
   void_element("input", attrs~)
 }
 

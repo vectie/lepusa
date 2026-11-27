@@ -1,16 +1,18 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleTarget {
   MacOS
   Windows
   Linux
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct AppMetadata {
   identifier : String
   product_name : String
   version : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn AppMetadata::new(
@@ -18,7 +20,7 @@ pub fn AppMetadata::new(
   product_name~ : String,
   version~ : String,
 ) -> AppMetadata {
-  { identifier, product_name, version }
+  { identifier, product_name, version, }
 }
 
 ///|
@@ -57,6 +59,7 @@ pub fn AppMetadata::version(self : AppMetadata) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
@@ -64,16 +67,16 @@ pub struct BundleConfig {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleConfig::new(
   metadata : AppMetadata,
-  target? : BundleTarget = MacOS,
+  target~ : BundleTarget = MacOS,
   icon_path? : String,
-  resource_sources? : Array[BundleResourceSource] = [],
-  runtime_dependency_sources? : Array[BundleRuntimeDependencySource] = [],
-  signing? : SigningConfig = SigningConfig::new(),
+  resource_sources~ : Array[BundleResourceSource] = [],
+  runtime_dependency_sources~ : Array[BundleRuntimeDependencySource] = [],
+  signing~ : SigningConfig = SigningConfig::new(),
 ) -> BundleConfig {
   {
     metadata,
@@ -97,19 +100,20 @@ pub fn BundleConfig::validate(self : BundleConfig) -> Array[String] {
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleResourceSource {
   source_path : String
   path : String
   executable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleResourceSource::new(
   source_path~ : String,
   path~ : String,
-  executable? : Bool = false,
+  executable~ : Bool = false,
 ) -> BundleResourceSource {
-  { source_path, path, executable }
+  { source_path, path, executable, }
 }
 
 ///|
@@ -154,17 +158,18 @@ fn validate_bundle_resource_sources(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleRuntimeDependencySource {
   name : String
   source_path : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleRuntimeDependencySource::new(
   name~ : String,
   source_path~ : String,
 ) -> BundleRuntimeDependencySource {
-  { name, source_path }
+  { name, source_path, }
 }
 
 ///|
@@ -204,6 +209,7 @@ fn validate_runtime_dependency_sources(
 }
 
 ///|
+#derive(Debug, Eq)
 pub struct BundlePlan {
   metadata : AppMetadata
   target : BundleTarget
@@ -215,36 +221,39 @@ pub struct BundlePlan {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleResourceKind {
   IconResource
   AssetResource
   ExecutableResource
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleResource {
   kind : BundleResourceKind
   source_path : String
   path : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleFile {
   path : String
   content : String
   executable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleFile::new(
   path~ : String,
   content~ : String,
-  executable? : Bool = false,
+  executable~ : Bool = false,
 ) -> BundleFile {
-  { path, content, executable }
+  { path, content, executable, }
 }
 
 ///|
@@ -253,7 +262,7 @@ pub fn BundleResource::new(
   source_path~ : String,
   path~ : String,
 ) -> BundleResource {
-  { kind, source_path, path }
+  { kind, source_path, path, }
 }
 
 ///|
@@ -593,7 +602,7 @@ fn BundlePlan::runtime_manifest_file_json(
 pub fn BundleConfig::plan(
   self : BundleConfig,
   runtime : RuntimePlan,
-  registered_routes? : Array[String] = [],
+  registered_routes~ : Array[String] = [],
 ) -> Result[BundlePlan, Array[String]] {
   let problems = self.validate()
   if problems.is_empty() {

@@ -1,5 +1,5 @@
 ///|
-fn runtime_audit_host(registered? : Bool = true) -> RuntimeHost {
+fn runtime_audit_host(registered~ : Bool = true) -> @runtime.RuntimeHost {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
     .window(label="main", source=@lepusa.Source::html("<main></main>"))
@@ -24,7 +24,7 @@ fn runtime_audit_host(registered? : Bool = true) -> RuntimeHost {
     Ok(manager) => manager
     Err(problems) => abort(problems.join(", "))
   }
-  RuntimeHost::from_manager(manager)
+  @runtime.RuntimeHost::from_manager(manager)
 }
 
 ///|

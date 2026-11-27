@@ -1,7 +1,7 @@
 ///|
 fn security_profile_test_app(
-  grant_write? : Bool = true,
-  origin? : String = "https://app.example",
+  grant_write~ : Bool = true,
+  origin~ : String = "https://app.example",
 ) -> @lepusa.App {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
@@ -34,8 +34,8 @@ fn security_profile_test_app(
 
 ///|
 fn security_profile_test_plan(
-  grant_write? : Bool = true,
-  origin? : String = "https://app.example",
+  grant_write~ : Bool = true,
+  origin~ : String = "https://app.example",
 ) -> @lepusa.RuntimePlan {
   match
     security_profile_test_app(grant_write~, origin~).runtime_plan(
@@ -49,9 +49,9 @@ fn security_profile_test_plan(
 ///|
 fn security_profile_request(
   route : String,
-  window_label? : String = "main",
-  origin? : String = "https://app.example",
-  payload? : String = "",
+  window_label~ : String = "main",
+  origin~ : String = "https://app.example",
+  payload~ : String = "",
 ) -> @lepusa.InvokeRequest {
   let mut plugin = ""
   let mut command = ""

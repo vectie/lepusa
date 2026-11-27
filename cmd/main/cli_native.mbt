@@ -361,7 +361,7 @@ fn render_doctor_bundle_contract_json(
 ///|
 fn bundle_contract_failed_count(
   checks : Array[@bundle.BundleWriteCheck],
-) -> Int {
+) -> Int32 {
   let mut failed = 0
   for check in checks {
     if !check.ok() {
@@ -662,7 +662,7 @@ fn macos_launch_report(
 fn native_run_report(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
-  status? : @lepusa.RunStatus = RunPrepared,
+  status~ : @lepusa.RunStatus = RunPrepared,
 ) -> @lepusa.RunReport {
   let (can_launch, blocker) = native_target_launch_status(target, runtime)
   runtime.run_report(
@@ -748,10 +748,10 @@ fn native_contract_blocker(contract : @runtime.NativeBackendContract) -> String 
 fn render_native_run_report(
   title : String,
   report : @lepusa.RunReport,
-  json? : Bool = false,
-  include_status? : Bool = true,
-  include_bridge_url? : Bool = false,
-  include_services? : Bool = false,
+  json~ : Bool = false,
+  include_status~ : Bool = true,
+  include_bridge_url~ : Bool = false,
+  include_services~ : Bool = false,
 ) -> CliResult {
   if json {
     return ok(report.to_json() + "\n")
@@ -850,7 +850,7 @@ fn render_native_run_summary(
 fn render_native_launch_session(
   target : @lepusa.BundleTarget,
   runtime : @runtime.NativeRuntime,
-  bridge_mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  bridge_mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
   requested_bridge_mode~ : @runtime.NativeBridgeSchedulerMode,
 ) -> CliResult {
   match target {

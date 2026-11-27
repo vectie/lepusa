@@ -1,22 +1,24 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum LocalServiceSupervisorAction {
   StartLocalService(LocalService)
   WaitLocalServiceReady(LocalService)
   StopLocalService(LocalService)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct LocalServiceSupervisorPlan {
   services : Array[LocalService]
   startup_services : Array[LocalService]
   startup_actions : Array[LocalServiceSupervisorAction]
   shutdown_actions : Array[LocalServiceSupervisorAction]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LocalServiceSupervisorPlan::new(
-  services? : Array[LocalService] = [],
-  startup_services? : Array[LocalService] = [],
+  services~ : Array[LocalService] = [],
+  startup_services~ : Array[LocalService] = [],
 ) -> LocalServiceSupervisorPlan {
   let startup_actions : Array[LocalServiceSupervisorAction] = []
   for service in startup_services {

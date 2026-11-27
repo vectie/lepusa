@@ -1,11 +1,13 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeServiceSupervisorPlan {
   backend_name : String
   webview_engine : String
   plan : @lepusa.LocalServiceSupervisorPlan
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeServiceActionStatus {
   NativeServiceActionPrepared
   NativeServiceActionStarted
@@ -13,20 +15,22 @@ pub(all) enum NativeServiceActionStatus {
   NativeServiceActionStopped
   NativeServiceActionSkipped(String)
   NativeServiceActionFailed(String)
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeServiceActionReport {
   action : @lepusa.LocalServiceSupervisorAction
   status : NativeServiceActionStatus
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeServiceSupervisorReport {
   backend_name : String
   webview_engine : String
   action_reports : Array[NativeServiceActionReport]
-} derive(Debug, Eq)
+}
 
 ///|
 pub type NativeServiceActionHandler = (@lepusa.LocalService) -> NativeServiceActionStatus
@@ -55,7 +59,7 @@ pub fn NativeServiceSupervisorPlan::new(
   webview_engine~ : String,
   plan~ : @lepusa.LocalServiceSupervisorPlan,
 ) -> NativeServiceSupervisorPlan {
-  { backend_name, webview_engine, plan }
+  { backend_name, webview_engine, plan, }
 }
 
 ///|
@@ -183,9 +187,9 @@ pub fn NativeServiceSupervisorPlan::executor(
 ///|
 pub fn NativeServiceActionReport::new(
   action~ : @lepusa.LocalServiceSupervisorAction,
-  status? : NativeServiceActionStatus = NativeServiceActionPrepared,
+  status~ : NativeServiceActionStatus = NativeServiceActionPrepared,
 ) -> NativeServiceActionReport {
-  { action, status }
+  { action, status, }
 }
 
 ///|
@@ -389,9 +393,9 @@ pub fn NativeServiceActionStatus::to_json(
 pub fn NativeServiceSupervisorReport::new(
   backend_name~ : String,
   webview_engine~ : String,
-  action_reports? : Array[NativeServiceActionReport] = [],
+  action_reports~ : Array[NativeServiceActionReport] = [],
 ) -> NativeServiceSupervisorReport {
-  { backend_name, webview_engine, action_reports: action_reports.copy() }
+  { backend_name, webview_engine, action_reports: action_reports.copy(), }
 }
 
 ///|
@@ -418,14 +422,14 @@ pub fn NativeServiceSupervisorReport::action_reports(
 ///|
 pub fn NativeServiceSupervisorReport::action_count(
   self : NativeServiceSupervisorReport,
-) -> Int {
+) -> Int32 {
   self.action_reports.length()
 }
 
 ///|
 pub fn NativeServiceSupervisorReport::failed_count(
   self : NativeServiceSupervisorReport,
-) -> Int {
+) -> Int32 {
   let mut count = 0
   for report in self.action_reports {
     if report.failed() {
@@ -445,7 +449,7 @@ pub fn NativeServiceSupervisorReport::ok(
 ///|
 pub fn NativeServiceSupervisorReport::first_failure_message(
   self : NativeServiceSupervisorReport,
-  context? : String = "native service supervisor",
+  context~ : String = "native service supervisor",
 ) -> String? {
   for report in self.action_reports {
     match report.status() {

@@ -46,6 +46,7 @@ pub fn simple_cell(Html) -> Cell
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct App {
   root : Cell
   windows : Array[WindowConfig]
@@ -53,7 +54,7 @@ pub struct App {
   capabilities : Array[Capability]
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Eq, @debug.Debug)
+}
 pub fn App::launch_plan(Self) -> Result[LaunchPlan, Array[String]]
 pub fn App::manager(Self, config? : RuntimeConfig, registry? : CommandRegistry) -> Result[AppManager, Array[String]]
 pub fn App::on_shutdown(Self, Cmd) -> Self
@@ -61,7 +62,7 @@ pub fn App::on_window_close_requested(Self, String, Cmd) -> Self
 pub fn App::on_window_closed(Self, String, Cmd) -> Self
 pub fn App::runtime_plan(Self, config? : RuntimeConfig) -> Result[RuntimePlan, Array[String]]
 pub fn App::validate(Self) -> Array[String]
-pub fn App::window(Self, label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn App::window(Self, label? : String, title? : String, width? : Int32, height? : Int32, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
 pub fn App::with_capability(Self, Capability) -> Self
 pub fn App::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 pub fn App::with_plugin(Self, Plugin) -> Self
@@ -78,9 +79,9 @@ pub struct AppManager {
 }
 pub fn AppManager::audit(Self) -> RuntimeAudit
 pub fn AppManager::cancel_channel(Self, String) -> Result[ChannelMessage, String]
-pub fn AppManager::capability_count(Self) -> Int
+pub fn AppManager::capability_count(Self) -> Int32
 pub fn AppManager::channel(Self, String) -> Channel?
-pub fn AppManager::channel_count(Self) -> Int
+pub fn AppManager::channel_count(Self) -> Int32
 pub fn AppManager::close_all_resources(Self) -> ResourceCleanupReport
 pub fn AppManager::close_resource(Self, String) -> Result[ResourceEntry, String]
 pub fn AppManager::close_resource_handle(Self, ResourceHandle) -> Result[ResourceEntry, String]
@@ -94,19 +95,19 @@ pub fn AppManager::fail_channel(Self, String, String) -> Result[ChannelMessage, 
 pub fn AppManager::invoke_contract_report(Self) -> InvokeContractReport
 pub fn AppManager::invoke_contracts(Self) -> Array[InvokeContract]
 pub fn AppManager::listen(Self, String, target? : EventTarget, once? : Bool) -> Result[EventListener, Array[String]]
-pub fn AppManager::listener_count(Self) -> Int
+pub fn AppManager::listener_count(Self) -> Int32
 pub fn AppManager::manage_state(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
 pub fn AppManager::new(RuntimePlan, registry? : CommandRegistry) -> Self
 pub fn AppManager::once(Self, String, target? : EventTarget) -> Result[EventListener, Array[String]]
 pub fn AppManager::open_channel(Self, owner? : String, name? : String, metadata? : String) -> Result[Channel, Array[String]]
 pub fn AppManager::open_resource(Self, ResourceDescriptor) -> Result[ResourceEntry, Array[String]]
 pub fn AppManager::plan(Self) -> RuntimePlan
-pub fn AppManager::plugin_count(Self) -> Int
+pub fn AppManager::plugin_count(Self) -> Int32
 pub fn AppManager::registered_routes(Self) -> Array[String]
 pub fn AppManager::registry(Self) -> CommandRegistry
 pub fn AppManager::remove_state(Self, String) -> Result[AppStateEntry, String]
 pub fn AppManager::resource(Self, String) -> ResourceEntry?
-pub fn AppManager::resource_count(Self) -> Int
+pub fn AppManager::resource_count(Self) -> Int32
 pub fn AppManager::resource_handles(Self) -> Array[ResourceHandle]
 pub fn AppManager::resource_handles_by_kind(Self, String) -> Array[ResourceHandle]
 pub fn AppManager::resource_handles_by_owner(Self, String) -> Array[ResourceHandle]
@@ -115,16 +116,17 @@ pub fn AppManager::resources(Self) -> Array[ResourceEntry]
 pub fn AppManager::security_profile(Self) -> SecurityProfile
 pub fn AppManager::send_channel(Self, String, String) -> Result[ChannelMessage, String]
 pub fn AppManager::state(Self, String) -> AppStateEntry?
-pub fn AppManager::state_count(Self) -> Int
+pub fn AppManager::state_count(Self) -> Int32
 pub fn AppManager::to_json(Self) -> String
 pub fn AppManager::unlisten(Self, String) -> Result[EventListener, String]
-pub fn AppManager::window_count(Self) -> Int
+pub fn AppManager::window_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct AppMetadata {
   identifier : String
   product_name : String
   version : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AppMetadata::executable_name(Self) -> String
 pub fn AppMetadata::identifier(Self) -> String
 pub fn AppMetadata::new(identifier~ : String, product_name~ : String, version~ : String) -> Self
@@ -132,11 +134,12 @@ pub fn AppMetadata::product_name(Self) -> String
 pub fn AppMetadata::validate(Self) -> Array[String]
 pub fn AppMetadata::version(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct AppStateEntry {
   key : String
   kind : String
   value : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AppStateEntry::key(Self) -> String
 pub fn AppStateEntry::kind(Self) -> String
 pub fn AppStateEntry::new(key~ : String, kind? : String, value? : String) -> Self
@@ -150,7 +153,7 @@ pub struct AppStateStore {
 }
 pub fn AppStateStore::clear(Self) -> Array[AppStateEntry]
 pub fn AppStateStore::contains(Self, String) -> Bool
-pub fn AppStateStore::count(Self) -> Int
+pub fn AppStateStore::count(Self) -> Int32
 pub fn AppStateStore::entries(Self) -> Array[AppStateEntry]
 pub fn AppStateStore::get(Self, String) -> AppStateEntry?
 pub fn AppStateStore::is_empty(Self) -> Bool
@@ -161,36 +164,40 @@ pub fn AppStateStore::remove(Self, String) -> Result[AppStateEntry, String]
 pub fn AppStateStore::set(Self, String, kind? : String, value? : String) -> Result[AppStateEntry, Array[String]]
 pub fn AppStateStore::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BackpressureOverflow {
   RejectNew
   DropOldest
-} derive(Eq, @debug.Debug)
+}
 pub fn BackpressureOverflow::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BackpressurePolicy {
-  max_pending : Int
+  max_pending : Int32
   overflow : BackpressureOverflow
-} derive(Eq, @debug.Debug)
-pub fn BackpressurePolicy::at_capacity(Self, Int) -> Bool
-pub fn BackpressurePolicy::bounded(max_pending~ : Int, overflow? : BackpressureOverflow) -> Self
+}
+pub fn BackpressurePolicy::at_capacity(Self, Int32) -> Bool
+pub fn BackpressurePolicy::bounded(max_pending~ : Int32, overflow? : BackpressureOverflow) -> Self
 pub fn BackpressurePolicy::is_bounded(Self) -> Bool
 pub fn BackpressurePolicy::is_unbounded(Self) -> Bool
-pub fn BackpressurePolicy::max_pending(Self) -> Int
-pub fn BackpressurePolicy::new(max_pending? : Int, overflow? : BackpressureOverflow) -> Self
+pub fn BackpressurePolicy::max_pending(Self) -> Int32
+pub fn BackpressurePolicy::new(max_pending? : Int32, overflow? : BackpressureOverflow) -> Self
 pub fn BackpressurePolicy::overflow(Self) -> BackpressureOverflow
 pub fn BackpressurePolicy::to_json(Self) -> String
 pub fn BackpressurePolicy::unbounded() -> Self
 pub fn BackpressurePolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct BridgeConfig {
   global_name : String
   native_hook : String
   event_dispatch_hook : String
   window_label : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BridgeConfig::new(global_name? : String, native_hook? : String, event_dispatch_hook? : String, window_label? : String) -> Self
 pub fn BridgeConfig::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct BridgeScript {
   global_name : String
   native_hook : String
@@ -198,7 +205,7 @@ pub struct BridgeScript {
   window_label : String
   routes : Array[String]
   source : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BridgeScript::event_dispatch_hook(Self) -> String
 pub fn BridgeScript::global_name(Self) -> String
 pub fn BridgeScript::native_hook(Self) -> String
@@ -206,17 +213,19 @@ pub fn BridgeScript::routes(Self) -> Array[String]
 pub fn BridgeScript::source(Self) -> String
 pub fn BridgeScript::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundleArtifact {
   kind : BundleArtifactKind
   path : String
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleArtifact::description(Self) -> String
 pub fn BundleArtifact::kind(Self) -> BundleArtifactKind
 pub fn BundleArtifact::new(kind~ : BundleArtifactKind, path~ : String, description~ : String) -> Self
 pub fn BundleArtifact::path(Self) -> String
 pub fn BundleArtifact::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BundleArtifactKind {
   AppBundleArtifact
   DiskImageArtifact
@@ -224,9 +233,10 @@ pub(all) enum BundleArtifactKind {
   InstallerArtifact
   PortableDirectoryArtifact
   DesktopEntryArtifact
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleArtifactKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundleConfig {
   metadata : AppMetadata
   target : BundleTarget
@@ -234,21 +244,23 @@ pub struct BundleConfig {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleConfig::new(AppMetadata, target? : BundleTarget, icon_path? : String, resource_sources? : Array[BundleResourceSource], runtime_dependency_sources? : Array[BundleRuntimeDependencySource], signing? : SigningConfig) -> Self
 pub fn BundleConfig::plan(Self, RuntimePlan, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn BundleConfig::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct BundleFile {
   path : String
   content : String
   executable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleFile::content(Self) -> String
 pub fn BundleFile::executable(Self) -> Bool
 pub fn BundleFile::new(path~ : String, content~ : String, executable? : Bool) -> Self
 pub fn BundleFile::path(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundlePlan {
   metadata : AppMetadata
   target : BundleTarget
@@ -260,7 +272,7 @@ pub struct BundlePlan {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Eq, @debug.Debug)
+}
 pub fn BundlePlan::artifacts(Self) -> Array[BundleArtifact]
 pub fn BundlePlan::bundle_name(Self) -> String
 pub fn BundlePlan::distribution_manifest_json(Self) -> String
@@ -284,34 +296,38 @@ pub fn BundlePlan::target(Self) -> BundleTarget
 pub fn BundlePlan::update_manifest(Self, base_url~ : String, channel? : String, public_key? : String, artifact_trust? : Array[UpdateArtifactTrust]) -> Result[UpdateManifest, Array[String]]
 pub fn BundlePlan::update_manifest_json(Self, base_url~ : String, channel? : String, public_key? : String, artifact_trust? : Array[UpdateArtifactTrust]) -> Result[String, Array[String]]
 
+#derive(Eq, @debug.Debug)
 pub struct BundleResource {
   kind : BundleResourceKind
   source_path : String
   path : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleResource::kind(Self) -> BundleResourceKind
 pub fn BundleResource::new(kind~ : BundleResourceKind, source_path~ : String, path~ : String) -> Self
 pub fn BundleResource::path(Self) -> String
 pub fn BundleResource::source_path(Self) -> String
 pub fn BundleResource::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BundleResourceKind {
   IconResource
   AssetResource
   ExecutableResource
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleResourceKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundleResourceSource {
   source_path : String
   path : String
   executable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleResourceSource::executable(Self) -> Bool
 pub fn BundleResourceSource::new(source_path~ : String, path~ : String, executable? : Bool) -> Self
 pub fn BundleResourceSource::path(Self) -> String
 pub fn BundleResourceSource::source_path(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundleRuntimeDependency {
   kind : BundleRuntimeDependencyKind
   name : String
@@ -319,7 +335,7 @@ pub struct BundleRuntimeDependency {
   source_path : String?
   required : Bool
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleRuntimeDependency::description(Self) -> String
 pub fn BundleRuntimeDependency::kind(Self) -> BundleRuntimeDependencyKind
 pub fn BundleRuntimeDependency::name(Self) -> String
@@ -329,27 +345,31 @@ pub fn BundleRuntimeDependency::required(Self) -> Bool
 pub fn BundleRuntimeDependency::source_path(Self) -> String?
 pub fn BundleRuntimeDependency::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BundleRuntimeDependencyKind {
   SystemWebViewRuntime
   NativeLoaderLibrary
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleRuntimeDependencyKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundleRuntimeDependencySource {
   name : String
   source_path : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleRuntimeDependencySource::name(Self) -> String
 pub fn BundleRuntimeDependencySource::new(name~ : String, source_path~ : String) -> Self
 pub fn BundleRuntimeDependencySource::source_path(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BundleTarget {
   MacOS
   Windows
   Linux
-} derive(Eq, @debug.Debug)
+}
 pub fn BundleTarget::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Capability {
   name : String
   windows : Array[String]
@@ -357,7 +377,7 @@ pub struct Capability {
   platforms : Array[String]
   permissions : Array[Permission]
   operation_scopes : Array[OperationScope]
-} derive(Eq, @debug.Debug)
+}
 pub fn Capability::allows(Self, window_label~ : String, permission~ : Permission, origin? : String, platform? : String) -> Bool
 pub fn Capability::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String, platform? : String) -> Bool
 pub fn Capability::command(Self, String) -> Self
@@ -380,6 +400,7 @@ pub fn Capability::window(Self, String) -> Self
 pub fn Capability::windows(Self) -> Array[String]
 pub fn Capability::with_file_system_scopes(Self, Array[FileSystemScope]) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct CapabilityCompileIssue {
   severity : CapabilityIssueSeverity
   code : String
@@ -389,7 +410,7 @@ pub struct CapabilityCompileIssue {
   permission : String
   capability : String
   window_label : String
-} derive(Eq, @debug.Debug)
+}
 pub fn CapabilityCompileIssue::capability(Self) -> String
 pub fn CapabilityCompileIssue::code(Self) -> String
 pub fn CapabilityCompileIssue::message(Self) -> String
@@ -400,15 +421,16 @@ pub fn CapabilityCompileIssue::severity(Self) -> CapabilityIssueSeverity
 pub fn CapabilityCompileIssue::to_json(Self) -> String
 pub fn CapabilityCompileIssue::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct CapabilityCompileReport {
   plugin_contracts : Array[PluginContract]
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
   issues : Array[CapabilityCompileIssue]
-} derive(Eq, @debug.Debug)
+}
 pub fn CapabilityCompileReport::command_manifest(Self) -> CommandManifest
 pub fn CapabilityCompileReport::denied_routes(Self) -> Array[String]
-pub fn CapabilityCompileReport::error_count(Self) -> Int
+pub fn CapabilityCompileReport::error_count(Self) -> Int32
 pub fn CapabilityCompileReport::errors(Self) -> Array[CapabilityCompileIssue]
 pub fn CapabilityCompileReport::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow]) -> Self
 pub fn CapabilityCompileReport::issues(Self) -> Array[CapabilityCompileIssue]
@@ -418,9 +440,10 @@ pub fn CapabilityCompileReport::plugin_contracts(Self) -> Array[PluginContract]
 pub fn CapabilityCompileReport::to_json(Self) -> String
 pub fn CapabilityCompileReport::unknown_windows(Self) -> Array[String]
 pub fn CapabilityCompileReport::unused_permissions(Self) -> Array[String]
-pub fn CapabilityCompileReport::warning_count(Self) -> Int
+pub fn CapabilityCompileReport::warning_count(Self) -> Int32
 pub fn CapabilityCompileReport::warnings(Self) -> Array[CapabilityCompileIssue]
 
+#derive(Eq, @debug.Debug)
 pub struct CapabilityDecision {
   allowed : Bool
   window_label : String
@@ -429,7 +452,7 @@ pub struct CapabilityDecision {
   permission : Permission
   capability : String
   reason : String
-} derive(Eq, @debug.Debug)
+}
 pub fn CapabilityDecision::allowed(Self) -> Bool
 pub fn CapabilityDecision::capability(Self) -> String
 pub fn CapabilityDecision::denied(Self) -> Bool
@@ -440,16 +463,18 @@ pub fn CapabilityDecision::reason(Self) -> String
 pub fn CapabilityDecision::to_json(Self) -> String
 pub fn CapabilityDecision::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CapabilityIssueSeverity {
   CapabilityWarning
   CapabilityError
-} derive(Eq, @debug.Debug)
+}
 pub fn CapabilityIssueSeverity::is_error(Self) -> Bool
 pub fn CapabilityIssueSeverity::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct CapabilityPolicy {
   capabilities : Array[Capability]
-} derive(Eq, @debug.Debug)
+}
 pub fn CapabilityPolicy::allowed_origins(Self, window_label~ : String, permission~ : Permission, platform? : String) -> Array[String]
 pub fn CapabilityPolicy::allows(Self, window_label~ : String, permission~ : Permission, origin? : String, platform? : String) -> Bool
 pub fn CapabilityPolicy::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String, platform? : String) -> Bool
@@ -461,46 +486,50 @@ pub fn CapabilityPolicy::new(capabilities? : Array[Capability]) -> Self
 pub fn CapabilityPolicy::to_json(Self) -> String
 pub fn CapabilityPolicy::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct Cell {
   id : String
   html : Html
-} derive(Eq, @debug.Debug)
+}
 pub fn Cell::html(Self) -> Html
 pub fn Cell::id(Self) -> String
 pub fn Cell::new(id? : String, html? : Html) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct Channel {
   resource : ResourceEntry
-  mut next_sequence : Int
+  mut next_sequence : Int32
   messages : Array[ChannelMessage]
   closed : Bool
   cancelled : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Channel::cancelled(Self) -> Bool
 pub fn Channel::closed(Self) -> Bool
 pub fn Channel::id(Self) -> String
-pub fn Channel::pending_count(Self) -> Int
+pub fn Channel::pending_count(Self) -> Int32
 pub fn Channel::resource(Self) -> ResourceEntry
 pub fn Channel::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct ChannelMessage {
   channel_id : String
-  sequence : Int
+  sequence : Int32
   kind : ChannelMessageKind
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ChannelMessage::channel_id(Self) -> String
 pub fn ChannelMessage::kind(Self) -> ChannelMessageKind
 pub fn ChannelMessage::payload(Self) -> String
-pub fn ChannelMessage::sequence(Self) -> Int
+pub fn ChannelMessage::sequence(Self) -> Int32
 pub fn ChannelMessage::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ChannelMessageKind {
   ChannelData
   ChannelError
   ChannelEnd
   ChannelCancel
-} derive(Eq, @debug.Debug)
+}
 pub fn ChannelMessageKind::name(Self) -> String
 
 pub struct ChannelTable {
@@ -514,7 +543,7 @@ pub fn ChannelTable::cleanup_report(Self) -> ResourceCleanupReport
 pub fn ChannelTable::close(Self, String) -> Result[ResourceEntry, String]
 pub fn ChannelTable::close_all(Self) -> Array[ResourceEntry]
 pub fn ChannelTable::contains(Self, String) -> Bool
-pub fn ChannelTable::count(Self) -> Int
+pub fn ChannelTable::count(Self) -> Int32
 pub fn ChannelTable::drain(Self, String) -> Result[Array[ChannelMessage], String]
 pub fn ChannelTable::end(Self, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::fail(Self, String, String) -> Result[ChannelMessage, String]
@@ -527,29 +556,32 @@ pub fn ChannelTable::resource_entries(Self) -> Array[ResourceEntry]
 pub fn ChannelTable::send(Self, String, String) -> Result[ChannelMessage, String]
 pub fn ChannelTable::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Cmd {
   None
   Batch(Array[Cmd])
   Effect(String)
   Emit(EventTarget, Event)
   Navigate(String, Source)
-} derive(Eq, @debug.Debug)
+}
 pub fn Cmd::batch(Array[Self]) -> Self
 pub fn Cmd::effect(String) -> Self
 pub fn Cmd::emit(Event, target? : EventTarget) -> Self
 pub fn Cmd::is_empty(Self) -> Bool
 pub fn Cmd::navigate(String, Source) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CommandExecutionAffinity {
   MainThread
   WorkerThread
   AnyThread
-} derive(Eq, @debug.Debug)
+}
 pub fn CommandExecutionAffinity::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct CommandManifest {
   entries : Array[CommandManifestEntry]
-} derive(Eq, @debug.Debug)
+}
 pub fn CommandManifest::allowed_routes(Self, String) -> Array[String]
 pub fn CommandManifest::allows(Self, String, window_label~ : String, origin? : String, platform? : String) -> Bool
 pub fn CommandManifest::entries(Self) -> Array[CommandManifestEntry]
@@ -561,6 +593,7 @@ pub fn CommandManifest::routes_by_affinity(Self, CommandExecutionAffinity) -> Ar
 pub fn CommandManifest::routes_by_mode(Self, CommandMode) -> Array[String]
 pub fn CommandManifest::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct CommandManifestEntry {
   plugin : String
   command : String
@@ -573,7 +606,7 @@ pub struct CommandManifestEntry {
   allowed_windows : Array[String]
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn CommandManifestEntry::affinity(Self) -> CommandExecutionAffinity
 pub fn CommandManifestEntry::allowed_for_origin(Self, String) -> Bool
 pub fn CommandManifestEntry::allowed_in_window(Self, String) -> Bool
@@ -590,12 +623,13 @@ pub fn CommandManifestEntry::response_schema(Self) -> IpcSchema
 pub fn CommandManifestEntry::route(Self) -> String
 pub fn CommandManifestEntry::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CommandMode {
   Sync
   Async
   Stream
   Event
-} derive(Eq, @debug.Debug)
+}
 pub fn CommandMode::name(Self) -> String
 
 pub struct CommandRegistry {
@@ -623,6 +657,7 @@ pub fn CommandRegistry::routes(Self) -> Array[String]
 pub fn CommandRegistry::sync_routes(Self) -> Array[String]
 pub fn CommandRegistry::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct CommandSpec {
   name : String
   mode : CommandMode
@@ -630,7 +665,7 @@ pub struct CommandSpec {
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
-} derive(Eq, @debug.Debug)
+}
 pub fn CommandSpec::affinity(Self) -> CommandExecutionAffinity
 pub fn CommandSpec::mode(Self) -> CommandMode
 pub fn CommandSpec::name(Self) -> String
@@ -641,26 +676,28 @@ pub fn CommandSpec::response_schema(Self) -> IpcSchema
 pub fn CommandSpec::with_affinity(Self, CommandExecutionAffinity) -> Self
 pub fn CommandSpec::with_schema(Self, request? : IpcSchema, response? : IpcSchema) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct Event {
   name : String
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Event::name(Self) -> String
 pub fn Event::new(String, payload? : String) -> Self
 pub fn Event::payload(Self) -> String
 pub fn Event::to_json(Self) -> String
 pub fn Event::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct EventBus {
-  mut next_listener_sequence : Int
+  mut next_listener_sequence : Int32
   listeners : Map[String, EventListener]
   order : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn EventBus::clear(Self) -> Array[EventListener]
 pub fn EventBus::emit(Self, Event, target? : EventTarget) -> Result[Array[EventDelivery], Array[String]]
 pub fn EventBus::listen(Self, String, target? : EventTarget, once? : Bool) -> Result[EventListener, Array[String]]
 pub fn EventBus::listener(Self, String) -> EventListener?
-pub fn EventBus::listener_count(Self) -> Int
+pub fn EventBus::listener_count(Self) -> Int32
 pub fn EventBus::listeners(Self) -> Array[EventListener]
 pub fn EventBus::listeners_for(Self, String, target? : EventTarget) -> Array[EventListener]
 pub fn EventBus::new() -> Self
@@ -669,43 +706,47 @@ pub fn EventBus::remove_target(Self, EventTarget) -> Array[EventListener]
 pub fn EventBus::to_json(Self) -> String
 pub fn EventBus::unlisten(Self, String) -> Result[EventListener, String]
 
+#derive(Eq, @debug.Debug)
 pub struct EventDelivery {
   listener_id : String
   target : EventTarget
   event : Event
-} derive(Eq, @debug.Debug)
+}
 pub fn EventDelivery::event(Self) -> Event
 pub fn EventDelivery::listener_id(Self) -> String
 pub fn EventDelivery::target(Self) -> EventTarget
 pub fn EventDelivery::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct EventListener {
   id : String
   name : String
   target : EventTarget
   once : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn EventListener::id(Self) -> String
 pub fn EventListener::name(Self) -> String
 pub fn EventListener::once(Self) -> Bool
 pub fn EventListener::target(Self) -> EventTarget
 pub fn EventListener::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum EventTarget {
   AppTarget
   WindowTarget(String)
   WebviewTarget(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn EventTarget::kind(Self) -> String
 pub fn EventTarget::label(Self) -> String?
 pub fn EventTarget::to_json(Self) -> String
 pub fn EventTarget::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct FileSystemScope {
   name : String
   root : String
   writable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn FileSystemScope::name(Self) -> String
 pub fn FileSystemScope::new(name~ : String, root~ : String, writable? : Bool) -> Self
 pub fn FileSystemScope::root(Self) -> String
@@ -713,12 +754,13 @@ pub fn FileSystemScope::to_json(Self) -> String
 pub fn FileSystemScope::validate(Self) -> Array[String]
 pub fn FileSystemScope::writable(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub struct FrontendEventDispatch {
   window_label : String
   hook : String
   event : Event
   script : String
-} derive(Eq, @debug.Debug)
+}
 pub fn FrontendEventDispatch::event(Self) -> Event
 pub fn FrontendEventDispatch::hook(Self) -> String
 pub fn FrontendEventDispatch::new(window_label~ : String, hook? : String, event~ : Event) -> Self
@@ -726,13 +768,15 @@ pub fn FrontendEventDispatch::script(Self) -> String
 pub fn FrontendEventDispatch::to_json(Self) -> String
 pub fn FrontendEventDispatch::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Html {
   content : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Html::content(Self) -> String
 pub fn Html::empty() -> Self
 pub fn Html::text(String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct InvokeContract {
   route : String
   plugin : String
@@ -752,7 +796,7 @@ pub struct InvokeContract {
   operation_scope_configured : Bool
   operation_scope_required : Bool
   problems : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeContract::affinity(Self) -> CommandExecutionAffinity
 pub fn InvokeContract::allowed_origins(Self) -> Array[String]
 pub fn InvokeContract::allowed_windows(Self) -> Array[String]
@@ -775,12 +819,13 @@ pub fn InvokeContract::response_schema(Self) -> IpcSchema
 pub fn InvokeContract::route(Self) -> String
 pub fn InvokeContract::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct InvokeContractReport {
   contracts : Array[InvokeContract]
   undeclared_routes : Array[String]
   duplicate_routes : Array[String]
   problems : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeContractReport::contracts(Self) -> Array[InvokeContract]
 pub fn InvokeContractReport::dispatchable_routes(Self) -> Array[String]
 pub fn InvokeContractReport::duplicate_routes(Self) -> Array[String]
@@ -789,6 +834,7 @@ pub fn InvokeContractReport::problems(Self) -> Array[String]
 pub fn InvokeContractReport::to_json(Self) -> String
 pub fn InvokeContractReport::undeclared_routes(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum InvokeErrorKind {
   InvalidRequest
   UnknownCommand
@@ -798,14 +844,15 @@ pub(all) enum InvokeErrorKind {
   TransportError
   Timeout
   Cancelled
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeErrorKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct InvokeFailure {
   kind : InvokeErrorKind
   message : String
   route : String
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeFailure::async_required(String) -> Self
 pub fn InvokeFailure::cancelled(message? : String, route? : String) -> Self
 pub fn InvokeFailure::handler_error(String, route? : String) -> Self
@@ -820,6 +867,7 @@ pub fn InvokeFailure::to_json(Self) -> String
 pub fn InvokeFailure::transport_error(String) -> Self
 pub fn InvokeFailure::unknown_command(String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct InvokeRequest {
   id : String
   window_label : String
@@ -829,7 +877,7 @@ pub struct InvokeRequest {
   origin : String
   callback_id : String
   error_id : String
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeRequest::callback_id(Self) -> String
 pub fn InvokeRequest::command(Self) -> String
 pub fn InvokeRequest::error_id(Self) -> String
@@ -843,10 +891,11 @@ pub fn InvokeRequest::route(Self) -> String
 pub fn InvokeRequest::validate(Self) -> Array[String]
 pub fn InvokeRequest::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum InvokeResponse {
   InvokeOk(String, String)
   InvokeError(String, InvokeFailure)
-} derive(Eq, @debug.Debug)
+}
 pub fn InvokeResponse::async_required(String, String) -> Self
 pub fn InvokeResponse::error(String, String) -> Self
 pub fn InvokeResponse::error_kind(Self) -> InvokeErrorKind?
@@ -861,11 +910,12 @@ pub fn InvokeResponse::payload(Self) -> String?
 pub fn InvokeResponse::permission_denied(String, String) -> Self
 pub fn InvokeResponse::unknown_command(String, String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct IpcSchema {
   name : String
   typescript : String
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn IpcSchema::accepts_payload(Self, String) -> Bool
 pub fn IpcSchema::any() -> Self
 pub fn IpcSchema::array(Self) -> Self
@@ -883,6 +933,7 @@ pub fn IpcSchema::unit() -> Self
 pub fn IpcSchema::validate(Self) -> Array[String]
 pub fn IpcSchema::validate_payload(Self, String) -> String?
 
+#derive(Eq, @debug.Debug)
 pub struct LaunchPlan {
   root : Cell
   windows : Array[WindowConfig]
@@ -890,17 +941,18 @@ pub struct LaunchPlan {
   capabilities : Array[Capability]
   startup : Cmd
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Eq, @debug.Debug)
+}
 pub fn LaunchPlan::capabilities(Self) -> Array[Capability]
-pub fn LaunchPlan::capability_count(Self) -> Int
+pub fn LaunchPlan::capability_count(Self) -> Int32
 pub fn LaunchPlan::command_routes(Self) -> Array[String]
 pub fn LaunchPlan::lifecycle_hooks(Self) -> Array[LifecycleHook]
-pub fn LaunchPlan::plugin_count(Self) -> Int
+pub fn LaunchPlan::plugin_count(Self) -> Int32
 pub fn LaunchPlan::plugins(Self) -> Array[Plugin]
 pub fn LaunchPlan::startup(Self) -> Cmd
-pub fn LaunchPlan::window_count(Self) -> Int
+pub fn LaunchPlan::window_count(Self) -> Int32
 pub fn LaunchPlan::windows(Self) -> Array[WindowConfig]
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct LepusaMoonSuiteProductHome {
   product_id : String
   state_path : String
@@ -908,8 +960,9 @@ pub(all) struct LepusaMoonSuiteProductHome {
   runtime_path : String
   update_metadata_path : String
   tmp_path : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LifecycleEvent {
   AppStarted
   AppWillExit
@@ -918,7 +971,7 @@ pub(all) enum LifecycleEvent {
   PluginWillExit(String)
   WindowCloseRequested(String)
   WindowClosed(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn LifecycleEvent::app_started() -> Self
 pub fn LifecycleEvent::app_will_exit() -> Self
 pub fn LifecycleEvent::plugin_ready(String) -> Self
@@ -928,19 +981,21 @@ pub fn LifecycleEvent::to_json(Self) -> String
 pub fn LifecycleEvent::window_close_requested(String) -> Self
 pub fn LifecycleEvent::window_closed(String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct LifecycleHook {
   event : LifecycleEvent
   command : Cmd
-} derive(Eq, @debug.Debug)
+}
 pub fn LifecycleHook::command(Self) -> Cmd
 pub fn LifecycleHook::event(Self) -> LifecycleEvent
 pub fn LifecycleHook::new(LifecycleEvent, Cmd) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct LocalService {
   name : String
   command : Array[String]
   readiness_url : String
-} derive(Eq, @debug.Debug)
+}
 pub fn LocalService::command(Self) -> Array[String]
 pub fn LocalService::name(Self) -> String
 pub fn LocalService::new(name~ : String, command~ : Array[String], readiness_url~ : String) -> Self
@@ -948,21 +1003,23 @@ pub fn LocalService::readiness_url(Self) -> String
 pub fn LocalService::to_json(Self) -> String
 pub fn LocalService::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LocalServiceSupervisorAction {
   StartLocalService(LocalService)
   WaitLocalServiceReady(LocalService)
   StopLocalService(LocalService)
-} derive(Eq, @debug.Debug)
+}
 pub fn LocalServiceSupervisorAction::kind(Self) -> String
 pub fn LocalServiceSupervisorAction::service(Self) -> LocalService
 pub fn LocalServiceSupervisorAction::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct LocalServiceSupervisorPlan {
   services : Array[LocalService]
   startup_services : Array[LocalService]
   startup_actions : Array[LocalServiceSupervisorAction]
   shutdown_actions : Array[LocalServiceSupervisorAction]
-} derive(Eq, @debug.Debug)
+}
 pub fn LocalServiceSupervisorPlan::new(services? : Array[LocalService], startup_services? : Array[LocalService]) -> Self
 pub fn LocalServiceSupervisorPlan::requires_supervisor(Self) -> Bool
 pub fn LocalServiceSupervisorPlan::services(Self) -> Array[LocalService]
@@ -973,29 +1030,31 @@ pub fn LocalServiceSupervisorPlan::startup_services(Self) -> Array[LocalService]
 pub fn LocalServiceSupervisorPlan::to_json(Self) -> String
 pub fn LocalServiceSupervisorPlan::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct LocalhostSource {
   host : String
-  port : Int
+  port : Int32
   path : String
   readiness_path : String?
   command : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn LocalhostSource::command(Self) -> Array[String]
 pub fn LocalhostSource::host(Self) -> String
 pub fn LocalhostSource::local_service(Self, String) -> LocalService?
-pub fn LocalhostSource::new(port~ : Int, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
+pub fn LocalhostSource::new(port~ : Int32, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
 pub fn LocalhostSource::path(Self) -> String
-pub fn LocalhostSource::port(Self) -> Int
+pub fn LocalhostSource::port(Self) -> Int32
 pub fn LocalhostSource::readiness_path(Self) -> String?
 pub fn LocalhostSource::readiness_url(Self) -> String
 pub fn LocalhostSource::url(Self) -> String
 pub fn LocalhostSource::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct OperationScope {
   kind : OperationScopeKind
   value : String
   writable : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn OperationScope::allows(Self, Self) -> Bool
 pub fn OperationScope::command(Self) -> String
 pub fn OperationScope::kind(Self) -> OperationScopeKind
@@ -1009,15 +1068,18 @@ pub fn OperationScope::validate(Self) -> Array[String]
 pub fn OperationScope::value(Self) -> String
 pub fn OperationScope::writable(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum OperationScopeKind {
   PathOperation
   ShellOperation
   UrlOperation
-} derive(Eq, @debug.Debug)
+}
 pub fn OperationScopeKind::name(Self) -> String
 
-type ParsedLaunchAssetUrl derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type ParsedLaunchAssetUrl
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Permission {
   App
   FileSystemRead
@@ -1043,14 +1105,15 @@ pub(all) enum Permission {
   ProcessEnvironment
   ProcessControl
   Custom(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Permission::command(String) -> Self
 pub fn Permission::name(Self) -> String
 pub fn Permission::named(String) -> Result[Self, String]
 
+#derive(Eq, @debug.Debug)
 pub struct PermissionManifest {
   permissions : Array[PermissionManifestPermission]
-} derive(Eq, @debug.Debug)
+}
 pub fn PermissionManifest::denied_routes(Self) -> Array[String]
 pub fn PermissionManifest::from_command_manifest(CommandManifest, capabilities~ : Array[Capability]) -> Self
 pub fn PermissionManifest::from_plugins(plugins~ : Array[Plugin], capabilities~ : Array[Capability], windows~ : Array[ResolvedWindow], platform? : String) -> Self
@@ -1060,6 +1123,7 @@ pub fn PermissionManifest::permission_names(Self) -> Array[String]
 pub fn PermissionManifest::permissions(Self) -> Array[PermissionManifestPermission]
 pub fn PermissionManifest::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct PermissionManifestCommand {
   plugin : String
   command : String
@@ -1069,7 +1133,7 @@ pub struct PermissionManifestCommand {
   allowed_windows : Array[String]
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn PermissionManifestCommand::affinity(Self) -> CommandExecutionAffinity
 pub fn PermissionManifestCommand::allowed_origins(Self) -> Array[String]
 pub fn PermissionManifestCommand::allowed_platforms(Self) -> Array[String]
@@ -1080,13 +1144,14 @@ pub fn PermissionManifestCommand::plugin(Self) -> String
 pub fn PermissionManifestCommand::route(Self) -> String
 pub fn PermissionManifestCommand::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct PermissionManifestGrant {
   capability : String
   windows : Array[String]
   origins : Array[String]
   platforms : Array[String]
   operation_scopes : Array[OperationScope]
-} derive(Eq, @debug.Debug)
+}
 pub fn PermissionManifestGrant::capability(Self) -> String
 pub fn PermissionManifestGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn PermissionManifestGrant::origins(Self) -> Array[String]
@@ -1094,6 +1159,7 @@ pub fn PermissionManifestGrant::platforms(Self) -> Array[String]
 pub fn PermissionManifestGrant::to_json(Self) -> String
 pub fn PermissionManifestGrant::windows(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct PermissionManifestPermission {
   name : String
   commands : Array[PermissionManifestCommand]
@@ -1102,7 +1168,7 @@ pub struct PermissionManifestPermission {
   allowed_origins : Array[String]
   allowed_platforms : Array[String]
   denied_routes : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn PermissionManifestPermission::allowed_origins(Self) -> Array[String]
 pub fn PermissionManifestPermission::allowed_platforms(Self) -> Array[String]
 pub fn PermissionManifestPermission::allowed_windows(Self) -> Array[String]
@@ -1112,11 +1178,12 @@ pub fn PermissionManifestPermission::grants(Self) -> Array[PermissionManifestGra
 pub fn PermissionManifestPermission::name(Self) -> String
 pub fn PermissionManifestPermission::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Plugin {
   name : String
   commands : Array[CommandSpec]
   lifecycle_hooks : Array[LifecycleHook]
-} derive(Eq, @debug.Debug)
+}
 pub fn Plugin::command(Self, String, mode? : CommandMode, affinity? : CommandExecutionAffinity, permission? : Permission, request? : IpcSchema, response? : IpcSchema) -> Self
 pub fn Plugin::command_async(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
 pub fn Plugin::command_event(Self, String, permission? : Permission, request? : IpcSchema, response? : IpcSchema, affinity? : CommandExecutionAffinity) -> Self
@@ -1135,6 +1202,7 @@ pub fn Plugin::on_will_exit(Self, Cmd) -> Self
 pub fn Plugin::validate(Self) -> Array[String]
 pub fn Plugin::with_lifecycle(Self, LifecycleEvent, Cmd) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct PluginCommandContract {
   plugin : String
   name : String
@@ -1144,7 +1212,7 @@ pub struct PluginCommandContract {
   permission : Permission
   request_schema : IpcSchema
   response_schema : IpcSchema
-} derive(Eq, @debug.Debug)
+}
 pub fn PluginCommandContract::affinity(Self) -> CommandExecutionAffinity
 pub fn PluginCommandContract::from_command(plugin_name~ : String, CommandSpec) -> Self
 pub fn PluginCommandContract::mode(Self) -> CommandMode
@@ -1156,42 +1224,45 @@ pub fn PluginCommandContract::response_schema(Self) -> IpcSchema
 pub fn PluginCommandContract::route(Self) -> String
 pub fn PluginCommandContract::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct PluginContract {
   name : String
   commands : Array[PluginCommandContract]
   lifecycle_hooks : Array[PluginLifecycleContract]
   permissions : Array[String]
   problems : Array[String]
-} derive(Eq, @debug.Debug)
-pub fn PluginContract::any_thread_count(Self) -> Int
-pub fn PluginContract::async_count(Self) -> Int
-pub fn PluginContract::command_count(Self) -> Int
-pub fn PluginContract::command_count_by_affinity(Self, CommandExecutionAffinity) -> Int
-pub fn PluginContract::command_count_by_mode(Self, CommandMode) -> Int
+}
+pub fn PluginContract::any_thread_count(Self) -> Int32
+pub fn PluginContract::async_count(Self) -> Int32
+pub fn PluginContract::command_count(Self) -> Int32
+pub fn PluginContract::command_count_by_affinity(Self, CommandExecutionAffinity) -> Int32
+pub fn PluginContract::command_count_by_mode(Self, CommandMode) -> Int32
 pub fn PluginContract::command_routes(Self) -> Array[String]
 pub fn PluginContract::commands(Self) -> Array[PluginCommandContract]
-pub fn PluginContract::event_count(Self) -> Int
-pub fn PluginContract::lifecycle_count(Self) -> Int
+pub fn PluginContract::event_count(Self) -> Int32
+pub fn PluginContract::lifecycle_count(Self) -> Int32
 pub fn PluginContract::lifecycle_hooks(Self) -> Array[PluginLifecycleContract]
-pub fn PluginContract::main_thread_count(Self) -> Int
+pub fn PluginContract::main_thread_count(Self) -> Int32
 pub fn PluginContract::name(Self) -> String
 pub fn PluginContract::ok(Self) -> Bool
 pub fn PluginContract::permissions(Self) -> Array[String]
 pub fn PluginContract::problems(Self) -> Array[String]
-pub fn PluginContract::stream_count(Self) -> Int
-pub fn PluginContract::sync_count(Self) -> Int
+pub fn PluginContract::stream_count(Self) -> Int32
+pub fn PluginContract::sync_count(Self) -> Int32
 pub fn PluginContract::to_json(Self) -> String
-pub fn PluginContract::worker_thread_count(Self) -> Int
+pub fn PluginContract::worker_thread_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct PluginLifecycleContract {
   event : LifecycleEvent
   command_empty : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn PluginLifecycleContract::command_empty(Self) -> Bool
 pub fn PluginLifecycleContract::event(Self) -> LifecycleEvent
 pub fn PluginLifecycleContract::from_hook(LifecycleHook) -> Self
 pub fn PluginLifecycleContract::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct ProjectManifest {
   metadata : AppMetadata
   windows : Array[WindowConfig]
@@ -1205,7 +1276,7 @@ pub struct ProjectManifest {
   resource_sources : Array[BundleResourceSource]
   runtime_dependency_sources : Array[BundleRuntimeDependencySource]
   signing : SigningConfig
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectManifest::app(Self, Cell) -> App
 pub fn ProjectManifest::bundle_plan(Self, Cell, target? : BundleTarget, registered_routes? : Array[String]) -> Result[BundlePlan, Array[String]]
 pub fn ProjectManifest::capabilities(Self) -> Array[Capability]
@@ -1235,10 +1306,11 @@ pub fn ProjectManifest::with_signing(Self, SigningConfig) -> Self
 pub fn ProjectManifest::with_startup(Self, Cmd) -> Self
 pub fn ProjectManifest::with_window(Self, WindowConfig) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct ProtocolMapping {
   scheme : String
   root : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ProtocolMapping::new(scheme~ : String, root~ : String) -> Self
 pub fn ProtocolMapping::root(Self) -> String
 pub fn ProtocolMapping::scheme(Self) -> String
@@ -1260,54 +1332,57 @@ pub fn RegisteredCommand::route(Self) -> String
 
 type RegisteredCommandHandler
 
+#derive(Eq, @debug.Debug)
 pub struct ReleaseReadinessReport {
   target : BundleTarget
-  files : Int
-  resources : Int
-  artifacts : Int
-  runtime_dependencies : Int
-  required_runtime_dependencies : Int
+  files : Int32
+  resources : Int32
+  artifacts : Int32
+  runtime_dependencies : Int32
+  required_runtime_dependencies : Int32
   signing_configured : Bool
-  signing_prerequisites : Int
-  signing_steps : Int
-  runtime_webviews : Int
-  command_routes : Int
-  registered_routes : Int
+  signing_prerequisites : Int32
+  signing_steps : Int32
+  runtime_webviews : Int32
+  command_routes : Int32
+  registered_routes : Int32
   native_launch_session_ready : Bool
   native_launch_session_issue : String
   issues : Array[String]
-} derive(Eq, @debug.Debug)
-pub fn ReleaseReadinessReport::artifacts(Self) -> Int
-pub fn ReleaseReadinessReport::command_routes(Self) -> Int
-pub fn ReleaseReadinessReport::files(Self) -> Int
+}
+pub fn ReleaseReadinessReport::artifacts(Self) -> Int32
+pub fn ReleaseReadinessReport::command_routes(Self) -> Int32
+pub fn ReleaseReadinessReport::files(Self) -> Int32
 pub fn ReleaseReadinessReport::issues(Self) -> Array[String]
 pub fn ReleaseReadinessReport::native_launch_session_issue(Self) -> String
 pub fn ReleaseReadinessReport::native_launch_session_ready(Self) -> Bool
 pub fn ReleaseReadinessReport::ready(Self) -> Bool
-pub fn ReleaseReadinessReport::registered_routes(Self) -> Int
-pub fn ReleaseReadinessReport::required_runtime_dependencies(Self) -> Int
-pub fn ReleaseReadinessReport::resources(Self) -> Int
-pub fn ReleaseReadinessReport::runtime_dependencies(Self) -> Int
-pub fn ReleaseReadinessReport::runtime_webviews(Self) -> Int
+pub fn ReleaseReadinessReport::registered_routes(Self) -> Int32
+pub fn ReleaseReadinessReport::required_runtime_dependencies(Self) -> Int32
+pub fn ReleaseReadinessReport::resources(Self) -> Int32
+pub fn ReleaseReadinessReport::runtime_dependencies(Self) -> Int32
+pub fn ReleaseReadinessReport::runtime_webviews(Self) -> Int32
 pub fn ReleaseReadinessReport::signing_configured(Self) -> Bool
-pub fn ReleaseReadinessReport::signing_prerequisites(Self) -> Int
-pub fn ReleaseReadinessReport::signing_steps(Self) -> Int
+pub fn ReleaseReadinessReport::signing_prerequisites(Self) -> Int32
+pub fn ReleaseReadinessReport::signing_steps(Self) -> Int32
 pub fn ReleaseReadinessReport::target(Self) -> BundleTarget
 pub fn ReleaseReadinessReport::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct ResolvedSource {
   kind : ResolvedSourceKind
   url : String
   protocol_mappings : Array[ProtocolMapping]
   virtual_files : Array[VirtualFile]
   local_services : Array[LocalService]
-} derive(Eq, @debug.Debug)
+}
 pub fn ResolvedSource::kind(Self) -> ResolvedSourceKind
 pub fn ResolvedSource::local_services(Self) -> Array[LocalService]
 pub fn ResolvedSource::protocol_mappings(Self) -> Array[ProtocolMapping]
 pub fn ResolvedSource::url(Self) -> String
 pub fn ResolvedSource::virtual_files(Self) -> Array[VirtualFile]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ResolvedSourceKind {
   ResolvedInlineHtml
   ResolvedLocalPath
@@ -1315,45 +1390,48 @@ pub(all) enum ResolvedSourceKind {
   ResolvedRemoteUrl
   ResolvedLocalhost
   ResolvedRabbitaMount
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub struct ResolvedWindow {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   source : ResolvedSource
-} derive(Eq, @debug.Debug)
-pub fn ResolvedWindow::height(Self) -> Int
+}
+pub fn ResolvedWindow::height(Self) -> Int32
 pub fn ResolvedWindow::label(Self) -> String
 pub fn ResolvedWindow::resizable(Self) -> Bool
 pub fn ResolvedWindow::source(Self) -> ResolvedSource
 pub fn ResolvedWindow::title(Self) -> String
 pub fn ResolvedWindow::title_bar(Self) -> TitleBarStyle
 pub fn ResolvedWindow::url(Self) -> String
-pub fn ResolvedWindow::width(Self) -> Int
+pub fn ResolvedWindow::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct ResourceCleanupReport {
   closed : Array[ResourceEntry]
   remaining : Array[ResourceEntry]
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceCleanupReport::closed(Self) -> Array[ResourceEntry]
-pub fn ResourceCleanupReport::closed_count(Self) -> Int
+pub fn ResourceCleanupReport::closed_count(Self) -> Int32
 pub fn ResourceCleanupReport::leak_report(Self) -> ResourceLeakReport
 pub fn ResourceCleanupReport::new(closed? : Array[ResourceEntry], remaining? : Array[ResourceEntry]) -> Self
 pub fn ResourceCleanupReport::ok(Self) -> Bool
 pub fn ResourceCleanupReport::remaining(Self) -> Array[ResourceEntry]
-pub fn ResourceCleanupReport::remaining_count(Self) -> Int
+pub fn ResourceCleanupReport::remaining_count(Self) -> Int32
 pub fn ResourceCleanupReport::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct ResourceDescriptor {
   kind : String
   owner : String
   name : String
   metadata : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceDescriptor::kind(Self) -> String
 pub fn ResourceDescriptor::metadata(Self) -> String
 pub fn ResourceDescriptor::name(Self) -> String
@@ -1362,15 +1440,16 @@ pub fn ResourceDescriptor::owner(Self) -> String
 pub fn ResourceDescriptor::to_json(Self) -> String
 pub fn ResourceDescriptor::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct ResourceEntry {
   id : String
-  sequence : Int
+  sequence : Int32
   kind : String
   owner : String
   name : String
   metadata : String
   closed : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceEntry::closed(Self) -> Bool
 pub fn ResourceEntry::descriptor(Self) -> ResourceDescriptor
 pub fn ResourceEntry::handle(Self) -> ResourceHandle
@@ -1379,15 +1458,16 @@ pub fn ResourceEntry::kind(Self) -> String
 pub fn ResourceEntry::metadata(Self) -> String
 pub fn ResourceEntry::name(Self) -> String
 pub fn ResourceEntry::owner(Self) -> String
-pub fn ResourceEntry::sequence(Self) -> Int
+pub fn ResourceEntry::sequence(Self) -> Int32
 pub fn ResourceEntry::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct ResourceHandle {
   id : String
   kind : String
   owner : String
   name : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ResourceHandle::from_entry(ResourceEntry) -> Self
 pub fn ResourceHandle::id(Self) -> String
 pub fn ResourceHandle::kind(Self) -> String
@@ -1397,10 +1477,11 @@ pub fn ResourceHandle::owner(Self) -> String
 pub fn ResourceHandle::to_json(Self) -> String
 pub fn ResourceHandle::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct ResourceLeakReport {
   resources : Array[ResourceEntry]
-} derive(Eq, @debug.Debug)
-pub fn ResourceLeakReport::count(Self) -> Int
+}
+pub fn ResourceLeakReport::count(Self) -> Int32
 pub fn ResourceLeakReport::handles(Self) -> Array[ResourceHandle]
 pub fn ResourceLeakReport::kinds(Self) -> Array[String]
 pub fn ResourceLeakReport::leaked(Self) -> Bool
@@ -1412,7 +1493,7 @@ pub fn ResourceLeakReport::resources(Self) -> Array[ResourceEntry]
 pub fn ResourceLeakReport::to_json(Self) -> String
 
 pub struct ResourceTable {
-  mut next_sequence : Int
+  mut next_sequence : Int32
   id_prefix : String
   entries : Map[String, ResourceEntry]
   order : Array[String]
@@ -1424,7 +1505,7 @@ pub fn ResourceTable::close_handle(Self, ResourceHandle) -> Result[ResourceEntry
 pub fn ResourceTable::close_kind(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::close_owner(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::contains(Self, String) -> Bool
-pub fn ResourceTable::count(Self) -> Int
+pub fn ResourceTable::count(Self) -> Int32
 pub fn ResourceTable::entries(Self) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_kind(Self, String) -> Array[ResourceEntry]
 pub fn ResourceTable::entries_by_owner(Self, String) -> Array[ResourceEntry]
@@ -1442,90 +1523,94 @@ pub fn ResourceTable::open(Self, ResourceDescriptor) -> Result[ResourceEntry, Ar
 pub fn ResourceTable::to_json(Self) -> String
 pub fn ResourceTable::with_prefix(String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct RunReport {
   target : String
   backend : String
   engine : String
   status : RunStatus
-  webviews : Int
+  webviews : Int32
   first_window_title : String
   first_window_url : String
   load_url : String
   bridge_url : String
-  local_services : Int
+  local_services : Int32
   service_supervisor : Bool
   service_start_order : Array[String]
-  startup_operations : Int
-  lifecycle_steps : Int
-  executable_operations : Int
-  executed_operations : Int
-  skipped_operations : Int
-  failed_operations : Int
+  startup_operations : Int32
+  lifecycle_steps : Int32
+  executable_operations : Int32
+  executed_operations : Int32
+  skipped_operations : Int32
+  failed_operations : Int32
   first_execution_failure : String
-  bridge_sync_routes : Int
-  bridge_async_routes : Int
+  bridge_sync_routes : Int32
+  bridge_async_routes : Int32
   target_can_launch : Bool
   target_launch_blocker : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RunReport::backend(Self) -> String
-pub fn RunReport::bridge_async_routes(Self) -> Int
-pub fn RunReport::bridge_sync_routes(Self) -> Int
+pub fn RunReport::bridge_async_routes(Self) -> Int32
+pub fn RunReport::bridge_sync_routes(Self) -> Int32
 pub fn RunReport::bridge_url(Self) -> String
 pub fn RunReport::engine(Self) -> String
-pub fn RunReport::executable_operations(Self) -> Int
-pub fn RunReport::executed_operations(Self) -> Int
-pub fn RunReport::failed_operations(Self) -> Int
+pub fn RunReport::executable_operations(Self) -> Int32
+pub fn RunReport::executed_operations(Self) -> Int32
+pub fn RunReport::failed_operations(Self) -> Int32
 pub fn RunReport::first_execution_failure(Self) -> String
 pub fn RunReport::first_window_title(Self) -> String
 pub fn RunReport::first_window_url(Self) -> String
-pub fn RunReport::lifecycle_steps(Self) -> Int
+pub fn RunReport::lifecycle_steps(Self) -> Int32
 pub fn RunReport::load_url(Self) -> String
-pub fn RunReport::local_services(Self) -> Int
-pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int, first_window_title? : String, first_window_url? : String, load_url? : String, bridge_url? : String, local_services? : Int, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int, lifecycle_steps? : Int, executable_operations? : Int, executed_operations? : Int, skipped_operations? : Int, failed_operations? : Int, first_execution_failure? : String, bridge_sync_routes? : Int, bridge_async_routes? : Int, target_can_launch? : Bool, target_launch_blocker? : String) -> Self
+pub fn RunReport::local_services(Self) -> Int32
+pub fn RunReport::new(target~ : String, backend~ : String, engine~ : String, status~ : RunStatus, webviews~ : Int32, first_window_title? : String, first_window_url? : String, load_url? : String, bridge_url? : String, local_services? : Int32, service_supervisor? : Bool, service_start_order? : Array[String], startup_operations? : Int32, lifecycle_steps? : Int32, executable_operations? : Int32, executed_operations? : Int32, skipped_operations? : Int32, failed_operations? : Int32, first_execution_failure? : String, bridge_sync_routes? : Int32, bridge_async_routes? : Int32, target_can_launch? : Bool, target_launch_blocker? : String) -> Self
 pub fn RunReport::service_start_order(Self) -> Array[String]
 pub fn RunReport::service_supervisor(Self) -> Bool
-pub fn RunReport::skipped_operations(Self) -> Int
-pub fn RunReport::startup_operations(Self) -> Int
+pub fn RunReport::skipped_operations(Self) -> Int32
+pub fn RunReport::startup_operations(Self) -> Int32
 pub fn RunReport::status(Self) -> RunStatus
 pub fn RunReport::target(Self) -> String
 pub fn RunReport::target_can_launch(Self) -> Bool
 pub fn RunReport::target_launch_blocker(Self) -> String
 pub fn RunReport::to_json(Self) -> String
-pub fn RunReport::webviews(Self) -> Int
+pub fn RunReport::webviews(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RunStatus {
   RunPrepared
   RunLaunched
   RunFailed(String)
   RunUnsupported(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn RunStatus::message(Self) -> String
 pub fn RunStatus::name(Self) -> String
 pub fn RunStatus::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeAction {
   RuntimeEffect(String)
   RuntimeEmit(EventTarget, Event)
   RuntimeNavigate(String, ResolvedSource)
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAction::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeAudit {
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
   registered_routes : Array[String]
   route_exposures : Array[RuntimeRouteExposure]
   findings : Array[RuntimeAuditFinding]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAudit::command_manifest(Self) -> CommandManifest
-pub fn RuntimeAudit::error_count(Self) -> Int
+pub fn RuntimeAudit::error_count(Self) -> Int32
 pub fn RuntimeAudit::errors(Self) -> Array[RuntimeAuditFinding]
 pub fn RuntimeAudit::exposed_routes(Self) -> Array[String]
 pub fn RuntimeAudit::findings(Self) -> Array[RuntimeAuditFinding]
 pub fn RuntimeAudit::findings_by_severity(Self, RuntimeAuditSeverity) -> Array[RuntimeAuditFinding]
 pub fn RuntimeAudit::from_plan(RuntimePlan) -> Self
 pub fn RuntimeAudit::from_registered_routes(RuntimePlan, Array[String]) -> Self
-pub fn RuntimeAudit::info_count(Self) -> Int
+pub fn RuntimeAudit::info_count(Self) -> Int32
 pub fn RuntimeAudit::infos(Self) -> Array[RuntimeAuditFinding]
 pub fn RuntimeAudit::ok(Self) -> Bool
 pub fn RuntimeAudit::permission_manifest(Self) -> PermissionManifest
@@ -1533,15 +1618,16 @@ pub fn RuntimeAudit::problems(Self) -> Array[String]
 pub fn RuntimeAudit::registered_routes(Self) -> Array[String]
 pub fn RuntimeAudit::route_exposures(Self) -> Array[RuntimeRouteExposure]
 pub fn RuntimeAudit::to_json(Self) -> String
-pub fn RuntimeAudit::warning_count(Self) -> Int
+pub fn RuntimeAudit::warning_count(Self) -> Int32
 pub fn RuntimeAudit::warnings(Self) -> Array[RuntimeAuditFinding]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeAuditFinding {
   severity : RuntimeAuditSeverity
   kind : RuntimeAuditKind
   route : String
   message : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAuditFinding::kind(Self) -> RuntimeAuditKind
 pub fn RuntimeAuditFinding::message(Self) -> String
 pub fn RuntimeAuditFinding::new(severity~ : RuntimeAuditSeverity, kind~ : RuntimeAuditKind, route~ : String, message~ : String) -> Self
@@ -1549,27 +1635,31 @@ pub fn RuntimeAuditFinding::route(Self) -> String
 pub fn RuntimeAuditFinding::severity(Self) -> RuntimeAuditSeverity
 pub fn RuntimeAuditFinding::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeAuditKind {
   RuntimeAuditDeniedCommand
   RuntimeAuditMissingHandler
   RuntimeAuditUndeclaredHandler
   RuntimeAuditOpenOrigin
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAuditKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeAuditSeverity {
   RuntimeAuditInfo
   RuntimeAuditWarning
   RuntimeAuditError
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeAuditSeverity::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeBackend {
   SystemWebView
   Headless
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeBackend::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeCapabilityGrant {
   name : String
   windows : Array[String]
@@ -1577,7 +1667,7 @@ pub struct RuntimeCapabilityGrant {
   platforms : Array[String]
   permissions : Array[String]
   operation_scopes : Array[OperationScope]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeCapabilityGrant::name(Self) -> String
 pub fn RuntimeCapabilityGrant::operation_scopes(Self) -> Array[OperationScope]
 pub fn RuntimeCapabilityGrant::origins(Self) -> Array[String]
@@ -1585,17 +1675,19 @@ pub fn RuntimeCapabilityGrant::permissions(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::platforms(Self) -> Array[String]
 pub fn RuntimeCapabilityGrant::windows(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeConfig {
   backend : RuntimeBackend
   devtools : Bool
   asset_protocol : String
   platform : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeConfig::headless(platform? : String) -> Self
 pub fn RuntimeConfig::platform(Self) -> String
 pub fn RuntimeConfig::system_webview(devtools? : Bool, asset_protocol? : String, platform? : String) -> Self
 pub fn RuntimeConfig::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeInvokeAuthorization {
   kind : RuntimeInvokeAuthorizationKind
   route : String
@@ -1606,7 +1698,7 @@ pub struct RuntimeInvokeAuthorization {
   registered : Bool
   capability : String
   reason : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeInvokeAuthorization::allowed(Self) -> Bool
 pub fn RuntimeInvokeAuthorization::capability(Self) -> String
 pub fn RuntimeInvokeAuthorization::kind(Self) -> RuntimeInvokeAuthorizationKind
@@ -1620,30 +1712,34 @@ pub fn RuntimeInvokeAuthorization::to_json(Self) -> String
 pub fn RuntimeInvokeAuthorization::to_response(Self, String) -> InvokeResponse
 pub fn RuntimeInvokeAuthorization::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeInvokeAuthorizationKind {
   RuntimeInvokeAuthorized
   RuntimeInvokeInvalidRequest
   RuntimeInvokeUnknownCommand
   RuntimeInvokeUnregisteredCommand
   RuntimeInvokePermissionDenied
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeInvokeAuthorizationKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeLaunchAsset {
   url : String
   mime_type : String
   body : RuntimeLaunchAssetBody
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeLaunchAsset::body(Self) -> RuntimeLaunchAssetBody
 pub fn RuntimeLaunchAsset::mime_type(Self) -> String
 pub fn RuntimeLaunchAsset::url(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum RuntimeLaunchAssetBody {
   LaunchVirtualContent(String)
   LaunchLocalFile(String)
   LaunchPackagedFile(String)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeLaunchManifest {
   backend : String
   platform : String
@@ -1663,7 +1759,7 @@ pub struct RuntimeLaunchManifest {
   declared_routes : Array[String]
   command_routes : Array[String]
   registered_routes : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeLaunchManifest::asset_protocol(Self) -> String
 pub fn RuntimeLaunchManifest::backend(Self) -> String
 pub fn RuntimeLaunchManifest::bridge_url(Self) -> String
@@ -1685,15 +1781,17 @@ pub fn RuntimeLaunchManifest::to_json(Self) -> String
 pub fn RuntimeLaunchManifest::virtual_files(Self) -> Array[RuntimeVirtualAsset]
 pub fn RuntimeLaunchManifest::webviews(Self) -> Array[RuntimeWebViewBoot]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeLifecycleHook {
   event : LifecycleEvent
   actions : Array[RuntimeAction]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeLifecycleHook::actions(Self) -> Array[RuntimeAction]
 pub fn RuntimeLifecycleHook::event(Self) -> LifecycleEvent
 pub fn RuntimeLifecycleHook::new(LifecycleEvent, Array[RuntimeAction]) -> Self
 pub fn RuntimeLifecycleHook::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimePlan {
   app_metadata : AppMetadata?
   launch : LaunchPlan
@@ -1704,7 +1802,7 @@ pub struct RuntimePlan {
   command_routes : Array[String]
   windows : Array[ResolvedWindow]
   filesystem_scopes : Array[FileSystemScope]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimePlan::actions(Self, Cmd) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::app_metadata(Self) -> AppMetadata?
 pub fn RuntimePlan::asset_protocol(Self) -> String
@@ -1714,7 +1812,7 @@ pub fn RuntimePlan::authorize_invoke(Self, InvokeRequest, registered_routes? : A
 pub fn RuntimePlan::backend(Self) -> RuntimeBackend
 pub fn RuntimePlan::bridge_script(Self, config? : BridgeConfig) -> Result[BridgeScript, Array[String]]
 pub fn RuntimePlan::capabilities(Self) -> Array[Capability]
-pub fn RuntimePlan::capability_count(Self) -> Int
+pub fn RuntimePlan::capability_count(Self) -> Int32
 pub fn RuntimePlan::capability_report(Self) -> CapabilityCompileReport
 pub fn RuntimePlan::command_manifest(Self) -> CommandManifest
 pub fn RuntimePlan::command_permission(Self, String) -> Permission?
@@ -1727,22 +1825,24 @@ pub fn RuntimePlan::lifecycle_actions(Self, LifecycleEvent) -> Result[Array[Runt
 pub fn RuntimePlan::lifecycle_hooks(Self) -> Result[Array[RuntimeLifecycleHook], Array[String]]
 pub fn RuntimePlan::permission_manifest(Self) -> PermissionManifest
 pub fn RuntimePlan::platform(Self) -> String
-pub fn RuntimePlan::plugin_count(Self) -> Int
+pub fn RuntimePlan::plugin_count(Self) -> Int32
 pub fn RuntimePlan::security_profile(Self, registered_routes? : Array[String], check_handlers? : Bool) -> SecurityProfile
 pub fn RuntimePlan::startup_actions(Self) -> Result[Array[RuntimeAction], Array[String]]
 pub fn RuntimePlan::window_command_routes(Self, String) -> Array[String]
-pub fn RuntimePlan::window_count(Self) -> Int
+pub fn RuntimePlan::window_count(Self) -> Int32
 pub fn RuntimePlan::windows(Self) -> Array[ResolvedWindow]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeProtocolBinding {
   window_label : String
   scheme : String
   root : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeProtocolBinding::root(Self) -> String
 pub fn RuntimeProtocolBinding::scheme(Self) -> String
 pub fn RuntimeProtocolBinding::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeRouteExposure {
   route : String
   mode : CommandMode
@@ -1750,7 +1850,7 @@ pub struct RuntimeRouteExposure {
   exposed : Bool
   windows : Array[String]
   reasons : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeRouteExposure::exposed(Self) -> Bool
 pub fn RuntimeRouteExposure::mode(Self) -> CommandMode
 pub fn RuntimeRouteExposure::reasons(Self) -> Array[String]
@@ -1759,23 +1859,25 @@ pub fn RuntimeRouteExposure::route(Self) -> String
 pub fn RuntimeRouteExposure::to_json(Self) -> String
 pub fn RuntimeRouteExposure::windows(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeVirtualAsset {
   window_label : String
   path : String
   mime_type : String
   content : String
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeVirtualAsset::content(Self) -> String
 pub fn RuntimeVirtualAsset::mime_type(Self) -> String
 pub fn RuntimeVirtualAsset::path(Self) -> String
 pub fn RuntimeVirtualAsset::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct RuntimeWebViewBoot {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   devtools : Bool
@@ -1785,13 +1887,13 @@ pub struct RuntimeWebViewBoot {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn RuntimeWebViewBoot::allowed_routes(Self) -> Array[String]
 pub fn RuntimeWebViewBoot::asset_protocol(Self) -> String
 pub fn RuntimeWebViewBoot::bridge_global_name(Self) -> String
 pub fn RuntimeWebViewBoot::devtools(Self) -> Bool
 pub fn RuntimeWebViewBoot::event_dispatch_hook(Self) -> String
-pub fn RuntimeWebViewBoot::height(Self) -> Int
+pub fn RuntimeWebViewBoot::height(Self) -> Int32
 pub fn RuntimeWebViewBoot::initialization_scripts(Self) -> Array[String]
 pub fn RuntimeWebViewBoot::label(Self) -> String
 pub fn RuntimeWebViewBoot::native_hook(Self) -> String
@@ -1799,8 +1901,9 @@ pub fn RuntimeWebViewBoot::resizable(Self) -> Bool
 pub fn RuntimeWebViewBoot::title(Self) -> String
 pub fn RuntimeWebViewBoot::title_bar(Self) -> TitleBarStyle
 pub fn RuntimeWebViewBoot::url(Self) -> String
-pub fn RuntimeWebViewBoot::width(Self) -> Int
+pub fn RuntimeWebViewBoot::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct SecurityProfile {
   command_manifest : CommandManifest
   permission_manifest : PermissionManifest
@@ -1810,7 +1913,7 @@ pub struct SecurityProfile {
   registered_routes : Array[String]
   check_handlers : Bool
   platform : String
-} derive(Eq, @debug.Debug)
+}
 pub fn SecurityProfile::allowed_origins(Self, window_label~ : String, permission~ : Permission) -> Array[String]
 pub fn SecurityProfile::allows(Self, window_label~ : String, permission~ : Permission, origin? : String) -> Bool
 pub fn SecurityProfile::allows_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> Bool
@@ -1821,12 +1924,12 @@ pub fn SecurityProfile::capability_report(Self) -> CapabilityCompileReport
 pub fn SecurityProfile::check_handlers(Self) -> Bool
 pub fn SecurityProfile::command_manifest(Self) -> CommandManifest
 pub fn SecurityProfile::denied_routes(Self) -> Array[String]
-pub fn SecurityProfile::error_count(Self) -> Int
+pub fn SecurityProfile::error_count(Self) -> Int32
 pub fn SecurityProfile::evaluate(Self, window_label~ : String, permission~ : Permission, origin? : String) -> CapabilityDecision
 pub fn SecurityProfile::evaluate_operation(Self, window_label~ : String, permission~ : Permission, scope~ : OperationScope, origin? : String) -> CapabilityDecision
 pub fn SecurityProfile::exposed_routes(Self) -> Array[String]
 pub fn SecurityProfile::from_plan(RuntimePlan, registered_routes? : Array[String], check_handlers? : Bool) -> Self
-pub fn SecurityProfile::info_count(Self) -> Int
+pub fn SecurityProfile::info_count(Self) -> Int32
 pub fn SecurityProfile::ok(Self) -> Bool
 pub fn SecurityProfile::permission_manifest(Self) -> PermissionManifest
 pub fn SecurityProfile::platform(Self) -> String
@@ -1835,15 +1938,16 @@ pub fn SecurityProfile::registered_routes(Self) -> Array[String]
 pub fn SecurityProfile::runtime_audit(Self) -> RuntimeAudit
 pub fn SecurityProfile::to_json(Self) -> String
 pub fn SecurityProfile::unused_permissions(Self) -> Array[String]
-pub fn SecurityProfile::warning_count(Self) -> Int
+pub fn SecurityProfile::warning_count(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub struct SigningConfig {
   identity : String?
   team_id : String?
   entitlements_path : String?
   notarization_profile : String?
   timestamp_url : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn SigningConfig::configured(Self) -> Bool
 pub fn SigningConfig::entitlements_path(Self) -> String?
 pub fn SigningConfig::identity(Self) -> String?
@@ -1854,32 +1958,35 @@ pub fn SigningConfig::timestamp_url(Self) -> String?
 pub fn SigningConfig::to_json(Self) -> String
 pub fn SigningConfig::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct SigningPrerequisite {
   kind : SigningPrerequisiteKind
   name : String
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn SigningPrerequisite::description(Self) -> String
 pub fn SigningPrerequisite::kind(Self) -> SigningPrerequisiteKind
 pub fn SigningPrerequisite::name(Self) -> String
 pub fn SigningPrerequisite::new(kind~ : SigningPrerequisiteKind, name~ : String, description~ : String) -> Self
 pub fn SigningPrerequisite::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SigningPrerequisiteKind {
   SigningIdentity
   SigningTool
   NotarizationTool
   RuntimeDependency
   PackageValidator
-} derive(Eq, @debug.Debug)
+}
 pub fn SigningPrerequisiteKind::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct SigningStep {
   name : String
   tool : String
   arguments : Array[String]
   description : String
-} derive(Eq, @debug.Debug)
+}
 pub fn SigningStep::arguments(Self) -> Array[String]
 pub fn SigningStep::description(Self) -> String
 pub fn SigningStep::name(Self) -> String
@@ -1887,6 +1994,7 @@ pub fn SigningStep::new(name~ : String, tool~ : String, arguments~ : Array[Strin
 pub fn SigningStep::to_json(Self) -> String
 pub fn SigningStep::tool(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Source {
   InlineHtml(String)
   LocalPath(String)
@@ -1894,11 +2002,11 @@ pub(all) enum Source {
   RemoteUrl(String)
   Localhost(LocalhostSource)
   RabbitaCell(Cell)
-} derive(Eq, @debug.Debug)
+}
 pub fn Source::html(String) -> Self
 pub fn Source::is_empty(Self) -> Bool
 pub fn Source::local_path(String) -> Self
-pub fn Source::localhost(port~ : Int, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
+pub fn Source::localhost(port~ : Int32, host? : String, path? : String, readiness_path? : String, command? : Array[String]) -> Self
 pub fn Source::localhost_source(LocalhostSource) -> Self
 pub fn Source::packaged(String) -> Self
 pub fn Source::rabbita(Cell) -> Self
@@ -1921,23 +2029,26 @@ pub fn StreamSink::route(Self) -> String
 pub fn StreamSink::send(Self, String) -> Result[ChannelMessage, String]
 pub fn StreamSink::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TitleBarStyle {
   Native
   Transparent
   Hidden
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub struct UpdateArtifactTrust {
   path : String
   sha256 : String
   signature : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn UpdateArtifactTrust::new(path~ : String, sha256~ : String, signature? : String) -> Self
 pub fn UpdateArtifactTrust::path(Self) -> String
 pub fn UpdateArtifactTrust::sha256(Self) -> String
 pub fn UpdateArtifactTrust::signature(Self) -> String?
 pub fn UpdateArtifactTrust::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct UpdateManifest {
   identifier : String
   product_name : String
@@ -1945,7 +2056,7 @@ pub struct UpdateManifest {
   channel : String
   public_key : String?
   artifacts : Array[UpdateManifestArtifact]
-} derive(Eq, @debug.Debug)
+}
 pub fn UpdateManifest::artifacts(Self) -> Array[UpdateManifestArtifact]
 pub fn UpdateManifest::channel(Self) -> String
 pub fn UpdateManifest::identifier(Self) -> String
@@ -1958,6 +2069,7 @@ pub fn UpdateManifest::trust_report(Self) -> UpdateTrustReport
 pub fn UpdateManifest::validate(Self) -> Array[String]
 pub fn UpdateManifest::version(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct UpdateManifestArtifact {
   target : BundleTarget
   kind : BundleArtifactKind
@@ -1965,7 +2077,7 @@ pub struct UpdateManifestArtifact {
   url : String
   sha256 : String
   signature : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn UpdateManifestArtifact::kind(Self) -> BundleArtifactKind
 pub fn UpdateManifestArtifact::new(target~ : BundleTarget, kind~ : BundleArtifactKind, path~ : String, url~ : String, sha256~ : String, signature? : String) -> Self
 pub fn UpdateManifestArtifact::path(Self) -> String
@@ -1976,39 +2088,42 @@ pub fn UpdateManifestArtifact::to_json(Self) -> String
 pub fn UpdateManifestArtifact::url(Self) -> String
 pub fn UpdateManifestArtifact::validate(Self, signature_required? : Bool) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct UpdateTrustReport {
   trusted : Bool
   signature_required : Bool
-  artifact_count : Int
-  signed_artifacts : Int
+  artifact_count : Int32
+  signed_artifacts : Int32
   problems : Array[String]
-} derive(Eq, @debug.Debug)
-pub fn UpdateTrustReport::artifact_count(Self) -> Int
+}
+pub fn UpdateTrustReport::artifact_count(Self) -> Int32
 pub fn UpdateTrustReport::problems(Self) -> Array[String]
 pub fn UpdateTrustReport::signature_required(Self) -> Bool
-pub fn UpdateTrustReport::signed_artifacts(Self) -> Int
+pub fn UpdateTrustReport::signed_artifacts(Self) -> Int32
 pub fn UpdateTrustReport::to_json(Self) -> String
 pub fn UpdateTrustReport::trusted(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub struct VirtualFile {
   path : String
   content : String
-} derive(Eq, @debug.Debug)
+}
 pub fn VirtualFile::content(Self) -> String
 pub fn VirtualFile::new(path~ : String, content~ : String) -> Self
 pub fn VirtualFile::path(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct WindowConfig {
   label : String
   title : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : TitleBarStyle
   source : Source?
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowConfig::label(Self) -> String
-pub fn WindowConfig::new(label? : String, title? : String, width? : Int, height? : Int, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
+pub fn WindowConfig::new(label? : String, title? : String, width? : Int32, height? : Int32, resizable? : Bool, title_bar? : TitleBarStyle, source? : Source) -> Self
 pub fn WindowConfig::parse_open_payload(String) -> Result[Self, String]
 pub fn WindowConfig::resolve(Self, asset_protocol? : String) -> Result[ResolvedWindow, Array[String]]
 pub fn WindowConfig::validate(Self) -> Array[String]
@@ -2026,4 +2141,3 @@ pub type OperationScopeResolver = (InvokeRequest) -> Result[OperationScope, Stri
 pub type StreamCommandHandler = (String, StreamSink) -> Result[Unit, String]
 
 // Traits
-

@@ -3,6 +3,7 @@ package "vectie/lepusa/runtime/bundled"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
   "vectie/lepusa",
   "vectie/lepusa/runtime",
 }
@@ -13,12 +14,13 @@ pub fn bundled_bridge_drain_request_packet(String) -> Bytes
 // Errors
 
 // Types and methods
+#derive(@debug.Debug)
 pub struct BundledBootstrapPlan {
   manifest : BundledRuntimeManifest
   run_plan : BundledRunPlan
   startup_operations : Array[String]
   lifecycle_operations : Array[String]
-} derive(@debug.Debug)
+}
 pub fn BundledBootstrapPlan::lifecycle_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledBootstrapPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
@@ -29,16 +31,18 @@ pub fn BundledBootstrapPlan::startup_navigations(Self) -> Array[@runtime.NativeN
 pub fn BundledBootstrapPlan::startup_operations(Self) -> Array[String]
 pub fn BundledBootstrapPlan::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeCompletion {
   task : BundledBridgeDispatchTask
   dispatch : BundledBridgeDispatch
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledBridgeCompletion::dispatch(Self) -> BundledBridgeDispatch
 pub fn BundledBridgeCompletion::evaluation_script(Self) -> String
 pub fn BundledBridgeCompletion::operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeCompletion::task(Self) -> BundledBridgeDispatchTask
 pub fn BundledBridgeCompletion::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeDispatch {
   window_label : String
   response_hook : String
@@ -46,7 +50,7 @@ pub struct BundledBridgeDispatch {
   response_json : String
   evaluation_script : String
   extra_operations : Array[@runtime.NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledBridgeDispatch::evaluation_script(Self) -> String
 pub fn BundledBridgeDispatch::message(Self) -> String
 pub fn BundledBridgeDispatch::native_desktop_shell_operation(Self) -> @runtime.NativeDesktopShellOperation?
@@ -57,11 +61,12 @@ pub fn BundledBridgeDispatch::response_json(Self) -> String
 pub fn BundledBridgeDispatch::to_json(Self) -> String
 pub fn BundledBridgeDispatch::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeDispatchTask {
   message : BundledBridgeMessage
   route : String
   mode : @runtime.NativeBridgeDispatchMode
-} derive(Eq, @debug.Debug)
+}
 pub async fn BundledBridgeDispatchTask::complete(Self, BundledRuntime) -> BundledBridgeCompletion
 pub async fn BundledBridgeDispatchTask::dispatch(Self, BundledRuntime) -> BundledBridgeDispatch
 pub fn BundledBridgeDispatchTask::message(Self) -> BundledBridgeMessage
@@ -72,28 +77,30 @@ pub fn BundledBridgeDispatchTask::route(Self) -> String
 pub fn BundledBridgeDispatchTask::to_json(Self) -> String
 pub fn BundledBridgeDispatchTask::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeDrainResult {
-  pending_before : Int
-  pending_after : Int
+  pending_before : Int32
+  pending_after : Int32
   completions : Array[BundledBridgeCompletion]
   evaluation_scripts : Array[String]
   operations : Array[@runtime.NativeExecutableOperation]
-} derive(Eq, @debug.Debug)
-pub fn BundledBridgeDrainResult::completed_count(Self) -> Int
+}
+pub fn BundledBridgeDrainResult::completed_count(Self) -> Int32
 pub fn BundledBridgeDrainResult::completed_routes(Self) -> Array[String]
 pub fn BundledBridgeDrainResult::completions(Self) -> Array[BundledBridgeCompletion]
 pub fn BundledBridgeDrainResult::evaluation_scripts(Self) -> Array[String]
 pub fn BundledBridgeDrainResult::is_empty(Self) -> Bool
-pub fn BundledBridgeDrainResult::new(pending_before~ : Int, pending_after~ : Int, completions~ : Array[BundledBridgeCompletion]) -> Self
+pub fn BundledBridgeDrainResult::new(pending_before~ : Int32, pending_after~ : Int32, completions~ : Array[BundledBridgeCompletion]) -> Self
 pub fn BundledBridgeDrainResult::operations(Self) -> Array[@runtime.NativeExecutableOperation]
-pub fn BundledBridgeDrainResult::pending_after(Self) -> Int
-pub fn BundledBridgeDrainResult::pending_before(Self) -> Int
+pub fn BundledBridgeDrainResult::pending_after(Self) -> Int32
+pub fn BundledBridgeDrainResult::pending_before(Self) -> Int32
 pub fn BundledBridgeDrainResult::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeHandoff {
   task : BundledBridgeDispatchTask
   immediate_dispatch : BundledBridgeDispatch?
-} derive(Eq, @debug.Debug)
+}
 pub async fn BundledBridgeHandoff::complete_deferred(Self, BundledRuntime) -> Result[BundledBridgeCompletion, String]
 pub fn BundledBridgeHandoff::immediate_dispatch(Self) -> BundledBridgeDispatch?
 pub fn BundledBridgeHandoff::immediate_script(Self) -> String?
@@ -118,7 +125,7 @@ pub fn BundledBridgeLoopAdapter::handoff_packet_callback(Self) -> (Bytes) -> Byt
 pub fn BundledBridgeLoopAdapter::handoff_script_bytes(Self, Bytes) -> Bytes
 pub fn BundledBridgeLoopAdapter::is_empty(Self) -> Bool
 pub fn BundledBridgeLoopAdapter::new(BundledRuntime, policy? : @lepusa.BackpressurePolicy) -> Self
-pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int
+pub fn BundledBridgeLoopAdapter::pending_count(Self) -> Int32
 pub fn BundledBridgeLoopAdapter::queue(Self) -> BundledBridgeWorkQueue
 pub async fn BundledBridgeLoopAdapter::receive_message(Self, Bytes) -> BundledBridgeLoopResult
 pub async fn BundledBridgeLoopAdapter::receive_window_message(Self, window_label~ : String, Bytes) -> BundledBridgeLoopDelivery
@@ -141,11 +148,12 @@ pub fn BundledBridgeLoopCallbacks::handoff_packet_callback(Self) -> (Bytes) -> B
 pub fn BundledBridgeLoopCallbacks::to_json(Self) -> String
 pub fn BundledBridgeLoopCallbacks::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeLoopDelivery {
   window_label : String
   result : BundledBridgeLoopResult
   evaluation_plan : @runtime.NativeBridgeLoopEvaluationPlan
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledBridgeLoopDelivery::evaluation_plan(Self) -> @runtime.NativeBridgeLoopEvaluationPlan
 pub fn BundledBridgeLoopDelivery::from_result(window_label~ : String, result~ : BundledBridgeLoopResult) -> Self
 pub fn BundledBridgeLoopDelivery::is_empty(Self) -> Bool
@@ -154,10 +162,11 @@ pub fn BundledBridgeLoopDelivery::result(Self) -> BundledBridgeLoopResult
 pub fn BundledBridgeLoopDelivery::to_json(Self) -> String
 pub fn BundledBridgeLoopDelivery::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeLoopResult {
   immediate_script : String
   completions : Array[BundledBridgeCompletion]
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledBridgeLoopResult::completions(Self) -> Array[BundledBridgeCompletion]
 pub fn BundledBridgeLoopResult::evaluation_plan(Self, window_label~ : String) -> @runtime.NativeBridgeLoopEvaluationPlan
 pub fn BundledBridgeLoopResult::evaluation_scripts(Self) -> Array[String]
@@ -166,43 +175,46 @@ pub fn BundledBridgeLoopResult::immediate_script(Self) -> String
 pub fn BundledBridgeLoopResult::operations(Self, window_label~ : String) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledBridgeLoopResult::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeMessage {
   window_label : String
   response_hook : String
   message : String
-} derive(Eq, @debug.Debug)
+}
 pub async fn BundledBridgeMessage::dispatch(Self, BundledRuntime) -> BundledBridgeDispatch
 pub fn BundledBridgeMessage::dispatch_sync(Self, BundledRuntime) -> BundledBridgeDispatch
 pub fn BundledBridgeMessage::message(Self) -> String
 pub fn BundledBridgeMessage::response_hook(Self) -> String
 pub fn BundledBridgeMessage::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledBridgeWorkQueue {
   tasks : Array[BundledBridgeDispatchTask]
   policy : @lepusa.BackpressurePolicy
-  mut dropped_count : Int
-} derive(Eq, @debug.Debug)
+  mut dropped_count : Int32
+}
 pub async fn BundledBridgeWorkQueue::drain(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
 pub async fn BundledBridgeWorkQueue::drain_result(Self, BundledRuntime) -> BundledBridgeDrainResult
 pub fn BundledBridgeWorkQueue::drain_result_sync(Self, BundledRuntime) -> BundledBridgeDrainResult
 pub fn BundledBridgeWorkQueue::drain_sync(Self, BundledRuntime) -> Array[BundledBridgeCompletion]
-pub fn BundledBridgeWorkQueue::dropped_count(Self) -> Int
-pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int, String]
-pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int, String]
+pub fn BundledBridgeWorkQueue::dropped_count(Self) -> Int32
+pub fn BundledBridgeWorkQueue::enqueue_handoff(Self, BundledBridgeHandoff) -> Result[Int32, String]
+pub fn BundledBridgeWorkQueue::enqueue_task(Self, BundledBridgeDispatchTask) -> Result[Int32, String]
 pub fn BundledBridgeWorkQueue::handoff_callback(Self, BundledRuntime) -> (Bytes) -> Bytes
 pub fn BundledBridgeWorkQueue::handoff_script_bytes(Self, BundledRuntime, Bytes) -> Bytes
 pub fn BundledBridgeWorkQueue::is_empty(Self) -> Bool
 pub fn BundledBridgeWorkQueue::new(policy? : @lepusa.BackpressurePolicy) -> Self
-pub fn BundledBridgeWorkQueue::pending_count(Self) -> Int
+pub fn BundledBridgeWorkQueue::pending_count(Self) -> Int32
 pub fn BundledBridgeWorkQueue::policy(Self) -> @lepusa.BackpressurePolicy
 pub fn BundledBridgeWorkQueue::tasks(Self) -> Array[BundledBridgeDispatchTask]
 pub fn BundledBridgeWorkQueue::to_json(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct BundledLifecycleEvent {
   kind : String
   label : String
   plugin : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledLifecycleEvent::app_started() -> Self
 pub fn BundledLifecycleEvent::app_will_exit() -> Self
 pub fn BundledLifecycleEvent::kind(Self) -> String
@@ -214,35 +226,38 @@ pub fn BundledLifecycleEvent::plugin_will_exit(String) -> Result[Self, String]
 pub fn BundledLifecycleEvent::window_close_requested(String) -> Result[Self, String]
 pub fn BundledLifecycleEvent::window_closed(String) -> Result[Self, String]
 
+#derive(Eq, @debug.Debug)
 pub struct BundledLifecyclePlan {
   event : BundledLifecycleEvent
   action_jsons : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledLifecyclePlan::action_jsons(Self) -> Array[String]
 pub fn BundledLifecyclePlan::event(Self) -> BundledLifecycleEvent
 
+#derive(@debug.Debug)
 pub struct BundledNativeLifecycleStep {
   event : BundledLifecycleEvent
   executable_operations : Array[@runtime.NativeExecutableOperation]
   evaluation_scripts : Array[@runtime.NativeEvaluationScript]
   navigations : Array[@runtime.NativeNavigation]
-} derive(@debug.Debug)
+}
 pub fn BundledNativeLifecycleStep::evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
 pub fn BundledNativeLifecycleStep::event(Self) -> BundledLifecycleEvent
 pub fn BundledNativeLifecycleStep::executable_operations(Self) -> Array[@runtime.NativeExecutableOperation]
 pub fn BundledNativeLifecycleStep::navigations(Self) -> Array[@runtime.NativeNavigation]
 
+#derive(@debug.Debug)
 pub struct BundledNativeRunPlan {
   bootstrap : BundledBootstrapPlan
   bundled_webviews : Array[BundledWebView]
   webviews : Array[@runtime.NativeWebViewPlan]
-} derive(@debug.Debug)
+}
 pub fn BundledNativeRunPlan::async_bridge_launch_message(Self, String) -> String
 pub fn BundledNativeRunPlan::bootstrap(Self) -> BundledBootstrapPlan
 pub fn BundledNativeRunPlan::bootstrap_json(Self) -> String
-pub fn BundledNativeRunPlan::bridge_async_route_count(Self) -> Int
+pub fn BundledNativeRunPlan::bridge_async_route_count(Self) -> Int32
 pub fn BundledNativeRunPlan::bridge_scheduler(Self, mode? : @runtime.NativeBridgeSchedulerMode) -> @runtime.NativeBridgeScheduler
-pub fn BundledNativeRunPlan::bridge_sync_route_count(Self) -> Int
+pub fn BundledNativeRunPlan::bridge_sync_route_count(Self) -> Int32
 pub fn BundledNativeRunPlan::bundled_webviews(Self) -> Array[BundledWebView]
 pub fn BundledNativeRunPlan::first_webview(Self) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledNativeRunPlan::first_webview_load_url(Self) -> String
@@ -250,7 +265,7 @@ pub fn BundledNativeRunPlan::first_webview_url(Self) -> String
 pub fn BundledNativeRunPlan::launch_blocker_with_capability(Self, String, @runtime.NativeLaunchCapability) -> String?
 pub fn BundledNativeRunPlan::launch_session(Self, bridge_mode? : @runtime.NativeBridgeSchedulerMode) -> Result[@runtime.NativeLaunchSession, String]
 pub fn BundledNativeRunPlan::launch_session_with_capability(Self, @runtime.NativeLaunchCapability) -> Result[@runtime.NativeLaunchSession, String]
-pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int
+pub fn BundledNativeRunPlan::lifecycle_step_count(Self) -> Int32
 pub fn BundledNativeRunPlan::native_execution_plan(Self) -> Result[@runtime.NativeExecutionPlan, String]
 pub fn BundledNativeRunPlan::native_lifecycle_steps(Self) -> Result[Array[BundledNativeLifecycleStep], String]
 pub fn BundledNativeRunPlan::operation_execution_report(Self) -> Result[@runtime.NativeOperationExecutionReport, String]
@@ -261,16 +276,18 @@ pub fn BundledNativeRunPlan::service_supervisor_report(Self) -> @runtime.NativeS
 pub fn BundledNativeRunPlan::startup_evaluation_scripts(Self) -> Array[@runtime.NativeEvaluationScript]
 pub fn BundledNativeRunPlan::startup_executable_operations(Self) -> Result[Array[@runtime.NativeExecutableOperation], String]
 pub fn BundledNativeRunPlan::startup_navigations(Self) -> Array[@runtime.NativeNavigation]
-pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int
+pub fn BundledNativeRunPlan::startup_operation_count(Self) -> Int32
 pub fn BundledNativeRunPlan::to_json(Self) -> Result[String, String]
-pub fn BundledNativeRunPlan::webview_count(Self) -> Int
+pub fn BundledNativeRunPlan::webview_count(Self) -> Int32
 pub fn BundledNativeRunPlan::webviews(Self) -> Array[@runtime.NativeWebViewPlan]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BundledRunMode {
   BundledDryRun
   BundledOpenWindow
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub struct BundledRunPlan {
   target : String
   backend : String
@@ -278,29 +295,30 @@ pub struct BundledRunPlan {
   bridge_url : String
   webviews : Array[BundledWebView]
   service_plan : BundledServicePlan
-  startup_operation_count : Int
-  lifecycle_step_count : Int
-  sync_route_count : Int
-  async_route_count : Int
-} derive(Eq, @debug.Debug)
-pub fn BundledRunPlan::async_route_count(Self) -> Int
+  startup_operation_count : Int32
+  lifecycle_step_count : Int32
+  sync_route_count : Int32
+  async_route_count : Int32
+}
+pub fn BundledRunPlan::async_route_count(Self) -> Int32
 pub fn BundledRunPlan::backend(Self) -> String
 pub fn BundledRunPlan::bridge_url(Self) -> String
 pub fn BundledRunPlan::first_webview(Self) -> BundledWebView?
-pub fn BundledRunPlan::lifecycle_step_count(Self) -> Int
-pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, executable_operations? : Int, executed_operations? : Int, skipped_operations? : Int, failed_operations? : Int, first_execution_failure? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
+pub fn BundledRunPlan::lifecycle_step_count(Self) -> Int32
+pub fn BundledRunPlan::report(Self, status~ : @lepusa.RunStatus, load_url? : String, executable_operations? : Int32, executed_operations? : Int32, skipped_operations? : Int32, failed_operations? : Int32, first_execution_failure? : String, target_can_launch? : Bool, target_launch_blocker? : String) -> @lepusa.RunReport
 pub fn BundledRunPlan::service_plan(Self) -> BundledServicePlan
 pub fn BundledRunPlan::service_supervisor_plan(Self) -> @lepusa.LocalServiceSupervisorPlan
-pub fn BundledRunPlan::startup_operation_count(Self) -> Int
-pub fn BundledRunPlan::sync_route_count(Self) -> Int
+pub fn BundledRunPlan::startup_operation_count(Self) -> Int32
+pub fn BundledRunPlan::sync_route_count(Self) -> Int32
 pub fn BundledRunPlan::target(Self) -> String
 pub fn BundledRunPlan::webview_engine(Self) -> String
 pub fn BundledRunPlan::webviews(Self) -> Array[BundledWebView]
 
+#derive(Eq, @debug.Debug)
 pub struct BundledRunResult {
   plan : BundledRunPlan
   status : @lepusa.RunStatus
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledRunResult::plan(Self) -> BundledRunPlan
 pub fn BundledRunResult::report(Self) -> @lepusa.RunReport
 pub fn BundledRunResult::status(Self) -> @lepusa.RunStatus
@@ -323,12 +341,13 @@ pub fn BundledRuntime::manifest(Self) -> BundledRuntimeManifest
 pub fn BundledRuntime::new(BundledRuntimeManifest) -> Self
 pub fn BundledRuntime::prepare_bridge_message(Self, String, window_label? : String) -> Result[BundledBridgeMessage, Array[String]]
 
+#derive(@debug.Debug)
 pub struct BundledRuntimeManifest {
   path : String
   bundle_root : String
-  bundle : Map[String, Json]
-  runtime : Map[String, Json]
-} derive(@debug.Debug)
+  bundle : Map[String, @json.Json]
+  runtime : Map[String, @json.Json]
+}
 pub fn BundledRuntimeManifest::artifact_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::asset_protocol(Self) -> String
 pub fn BundledRuntimeManifest::asset_protocol_resolver_callback(Self) -> (Bytes) -> Bytes
@@ -377,14 +396,15 @@ pub fn BundledRuntimeManifest::signing_step_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::startup_action_jsons(Self) -> Array[String]
 pub fn BundledRuntimeManifest::summary(Self) -> String
 pub fn BundledRuntimeManifest::target(Self) -> String
-pub fn BundledRuntimeManifest::webview_count(Self) -> Int
+pub fn BundledRuntimeManifest::webview_count(Self) -> Int32
 pub fn BundledRuntimeManifest::webview_plan(Self, BundledWebView, initialization_script~ : String) -> Result[@runtime.NativeWebViewPlan, String]
 pub fn BundledRuntimeManifest::webviews(Self) -> Result[Array[BundledWebView], String]
 
+#derive(Eq, @debug.Debug)
 pub struct BundledServicePlan {
   services : Array[@lepusa.LocalService]
   startup_services : Array[@lepusa.LocalService]
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledServicePlan::new(services~ : Array[@lepusa.LocalService]) -> Self
 pub fn BundledServicePlan::requires_supervisor(Self) -> Bool
 pub fn BundledServicePlan::service_names(Self) -> Array[String]
@@ -395,12 +415,13 @@ pub fn BundledServicePlan::supervisor_plan(Self) -> @lepusa.LocalServiceSupervis
 pub fn BundledServicePlan::to_json(Self) -> String
 pub fn BundledServicePlan::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct BundledWebView {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : String
   devtools : Bool
@@ -410,13 +431,13 @@ pub struct BundledWebView {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn BundledWebView::allowed_routes(Self) -> Array[String]
 pub fn BundledWebView::asset_protocol(Self) -> String
 pub fn BundledWebView::bridge_global_name(Self) -> String
 pub fn BundledWebView::devtools(Self) -> Bool
 pub fn BundledWebView::event_dispatch_hook(Self) -> String
-pub fn BundledWebView::height(Self) -> Int
+pub fn BundledWebView::height(Self) -> Int32
 pub fn BundledWebView::initialization_scripts(Self) -> Array[String]
 pub fn BundledWebView::label(Self) -> String
 pub fn BundledWebView::native_hook(Self) -> String
@@ -424,9 +445,10 @@ pub fn BundledWebView::resizable(Self) -> Bool
 pub fn BundledWebView::title(Self) -> String
 pub fn BundledWebView::title_bar(Self) -> String
 pub fn BundledWebView::url(Self) -> String
-pub fn BundledWebView::width(Self) -> Int
+pub fn BundledWebView::width(Self) -> Int32
 
-type ParsedRuntimeAssetUrl derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type ParsedRuntimeAssetUrl
 
 // Type aliases
 

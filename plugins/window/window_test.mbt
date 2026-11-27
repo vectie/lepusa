@@ -1,6 +1,6 @@
 ///|
 test "window plugin declares sync window commands" {
-  let declared = plugin()
+  let declared = @window.plugin()
   assert_eq(declared.name(), "window")
   assert_true(declared.command_routes().contains("window.close"))
   assert_true(declared.command_routes().contains("window.focus"))
@@ -24,7 +24,7 @@ test "window plugin declares sync window commands" {
 
 ///|
 test "window capabilities grant window permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @window.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=Window))
   assert_false(grant.allows(window_label="settings", permission=Window))
   assert_false(grant.allows(window_label="main", permission=WindowState))
@@ -32,11 +32,13 @@ test "window capabilities grant window permission by window" {
 
 ///|
 test "window control policy validates allowed window labels" {
-  let policy = WindowControlPolicy::new(allowed_windows=["main", "settings"])
+  let policy = @window.WindowControlPolicy::new(allowed_windows=[
+    "main", "settings",
+  ])
   assert_eq(policy.validate().length(), 0)
   assert_true(policy.allows("main"))
   assert_false(policy.allows("other"))
-  let bad = WindowControlPolicy::new(allowed_windows=[
+  let bad = @window.WindowControlPolicy::new(allowed_windows=[
     "", "main/child", "main", "main",
   ])
   let problems = bad.validate()
@@ -55,16 +57,16 @@ test "window control policy validates allowed window labels" {
 
 ///|
 test "window registry records control operations" {
-  let state = WindowControlState::new()
-  let registry = registry(
-    policy=WindowControlPolicy::new(allowed_windows=["main"]),
+  let state = @window.WindowControlState::new()
+  let registry = @window.registry(
+    policy=@window.WindowControlPolicy::new(allowed_windows=["main"]),
     state~,
   )
   assert_true(registry.contains("window.setTitle"))
   assert_true(registry.contains("window.close"))
   assert_true(registry.contains("window.open"))
   assert_eq(registry.sync_routes().length(), 12)
-  let grant = capability_for_window("main")
+  let grant = @window.capability_for_window("main")
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -105,8 +107,8 @@ test "window registry records control operations" {
 
 ///|
 test "window registry validates and queues open operations" {
-  let registry = registry()
-  let grant = capability_for_window("main")
+  let registry = @window.registry()
+  let grant = @window.capability_for_window("main")
   let payload = "{\"label\":\"tools\",\"title\":\"Tools\",\"width\":480,\"height\":360,\"source\":{\"kind\":\"html\",\"content\":\"<aside>tools</aside>\"}}"
   let response = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -144,8 +146,8 @@ test "window registry validates and queues open operations" {
 
 ///|
 test "window registry validates payload shape" {
-  let registry = registry()
-  let grant = capability()
+  let registry = @window.registry()
+  let grant = @window.capability()
   let invalid = registry.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",

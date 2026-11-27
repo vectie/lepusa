@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum AppControlAction {
   Show
   Hide
@@ -6,27 +7,30 @@ pub(all) enum AppControlAction {
   SetDockVisibility
   Exit
   Restart
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum AppTheme {
   System
   Light
   Dark
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct AppInfo {
   name : String
   version : String
   identifier : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct AppControlOperation {
   action : AppControlAction
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub struct AppState {
@@ -45,7 +49,7 @@ pub fn AppInfo::new(
   version~ : String,
   identifier~ : String,
 ) -> AppInfo {
-  { name, version, identifier }
+  { name, version, identifier, }
 }
 
 ///|
@@ -98,10 +102,10 @@ pub fn AppInfo::validate(self : AppInfo) -> Array[String] {
 
 ///|
 pub fn AppState::new(
-  info? : AppInfo = AppInfo::default(),
-  visible? : Bool = true,
-  theme? : AppTheme = System,
-  dock_visible? : Bool = true,
+  info~ : AppInfo = AppInfo::default(),
+  visible~ : Bool = true,
+  theme~ : AppTheme = System,
+  dock_visible~ : Bool = true,
 ) -> AppState {
   {
     info,
@@ -157,9 +161,9 @@ pub fn AppState::last(self : AppState) -> AppControlOperation? {
 ///|
 pub fn AppControlOperation::new(
   action~ : AppControlAction,
-  payload? : String = "",
+  payload~ : String = "",
 ) -> AppControlOperation {
-  { action, payload }
+  { action, payload, }
 }
 
 ///|
@@ -217,27 +221,27 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "app") -> @lepusa.Capability {
+pub fn capability(name~ : String = "app") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(App)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "app",
+  name~ : String = "app",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
-pub fn registry(state? : AppState = AppState::new()) -> @lepusa.CommandRegistry {
+pub fn registry(state~ : AppState = AppState::new()) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), state~)
 }
 
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  state? : AppState = AppState::new(),
+  state~ : AppState = AppState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_fn("app.info", permission=App, handler=_ => {

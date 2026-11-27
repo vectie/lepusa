@@ -1,6 +1,6 @@
 ///|
 test "service discovery plugin declares resolution commands" {
-  let declared = plugin()
+  let declared = @service_discovery.plugin()
   assert_eq(declared.name(), "serviceDiscovery")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("serviceDiscovery.list"))
@@ -18,7 +18,7 @@ test "service discovery plugin declares resolution commands" {
 
 ///|
 test "service discovery capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @service_discovery.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=ServiceDiscovery))
   assert_false(
     grant.allows(window_label="settings", permission=ServiceDiscovery),
@@ -28,16 +28,19 @@ test "service discovery capabilities grant permission by window" {
 
 ///|
 test "service discovery policy validates service metadata" {
-  let policy = ServiceDiscoveryPolicy::new()
+  let policy = @service_discovery.ServiceDiscoveryPolicy::new()
     .service(
-      ServiceEndpoint::new(
+      @service_discovery.ServiceEndpoint::new(
         name="api",
         url="http://127.0.0.1:8080",
         health_path="/health",
       ),
     )
     .service(
-      ServiceEndpoint::new(name="events", url="wss://events.example.dev"),
+      @service_discovery.ServiceEndpoint::new(
+        name="events",
+        url="wss://events.example.dev",
+      ),
     )
   assert_eq(policy.validate().length(), 0)
   assert_eq(policy.services().length(), 2)
@@ -47,11 +50,25 @@ test "service discovery policy validates service metadata" {
 
 ///|
 test "service discovery policy rejects invalid metadata" {
-  let policy = ServiceDiscoveryPolicy::new()
-    .service(ServiceEndpoint::new(name="api", url="ftp://example.dev"))
-    .service(ServiceEndpoint::new(name="api", url="https://example.dev"))
+  let policy = @service_discovery.ServiceDiscoveryPolicy::new()
     .service(
-      ServiceEndpoint::new(name="bad name", url="", health_path="health"),
+      @service_discovery.ServiceEndpoint::new(
+        name="api",
+        url="ftp://example.dev",
+      ),
+    )
+    .service(
+      @service_discovery.ServiceEndpoint::new(
+        name="api",
+        url="https://example.dev",
+      ),
+    )
+    .service(
+      @service_discovery.ServiceEndpoint::new(
+        name="bad name",
+        url="",
+        health_path="health",
+      ),
     )
   let problems = policy.validate()
   assert_true(
@@ -72,11 +89,16 @@ test "service discovery plugin registers metadata handlers" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/health",
   )
-  let policy = ServiceDiscoveryPolicy::from_local_services([service])
+  let policy = @service_discovery.ServiceDiscoveryPolicy::from_local_services([
+    service,
+  ])
   assert_eq(policy.services().length(), 1)
   assert_true(policy.services()[0].health_path() is Some("/health"))
-  let registry = register(@lepusa.CommandRegistry::new(), policy~)
-  let capabilities = [capability_for_window("main")]
+  let registry = @service_discovery.register(
+    @lepusa.CommandRegistry::new(),
+    policy~,
+  )
+  let capabilities = [@service_discovery.capability_for_window("main")]
   assert_true(registry.contains("serviceDiscovery.list"))
   assert_true(registry.contains("serviceDiscovery.resolve"))
   assert_true(registry.contains("serviceDiscovery.status"))

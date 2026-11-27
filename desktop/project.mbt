@@ -9,7 +9,7 @@ pub struct DesktopProject {
 pub fn DesktopProject::new(
   metadata : @lepusa.AppMetadata,
   root : @lepusa.Cell,
-  runtime? : @lepusa.RuntimeConfig = @lepusa.RuntimeConfig::system_webview(),
+  runtime~ : @lepusa.RuntimeConfig = @lepusa.RuntimeConfig::system_webview(),
 ) -> DesktopProject {
   {
     root,
@@ -59,18 +59,18 @@ pub fn DesktopProject::with_window(
   self : DesktopProject,
   window : @lepusa.WindowConfig,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_window(window) }
+  { ..self, manifest: self.manifest.with_window(window), }
 }
 
 ///|
 pub fn DesktopProject::window(
   self : DesktopProject,
-  label? : String = "main",
-  title? : String = "Lepusa",
-  width? : Int = 1000,
-  height? : Int = 720,
-  resizable? : Bool = true,
-  title_bar? : @lepusa.TitleBarStyle = Native,
+  label~ : String = "main",
+  title~ : String = "Lepusa",
+  width~ : Int32 = 1000,
+  height~ : Int32 = 720,
+  resizable~ : Bool = true,
+  title_bar~ : @lepusa.TitleBarStyle = Native,
   source? : @lepusa.Source,
 ) -> DesktopProject {
   self.with_window(
@@ -91,7 +91,7 @@ pub fn DesktopProject::with_plugin(
   self : DesktopProject,
   plugin : @lepusa.Plugin,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_plugin(plugin) }
+  { ..self, manifest: self.manifest.with_plugin(plugin), }
 }
 
 ///|
@@ -99,34 +99,34 @@ pub fn DesktopProject::with_capability(
   self : DesktopProject,
   capability : @lepusa.Capability,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_capability(capability) }
+  { ..self, manifest: self.manifest.with_capability(capability), }
 }
 
 ///|
 pub fn DesktopProject::with_official_plugin(
   self : DesktopProject,
   name : String,
-  window_label? : String = "main",
-  capability_name? : String = "",
+  window_label~ : String = "main",
+  capability_name~ : String = "",
 ) -> DesktopProject {
-  { ..self, kit: self.kit.with_plugin(name, window_label~, capability_name~) }
+  { ..self, kit: self.kit.with_plugin(name, window_label~, capability_name~), }
 }
 
 ///|
 pub fn DesktopProject::with_official_plugins(
   self : DesktopProject,
   names : Array[String],
-  window_label? : String = "main",
+  window_label~ : String = "main",
 ) -> DesktopProject {
-  { ..self, kit: self.kit.with_plugins(names, window_label~) }
+  { ..self, kit: self.kit.with_plugins(names, window_label~), }
 }
 
 ///|
 pub fn DesktopProject::with_sync_plugins(
   self : DesktopProject,
-  window_label? : String = "main",
+  window_label~ : String = "main",
 ) -> DesktopProject {
-  { ..self, kit: self.kit.with_sync_plugins(window_label~) }
+  { ..self, kit: self.kit.with_sync_plugins(window_label~), }
 }
 
 ///|
@@ -146,7 +146,7 @@ pub fn DesktopProject::with_local_service(
   self : DesktopProject,
   service : @lepusa.LocalService,
 ) -> DesktopProject {
-  { ..self, kit: self.kit.with_local_service(service) }
+  { ..self, kit: self.kit.with_local_service(service), }
 }
 
 ///|
@@ -154,7 +154,7 @@ pub fn DesktopProject::with_registry(
   self : DesktopProject,
   registry : @lepusa.CommandRegistry,
 ) -> DesktopProject {
-  { ..self, kit: self.kit.with_registry(registry) }
+  { ..self, kit: self.kit.with_registry(registry), }
 }
 
 ///|
@@ -162,7 +162,7 @@ pub fn DesktopProject::with_startup(
   self : DesktopProject,
   command : @lepusa.Cmd,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_startup(command) }
+  { ..self, manifest: self.manifest.with_startup(command), }
 }
 
 ///|
@@ -171,7 +171,7 @@ pub fn DesktopProject::with_lifecycle(
   event : @lepusa.LifecycleEvent,
   command : @lepusa.Cmd,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_lifecycle(event, command) }
+  { ..self, manifest: self.manifest.with_lifecycle(event, command), }
 }
 
 ///|
@@ -196,7 +196,7 @@ pub fn DesktopProject::with_runtime(
   self : DesktopProject,
   runtime : @lepusa.RuntimeConfig,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_runtime(runtime) }
+  { ..self, manifest: self.manifest.with_runtime(runtime), }
 }
 
 ///|
@@ -204,7 +204,7 @@ pub fn DesktopProject::with_icon_path(
   self : DesktopProject,
   icon_path : String,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_icon_path(icon_path) }
+  { ..self, manifest: self.manifest.with_icon_path(icon_path), }
 }
 
 ///|
@@ -212,7 +212,7 @@ pub fn DesktopProject::with_signing(
   self : DesktopProject,
   signing : @lepusa.SigningConfig,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_signing(signing) }
+  { ..self, manifest: self.manifest.with_signing(signing), }
 }
 
 ///|
@@ -220,7 +220,7 @@ pub fn DesktopProject::with_runtime_dependency_source(
   self : DesktopProject,
   source : @lepusa.BundleRuntimeDependencySource,
 ) -> DesktopProject {
-  { ..self, manifest: self.manifest.with_runtime_dependency_source(source) }
+  { ..self, manifest: self.manifest.with_runtime_dependency_source(source), }
 }
 
 ///|
@@ -265,7 +265,7 @@ pub fn DesktopProject::runtime_host(
 ///|
 pub fn DesktopProject::bundle_plan(
   self : DesktopProject,
-  target? : @lepusa.BundleTarget = MacOS,
+  target~ : @lepusa.BundleTarget = MacOS,
 ) -> Result[@lepusa.BundlePlan, Array[String]] {
   match self.manifest() {
     Ok(manifest) =>

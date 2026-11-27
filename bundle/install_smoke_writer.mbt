@@ -1,11 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundleInstallSmokeWriteResult {
   root : String
   plan_path : String
   checklist_path : String
   script_path : String
   plan : BundleInstallSmokePlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleInstallSmokeWriteResult::root(
@@ -97,7 +98,7 @@ pub async fn write_install_smoke_plan(
     }
   }
   if problems.is_empty() {
-    Ok({ root, plan_path, checklist_path, script_path, plan })
+    Ok({ root, plan_path, checklist_path, script_path, plan, })
   } else {
     Err(problems)
   }

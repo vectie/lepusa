@@ -7,7 +7,7 @@ pub struct BundledRuntime {
 ///|
 pub fn BundledRuntime::new(manifest : BundledRuntimeManifest) -> BundledRuntime {
   let registry = manifest.command_registry()
-  { manifest, registry }
+  { manifest, registry, }
 }
 
 ///|
@@ -23,8 +23,8 @@ pub fn BundledRuntimeManifest::dispatch_json(
   id~ : String,
   window_label~ : String,
   route~ : String,
-  payload? : String = "",
-  origin? : String = "",
+  payload~ : String = "",
+  origin~ : String = "",
 ) -> String {
   BundledRuntime::new(self).dispatch_json(
     id~,
@@ -41,8 +41,8 @@ pub async fn BundledRuntimeManifest::dispatch_json_async(
   id~ : String,
   window_label~ : String,
   route~ : String,
-  payload? : String = "",
-  origin? : String = "",
+  payload~ : String = "",
+  origin~ : String = "",
 ) -> String {
   BundledRuntime::new(self).dispatch_json_async(
     id~,
@@ -59,8 +59,8 @@ pub fn BundledRuntime::dispatch_json(
   id~ : String,
   window_label~ : String,
   route~ : String,
-  payload? : String = "",
-  origin? : String = "",
+  payload~ : String = "",
+  origin~ : String = "",
 ) -> String {
   match self.dispatch(id~, window_label~, route~, payload~, origin~) {
     Ok(response) => @runtime.encode_invoke_response_json(response)
@@ -74,8 +74,8 @@ pub async fn BundledRuntime::dispatch_json_async(
   id~ : String,
   window_label~ : String,
   route~ : String,
-  payload? : String = "",
-  origin? : String = "",
+  payload~ : String = "",
+  origin~ : String = "",
 ) -> String {
   match self.dispatch_async(id~, window_label~, route~, payload~, origin~) {
     Ok(response) => @runtime.encode_invoke_response_json(response)
@@ -186,7 +186,7 @@ fn BundledRuntime::window_allows_route(
   self : BundledRuntime,
   window_label~ : String,
   route~ : String,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> Bool {
   self.manifest.window_allows_route(window_label~, route~, origin~)
 }
@@ -250,7 +250,7 @@ fn BundledRuntimeManifest::window_allows_route(
   self : BundledRuntimeManifest,
   window_label~ : String,
   route~ : String,
-  origin? : String = "",
+  origin~ : String = "",
 ) -> Bool {
   match self.command_manifest_allows_route(window_label~, route~, origin~) {
     Some(allowed) => return allowed

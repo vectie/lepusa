@@ -42,8 +42,8 @@ fn platform_authorization_plan(platform : String) -> @lepusa.RuntimePlan {
 ///|
 fn authorization_request(
   route : String,
-  window_label? : String = "main",
-  origin? : String = "https://app.example",
+  window_label~ : String = "main",
+  origin~ : String = "https://app.example",
 ) -> @lepusa.InvokeRequest {
   let mut plugin = ""
   let mut command = ""

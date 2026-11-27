@@ -1,5 +1,5 @@
 ///|
-fn registered_bridge_host() -> RuntimeHost {
+fn registered_bridge_host() -> @runtime.RuntimeHost {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let app = @lepusa.new(root)
     .window(label="main", source=@lepusa.Source::html("<main></main>"))
@@ -21,7 +21,7 @@ fn registered_bridge_host() -> RuntimeHost {
   ) {
     Ok(payload)
   })
-  RuntimeHost::new(plan, registry~)
+  @runtime.RuntimeHost::new(plan, registry~)
 }
 
 ///|

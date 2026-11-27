@@ -1,12 +1,14 @@
 ///|
+#derive(Debug, Eq)
 pub struct UpdaterPolicy {
   feed_url : String
   channel : String
   public_key : String?
   allow_prerelease : Bool
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct UpdaterState {
   mut update_available : Bool
   mut version : String?
@@ -14,7 +16,7 @@ pub struct UpdaterState {
   mut installed : Bool
   mut restart_requested : Bool
   mut last_action : String
-} derive(Debug, Eq)
+}
 
 ///|
 priv struct UpdaterRequest {
@@ -25,11 +27,11 @@ priv struct UpdaterRequest {
 ///|
 pub fn UpdaterPolicy::new(
   feed_url~ : String,
-  channel? : String = "stable",
+  channel~ : String = "stable",
   public_key? : String,
-  allow_prerelease? : Bool = false,
+  allow_prerelease~ : Bool = false,
 ) -> UpdaterPolicy {
-  { feed_url, channel, public_key, allow_prerelease }
+  { feed_url, channel, public_key, allow_prerelease, }
 }
 
 ///|
@@ -74,7 +76,7 @@ pub fn UpdaterPolicy::validate(self : UpdaterPolicy) -> Array[String] {
 
 ///|
 pub fn UpdaterState::new(
-  update_available? : Bool = false,
+  update_available~ : Bool = false,
   version? : String,
 ) -> UpdaterState {
   {
@@ -133,24 +135,24 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "updater") -> @lepusa.Capability {
+pub fn capability(name~ : String = "updater") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Updater)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "updater",
+  name~ : String = "updater",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  policy? : UpdaterPolicy = UpdaterPolicy::new(
+  policy~ : UpdaterPolicy = UpdaterPolicy::new(
     feed_url="https://updates.example.invalid/lepusa.json",
   ),
-  state? : UpdaterState = UpdaterState::new(),
+  state~ : UpdaterState = UpdaterState::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), policy~, state~)
 }
@@ -158,10 +160,10 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  policy? : UpdaterPolicy = UpdaterPolicy::new(
+  policy~ : UpdaterPolicy = UpdaterPolicy::new(
     feed_url="https://updates.example.invalid/lepusa.json",
   ),
-  state? : UpdaterState = UpdaterState::new(),
+  state~ : UpdaterState = UpdaterState::new(),
 ) -> @lepusa.CommandRegistry {
   registry
   .register_async_fn("updater.check", permission=Updater, handler=payload => {
@@ -326,7 +328,7 @@ fn decode_request_payload(
   context~ : String,
 ) -> Result[UpdaterRequest, String] {
   if payload == "" {
-    return Ok({ update_available: None, version: None })
+    return Ok({ update_available: None, version: None, })
   }
   let json = @json.parse(payload) catch {
     error => return Err("invalid \{context} payload: \{error}")
@@ -334,7 +336,7 @@ fn decode_request_payload(
   match json {
     String(version) =>
       match validate_version(version, context~) {
-        Ok(version) => Ok({ update_available: None, version: Some(version) })
+        Ok(version) => Ok({ update_available: None, version: Some(version), })
         Err(problem) => Err(problem)
       }
     Object(object) => {
@@ -350,7 +352,7 @@ fn decode_request_payload(
           }
         None => None
       }
-      Ok({ update_available, version })
+      Ok({ update_available, version, })
     }
     _ => Err("\{context} payload must be a string or object")
   }

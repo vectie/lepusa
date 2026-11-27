@@ -82,9 +82,9 @@ pub fn register_with_context(
 
 ///|
 pub fn CatalogContext::new(
-  app_info? : @app.AppInfo = @app.AppInfo::default(),
-  filesystem_scopes? : Array[@lepusa.FileSystemScope] = [],
-  local_services? : Array[@lepusa.LocalService] = [],
+  app_info~ : @app.AppInfo = @app.AppInfo::default(),
+  filesystem_scopes~ : Array[@lepusa.FileSystemScope] = [],
+  local_services~ : Array[@lepusa.LocalService] = [],
 ) -> CatalogContext {
   {
     app_info,
@@ -134,28 +134,28 @@ pub fn sync_plugin_names() -> Array[String] {
 ///|
 fn catalog_plugins() -> Array[CatalogPlugin] {
   [
-    { name: "app", load: fn() { @app.plugin() } },
-    { name: "autoLaunch", load: fn() { @auto_launch.plugin() } },
-    { name: "browserHost", load: fn() { @browser_host.plugin() } },
-    { name: "clipboard", load: fn() { @clipboard.plugin() } },
-    { name: "deepLink", load: fn() { @deep_link.plugin() } },
-    { name: "dialog", load: fn() { @dialog.plugin() } },
-    { name: "fileDialog", load: fn() { @file_dialog.plugin() } },
-    { name: "fs", load: fn() { @fs_plugin.plugin() } },
-    { name: "localhost", load: fn() { @localhost.plugin() } },
-    { name: "log", load: fn() { @log.plugin() } },
-    { name: "menu", load: fn() { @menu.plugin() } },
-    { name: "notification", load: fn() { @notification.plugin() } },
-    { name: "opener", load: fn() { @opener.plugin() } },
-    { name: "process", load: fn() { @process.plugin() } },
-    { name: "serviceDiscovery", load: fn() { @service_discovery.plugin() } },
-    { name: "shell", load: fn() { @shell.plugin() } },
-    { name: "singleInstance", load: fn() { @single_instance.plugin() } },
-    { name: "store", load: fn() { @store.plugin() } },
-    { name: "tray", load: fn() { @tray.plugin() } },
-    { name: "updater", load: fn() { @updater.plugin() } },
-    { name: "window", load: fn() { @window.plugin() } },
-    { name: "windowState", load: fn() { @window_state.plugin() } },
+    { name: "app", load: fn() { @app.plugin() }, },
+    { name: "autoLaunch", load: fn() { @auto_launch.plugin() }, },
+    { name: "browserHost", load: fn() { @browser_host.plugin() }, },
+    { name: "clipboard", load: fn() { @clipboard.plugin() }, },
+    { name: "deepLink", load: fn() { @deep_link.plugin() }, },
+    { name: "dialog", load: fn() { @dialog.plugin() }, },
+    { name: "fileDialog", load: fn() { @file_dialog.plugin() }, },
+    { name: "fs", load: fn() { @fs_plugin.plugin() }, },
+    { name: "localhost", load: fn() { @localhost.plugin() }, },
+    { name: "log", load: fn() { @log.plugin() }, },
+    { name: "menu", load: fn() { @menu.plugin() }, },
+    { name: "notification", load: fn() { @notification.plugin() }, },
+    { name: "opener", load: fn() { @opener.plugin() }, },
+    { name: "process", load: fn() { @process.plugin() }, },
+    { name: "serviceDiscovery", load: fn() { @service_discovery.plugin() }, },
+    { name: "shell", load: fn() { @shell.plugin() }, },
+    { name: "singleInstance", load: fn() { @single_instance.plugin() }, },
+    { name: "store", load: fn() { @store.plugin() }, },
+    { name: "tray", load: fn() { @tray.plugin() }, },
+    { name: "updater", load: fn() { @updater.plugin() }, },
+    { name: "window", load: fn() { @window.plugin() }, },
+    { name: "windowState", load: fn() { @window_state.plugin() }, },
   ]
 }
 
@@ -196,7 +196,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
       name: "deepLink",
       register: fn(registry, _) { @deep_link.register(registry) },
     },
-    { name: "dialog", register: fn(registry, _) { @dialog.register(registry) } },
+    {
+      name: "dialog",
+      register: fn(registry, _) { @dialog.register(registry) },
+    },
     {
       name: "fileDialog",
       register: fn(registry, context) {
@@ -210,8 +213,8 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
         }
       },
     },
-    { name: "log", register: fn(registry, _) { @log.register(registry) } },
-    { name: "menu", register: fn(registry, _) { @menu.register(registry) } },
+    { name: "log", register: fn(registry, _) { @log.register(registry) }, },
+    { name: "menu", register: fn(registry, _) { @menu.register(registry) }, },
     {
       name: "localhost",
       register: fn(registry, context) {
@@ -233,7 +236,10 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
         }
       },
     },
-    { name: "opener", register: fn(registry, _) { @opener.register(registry) } },
+    {
+      name: "opener",
+      register: fn(registry, _) { @opener.register(registry) },
+    },
     {
       name: "process",
       register: fn(registry, _) { @process.register(registry) },
@@ -249,14 +255,17 @@ fn catalog_registrations() -> Array[CatalogRegistration] {
         )
       },
     },
-    { name: "shell", register: fn(registry, _) { @shell.register(registry) } },
+    { name: "shell", register: fn(registry, _) { @shell.register(registry) }, },
     {
       name: "singleInstance",
       register: fn(registry, _) { @single_instance.register(registry) },
     },
-    { name: "store", register: fn(registry, _) { @store.register(registry) } },
-    { name: "tray", register: fn(registry, _) { @tray.register(registry) } },
-    { name: "window", register: fn(registry, _) { @window.register(registry) } },
+    { name: "store", register: fn(registry, _) { @store.register(registry) }, },
+    { name: "tray", register: fn(registry, _) { @tray.register(registry) }, },
+    {
+      name: "window",
+      register: fn(registry, _) { @window.register(registry) },
+    },
     {
       name: "updater",
       register: fn(registry, _) { @updater.register(registry) },

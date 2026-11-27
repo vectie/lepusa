@@ -1,6 +1,6 @@
 ///|
 test "store plugin declares commands and capability" {
-  let declared = plugin()
+  let declared = @store.plugin()
   assert_eq(declared.name(), "store")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("store.get"))
@@ -8,8 +8,8 @@ test "store plugin declares commands and capability" {
   assert_true(declared.command_routes().contains("store.delete"))
   assert_true(declared.command_routes().contains("store.clear"))
   assert_true(declared.command_routes().contains("store.keys"))
-  let grant = capability_for_window("main")
-  let registry = registry()
+  let grant = @store.capability_for_window("main")
+  let registry = @store.registry()
   assert_true(registry.contains("store.get"))
   let denied = registry.dispatch(
     @lepusa.InvokeRequest::new(
@@ -29,9 +29,9 @@ test "store plugin declares commands and capability" {
 
 ///|
 test "store registry handles set get delete and keys" {
-  let store = Store::new()
-  let registry = registry(store~)
-  let grant = capability_for_window("main")
+  let store = @store.Store::new()
+  let registry = @store.registry(store~)
+  let grant = @store.capability_for_window("main")
   let set = registry.dispatch(
     request(command="set", payload="{\"key\":\"theme\",\"value\":\"dark\"}"),
     capabilities=[grant],
@@ -70,8 +70,8 @@ test "store registry handles set get delete and keys" {
 
 ///|
 test "store registry reports missing values and invalid payloads" {
-  let registry = registry()
-  let grant = capability()
+  let registry = @store.registry()
+  let grant = @store.capability()
   let missing = registry.dispatch(
     request(command="get", payload="{\"key\":\"missing\"}"),
     capabilities=[grant],
@@ -86,7 +86,7 @@ test "store registry reports missing values and invalid payloads" {
 }
 
 ///|
-fn request(command~ : String, payload? : String = "") -> @lepusa.InvokeRequest {
+fn request(command~ : String, payload~ : String = "") -> @lepusa.InvokeRequest {
   @lepusa.InvokeRequest::new(
     id="1",
     window_label="main",

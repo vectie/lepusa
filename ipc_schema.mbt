@@ -1,17 +1,18 @@
 ///|
+#derive(Debug, Eq)
 pub struct IpcSchema {
   name : String
   typescript : String
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn IpcSchema::new(
   name~ : String,
-  typescript? : String = "unknown",
-  description? : String = "",
+  typescript~ : String = "unknown",
+  description~ : String = "",
 ) -> IpcSchema {
-  { name, typescript, description }
+  { name, typescript, description, }
 }
 
 ///|
@@ -48,7 +49,7 @@ pub fn IpcSchema::number() -> IpcSchema {
 pub fn IpcSchema::object(
   name : String,
   typescript : String,
-  description? : String = "",
+  description~ : String = "",
 ) -> IpcSchema {
   IpcSchema::new(name~, typescript~, description~)
 }

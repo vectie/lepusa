@@ -18,14 +18,14 @@ fn command_payload() -> String {
 
 ///|
 test "browser host route is capability gated and preserves terminal idempotency" {
-  let state = BrowserHostState::new()
-  let registry = registry(state~)
+  let state = @browser_host.BrowserHostState::new()
+  let registry = @browser_host.registry(state~)
   let denied = registry.dispatch(request("execute", command_payload()), capabilities=[])
   assert_eq(
     denied.error_message().unwrap_or(""),
     "permission denied: browserHost.execute",
   )
-  let grant = capability_for_window("main")
+  let grant = @browser_host.capability_for_window("main")
   let ready = registry.dispatch(request("execute", command_payload()), capabilities=[
     grant,
   ])
@@ -48,14 +48,16 @@ test "browser host route is capability gated and preserves terminal idempotency"
     completed.payload().unwrap_or("").contains("lepusa-native-host-action-1"),
   )
   assert_true(
-    plugin().command_routes().contains("browserHost.captureScreenshot"),
+    @browser_host.plugin()
+    .command_routes()
+    .contains("browserHost.captureScreenshot"),
   )
 }
 
 ///|
 test "browser host completion rejects mismatched MoonClaw identity" {
-  let registry = registry()
-  let grant = capability_for_window("main")
+  let registry = @browser_host.registry()
+  let grant = @browser_host.capability_for_window("main")
   ignore(
     registry.dispatch(request("execute", command_payload()), capabilities=[
       grant,

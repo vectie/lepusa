@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleArtifactKind {
   AppBundleArtifact
   DiskImageArtifact
@@ -6,22 +7,25 @@ pub(all) enum BundleArtifactKind {
   InstallerArtifact
   PortableDirectoryArtifact
   DesktopEntryArtifact
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundleRuntimeDependencyKind {
   SystemWebViewRuntime
   NativeLoaderLibrary
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleArtifact {
   kind : BundleArtifactKind
   path : String
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundleRuntimeDependency {
   kind : BundleRuntimeDependencyKind
   name : String
@@ -29,40 +33,44 @@ pub struct BundleRuntimeDependency {
   source_path : String?
   required : Bool
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum SigningPrerequisiteKind {
   SigningIdentity
   SigningTool
   NotarizationTool
   RuntimeDependency
   PackageValidator
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct SigningPrerequisite {
   kind : SigningPrerequisiteKind
   name : String
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct SigningStep {
   name : String
   tool : String
   arguments : Array[String]
   description : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct SigningConfig {
   identity : String?
   team_id : String?
   entitlements_path : String?
   notarization_profile : String?
   timestamp_url : String?
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn SigningConfig::new(
@@ -72,7 +80,7 @@ pub fn SigningConfig::new(
   notarization_profile? : String,
   timestamp_url? : String,
 ) -> SigningConfig {
-  { identity, team_id, entitlements_path, notarization_profile, timestamp_url }
+  { identity, team_id, entitlements_path, notarization_profile, timestamp_url, }
 }
 
 ///|
@@ -162,7 +170,7 @@ pub fn BundleArtifact::new(
   path~ : String,
   description~ : String,
 ) -> BundleArtifact {
-  { kind, path, description }
+  { kind, path, description, }
 }
 
 ///|
@@ -209,10 +217,10 @@ pub fn BundleRuntimeDependency::new(
   name~ : String,
   path? : String,
   source_path? : String,
-  required? : Bool = true,
+  required~ : Bool = true,
   description~ : String,
 ) -> BundleRuntimeDependency {
-  { kind, name, path, source_path, required, description }
+  { kind, name, path, source_path, required, description, }
 }
 
 ///|
@@ -285,7 +293,7 @@ pub fn SigningPrerequisite::new(
   name~ : String,
   description~ : String,
 ) -> SigningPrerequisite {
-  { kind, name, description }
+  { kind, name, description, }
 }
 
 ///|
@@ -334,7 +342,7 @@ pub fn SigningStep::new(
   arguments~ : Array[String],
   description~ : String,
 ) -> SigningStep {
-  { name, tool, arguments, description }
+  { name, tool, arguments, description, }
 }
 
 ///|

@@ -1,14 +1,16 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeExecutionPlan {
   startup_operations : Array[NativeExecutableOperation]
   lifecycle_steps : Array[NativeExecutionStep]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeExecutionStep {
   event_json : String
   operations : Array[NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeExecutionPlan::new(
@@ -26,7 +28,7 @@ pub fn NativeExecutionStep::new(
   event_json~ : String,
   operations~ : Array[NativeExecutableOperation],
 ) -> NativeExecutionStep {
-  { event_json, operations: operations.copy() }
+  { event_json, operations: operations.copy(), }
 }
 
 ///|

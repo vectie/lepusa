@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundleReleaseWriteResult {
   root : String
   plan_path : String
   checklist_path : String
   plan : BundleReleasePlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundleReleaseWriteResult::root(
@@ -73,7 +74,7 @@ pub async fn write_release_plan(
   write_release_file(plan_path, plan.to_json() + "\n", problems)
   write_release_file(checklist_path, plan.checklist_markdown(), problems)
   if problems.is_empty() {
-    Ok({ root, plan_path, checklist_path, plan })
+    Ok({ root, plan_path, checklist_path, plan, })
   } else {
     Err(problems)
   }

@@ -1,5 +1,5 @@
 ///|
-fn audit_test_app(grant? : Bool = true, origin? : String = "") -> @lepusa.App {
+fn audit_test_app(grant~ : Bool = true, origin~ : String = "") -> @lepusa.App {
   let root = @lepusa.simple_cell(@lepusa.Html::text("<main></main>"))
   let mut capability = @lepusa.Capability::new("core")
     .window("main")
@@ -19,8 +19,8 @@ fn audit_test_app(grant? : Bool = true, origin? : String = "") -> @lepusa.App {
 
 ///|
 fn audit_test_plan(
-  grant? : Bool = true,
-  origin? : String = "",
+  grant~ : Bool = true,
+  origin~ : String = "",
 ) -> @lepusa.RuntimePlan {
   match
     audit_test_app(grant~, origin~).runtime_plan(

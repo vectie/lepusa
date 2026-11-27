@@ -16,8 +16,8 @@ fn release_readiness_plan() -> @lepusa.RuntimePlan {
 ///|
 fn release_bundle(
   target : @lepusa.BundleTarget,
-  signing? : @lepusa.SigningConfig = @lepusa.SigningConfig::new(),
-  runtime_dependency_sources? : Array[@lepusa.BundleRuntimeDependencySource] = [],
+  signing~ : @lepusa.SigningConfig = @lepusa.SigningConfig::new(),
+  runtime_dependency_sources~ : Array[@lepusa.BundleRuntimeDependencySource] = [],
 ) -> @lepusa.BundlePlan {
   match
     @lepusa.BundleConfig::new(

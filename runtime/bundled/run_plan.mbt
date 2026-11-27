@@ -1,10 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum BundledRunMode {
   BundledDryRun
   BundledOpenWindow
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledRunPlan {
   target : String
   backend : String
@@ -12,17 +14,18 @@ pub struct BundledRunPlan {
   bridge_url : String
   webviews : Array[BundledWebView]
   service_plan : BundledServicePlan
-  startup_operation_count : Int
-  lifecycle_step_count : Int
-  sync_route_count : Int
-  async_route_count : Int
-} derive(Debug, Eq)
+  startup_operation_count : Int32
+  lifecycle_step_count : Int32
+  sync_route_count : Int32
+  async_route_count : Int32
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledRunResult {
   plan : BundledRunPlan
   status : @lepusa.RunStatus
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundledRuntimeManifest::run_plan(
@@ -58,7 +61,7 @@ pub fn BundledRuntimeManifest::run_plan(
 ///|
 pub fn BundledRuntimeManifest::run(
   self : BundledRuntimeManifest,
-  mode? : BundledRunMode = BundledDryRun,
+  mode~ : BundledRunMode = BundledDryRun,
 ) -> Result[BundledRunResult, String] {
   match self.run_plan() {
     Err(problem) => Err(problem)
@@ -136,22 +139,22 @@ pub fn BundledRunPlan::service_supervisor_plan(
 }
 
 ///|
-pub fn BundledRunPlan::startup_operation_count(self : BundledRunPlan) -> Int {
+pub fn BundledRunPlan::startup_operation_count(self : BundledRunPlan) -> Int32 {
   self.startup_operation_count
 }
 
 ///|
-pub fn BundledRunPlan::lifecycle_step_count(self : BundledRunPlan) -> Int {
+pub fn BundledRunPlan::lifecycle_step_count(self : BundledRunPlan) -> Int32 {
   self.lifecycle_step_count
 }
 
 ///|
-pub fn BundledRunPlan::sync_route_count(self : BundledRunPlan) -> Int {
+pub fn BundledRunPlan::sync_route_count(self : BundledRunPlan) -> Int32 {
   self.sync_route_count
 }
 
 ///|
-pub fn BundledRunPlan::async_route_count(self : BundledRunPlan) -> Int {
+pub fn BundledRunPlan::async_route_count(self : BundledRunPlan) -> Int32 {
   self.async_route_count
 }
 
@@ -159,14 +162,14 @@ pub fn BundledRunPlan::async_route_count(self : BundledRunPlan) -> Int {
 pub fn BundledRunPlan::report(
   self : BundledRunPlan,
   status~ : @lepusa.RunStatus,
-  load_url? : String = "",
-  executable_operations? : Int = 0,
-  executed_operations? : Int = 0,
-  skipped_operations? : Int = 0,
-  failed_operations? : Int = 0,
-  first_execution_failure? : String = "",
-  target_can_launch? : Bool = true,
-  target_launch_blocker? : String = "",
+  load_url~ : String = "",
+  executable_operations~ : Int32 = 0,
+  executed_operations~ : Int32 = 0,
+  skipped_operations~ : Int32 = 0,
+  failed_operations~ : Int32 = 0,
+  first_execution_failure~ : String = "",
+  target_can_launch~ : Bool = true,
+  target_launch_blocker~ : String = "",
 ) -> @lepusa.RunReport {
   let services = self.service_plan()
   let first_window_url = match self.first_webview() {

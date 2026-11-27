@@ -1,15 +1,16 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeServicePlan {
   services : Array[@lepusa.LocalService]
   startup_services : Array[@lepusa.LocalService]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeServicePlan::new(
-  services? : Array[@lepusa.LocalService] = [],
-  startup_services? : Array[@lepusa.LocalService] = [],
+  services~ : Array[@lepusa.LocalService] = [],
+  startup_services~ : Array[@lepusa.LocalService] = [],
 ) -> RuntimeServicePlan {
-  { services: services.copy(), startup_services: startup_services.copy() }
+  { services: services.copy(), startup_services: startup_services.copy(), }
 }
 
 ///|

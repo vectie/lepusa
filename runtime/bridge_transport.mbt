@@ -1,11 +1,13 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeMessage {
   window_label : String
   response_hook : String
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeDispatch {
   window_label : String
   response_hook : String
@@ -13,48 +15,54 @@ pub struct NativeBridgeDispatch {
   response_json : String
   evaluation_script : String
   extra_operations : Array[NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum NativeBridgeDispatchMode {
   NativeBridgeDispatchSync
   NativeBridgeDispatchAsync
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeDispatchTask {
   message : NativeBridgeMessage
   route : String
   mode : NativeBridgeDispatchMode
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeHandoff {
   task : NativeBridgeDispatchTask
   immediate_dispatch : NativeBridgeDispatch?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeCompletion {
   task : NativeBridgeDispatchTask
   dispatch : NativeBridgeDispatch
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeDrainResult {
-  pending_before : Int
-  pending_after : Int
+  pending_before : Int32
+  pending_after : Int32
   completions : Array[NativeBridgeCompletion]
   evaluation_scripts : Array[String]
   operations : Array[NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeWorkQueue {
   tasks : Array[NativeBridgeDispatchTask]
   policy : @lepusa.BackpressurePolicy
-  mut dropped_count : Int
-} derive(Debug, Eq)
+  mut dropped_count : Int32
+}
 
 ///|
 pub struct NativeBridgeLoopAdapter {
@@ -74,23 +82,25 @@ pub struct NativeBridgeLoopCallbacks {
 let native_bridge_drain_request_prefix = "lepusa-drain-v1\n"
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeLoopResult {
   immediate_script : String
   completions : Array[NativeBridgeCompletion]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct NativeBridgeLoopDelivery {
   window_label : String
   result : NativeBridgeLoopResult
   evaluation_plan : NativeBridgeLoopEvaluationPlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeHost::prepare_bridge_message(
   self : RuntimeHost,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeMessage, Array[String]] {
   let resolved_window_label = bridge_window_label_from_message(
     message,
@@ -98,7 +108,7 @@ pub fn RuntimeHost::prepare_bridge_message(
   )
   match self.bridge_response_hook(window_label=resolved_window_label) {
     Ok((window_label, response_hook)) =>
-      Ok({ window_label, response_hook, message })
+      Ok({ window_label, response_hook, message, })
     Err(problem) => Err([problem])
   }
 }
@@ -107,7 +117,7 @@ pub fn RuntimeHost::prepare_bridge_message(
 pub fn RuntimeHost::bridge_dispatch_task(
   self : RuntimeHost,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatchTask, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -121,7 +131,7 @@ pub fn RuntimeHost::bridge_dispatch_task(
           } else {
             NativeBridgeDispatchSync
           }
-          Ok({ message: prepared, route, mode })
+          Ok({ message: prepared, route, mode, })
         }
       }
   }
@@ -131,7 +141,7 @@ pub fn RuntimeHost::bridge_dispatch_task(
 pub fn RuntimeHost::bridge_handoff(
   self : RuntimeHost,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeHandoff, Array[String]] {
   match self.bridge_dispatch_task(message, window_label~) {
     Err(problems) => Err(problems)
@@ -141,7 +151,7 @@ pub fn RuntimeHost::bridge_handoff(
       } else {
         Some(task.dispatch_host_sync(self))
       }
-      Ok({ task, immediate_dispatch })
+      Ok({ task, immediate_dispatch, })
     }
   }
 }
@@ -150,7 +160,7 @@ pub fn RuntimeHost::bridge_handoff(
 pub async fn RuntimeHost::dispatch_bridge_message(
   self : RuntimeHost,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -162,7 +172,7 @@ pub async fn RuntimeHost::dispatch_bridge_message(
 pub fn RuntimeHost::dispatch_bridge_message_sync(
   self : RuntimeHost,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -174,7 +184,7 @@ pub fn RuntimeHost::dispatch_bridge_message_sync(
 pub fn NativeRuntime::prepare_bridge_message(
   self : NativeRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeMessage, Array[String]] {
   let resolved_window_label = bridge_window_label_from_message(
     message,
@@ -182,7 +192,7 @@ pub fn NativeRuntime::prepare_bridge_message(
   )
   match self.bridge_response_hook(window_label=resolved_window_label) {
     Ok((window_label, response_hook)) =>
-      Ok({ window_label, response_hook, message })
+      Ok({ window_label, response_hook, message, })
     Err(problem) => Err([problem])
   }
 }
@@ -191,7 +201,7 @@ pub fn NativeRuntime::prepare_bridge_message(
 pub fn NativeRuntime::bridge_dispatch_task(
   self : NativeRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatchTask, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -205,7 +215,7 @@ pub fn NativeRuntime::bridge_dispatch_task(
           } else {
             NativeBridgeDispatchSync
           }
-          Ok({ message: prepared, route, mode })
+          Ok({ message: prepared, route, mode, })
         }
       }
   }
@@ -215,7 +225,7 @@ pub fn NativeRuntime::bridge_dispatch_task(
 pub fn NativeRuntime::bridge_handoff(
   self : NativeRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeHandoff, Array[String]] {
   match self.bridge_dispatch_task(message, window_label~) {
     Err(problems) => Err(problems)
@@ -225,7 +235,7 @@ pub fn NativeRuntime::bridge_handoff(
       } else {
         Some(task.dispatch_sync(self))
       }
-      Ok({ task, immediate_dispatch })
+      Ok({ task, immediate_dispatch, })
     }
   }
 }
@@ -234,7 +244,7 @@ pub fn NativeRuntime::bridge_handoff(
 pub async fn NativeRuntime::dispatch_bridge_message(
   self : NativeRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -246,7 +256,7 @@ pub async fn NativeRuntime::dispatch_bridge_message(
 pub fn NativeRuntime::dispatch_bridge_message_sync(
   self : NativeRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[NativeBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -285,7 +295,7 @@ pub fn NativeRuntime::bridge_handoff_script_bytes(
 ///|
 pub fn NativeRuntime::bridge_response_hook(
   self : NativeRuntime,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[(String, String), String] {
   let specs = self.runner.webview_specs()
   if specs.is_empty() {
@@ -306,7 +316,7 @@ pub fn NativeRuntime::bridge_response_hook(
 ///|
 pub fn RuntimeHost::bridge_response_hook(
   self : RuntimeHost,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[(String, String), String] {
   match self.webviews() {
     Err(problems) => Err(problems.join("; "))
@@ -528,7 +538,7 @@ pub async fn NativeBridgeDispatchTask::complete(
   self : NativeBridgeDispatchTask,
   runtime : NativeRuntime,
 ) -> NativeBridgeCompletion {
-  { task: self, dispatch: self.dispatch(runtime) }
+  { task: self, dispatch: self.dispatch(runtime), }
 }
 
 ///|
@@ -536,7 +546,7 @@ fn NativeBridgeDispatchTask::complete_sync(
   self : NativeBridgeDispatchTask,
   runtime : NativeRuntime,
 ) -> NativeBridgeCompletion {
-  { task: self, dispatch: self.dispatch_sync(runtime) }
+  { task: self, dispatch: self.dispatch_sync(runtime), }
 }
 
 ///|
@@ -685,8 +695,8 @@ pub fn NativeBridgeCompletion::to_json(self : NativeBridgeCompletion) -> String 
 
 ///|
 pub fn NativeBridgeDrainResult::new(
-  pending_before~ : Int,
-  pending_after~ : Int,
+  pending_before~ : Int32,
+  pending_after~ : Int32,
   completions~ : Array[NativeBridgeCompletion],
 ) -> NativeBridgeDrainResult {
   let evaluation_scripts : Array[String] = []
@@ -709,21 +719,21 @@ pub fn NativeBridgeDrainResult::new(
 ///|
 pub fn NativeBridgeDrainResult::pending_before(
   self : NativeBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.pending_before
 }
 
 ///|
 pub fn NativeBridgeDrainResult::pending_after(
   self : NativeBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.pending_after
 }
 
 ///|
 pub fn NativeBridgeDrainResult::completed_count(
   self : NativeBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.completions.length()
 }
 
@@ -781,15 +791,15 @@ pub fn NativeBridgeDrainResult::to_json(
 
 ///|
 pub fn NativeBridgeWorkQueue::new(
-  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+  policy~ : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> NativeBridgeWorkQueue {
-  { tasks: [], policy, dropped_count: 0 }
+  { tasks: [], policy, dropped_count: 0, }
 }
 
 ///|
 pub fn NativeBridgeWorkQueue::pending_count(
   self : NativeBridgeWorkQueue,
-) -> Int {
+) -> Int32 {
   self.tasks.length()
 }
 
@@ -803,7 +813,7 @@ pub fn NativeBridgeWorkQueue::policy(
 ///|
 pub fn NativeBridgeWorkQueue::dropped_count(
   self : NativeBridgeWorkQueue,
-) -> Int {
+) -> Int32 {
   self.dropped_count
 }
 
@@ -823,7 +833,7 @@ pub fn NativeBridgeWorkQueue::tasks(
 pub fn NativeBridgeWorkQueue::enqueue_task(
   self : NativeBridgeWorkQueue,
   task : NativeBridgeDispatchTask,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if task.requires_async_dispatch() {
     if self.policy.at_capacity(self.pending_count()) {
       match self.policy.overflow() {
@@ -853,7 +863,7 @@ pub fn NativeBridgeWorkQueue::enqueue_task(
 pub fn NativeBridgeWorkQueue::enqueue_handoff(
   self : NativeBridgeWorkQueue,
   handoff : NativeBridgeHandoff,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if handoff.requires_async_dispatch() {
     self.enqueue_task(handoff.task())
   } else {
@@ -960,9 +970,9 @@ pub fn NativeBridgeWorkQueue::to_json(self : NativeBridgeWorkQueue) -> String {
 ///|
 pub fn NativeBridgeLoopAdapter::new(
   runtime : NativeRuntime,
-  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+  policy~ : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> NativeBridgeLoopAdapter {
-  { runtime, queue: NativeBridgeWorkQueue::new(policy~) }
+  { runtime, queue: NativeBridgeWorkQueue::new(policy~), }
 }
 
 ///|
@@ -989,7 +999,7 @@ pub fn NativeBridgeLoopAdapter::queue(
 ///|
 pub fn NativeBridgeLoopAdapter::pending_count(
   self : NativeBridgeLoopAdapter,
-) -> Int {
+) -> Int32 {
   self.queue.pending_count()
 }
 
@@ -1127,7 +1137,7 @@ pub async fn NativeBridgeLoopAdapter::receive_message(
   let immediate_script = @utf8.decode(self.handoff_script_bytes(message)) catch {
     _ => ""
   }
-  { immediate_script, completions: self.drain() }
+  { immediate_script, completions: self.drain(), }
 }
 
 ///|
@@ -1285,10 +1295,10 @@ pub fn NativeBridgeLoopResult::immediate_script(
 
 ///|
 pub fn NativeBridgeLoopResult::new(
-  immediate_script? : String = "",
-  completions? : Array[NativeBridgeCompletion] = [],
+  immediate_script~ : String = "",
+  completions~ : Array[NativeBridgeCompletion] = [],
 ) -> NativeBridgeLoopResult {
-  { immediate_script, completions: completions.copy() }
+  { immediate_script, completions: completions.copy(), }
 }
 
 ///|

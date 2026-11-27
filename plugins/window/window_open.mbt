@@ -1,15 +1,16 @@
 ///|
+#derive(Debug, Eq)
 pub struct WindowOpenOperation {
   window_label : String
   payload : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn WindowOpenOperation::new(
   window_label~ : String,
   payload~ : String,
 ) -> WindowOpenOperation {
-  { window_label, payload }
+  { window_label, payload, }
 }
 
 ///|

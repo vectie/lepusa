@@ -1,11 +1,13 @@
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeMessage {
   window_label : String
   response_hook : String
   message : String
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeDispatch {
   window_label : String
   response_hook : String
@@ -13,42 +15,47 @@ pub struct BundledBridgeDispatch {
   response_json : String
   evaluation_script : String
   extra_operations : Array[@runtime.NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeDispatchTask {
   message : BundledBridgeMessage
   route : String
   mode : @runtime.NativeBridgeDispatchMode
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeHandoff {
   task : BundledBridgeDispatchTask
   immediate_dispatch : BundledBridgeDispatch?
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeCompletion {
   task : BundledBridgeDispatchTask
   dispatch : BundledBridgeDispatch
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeDrainResult {
-  pending_before : Int
-  pending_after : Int
+  pending_before : Int32
+  pending_after : Int32
   completions : Array[BundledBridgeCompletion]
   evaluation_scripts : Array[String]
   operations : Array[@runtime.NativeExecutableOperation]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeWorkQueue {
   tasks : Array[BundledBridgeDispatchTask]
   policy : @lepusa.BackpressurePolicy
-  mut dropped_count : Int
-} derive(Debug, Eq)
+  mut dropped_count : Int32
+}
 
 ///|
 pub struct BundledBridgeLoopAdapter {
@@ -68,23 +75,25 @@ pub struct BundledBridgeLoopCallbacks {
 let bundled_bridge_drain_request_prefix = "lepusa-drain-v1\n"
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeLoopResult {
   immediate_script : String
   completions : Array[BundledBridgeCompletion]
-} derive(Debug, Eq)
+}
 
 ///|
+#derive(Debug, Eq)
 pub struct BundledBridgeLoopDelivery {
   window_label : String
   result : BundledBridgeLoopResult
   evaluation_plan : @runtime.NativeBridgeLoopEvaluationPlan
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn BundledRuntimeManifest::prepare_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeMessage, Array[String]] {
   let resolved_window_label = bundled_bridge_window_label_from_message(
     message,
@@ -92,7 +101,7 @@ pub fn BundledRuntimeManifest::prepare_bridge_message(
   )
   match self.bridge_response_hook(window_label=resolved_window_label) {
     Ok((window_label, response_hook)) =>
-      Ok({ window_label, response_hook, message })
+      Ok({ window_label, response_hook, message, })
     Err(problem) => Err([problem])
   }
 }
@@ -101,7 +110,7 @@ pub fn BundledRuntimeManifest::prepare_bridge_message(
 pub fn BundledRuntime::prepare_bridge_message(
   self : BundledRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeMessage, Array[String]] {
   self.manifest.prepare_bridge_message(message, window_label~)
 }
@@ -110,7 +119,7 @@ pub fn BundledRuntime::prepare_bridge_message(
 pub fn BundledRuntimeManifest::bridge_dispatch_task(
   self : BundledRuntimeManifest,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatchTask, Array[String]] {
   BundledRuntime::new(self).bridge_dispatch_task(message, window_label~)
 }
@@ -119,7 +128,7 @@ pub fn BundledRuntimeManifest::bridge_dispatch_task(
 pub fn BundledRuntimeManifest::bridge_handoff(
   self : BundledRuntimeManifest,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeHandoff, Array[String]] {
   BundledRuntime::new(self).bridge_handoff(message, window_label~)
 }
@@ -128,7 +137,7 @@ pub fn BundledRuntimeManifest::bridge_handoff(
 pub fn BundledRuntime::bridge_dispatch_task(
   self : BundledRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatchTask, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -142,7 +151,7 @@ pub fn BundledRuntime::bridge_dispatch_task(
           } else {
             NativeBridgeDispatchSync
           }
-          Ok({ message: prepared, route, mode })
+          Ok({ message: prepared, route, mode, })
         }
       }
   }
@@ -152,7 +161,7 @@ pub fn BundledRuntime::bridge_dispatch_task(
 pub fn BundledRuntime::bridge_handoff(
   self : BundledRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeHandoff, Array[String]] {
   match self.bridge_dispatch_task(message, window_label~) {
     Err(problems) => Err(problems)
@@ -162,7 +171,7 @@ pub fn BundledRuntime::bridge_handoff(
       } else {
         Some(task.dispatch_sync(self))
       }
-      Ok({ task, immediate_dispatch })
+      Ok({ task, immediate_dispatch, })
     }
   }
 }
@@ -170,7 +179,7 @@ pub fn BundledRuntime::bridge_handoff(
 ///|
 pub fn BundledRuntimeManifest::bridge_response_hook(
   self : BundledRuntimeManifest,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[(String, String), String] {
   match self.webviews() {
     Err(problem) => Err(problem)
@@ -196,7 +205,7 @@ pub fn BundledRuntimeManifest::bridge_response_hook(
 pub fn BundledRuntimeManifest::dispatch_bridge_message_sync(
   self : BundledRuntimeManifest,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatch, Array[String]] {
   BundledRuntime::new(self).dispatch_bridge_message_sync(message, window_label~)
 }
@@ -205,7 +214,7 @@ pub fn BundledRuntimeManifest::dispatch_bridge_message_sync(
 pub fn BundledRuntime::dispatch_bridge_message_sync(
   self : BundledRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -257,7 +266,7 @@ pub async fn BundledRuntime::dispatch_bridge_script_bytes_async(
 pub async fn BundledRuntimeManifest::dispatch_bridge_message(
   self : BundledRuntimeManifest,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatch, Array[String]] {
   BundledRuntime::new(self).dispatch_bridge_message(message, window_label~)
 }
@@ -266,7 +275,7 @@ pub async fn BundledRuntimeManifest::dispatch_bridge_message(
 pub async fn BundledRuntime::dispatch_bridge_message(
   self : BundledRuntime,
   message : String,
-  window_label? : String = "",
+  window_label~ : String = "",
 ) -> Result[BundledBridgeDispatch, Array[String]] {
   match self.prepare_bridge_message(message, window_label~) {
     Err(problems) => Err(problems)
@@ -424,7 +433,7 @@ pub async fn BundledBridgeDispatchTask::complete(
   self : BundledBridgeDispatchTask,
   runtime : BundledRuntime,
 ) -> BundledBridgeCompletion {
-  { task: self, dispatch: self.dispatch(runtime) }
+  { task: self, dispatch: self.dispatch(runtime), }
 }
 
 ///|
@@ -432,7 +441,7 @@ fn BundledBridgeDispatchTask::complete_sync(
   self : BundledBridgeDispatchTask,
   runtime : BundledRuntime,
 ) -> BundledBridgeCompletion {
-  { task: self, dispatch: self.dispatch_sync(runtime) }
+  { task: self, dispatch: self.dispatch_sync(runtime), }
 }
 
 ///|
@@ -575,8 +584,8 @@ pub fn BundledBridgeCompletion::to_json(
 
 ///|
 pub fn BundledBridgeDrainResult::new(
-  pending_before~ : Int,
-  pending_after~ : Int,
+  pending_before~ : Int32,
+  pending_after~ : Int32,
   completions~ : Array[BundledBridgeCompletion],
 ) -> BundledBridgeDrainResult {
   let evaluation_scripts : Array[String] = []
@@ -599,21 +608,21 @@ pub fn BundledBridgeDrainResult::new(
 ///|
 pub fn BundledBridgeDrainResult::pending_before(
   self : BundledBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.pending_before
 }
 
 ///|
 pub fn BundledBridgeDrainResult::pending_after(
   self : BundledBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.pending_after
 }
 
 ///|
 pub fn BundledBridgeDrainResult::completed_count(
   self : BundledBridgeDrainResult,
-) -> Int {
+) -> Int32 {
   self.completions.length()
 }
 
@@ -671,15 +680,15 @@ pub fn BundledBridgeDrainResult::to_json(
 
 ///|
 pub fn BundledBridgeWorkQueue::new(
-  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+  policy~ : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> BundledBridgeWorkQueue {
-  { tasks: [], policy, dropped_count: 0 }
+  { tasks: [], policy, dropped_count: 0, }
 }
 
 ///|
 pub fn BundledBridgeWorkQueue::pending_count(
   self : BundledBridgeWorkQueue,
-) -> Int {
+) -> Int32 {
   self.tasks.length()
 }
 
@@ -693,7 +702,7 @@ pub fn BundledBridgeWorkQueue::policy(
 ///|
 pub fn BundledBridgeWorkQueue::dropped_count(
   self : BundledBridgeWorkQueue,
-) -> Int {
+) -> Int32 {
   self.dropped_count
 }
 
@@ -713,7 +722,7 @@ pub fn BundledBridgeWorkQueue::tasks(
 pub fn BundledBridgeWorkQueue::enqueue_task(
   self : BundledBridgeWorkQueue,
   task : BundledBridgeDispatchTask,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if task.requires_async_dispatch() {
     if self.policy.at_capacity(self.pending_count()) {
       match self.policy.overflow() {
@@ -743,7 +752,7 @@ pub fn BundledBridgeWorkQueue::enqueue_task(
 pub fn BundledBridgeWorkQueue::enqueue_handoff(
   self : BundledBridgeWorkQueue,
   handoff : BundledBridgeHandoff,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if handoff.requires_async_dispatch() {
     self.enqueue_task(handoff.task())
   } else {
@@ -850,9 +859,9 @@ pub fn BundledBridgeWorkQueue::to_json(self : BundledBridgeWorkQueue) -> String 
 ///|
 pub fn BundledBridgeLoopAdapter::new(
   runtime : BundledRuntime,
-  policy? : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
+  policy~ : @lepusa.BackpressurePolicy = @lepusa.BackpressurePolicy::unbounded(),
 ) -> BundledBridgeLoopAdapter {
-  { runtime, queue: BundledBridgeWorkQueue::new(policy~) }
+  { runtime, queue: BundledBridgeWorkQueue::new(policy~), }
 }
 
 ///|
@@ -886,7 +895,7 @@ pub fn BundledBridgeLoopAdapter::queue(
 ///|
 pub fn BundledBridgeLoopAdapter::pending_count(
   self : BundledBridgeLoopAdapter,
-) -> Int {
+) -> Int32 {
   self.queue.pending_count()
 }
 
@@ -1024,7 +1033,7 @@ pub async fn BundledBridgeLoopAdapter::receive_message(
   let immediate_script = @utf8.decode(self.handoff_script_bytes(message)) catch {
     _ => ""
   }
-  { immediate_script, completions: self.drain() }
+  { immediate_script, completions: self.drain(), }
 }
 
 ///|

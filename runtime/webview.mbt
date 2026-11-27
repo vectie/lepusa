@@ -1,10 +1,11 @@
 ///|
+#derive(Debug, Eq)
 pub struct RuntimeWebViewSpec {
   label : String
   title : String
   url : String
-  width : Int
-  height : Int
+  width : Int32
+  height : Int32
   resizable : Bool
   title_bar : @lepusa.TitleBarStyle
   devtools : Bool
@@ -14,7 +15,7 @@ pub struct RuntimeWebViewSpec {
   event_dispatch_hook : String
   allowed_routes : Array[String]
   initialization_scripts : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn RuntimeHost::webviews(
@@ -70,12 +71,12 @@ pub fn RuntimeWebViewSpec::url(self : RuntimeWebViewSpec) -> String {
 }
 
 ///|
-pub fn RuntimeWebViewSpec::width(self : RuntimeWebViewSpec) -> Int {
+pub fn RuntimeWebViewSpec::width(self : RuntimeWebViewSpec) -> Int32 {
   self.width
 }
 
 ///|
-pub fn RuntimeWebViewSpec::height(self : RuntimeWebViewSpec) -> Int {
+pub fn RuntimeWebViewSpec::height(self : RuntimeWebViewSpec) -> Int32 {
   self.height
 }
 

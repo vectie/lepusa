@@ -6,8 +6,8 @@
 //
 // Or manually declare it in `import`, for example:
 import {
-  "moonbitlang/async@0.20.3",
-  "moonbitlang/x@0.4.50",
+  "moonbitlang/async@0.22.11",
+  "moonbitlang/x@0.5.9",
   "vectie/moonlib@0.1.19",
 }
 

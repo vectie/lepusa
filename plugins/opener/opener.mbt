@@ -7,14 +7,14 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "opener") -> @lepusa.Capability {
+pub fn capability(name~ : String = "opener") -> @lepusa.Capability {
   @lepusa.Capability::new(name).permission(Opener)
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "opener",
+  name~ : String = "opener",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
@@ -22,17 +22,17 @@ pub fn capability_for_window(
 ///|
 #cfg(target="native")
 #borrow(target)
-extern "c" fn native_open_url(target : Bytes) -> Int = "lepusa_opener_open_url"
+extern "c" fn native_open_url(target : Bytes) -> Int32 = "lepusa_opener_open_url"
 
 ///|
 #cfg(target="native")
 #borrow(target)
-extern "c" fn native_open_path(target : Bytes) -> Int = "lepusa_opener_open_path"
+extern "c" fn native_open_path(target : Bytes) -> Int32 = "lepusa_opener_open_path"
 
 ///|
 #cfg(target="native")
 #borrow(target)
-extern "c" fn native_reveal_path(target : Bytes) -> Int = "lepusa_opener_reveal_path"
+extern "c" fn native_reveal_path(target : Bytes) -> Int32 = "lepusa_opener_reveal_path"
 
 ///|
 pub fn registry() -> @lepusa.CommandRegistry {
@@ -79,37 +79,37 @@ fn handle_reveal_path(payload : String) -> Result[String, String] {
 
 ///|
 #cfg(target="native")
-fn run_open_url(target : Bytes) -> Int {
+fn run_open_url(target : Bytes) -> Int32 {
   native_open_url(target)
 }
 
 ///|
 #cfg(not(target="native"))
-fn run_open_url(_target : Bytes) -> Int {
+fn run_open_url(_target : Bytes) -> Int32 {
   2
 }
 
 ///|
 #cfg(target="native")
-fn run_open_path(target : Bytes) -> Int {
+fn run_open_path(target : Bytes) -> Int32 {
   native_open_path(target)
 }
 
 ///|
 #cfg(not(target="native"))
-fn run_open_path(_target : Bytes) -> Int {
+fn run_open_path(_target : Bytes) -> Int32 {
   2
 }
 
 ///|
 #cfg(target="native")
-fn run_reveal_path(target : Bytes) -> Int {
+fn run_reveal_path(target : Bytes) -> Int32 {
   native_reveal_path(target)
 }
 
 ///|
 #cfg(not(target="native"))
-fn run_reveal_path(_target : Bytes) -> Int {
+fn run_reveal_path(_target : Bytes) -> Int32 {
   2
 }
 
@@ -117,7 +117,7 @@ fn run_reveal_path(_target : Bytes) -> Int {
 fn opener_result_json(
   action : String,
   target : String,
-  run : (Bytes) -> Int,
+  run : (Bytes) -> Int32,
 ) -> Result[String, String] {
   match run(@utf8.encode(target)) {
     0 =>

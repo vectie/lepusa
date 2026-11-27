@@ -1,17 +1,18 @@
 ///|
+#derive(Debug, Eq)
 pub struct FileSystemScope {
   name : String
   root : String
   writable : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn FileSystemScope::new(
   name~ : String,
   root~ : String,
-  writable? : Bool = false,
+  writable~ : Bool = false,
 ) -> FileSystemScope {
-  { name, root, writable }
+  { name, root, writable, }
 }
 
 ///|

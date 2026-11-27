@@ -23,7 +23,7 @@ fn test_plan() -> @lepusa.RuntimePlan {
 
 ///|
 test "runtime host snapshots windows protocols and bridge" {
-  let host = RuntimeHost::new(test_plan())
+  let host = @runtime.RuntimeHost::new(test_plan())
   match host.snapshot() {
     Ok(session) => {
       assert_true(session.backend() is Headless)
@@ -55,7 +55,7 @@ test "runtime host snapshots windows protocols and bridge" {
 
 ///|
 test "runtime session plans dynamic window lifecycle operations" {
-  match RuntimeHost::new(test_plan()).snapshot() {
+  match @runtime.RuntimeHost::new(test_plan()).snapshot() {
     Ok(session) => {
       let window = @lepusa.WindowConfig::new(
         label="tools",
@@ -146,7 +146,7 @@ test "runtime host carries localhost service metadata" {
   )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) => {
-      let host = RuntimeHost::new(plan)
+      let host = @runtime.RuntimeHost::new(plan)
       match host.snapshot() {
         Ok(session) => {
           assert_eq(session.windows()[0].url(), "http://127.0.0.1:4317/")
@@ -180,8 +180,11 @@ test "runtime host carries localhost service metadata" {
 
 ///|
 test "native backend lowers host runner plan with portable operations" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match backend.runner_plan(RuntimeHost::new(test_plan())) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match backend.runner_plan(@runtime.RuntimeHost::new(test_plan())) {
     Ok(plan) => {
       assert_eq(plan.backend_name(), "test")
       assert_eq(plan.webview_engine(), "SystemWebView")
@@ -254,11 +257,11 @@ test "native runner exposes executable operation views" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) => {
-      let backend = NativeBackend::new(
+      let backend = @runtime.NativeBackend::new(
         name="test",
         webview_engine="SystemWebView",
       )
-      match backend.runner_plan(RuntimeHost::new(plan)) {
+      match backend.runner_plan(@runtime.RuntimeHost::new(plan)) {
         Ok(runner) => {
           let startup = runner.startup_operations()
           assert_eq(startup.length(), 4)
@@ -323,7 +326,11 @@ test "native runner exposes executable operation views" {
           assert_eq(navigations.length(), 1)
           assert_eq(navigations[0].window_label(), "main")
           assert_true(navigations[0].to_json().contains("\"url\""))
-          match NativeRuntime::new(backend, RuntimeHost::new(plan)) {
+          match
+            @runtime.NativeRuntime::new(
+              backend,
+              @runtime.RuntimeHost::new(plan),
+            ) {
             Ok(runtime) =>
               match
                 runtime.prepare_run_plan(prepare_webview=fn(spec) {
@@ -385,9 +392,12 @@ test "native runtime facade exposes platform loop hooks" {
   ) {
     Ok(payload)
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, host) {
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match @runtime.NativeRuntime::new(backend, host) {
     Ok(runtime) => {
       let bootstrap = runtime.bootstrap_json()
       assert_true(runtime.backend().name() == "test")
@@ -419,7 +429,7 @@ test "native runtime facade exposes platform loop hooks" {
 
 ///|
 test "native asset protocol packet encodes runtime responses" {
-  match RuntimeHost::new(test_plan()).snapshot() {
+  match @runtime.RuntimeHost::new(test_plan()).snapshot() {
     Ok(session) =>
       match session.resolve_asset("lepusa://inline/main/index.html") {
         Ok(asset) => {
@@ -441,8 +451,15 @@ test "native runtime owns bridge and asset callbacks" {
   ) {
     Ok(payload)
   })
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, RuntimeHost::new(test_plan(), registry~)) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match
+    @runtime.NativeRuntime::new(
+      backend,
+      @runtime.RuntimeHost::new(test_plan(), registry~),
+    ) {
     Ok(runtime) => {
       let dispatch = runtime.bridge_dispatch_callback()
       let message = "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
@@ -474,7 +491,7 @@ test "native asset protocol packet encodes json envelopes" {
     #|  "body": { "kind": "virtual", "content": "console.log(\"ready\")" }
     #|}
   let virtual_packet = @utf8.decode(
-    native_asset_protocol_packet_from_json(virtual_json),
+    @runtime.native_asset_protocol_packet_from_json(virtual_json),
   ) catch {
     _ => abort("unexpected invalid virtual packet")
   }
@@ -490,13 +507,13 @@ test "native asset protocol packet encodes json envelopes" {
     #|  "body": { "kind": "packaged-file", "path": "/tmp/app.css" }
     #|}
   let file_packet = @utf8.decode(
-    native_asset_protocol_packet_from_json(file_json),
+    @runtime.native_asset_protocol_packet_from_json(file_json),
   ) catch {
     _ => abort("unexpected invalid file packet")
   }
   assert_eq(file_packet, "ok\nfile\ntext/css\n/tmp/app.css")
   let error_packet = @utf8.decode(
-    native_asset_protocol_packet_from_json(
+    @runtime.native_asset_protocol_packet_from_json(
       "{\"ok\":false,\"error\":\"missing\"}",
     ),
   ) catch {
@@ -507,8 +524,12 @@ test "native asset protocol packet encodes json envelopes" {
 
 ///|
 test "native asset load urls are runtime-owned" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match
+    @runtime.NativeRuntime::new(backend, @runtime.RuntimeHost::new(test_plan())) {
     Ok(runtime) =>
       match runtime.initial_load_url(runtime.runner_plan().webview_specs()[0]) {
         Ok(load_url) => assert_eq(load_url, "lepusa://inline/main/index.html")
@@ -516,7 +537,7 @@ test "native asset load urls are runtime-owned" {
       }
     Err(_) => abort("unexpected invalid native runtime")
   }
-  match RuntimeHost::new(test_plan()).snapshot() {
+  match @runtime.RuntimeHost::new(test_plan()).snapshot() {
     Ok(session) =>
       match session.resolve_asset("lepusa://inline/main/index.html") {
         Ok(asset) => {
@@ -528,17 +549,25 @@ test "native asset load urls are runtime-owned" {
       }
     Err(_) => abort("unexpected invalid runtime session")
   }
-  assert_true(native_direct_load_url("https://example.test/app"))
+  assert_true(@runtime.native_direct_load_url("https://example.test/app"))
   assert_true(
-    native_protocol_load_url("lepusa://inline/main/index.html", "lepusa"),
+    @runtime.native_protocol_load_url(
+      "lepusa://inline/main/index.html", "lepusa",
+    ),
   )
-  assert_false(native_protocol_load_url("https://example.test/app", "lepusa"))
+  assert_false(
+    @runtime.native_protocol_load_url("https://example.test/app", "lepusa"),
+  )
 }
 
 ///|
 test "native runtime prepares shared webview plans" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match
+    @runtime.NativeRuntime::new(backend, @runtime.RuntimeHost::new(test_plan())) {
     Ok(runtime) =>
       match
         runtime.webview_plan(
@@ -564,8 +593,12 @@ test "native runtime prepares shared webview plans" {
 
 ///|
 test "native webview launch packet owns abi lowering" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match
+    @runtime.NativeRuntime::new(backend, @runtime.RuntimeHost::new(test_plan())) {
     Ok(runtime) =>
       match
         runtime.webview_plan(
@@ -606,8 +639,12 @@ test "native webview launch packet owns abi lowering" {
 
 ///|
 test "native runtime prepares shared run plans" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, RuntimeHost::new(test_plan())) {
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match
+    @runtime.NativeRuntime::new(backend, @runtime.RuntimeHost::new(test_plan())) {
     Ok(runtime) =>
       match
         runtime.prepare_run_plan(prepare_webview=fn(spec) {
@@ -662,15 +699,18 @@ test "native runtime prepares shared run plans" {
 
 ///|
 test "native runner plans expose async bridge blockers" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
   let registry = @lepusa.CommandRegistry::new().register_async_fn(
     "core.invoke",
     handler=fn(payload) { Ok(payload) },
   )
   match
-    NativeRuntime::new(
+    @runtime.NativeRuntime::new(
       backend,
-      RuntimeHost::new(async_bridge_plan(), registry~),
+      @runtime.RuntimeHost::new(async_bridge_plan(), registry~),
     ) {
     Ok(runtime) => {
       let runner = runtime.runner_plan()
@@ -854,7 +894,7 @@ test "native runner plans expose async bridge blockers" {
             .async_bridge_launch_message("Test")
             .contains("1 async command route"),
           )
-          let sync_capability = NativeLaunchCapability::new(
+          let sync_capability = @runtime.NativeLaunchCapability::new(
             webview_creation=true,
             async_bridge_drain=false,
           )
@@ -871,7 +911,7 @@ test "native runner plans expose async bridge blockers" {
             .unwrap()
             .contains("1 async command route"),
           )
-          let async_capability = NativeLaunchCapability::new(
+          let async_capability = @runtime.NativeLaunchCapability::new(
             webview_creation=true,
             async_bridge_drain=true,
           )
@@ -896,11 +936,14 @@ test "native runner plans expose async bridge blockers" {
 
 ///|
 test "native launch capability gates webview and async bridge loops" {
-  let sync_scheduler = NativeBridgeScheduler::new(sync_routes=["core.invoke"], async_routes=[])
-  let async_scheduler = NativeBridgeScheduler::new(sync_routes=[], async_routes=[
+  let sync_scheduler = @runtime.NativeBridgeScheduler::new(
+    sync_routes=["core.invoke"],
+    async_routes=[],
+  )
+  let async_scheduler = @runtime.NativeBridgeScheduler::new(sync_routes=[], async_routes=[
     "fs.readText",
   ])
-  let sync_only = NativeLaunchCapability::new(
+  let sync_only = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=false,
   )
@@ -930,7 +973,7 @@ test "native launch capability gates webview and async bridge loops" {
     .unwrap()
     .contains("native async bridge drain/evaluate support is unavailable"),
   )
-  let unavailable = NativeLaunchCapability::new(
+  let unavailable = @runtime.NativeLaunchCapability::new(
     webview_creation=false,
     async_bridge_drain=false,
     webview_creation_message="Test WebView loop missing",
@@ -939,7 +982,7 @@ test "native launch capability gates webview and async bridge loops" {
     unavailable.launch_blocker("Test", sync_scheduler).unwrap(),
     "Test WebView loop missing",
   )
-  let no_sync_bridge = NativeLaunchCapability::new(
+  let no_sync_bridge = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     sync_bridge_evaluate=false,
     async_bridge_drain=true,
@@ -949,7 +992,7 @@ test "native launch capability gates webview and async bridge loops" {
     no_sync_bridge.launch_blocker("Test", sync_scheduler).unwrap(),
     "sync bridge missing",
   )
-  let custom_async_blocker = NativeLaunchCapability::new(
+  let custom_async_blocker = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=false,
     async_bridge_drain_message="event loop callback missing",
@@ -964,7 +1007,7 @@ test "native launch capability gates webview and async bridge loops" {
     .unwrap()
     .contains("event loop callback missing"),
   )
-  let async_capable = NativeLaunchCapability::new(
+  let async_capable = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=true,
   )
@@ -982,7 +1025,7 @@ test "native launch capability gates webview and async bridge loops" {
   )
   assert_true(async_capable.to_json().contains("\"asyncBridgeDrainMessage\""))
   assert_true(async_capable.to_json().contains("\"maxWebviews\":1"))
-  let multi_window_capable = NativeLaunchCapability::new(
+  let multi_window_capable = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=false,
     max_webviews=0,
@@ -992,14 +1035,17 @@ test "native launch capability gates webview and async bridge loops" {
 
 ///|
 test "native backend contract joins launch capability bridge and invoke readiness" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
   let registry = @lepusa.CommandRegistry::new().register_fn("core.invoke", handler=fn(
     payload,
   ) {
     Ok(payload)
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
-  let capability = NativeLaunchCapability::new(
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
+  let capability = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=false,
   )
@@ -1030,12 +1076,15 @@ test "native backend contract joins launch capability bridge and invoke readines
 
 ///|
 test "native backend contract reports async drain and invoke drift blockers" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
   let registry = @lepusa.CommandRegistry::new()
     .register_async_fn("core.invoke", handler=fn(payload) { Ok(payload) })
     .register_fn("extra.ping", handler=fn(payload) { Ok(payload) })
-  let host = RuntimeHost::new(async_bridge_plan(), registry~)
-  let sync_capability = NativeLaunchCapability::new(
+  let host = @runtime.RuntimeHost::new(async_bridge_plan(), registry~)
+  let sync_capability = @runtime.NativeLaunchCapability::new(
     webview_creation=true,
     async_bridge_drain=false,
   )
@@ -1079,18 +1128,21 @@ test "native backend contract reports async drain and invoke drift blockers" {
 
 ///|
 test "native runtime and prepared run expose backend contracts" {
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
   let registry = @lepusa.CommandRegistry::new().register_async_fn(
     "core.invoke",
     handler=fn(payload) { Ok(payload) },
   )
   match
-    NativeRuntime::new(
+    @runtime.NativeRuntime::new(
       backend,
-      RuntimeHost::new(async_bridge_plan(), registry~),
+      @runtime.RuntimeHost::new(async_bridge_plan(), registry~),
     ) {
     Ok(runtime) => {
-      let capability = NativeLaunchCapability::new(
+      let capability = @runtime.NativeLaunchCapability::new(
         webview_creation=true,
         async_bridge_drain=true,
       )
@@ -1126,7 +1178,7 @@ test "native runtime and prepared run expose backend contracts" {
 
 ///|
 test "native backend preflight reports dependency and launch readiness" {
-  let ready = NativeBackendPreflight::new(
+  let ready = @runtime.NativeBackendPreflight::new(
     platform="test",
     webview_engine="SystemWebView",
     dependency_name="system-webview",
@@ -1166,7 +1218,7 @@ test "native backend preflight reports dependency and launch readiness" {
       "\"asyncBridgeDrainProblem\":\"native async bridge drain/evaluate support is unavailable\"",
     ),
   )
-  let missing = NativeBackendPreflight::new(
+  let missing = @runtime.NativeBackendPreflight::new(
     platform="test",
     webview_engine="SystemWebView",
     dependency_name="system-webview",
@@ -1190,7 +1242,7 @@ test "native backend preflight reports dependency and launch readiness" {
     .to_json()
     .contains("\"dependencyProblem\":\"system webview missing\""),
   )
-  let no_loop = NativeBackendPreflight::new(
+  let no_loop = @runtime.NativeBackendPreflight::new(
     platform="test",
     webview_engine="SystemWebView",
     dependency_name="system-webview",
@@ -1211,17 +1263,17 @@ test "native backend preflight reports dependency and launch readiness" {
 
 ///|
 test "native launch readiness includes backend preflight" {
-  let session = NativeLaunchSession::new(
+  let session = @runtime.NativeLaunchSession::new(
     webviews=[],
-    execution=NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[]),
-    bridge_scheduler=NativeBridgeScheduler::new(sync_routes=[], async_routes=[]),
-    service_supervisor=NativeServiceSupervisorPlan::new(
+    execution=@runtime.NativeExecutionPlan::new(startup_operations=[], lifecycle_steps=[]),
+    bridge_scheduler=@runtime.NativeBridgeScheduler::new(sync_routes=[], async_routes=[]),
+    service_supervisor=@runtime.NativeServiceSupervisorPlan::new(
       backend_name="test",
       webview_engine="SystemWebView",
       plan=@lepusa.LocalServiceSupervisorPlan::new(),
     ),
   )
-  let preflight = NativeBackendPreflight::new(
+  let preflight = @runtime.NativeBackendPreflight::new(
     platform="test",
     webview_engine="SystemWebView",
     dependency_name="system-webview",
@@ -1229,7 +1281,7 @@ test "native launch readiness includes backend preflight" {
     webview_creation_loop=true,
     async_bridge_drain=false,
   )
-  let readiness = NativeLaunchReadiness::new(
+  let readiness = @runtime.NativeLaunchReadiness::new(
     target="test",
     platform_name="Test",
     session~,
@@ -1261,7 +1313,7 @@ test "native asset load urls decode json envelopes" {
     #|  "mimeType": "text/html",
     #|  "body": { "kind": "virtual", "content": "<main>runtime</main>" }
     #|}
-  match native_asset_load_url_from_json(virtual_json) {
+  match @runtime.native_asset_load_url_from_json(virtual_json) {
     Ok(load_url) => {
       assert_true(load_url.has_prefix("data:text/html;base64,"))
       assert_false(load_url.contains("<main>runtime</main>"))
@@ -1275,12 +1327,14 @@ test "native asset load urls decode json envelopes" {
     #|  "mimeType": "text/css",
     #|  "body": { "kind": "packaged-file", "path": "/tmp/app.css" }
     #|}
-  match native_asset_load_url_from_json(file_json) {
+  match @runtime.native_asset_load_url_from_json(file_json) {
     Ok(load_url) => assert_eq(load_url, "file:///tmp/app.css")
     Err(problem) => abort(problem)
   }
   match
-    native_asset_load_url_from_json("{\"ok\":false,\"error\":\"missing\"}") {
+    @runtime.native_asset_load_url_from_json(
+      "{\"ok\":false,\"error\":\"missing\"}",
+    ) {
     Err(problem) => assert_eq(problem, "missing")
     Ok(_) => abort("expected asset load url failure")
   }
@@ -1288,9 +1342,12 @@ test "native asset load urls decode json envelopes" {
 
 ///|
 test "native run report normalizes launch summaries" {
-  let host = RuntimeHost::new(test_plan())
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, host) {
+  let host = @runtime.RuntimeHost::new(test_plan())
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match @runtime.NativeRuntime::new(backend, host) {
     Ok(runtime) => {
       let report = runtime.run_report(
         target="test",
@@ -1356,7 +1413,7 @@ test "runtime host carries filesystem scope metadata" {
     )
   match manifest.runtime_plan(root) {
     Ok(plan) => {
-      let host = RuntimeHost::new(plan)
+      let host = @runtime.RuntimeHost::new(plan)
       match host.snapshot() {
         Ok(session) => {
           assert_eq(session.file_system_scopes().length(), 1)
@@ -1415,7 +1472,7 @@ test "runtime host produces per-window webview boot specs" {
       ) {
         Ok(payload)
       })
-      match RuntimeHost::new(plan, registry~).webviews() {
+      match @runtime.RuntimeHost::new(plan, registry~).webviews() {
         Ok(specs) => {
           assert_eq(specs.length(), 2)
           assert_eq(specs[0].label(), "main")
@@ -1457,7 +1514,7 @@ test "runtime host serializes native launch manifest" {
   ) {
     Ok(payload)
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
   match host.launch_manifest() {
     Ok(manifest) => {
       assert_eq(manifest.backend(), "headless")
@@ -1491,7 +1548,7 @@ test "runtime host serializes native launch manifest" {
 
 ///|
 test "runtime session resolves virtual runtime and window assets" {
-  let host = RuntimeHost::new(test_plan())
+  let host = @runtime.RuntimeHost::new(test_plan())
   match host.snapshot() {
     Ok(session) => {
       match session.resolve_asset("lepusa://runtime/bridge.js") {
@@ -1542,7 +1599,7 @@ test "runtime session maps local assets without allowing traversal" {
   let app = @lepusa.new(root).window(source=@lepusa.Source::local_path("dist"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).snapshot() {
+      match @runtime.RuntimeHost::new(plan).snapshot() {
         Ok(session) => {
           match session.resolve_asset("lepusa://local/main/app.css") {
             Ok(response) => {
@@ -1561,7 +1618,7 @@ test "runtime session maps local assets without allowing traversal" {
           )
           assert_true(local_json.contains("\"kind\":\"local-file\""))
           assert_true(local_json.contains("\"path\":\"dist/app.css\""))
-          let host_json = RuntimeHost::new(plan).resolve_asset_json(
+          let host_json = @runtime.RuntimeHost::new(plan).resolve_asset_json(
             "lepusa://local/main/app.css",
           )
           assert_true(host_json.contains("\"ok\":true"))
@@ -1582,7 +1639,7 @@ test "runtime session maps packaged assets distinctly" {
   )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).snapshot() {
+      match @runtime.RuntimeHost::new(plan).snapshot() {
         Ok(session) => {
           assert_eq(
             session.windows()[0].url(),
@@ -1620,7 +1677,7 @@ test "runtime session scopes asset resolution to requesting window" {
     .window(label="tools", source=@lepusa.Source::local_path("tools-dist"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).snapshot() {
+      match @runtime.RuntimeHost::new(plan).snapshot() {
         Ok(session) => {
           match
             session.resolve_window_asset(
@@ -1655,7 +1712,7 @@ test "runtime session scopes asset resolution to requesting window" {
                 problem, "asset request for window main cannot load window tools asset",
               )
           }
-          let denied_json = RuntimeHost::new(plan).resolve_window_asset_json(
+          let denied_json = @runtime.RuntimeHost::new(plan).resolve_window_asset_json(
             window_label="tools",
             "lepusa://inline/main/index.html",
           )
@@ -1683,7 +1740,7 @@ test "runtime host dispatches through plan capabilities" {
   ) {
     Ok("ok:\{payload}")
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
   let allowed = host.dispatch(
     @lepusa.InvokeRequest::new(
       id="1",
@@ -1726,7 +1783,7 @@ test "runtime host dispatches through plan capabilities" {
 
 ///|
 test "runtime host rejects declared commands without registered handlers" {
-  let host = RuntimeHost::new(test_plan())
+  let host = @runtime.RuntimeHost::new(test_plan())
   let response = host.dispatch(
     @lepusa.InvokeRequest::new(
       id="missing-handler",
@@ -1763,7 +1820,7 @@ test "runtime host dispatch uses plan command permissions" {
       ) {
         Ok("file:\{payload}")
       })
-      let host = RuntimeHost::new(plan, registry~)
+      let host = @runtime.RuntimeHost::new(plan, registry~)
       let allowed = host.dispatch(
         @lepusa.InvokeRequest::new(
           id="1",
@@ -1822,7 +1879,7 @@ test "runtime host enforces command origins from capabilities" {
       ) {
         Ok("file:\{payload}")
       })
-      let host = RuntimeHost::new(plan, registry~)
+      let host = @runtime.RuntimeHost::new(plan, registry~)
       let allowed = host.dispatch(
         @lepusa.InvokeRequest::new(
           id="origin-ok",
@@ -1882,7 +1939,7 @@ test "runtime session applies startup actions as backend operations" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).startup_step() {
+      match @runtime.RuntimeHost::new(plan).startup_step() {
         Ok(step) => {
           let operations = step.operations()
           assert_eq(operations.length(), 3)
@@ -1927,7 +1984,7 @@ test "runtime session applies lifecycle hooks without host state" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).snapshot() {
+      match @runtime.RuntimeHost::new(plan).snapshot() {
         Ok(session) =>
           match session.lifecycle_step(WindowCloseRequested("main")) {
             Ok(step) => {
@@ -1937,7 +1994,7 @@ test "runtime session applies lifecycle hooks without host state" {
                 step.operations()[1]
                 is RuntimeNavigateWindow(
                   "main",
-                  "lepusa://inline/main/index.html"
+                  "lepusa://inline/main/index.html",
                 ),
               )
               match
@@ -1964,7 +2021,7 @@ test "runtime host builds generic runner plan" {
   ) {
     Ok(payload)
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
   match host.runner_plan() {
     Ok(plan) => {
       assert_eq(plan.launch_manifest().registered_routes()[0], "core.invoke")
@@ -2015,7 +2072,7 @@ test "runtime runner starts services before app startup actions" {
     .with_startup(@lepusa.Cmd::effect("boot"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).runner_plan() {
+      match @runtime.RuntimeHost::new(plan).runner_plan() {
         Ok(runner) => {
           let operations = runner.startup_operations()
           assert_eq(operations.length(), 2)
@@ -2046,7 +2103,7 @@ test "runtime host builds dev plan for backend runners" {
     .with_startup(@lepusa.Cmd::effect("boot"))
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).dev_plan() {
+      match @runtime.RuntimeHost::new(plan).dev_plan() {
         Ok(dev) => {
           assert_eq(dev.launch_manifest().webviews().length(), 1)
           assert_eq(dev.webviews().length(), 1)
@@ -2123,7 +2180,7 @@ test "runtime dev plan classifies supervised and external frontend sources" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) =>
-      match RuntimeHost::new(plan).dev_plan() {
+      match @runtime.RuntimeHost::new(plan).dev_plan() {
         Ok(dev) => {
           let session = dev.dev_session()
           assert_eq(session.webviews().length(), 2)
@@ -2175,7 +2232,7 @@ test "runtime service plan validates startup service declarations" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/ready",
   )
-  let plan = RuntimeServicePlan::new(startup_services=[service])
+  let plan = @runtime.RuntimeServicePlan::new(startup_services=[service])
   let problems = plan.validate()
   assert_eq(problems.length(), 1)
   assert_eq(problems[0], "startup service is not declared: api")
@@ -2188,7 +2245,7 @@ test "runtime service plan exposes supervisor handoff" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/ready",
   )
-  let plan = RuntimeServicePlan::new(services=[service], startup_services=[
+  let plan = @runtime.RuntimeServicePlan::new(services=[service], startup_services=[
     service,
   ])
   let supervisor = plan.supervisor_plan()
@@ -2216,9 +2273,12 @@ test "native runtime exposes decorated service supervisor plan" {
   match app.runtime_plan(config=@lepusa.RuntimeConfig::system_webview()) {
     Ok(plan) =>
       match
-        NativeRuntime::new(
-          NativeBackend::new(name="test", webview_engine="SystemWebView"),
-          RuntimeHost::new(plan),
+        @runtime.NativeRuntime::new(
+          @runtime.NativeBackend::new(
+            name="test",
+            webview_engine="SystemWebView",
+          ),
+          @runtime.RuntimeHost::new(plan),
         ) {
         Ok(runtime) => {
           let supervisor = runtime.service_supervisor_plan()
@@ -2259,7 +2319,7 @@ test "native runtime exposes decorated service supervisor plan" {
 
 ///|
 test "native service supervisor plan validates native metadata" {
-  let plan = NativeServiceSupervisorPlan::new(
+  let plan = @runtime.NativeServiceSupervisorPlan::new(
     backend_name="",
     webview_engine="",
     plan=@lepusa.LocalServiceSupervisorPlan::new(),
@@ -2277,11 +2337,11 @@ test "native service supervisor report captures action failures" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/ready",
   )
-  let failed = NativeServiceActionReport::new(
+  let failed = @runtime.NativeServiceActionReport::new(
     action=StartLocalService(service),
     status=NativeServiceActionFailed("spawn failed"),
   )
-  let report = NativeServiceSupervisorReport::new(
+  let report = @runtime.NativeServiceSupervisorReport::new(
     backend_name="test",
     webview_engine="SystemWebView",
     action_reports=[failed],
@@ -2304,7 +2364,7 @@ test "native service executor runs startup and shutdown hooks" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/ready",
   )
-  let plan = NativeServiceSupervisorPlan::new(
+  let plan = @runtime.NativeServiceSupervisorPlan::new(
     backend_name="test",
     webview_engine="SystemWebView",
     plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
@@ -2348,14 +2408,14 @@ test "native backend creates service executor with backend metadata" {
     command=["moon", "run", "cmd/server"],
     readiness_url="http://127.0.0.1:4317/ready",
   )
-  let plan = NativeServiceSupervisorPlan::new(
+  let plan = @runtime.NativeServiceSupervisorPlan::new(
     backend_name="test",
     webview_engine="SystemWebView",
     plan=@lepusa.LocalServiceSupervisorPlan::new(services=[service], startup_services=[
       service,
     ]),
   )
-  let executor = NativeBackend::new(
+  let executor = @runtime.NativeBackend::new(
     name="native-test",
     webview_engine="SystemWebView",
   ).service_executor(
@@ -2385,7 +2445,7 @@ test "native backend creates service executor with backend metadata" {
 ///|
 test "native service command packet is length-prefixed" {
   let packet = @utf8.decode(
-    native_service_command_packet(["moon", "run", "cmd/main", "--flag"]),
+    @runtime.native_service_command_packet(["moon", "run", "cmd/main", "--flag"]),
   ) catch {
     _ => abort("unexpected invalid service command packet")
   }
@@ -2406,7 +2466,7 @@ test "runtime host applies lifecycle actions to an existing session" {
     )
   match app.runtime_plan(config=@lepusa.RuntimeConfig::headless()) {
     Ok(plan) => {
-      let host = RuntimeHost::new(plan)
+      let host = @runtime.RuntimeHost::new(plan)
       match host.snapshot() {
         Ok(session) =>
           match host.lifecycle_step(session, WindowCloseRequested("main")) {
@@ -2435,7 +2495,7 @@ test "runtime host applies lifecycle actions to an existing session" {
 
 ///|
 test "runtime session reports invalid action application" {
-  match RuntimeHost::new(test_plan()).snapshot() {
+  match @runtime.RuntimeHost::new(test_plan()).snapshot() {
     Ok(session) =>
       match
         @lepusa.Source::html("<main>missing</main>").resolve(
@@ -2456,7 +2516,7 @@ test "runtime session reports invalid action application" {
 ///|
 test "runtime wire codec decodes bridge requests and encodes responses" {
   match
-    decode_invoke_request_json(
+    @runtime.decode_invoke_request_json(
       "{\"id\":\"7\",\"windowLabel\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"{\\\"x\\\":1}\"}",
     ) {
     Ok(request) => {
@@ -2468,10 +2528,12 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
     }
     Err(_) => abort("unexpected invalid bridge request")
   }
-  let json = encode_invoke_response_json(@lepusa.InvokeResponse::ok("7", "{}"))
+  let json = @runtime.encode_invoke_response_json(
+    @lepusa.InvokeResponse::ok("7", "{}"),
+  )
   assert_true(json.contains("\"id\":\"7\""))
   assert_true(json.contains("\"payload\":\"{}\""))
-  let denied_json = encode_invoke_response_json(
+  let denied_json = @runtime.encode_invoke_response_json(
     @lepusa.InvokeResponse::permission_denied("8", "core.invoke"),
   )
   assert_true(
@@ -2481,7 +2543,7 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
   assert_true(denied_json.contains("\"failure\":{"))
   assert_true(denied_json.contains("\"route\":\"core.invoke\""))
   match
-    decode_invoke_request_json(
+    @runtime.decode_invoke_request_json(
       "{\"id\":\"cb-7\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"origin\":\"https://app.example\",\"callback_id\":\"cb-7\",\"error_id\":\"err-7\"}",
     ) {
     Ok(request) => {
@@ -2490,10 +2552,12 @@ test "runtime wire codec decodes bridge requests and encodes responses" {
       assert_eq(request.error_id(), "err-7")
       assert_eq(request.has_resolver_ids(), true)
       assert_true(
-        encode_invoke_request_json(request).contains("\"callback_id\":\"cb-7\""),
+        @runtime.encode_invoke_request_json(request).contains(
+          "\"callback_id\":\"cb-7\"",
+        ),
       )
       assert_true(
-        encode_invoke_request_json(request).contains(
+        @runtime.encode_invoke_request_json(request).contains(
           "\"origin\":\"https://app.example\"",
         ),
       )
@@ -2509,7 +2573,7 @@ test "runtime host dispatches bridge json through capability checks" {
   ) {
     Ok("{\"seen\":\{payload}}")
   })
-  let host = RuntimeHost::new(test_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
   let response = host.dispatch_json(
     "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
   )
@@ -2657,12 +2721,12 @@ test "bridge dispatch lowers approved window responses to native operations" {
         }).stringify(),
       )
     })
-  let host = RuntimeHost::new(window_control_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(window_control_plan(), registry~)
   let message = "{\"id\":\"11\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setTitle\",\"payload\":\"{\\\"title\\\":\\\"Ready\\\"}\"}"
   match host.prepare_bridge_message(message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -2700,8 +2764,8 @@ test "bridge dispatch lowers approved window responses to native operations" {
   let size_message = "{\"id\":\"12\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setSize\",\"payload\":\"{\\\"width\\\":900,\\\"height\\\":640}\"}"
   match host.prepare_bridge_message(size_message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -2729,8 +2793,8 @@ test "bridge dispatch lowers approved window responses to native operations" {
   let position_message = "{\"id\":\"13\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setPosition\",\"payload\":\"{\\\"x\\\":120,\\\"y\\\":80}\"}"
   match host.prepare_bridge_message(position_message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -2758,8 +2822,8 @@ test "bridge dispatch lowers approved window responses to native operations" {
   let fullscreen_message = "{\"id\":\"14\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"setFullscreen\",\"payload\":\"{\\\"fullscreen\\\":true}\"}"
   match host.prepare_bridge_message(fullscreen_message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -2823,9 +2887,9 @@ test "bridge dispatch lowers desktop shell plugin responses to native operations
     .register_fn("tray.setVisible", permission=Tray, handler=fn(_) {
       Ok(Json::object({ "status": Json::string("delegated") }).stringify())
     })
-  let host = RuntimeHost::new(desktop_shell_plan(), registry~)
-  let runtime = NativeRuntime::new(
-    NativeBackend::new(name="test", webview_engine="SystemWebView"),
+  let host = @runtime.RuntimeHost::new(desktop_shell_plan(), registry~)
+  let runtime = @runtime.NativeRuntime::new(
+    @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
     host,
   ).unwrap()
   let app_message = "{\"id\":\"app\",\"window_label\":\"main\",\"plugin\":\"app\",\"command\":\"exit\",\"payload\":\"\"}"
@@ -2900,12 +2964,12 @@ test "bridge dispatch lowers approved window open to native operation" {
     permission=Window,
     handler=fn(_) { Ok("{\"status\":\"queued\"}") },
   )
-  let host = RuntimeHost::new(plan, registry~)
+  let host = @runtime.RuntimeHost::new(plan, registry~)
   let message = "{\"id\":\"open\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"open\",\"payload\":\"{\\\"label\\\":\\\"tools\\\",\\\"title\\\":\\\"Tools\\\",\\\"width\\\":480,\\\"height\\\":360,\\\"source\\\":{\\\"kind\\\":\\\"html\\\",\\\"content\\\":\\\"<aside>tools</aside>\\\"}}\"}"
   match host.prepare_bridge_message(message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -2933,9 +2997,9 @@ test "bridge dispatch lowers approved window open to native operation" {
       assert_eq(
         tools_asset_packet, "ok\nvirtual\ntext/html\n<aside>tools</aside>",
       )
-      let packet_runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
-        RuntimeHost::new(plan, registry~),
+      let packet_runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        @runtime.RuntimeHost::new(plan, registry~),
       ).unwrap()
       let packet = @utf8.decode(
         packet_runtime
@@ -2996,12 +3060,12 @@ test "bridge dispatch lowers approved window close to runtime cleanup" {
       )
     },
   )
-  let host = RuntimeHost::new(plan, registry~)
+  let host = @runtime.RuntimeHost::new(plan, registry~)
   let message = "{\"id\":\"close\",\"window_label\":\"main\",\"plugin\":\"window\",\"command\":\"close\",\"payload\":\"{\\\"windowLabel\\\":\\\"main\\\"}\"}"
   match host.prepare_bridge_message(message) {
     Ok(prepared) => {
-      let runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
+      let runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
         host,
       ).unwrap()
       let dispatch = prepared.dispatch_sync(runtime)
@@ -3024,9 +3088,9 @@ test "bridge dispatch lowers approved window close to runtime cleanup" {
         _ => abort("unexpected invalid closed window asset packet")
       }
       assert_true(closed_asset_packet.contains("error"))
-      let packet_runtime = NativeRuntime::new(
-        NativeBackend::new(name="test", webview_engine="SystemWebView"),
-        RuntimeHost::new(plan, registry~),
+      let packet_runtime = @runtime.NativeRuntime::new(
+        @runtime.NativeBackend::new(name="test", webview_engine="SystemWebView"),
+        @runtime.RuntimeHost::new(plan, registry~),
       ).unwrap()
       let packet = @utf8.decode(
         packet_runtime
@@ -3049,7 +3113,7 @@ async test "runtime host dispatches async bridge handlers" {
     "core.invoke",
     handler=fn(payload) { Ok("{\"async\":\{payload}}") },
   )
-  let host = RuntimeHost::new(test_plan(), registry~)
+  let host = @runtime.RuntimeHost::new(test_plan(), registry~)
   let response = host.dispatch_json_async(
     "{\"id\":\"1\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}",
   )
@@ -3090,9 +3154,12 @@ async test "native runtime owns bridge message transport" {
     "core.invoke",
     handler=fn(payload) { Ok("{\"async\":\{payload}}") },
   )
-  let host = RuntimeHost::new(async_bridge_plan(), registry~)
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, host) {
+  let host = @runtime.RuntimeHost::new(async_bridge_plan(), registry~)
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match @runtime.NativeRuntime::new(backend, host) {
     Ok(runtime) => {
       let message = "{\"id\":\"9\",\"window_label\":\"main\",\"plugin\":\"core\",\"command\":\"invoke\",\"payload\":\"true\"}"
       match runtime.prepare_bridge_message(message) {
@@ -3150,7 +3217,7 @@ async test "native runtime owns bridge message transport" {
           assert_true(handoff.requires_async_dispatch())
           assert_true(handoff.immediate_script() is None)
           assert_true(handoff.to_json().contains("\"immediateDispatch\":null"))
-          let queue = NativeBridgeWorkQueue::new()
+          let queue = @runtime.NativeBridgeWorkQueue::new()
           assert_true(queue.is_empty())
           let queued_script = @utf8.decode(
             queue.handoff_callback(runtime)(@utf8.encode(message)),
@@ -3162,7 +3229,7 @@ async test "native runtime owns bridge message transport" {
           let queued_completions = queue.drain(runtime)
           assert_eq(queued_completions.length(), 1)
           assert_true(queue.is_empty())
-          let result_queue = NativeBridgeWorkQueue::new()
+          let result_queue = @runtime.NativeBridgeWorkQueue::new()
           ignore(result_queue.enqueue_handoff(handoff))
           let drain_result = result_queue.drain_result(runtime)
           assert_eq(drain_result.pending_before(), 1)
@@ -3247,7 +3314,7 @@ async test "native runtime owns bridge message transport" {
           assert_eq(packet_adapter.pending_count(), 1)
           let native_drain_packet = @utf8.decode(
             packet_callbacks.handoff_packet_callback()(
-              native_bridge_drain_request_packet("main"),
+              @runtime.native_bridge_drain_request_packet("main"),
             ),
           ) catch {
             _ => abort("unexpected invalid native drain request packet bytes")
@@ -3364,7 +3431,7 @@ async test "native runtime owns bridge message transport" {
             .evaluation_script()
             .contains("globalThis[\"__lepusaInvokeResponse\"]"),
           )
-          let rejecting_queue = NativeBridgeWorkQueue::new(
+          let rejecting_queue = @runtime.NativeBridgeWorkQueue::new(
             policy=@lepusa.BackpressurePolicy::bounded(max_pending=1),
           )
           ignore(rejecting_queue.enqueue_handoff(handoff))
@@ -3378,7 +3445,7 @@ async test "native runtime owns bridge message transport" {
           assert_true(
             rejecting_queue.to_json().contains("\"overflow\":\"reject-new\""),
           )
-          let dropping_queue = NativeBridgeWorkQueue::new(
+          let dropping_queue = @runtime.NativeBridgeWorkQueue::new(
             policy=@lepusa.BackpressurePolicy::bounded(
               max_pending=1,
               overflow=DropOldest,
@@ -3461,7 +3528,7 @@ async test "native runtime owns bridge message transport" {
       }
       match runtime.bridge_handoff(sync_handoff_message) {
         Ok(handoff) =>
-          match NativeBridgeWorkQueue::new().enqueue_handoff(handoff) {
+          match @runtime.NativeBridgeWorkQueue::new().enqueue_handoff(handoff) {
             Err(problem) =>
               assert_eq(
                 problem, "native bridge queue only accepts deferred async handoffs",
@@ -3470,7 +3537,7 @@ async test "native runtime owns bridge message transport" {
           }
         Err(_) => abort("unexpected immediate bridge queue setup failure")
       }
-      let sync_queue = NativeBridgeWorkQueue::new()
+      let sync_queue = @runtime.NativeBridgeWorkQueue::new()
       let sync_queue_script = @utf8.decode(
         sync_queue.handoff_callback(runtime)(@utf8.encode(sync_handoff_message)),
       ) catch {
@@ -3575,9 +3642,12 @@ async test "native runtime owns bridge message transport" {
 
 ///|
 test "native bridge transport validates target window" {
-  let host = RuntimeHost::new(test_plan())
-  let backend = NativeBackend::new(name="test", webview_engine="SystemWebView")
-  match NativeRuntime::new(backend, host) {
+  let host = @runtime.RuntimeHost::new(test_plan())
+  let backend = @runtime.NativeBackend::new(
+    name="test",
+    webview_engine="SystemWebView",
+  )
+  match @runtime.NativeRuntime::new(backend, host) {
     Ok(runtime) => {
       match runtime.bridge_response_hook(window_label="main") {
         Ok((window_label, hook)) => {
@@ -3595,7 +3665,7 @@ test "native bridge transport validates target window" {
           assert_eq(problems[0], "native bridge window not found: missing")
       }
       assert_eq(
-        native_bridge_response_script("__hook", "{\"id\":\"1\"}"),
+        @runtime.native_bridge_response_script("__hook", "{\"id\":\"1\"}"),
         "globalThis[\"__hook\"]({\"id\":\"1\"});",
       )
     }
@@ -3605,7 +3675,7 @@ test "native bridge transport validates target window" {
 
 ///|
 test "native bridge hook scripts cover webkit and webview2 transports" {
-  let webkit = native_webkit_bridge_hook_script(
+  let webkit = @runtime.native_webkit_bridge_hook_script(
     "__lepusaInvoke",
     platform_name="macOS",
   )
@@ -3614,7 +3684,7 @@ test "native bridge hook scripts cover webkit and webview2 transports" {
   assert_true(webkit.contains("__lepusaInvokeResponse"))
   assert_true(webkit.contains("Missing Lepusa macOS native message handler"))
   assert_false(webkit.contains("chrome.webview"))
-  let webview2 = native_webview2_bridge_hook_script("__lepusaInvoke")
+  let webview2 = @runtime.native_webview2_bridge_hook_script("__lepusaInvoke")
   assert_true(webview2.contains("chrome.webview"))
   assert_true(webview2.contains("postMessage(JSON.stringify(request))"))
   assert_true(webview2.contains("__lepusaInvokeResponse"))

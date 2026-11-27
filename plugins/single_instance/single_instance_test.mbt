@@ -1,6 +1,6 @@
 ///|
 test "single instance plugin declares lifecycle commands" {
-  let declared = plugin()
+  let declared = @single_instance.plugin()
   assert_eq(declared.name(), "singleInstance")
   assert_eq(declared.command_routes().length(), 5)
   assert_true(declared.command_routes().contains("singleInstance.status"))
@@ -18,7 +18,7 @@ test "single instance plugin declares lifecycle commands" {
 
 ///|
 test "single instance capabilities grant permission by window" {
-  let grant = capability_for_window("main")
+  let grant = @single_instance.capability_for_window("main")
   assert_true(grant.allows(window_label="main", permission=SingleInstance))
   assert_false(grant.allows(window_label="settings", permission=SingleInstance))
   assert_false(grant.allows(window_label="main", permission=DeepLink))
@@ -26,7 +26,7 @@ test "single instance capabilities grant permission by window" {
 
 ///|
 test "single instance policy validates launch handoff settings" {
-  let policy = SingleInstancePolicy::new(
+  let policy = @single_instance.SingleInstancePolicy::new(
     key="dev.local.lepusa",
     primary_window="main",
   )
@@ -39,7 +39,10 @@ test "single instance policy validates launch handoff settings" {
 
 ///|
 test "single instance policy rejects invalid identifiers" {
-  let policy = SingleInstancePolicy::new(key="bad/key", primary_window="")
+  let policy = @single_instance.SingleInstancePolicy::new(
+    key="bad/key",
+    primary_window="",
+  )
   let problems = policy.validate()
   assert_true(problems.contains("single instance key is invalid: bad/key"))
   assert_true(problems.contains("single instance primary window is required"))
@@ -47,13 +50,13 @@ test "single instance policy rejects invalid identifiers" {
 
 ///|
 test "single instance registry tracks primary launch state" {
-  let state = SingleInstanceState::new()
-  let policy = SingleInstancePolicy::new(
+  let state = @single_instance.SingleInstanceState::new()
+  let policy = @single_instance.SingleInstancePolicy::new(
     key="dev.local.lepusa",
     primary_window="main",
   )
-  let registry = registry(policy~, state~)
-  let grant = capability_for_window("main")
+  let registry = @single_instance.registry(policy~, state~)
+  let grant = @single_instance.capability_for_window("main")
   assert_true(registry.contains("singleInstance.status"))
   assert_true(registry.contains("singleInstance.acquire"))
   assert_true(registry.contains("singleInstance.release"))

@@ -66,7 +66,7 @@ pub fn BundledRuntimeManifest::bridge_handoff_callback(
 ///|
 pub fn BundledRuntimeManifest::bridge_scheduler(
   self : BundledRuntimeManifest,
-  mode? : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
+  mode~ : @runtime.NativeBridgeSchedulerMode = NativeBridgeSyncOnly,
 ) -> @runtime.NativeBridgeScheduler {
   @runtime.NativeBridgeScheduler::new(
     sync_routes=self.registered_sync_routes(),

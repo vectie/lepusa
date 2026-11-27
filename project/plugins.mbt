@@ -2,7 +2,7 @@
 fn project_registry_from_plugins(
   plugins : Array[@lepusa.Plugin],
   filesystem_scopes~ : Array[@lepusa.FileSystemScope],
-  local_services? : Array[@lepusa.LocalService] = [],
+  local_services~ : Array[@lepusa.LocalService] = [],
 ) -> @lepusa.CommandRegistry {
   let mut registry = @lepusa.CommandRegistry::new()
   let context = @catalog.CatalogContext::new(

@@ -8,7 +8,7 @@ bridge without registering its native handler.
 ```mbt check
 ///|
 test "build a desktop project" {
-  let project = DesktopProject::new(
+  let project = @desktop.DesktopProject::new(
       @lepusa.AppMetadata::new(
         identifier="dev.lepusa.desktop",
         product_name="Lepusa Desktop",
@@ -36,7 +36,7 @@ test "build a desktop project" {
 ```mbt check
 ///|
 test "build an app with official desktop plugins" {
-  let kit = DesktopKit::new().with_sync_plugins()
+  let kit = @desktop.DesktopKit::new().with_sync_plugins()
   let base = @lepusa.new(
     @lepusa.simple_cell(@lepusa.Html::text("<main></main>")),
   ).window(source=@lepusa.Source::html("<main></main>"))

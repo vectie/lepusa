@@ -1,4 +1,5 @@
 ///|
+#derive(Debug, Eq)
 pub struct NativeBackendPreflight {
   platform : String
   webview_engine : String
@@ -11,7 +12,7 @@ pub struct NativeBackendPreflight {
   webview_creation_message : String
   sync_bridge_evaluate_message : String
   async_bridge_drain_message : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn NativeBackendPreflight::new(
@@ -20,12 +21,12 @@ pub fn NativeBackendPreflight::new(
   dependency_name~ : String,
   dependency_available~ : Bool,
   webview_creation_loop~ : Bool,
-  sync_bridge_evaluate? : Bool = webview_creation_loop,
+  sync_bridge_evaluate~ : Bool = webview_creation_loop,
   async_bridge_drain~ : Bool,
-  dependency_message? : String = "native WebView dependency is unavailable",
-  webview_creation_message? : String = "native WebView creation loop is unavailable",
-  sync_bridge_evaluate_message? : String = "native sync bridge response evaluation is unavailable",
-  async_bridge_drain_message? : String = "native async bridge drain/evaluate support is unavailable",
+  dependency_message~ : String = "native WebView dependency is unavailable",
+  webview_creation_message~ : String = "native WebView creation loop is unavailable",
+  sync_bridge_evaluate_message~ : String = "native sync bridge response evaluation is unavailable",
+  async_bridge_drain_message~ : String = "native async bridge drain/evaluate support is unavailable",
 ) -> NativeBackendPreflight {
   {
     platform,

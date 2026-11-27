@@ -1,17 +1,18 @@
 ///|
+#derive(Debug, Eq)
 pub struct LogEntry {
   level : String
   message : String
   target : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn LogEntry::new(
   message~ : String,
-  level? : String = "info",
-  target? : String = "app",
+  level~ : String = "info",
+  target~ : String = "app",
 ) -> LogEntry {
-  { level, message, target }
+  { level, message, target, }
 }
 
 ///|
@@ -45,7 +46,7 @@ pub struct LogBuffer {
 
 ///|
 pub fn LogBuffer::new() -> LogBuffer {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
@@ -64,21 +65,21 @@ pub fn plugin() -> @lepusa.Plugin {
 }
 
 ///|
-pub fn capability(name? : String = "log") -> @lepusa.Capability {
+pub fn capability(name~ : String = "log") -> @lepusa.Capability {
   @lepusa.Capability::new(name).command("log.write")
 }
 
 ///|
 pub fn capability_for_window(
   window_label : String,
-  name? : String = "log",
+  name~ : String = "log",
 ) -> @lepusa.Capability {
   capability(name~).window(window_label)
 }
 
 ///|
 pub fn registry(
-  buffer? : LogBuffer = LogBuffer::new(),
+  buffer~ : LogBuffer = LogBuffer::new(),
 ) -> @lepusa.CommandRegistry {
   register(@lepusa.CommandRegistry::new(), buffer~)
 }
@@ -86,7 +87,7 @@ pub fn registry(
 ///|
 pub fn register(
   registry : @lepusa.CommandRegistry,
-  buffer? : LogBuffer = LogBuffer::new(),
+  buffer~ : LogBuffer = LogBuffer::new(),
 ) -> @lepusa.CommandRegistry {
   registry.register_fn("log.write", handler=fn(payload) {
     match decode_write_payload(payload) {

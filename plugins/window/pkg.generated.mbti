@@ -20,6 +20,7 @@ pub fn registry(policy? : WindowControlPolicy, state? : WindowControlState) -> @
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum WindowControlAction {
   Close
   Focus
@@ -32,23 +33,25 @@ pub(all) enum WindowControlAction {
   SetTitle
   Show
   Unmaximize
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowControlAction::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct WindowControlOperation {
   window_label : String
   action : WindowControlAction
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowControlOperation::action(Self) -> WindowControlAction
 pub fn WindowControlOperation::new(window_label~ : String, action~ : WindowControlAction, payload? : String) -> Self
 pub fn WindowControlOperation::payload(Self) -> String
 pub fn WindowControlOperation::to_json(Self) -> String
 pub fn WindowControlOperation::window_label(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct WindowControlPolicy {
   allowed_windows : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowControlPolicy::allowed_windows(Self) -> Array[String]
 pub fn WindowControlPolicy::allows(Self, String) -> Bool
 pub fn WindowControlPolicy::new(allowed_windows? : Array[String]) -> Self
@@ -63,10 +66,11 @@ pub fn WindowControlState::new() -> Self
 pub fn WindowControlState::operations(Self) -> Array[WindowControlOperation]
 pub fn WindowControlState::record(Self, WindowControlOperation) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub struct WindowOpenOperation {
   window_label : String
   payload : String
-} derive(Eq, @debug.Debug)
+}
 pub fn WindowOpenOperation::new(window_label~ : String, payload~ : String) -> Self
 pub fn WindowOpenOperation::payload(Self) -> String
 pub fn WindowOpenOperation::to_json(Self) -> String
@@ -75,4 +79,3 @@ pub fn WindowOpenOperation::window_label(Self) -> String
 // Type aliases
 
 // Traits
-

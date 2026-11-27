@@ -1,11 +1,12 @@
 ///|
+#derive(Debug, Eq)
 pub(all) enum Cmd {
   None
   Batch(Array[Cmd])
   Effect(String)
   Emit(EventTarget, Event)
   Navigate(String, Source)
-} derive(Debug, Eq)
+}
 
 ///|
 pub let none : Cmd = None
@@ -16,7 +17,7 @@ pub fn Cmd::effect(name : String) -> Cmd {
 }
 
 ///|
-pub fn Cmd::emit(event : Event, target? : EventTarget = AppTarget) -> Cmd {
+pub fn Cmd::emit(event : Event, target~ : EventTarget = AppTarget) -> Cmd {
   Emit(target, event)
 }
 

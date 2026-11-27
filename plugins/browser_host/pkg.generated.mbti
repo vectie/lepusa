@@ -28,4 +28,3 @@ pub fn BrowserHostState::new() -> Self
 // Type aliases
 
 // Traits
-

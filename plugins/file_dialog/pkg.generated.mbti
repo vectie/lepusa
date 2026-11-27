@@ -28,20 +28,22 @@ pub fn registry(policy? : FileDialogPolicy, scopes? : Array[@lepusa.FileSystemSc
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub struct FileDialogDefaultDirectory {
   name : String
   scope_name : String
   path : String
-} derive(Eq, @debug.Debug)
+}
 pub fn FileDialogDefaultDirectory::name(Self) -> String
 pub fn FileDialogDefaultDirectory::new(name~ : String, scope_name~ : String, path? : String) -> Self
 pub fn FileDialogDefaultDirectory::path(Self) -> String
 pub fn FileDialogDefaultDirectory::scope_name(Self) -> String
 pub fn FileDialogDefaultDirectory::validate(Self) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub struct FileDialogPolicy {
   default_directories : Array[FileDialogDefaultDirectory]
-} derive(Eq, @debug.Debug)
+}
 pub fn FileDialogPolicy::default_directories(Self) -> Array[FileDialogDefaultDirectory]
 pub fn FileDialogPolicy::default_directory(Self, FileDialogDefaultDirectory) -> Self
 pub fn FileDialogPolicy::new(default_directories? : Array[FileDialogDefaultDirectory]) -> Self

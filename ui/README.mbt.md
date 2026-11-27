@@ -10,12 +10,12 @@ boilerplate for UI messages.
 ```mbt check
 ///|
 test "compose a Lepusa UI view" {
-  let view = main_([
-    h1([text("Counter")]),
-    p([text("Count: 1")], attrs=[class_name("metric")]),
-    p([text("Starting")], attrs=[id("status")]),
-    button("Increment", attrs=[on_click("counter.increment")]),
-    text_listener("ready", "#status"),
+  let view = @ui.main_([
+    @ui.h1([@ui.text("Counter")]),
+    @ui.p([@ui.text("Count: 1")], attrs=[@ui.class_name("metric")]),
+    @ui.p([@ui.text("Starting")], attrs=[@ui.id("status")]),
+    @ui.button("Increment", attrs=[@ui.on_click("counter.increment")]),
+    @ui.text_listener("ready", "#status"),
   ])
   let cell = @lepusa.simple_cell(view)
   let app = @lepusa.new(cell)
@@ -32,13 +32,14 @@ test "compose a Lepusa UI view" {
 
 ```mbt check
 ///|
+#derive(Debug, Eq)
 enum CounterMessage {
   Increment
-} derive(Debug, Eq)
+}
 
 ///|
 test "compose a model update view program" {
-  let program = UiProgram::new(
+  let program = @ui.UiProgram::new(
     model=0,
     update=fn(message, count) {
       match message {
@@ -46,10 +47,10 @@ test "compose a model update view program" {
       }
     },
     view=fn(emit, count) {
-      main_([
-        h1([text("Counter")]),
-        p([text("Count: \{count}")]),
-        button("Increment", attrs=[emit(Increment)]),
+      @ui.main_([
+        @ui.h1([@ui.text("Counter")]),
+        @ui.p([@ui.text("Count: \{count}")]),
+        @ui.button("Increment", attrs=[emit(Increment)]),
       ])
     },
     encode=fn(message) {
